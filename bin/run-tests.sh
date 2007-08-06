@@ -14,7 +14,7 @@ do
 	esac
 
 	printf '%70s ' $test
-	if sh -x $test -v > /tmp/test.out 2>&1
+	if sh -x $test --no-symlinks -v > /tmp/test.out 2>&1
 	then
 		echo -e '\033[32mok\033[0m'
 	else
