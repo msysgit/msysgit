@@ -1,0 +1,106 @@
+# Copyright (C) 2001, 2002  Earnie Boyd  <earnie@users.sf.net>
+# This file is part of the Minimal SYStem.
+#   http://www.mingw.org/msys.shtml
+# 
+#         File:	profile
+#  Description:	Shell environment initialization script
+# Last Revised:	2002.05.04
+
+if [ -z "$MSYSTEM" ]; then
+  MSYSTEM=MINGW32
+fi
+
+# My decision to add a . to the PATH and as the first item in the path list
+# is to mimick the Win32 method of finding executables.
+#
+# I filter the PATH value setting in order to get ready for self hosting the
+# MSYS runtime and wanting different paths searched first for files.
+if [ $MSYSTEM == MINGW32 ]; then
+  export PATH=".:/usr/local/bin:/mingw/bin:/bin:$PATH"
+else
+  export PATH=".:/usr/local/bin:/bin:/mingw/bin:$PATH"
+fi
+
+if [ -z "$USERNAME" ]; then
+  LOGNAME="`id -un`"
+else
+  LOGNAME="$USERNAME"
+fi
+
+# Set up USER's home directory
+if [ -z "$HOME" ]; then
+  HOME="/home/$LOGNAME"
+fi
+
+export PATH="$HOME/bin:$PATH"
+
+if [ ! -d "$HOME" ]; then
+  mkdir -p "$HOME"
+fi
+
+export GNUPGHOME=~/.gnupg
+
+if [ "x$HISTFILE" == "x/.bash_history" ]; then
+  HISTFILE=$HOME/.bash_history
+fi
+
+export HOME LOGNAME MSYSTEM HISTFILE
+
+for i in /etc/profile.d/*.sh ; do
+  if [ -f $i ]; then
+    . $i
+  fi
+done
+
+export MAKE_MODE=unix
+export PS1='\[\033]0;$MSYSTEM:\w\007
+\033[32m\]\u@\h \[\033[33m\w\033[0m\]
+$ '
+
+alias clear=clsb
+
+cd "$HOME"
+
+test -e .bash_profile && . .bash_profile
+
+test -e /bin/git.exe || {
+	echo "Setting up git"
+
+	cd /git &&
+	make install &&
+	git init &&
+	git config remote.origin.url git://repo.or.cz/git/mingw.git &&
+	git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+	git config remote.mob.url repo.or.cz:/srv/git/git/mingw.git &&
+	git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
+	git config remote.mob.push master:mob &&
+	echo &&
+	echo "Fetching the MinGW repository from repo.or.cz" &&
+	(git fetch ||
+		(git config remote.origin.url http://repo.or.cz/r/git/mingw.git &&
+		git fetch)) &&
+	git reset 382210f715c0e1ef7a19eb10977dae4265a2c88f
+	
+	case $? in
+	0)
+		MESSAGE="You are in the git working tree, and all is ready for you to hack."
+	;;
+	*)
+		MESSAGE="Your build failed...  Please fix it, and give feedback on the Git list."
+	esac
+
+	cat <<EOF
+
+
+-------------------------
+Hello, dear Git developer.
+
+This is a minimal MSYS environment to work on Git.
+
+$MESSAGE
+
+Have fun!
+EOF
+}
+
+. /git/contrib/completion/git-completion.bash

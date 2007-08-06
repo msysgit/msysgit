@@ -1,0 +1,147 @@
+/* Script for ld -r: link without relocation */
+OUTPUT_FORMAT(pe-i386)
+SEARCH_DIR("/mingw/mingw32/lib"); SEARCH_DIR("/mingw/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
+SECTIONS
+{
+  .text  :
+  {
+    *(.text)
+    *(.glue_7t)
+    *(.glue_7)
+    /* ??? Why is .gcc_exc here?  */
+    *(.gcc_except_table)
+  }
+  /* The Cygwin32 library uses a section to avoid copying certain data
+     on fork.  This used to be named ".data".  The linker used
+     to include this between __data_start__ and __data_end__, but that
+     breaks building the cygwin32 dll.  Instead, we name the section
+     ".data_cygwin_nocopy" and explictly include it after __data_end__. */
+  .data  :
+  {
+    *(.data)
+    *(.data2)
+    *(.jcr)
+  }
+  .rdata  :
+  {
+    *(.rdata)
+    *(.eh_frame)
+    *(.rdata_runtime_pseudo_reloc)
+  }
+  .pdata  :
+  {
+    *(.pdata)
+  }
+  .bss  :
+  {
+    *(.bss)
+    *(COMMON)
+  }
+  .edata  :
+  {
+    *(.edata)
+  }
+  /DISCARD/ :
+  {
+    *(.debug$S)
+    *(.debug$T)
+    *(.debug$F)
+    *(.drectve)
+  }
+  .idata  :
+  {
+    /* This cannot currently be handled with grouped sections.
+	See pe.em:sort_sections.  */
+  }
+  .CRT  :
+  {
+    /* ___crt_xl_end__ is defined in the TLS Directory support code */
+  }
+  .tls  :
+  {
+  }
+  .endjunk  :
+  {
+    /* end is deprecated, don't use it */
+  }
+  .rsrc  :
+  {
+    *(.rsrc)
+  }
+  .reloc  :
+  {
+    *(.reloc)
+  }
+  .stab   :
+  {
+    *(.stab)
+  }
+  .stabstr   :
+  {
+    *(.stabstr)
+  }
+  /* DWARF debug sections.
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section.  Unlike other targets that fake this by putting the
+     section VMA at 0, the PE format will not allow it.  */
+  /* DWARF 1.1 and DWARF 2.  */
+  .debug_aranges   :
+  {
+    *(.debug_aranges)
+  }
+  .debug_pubnames   :
+  {
+    *(.debug_pubnames)
+  }
+  /* DWARF 2.  */
+  .debug_info   :
+  {
+    *(.debug_info) *(.gnu.linkonce.wi.*)
+  }
+  .debug_abbrev   :
+  {
+    *(.debug_abbrev)
+  }
+  .debug_line   :
+  {
+    *(.debug_line)
+  }
+  .debug_frame   :
+  {
+    *(.debug_frame)
+  }
+  .debug_str   :
+  {
+    *(.debug_str)
+  }
+  .debug_loc   :
+  {
+    *(.debug_loc)
+  }
+  .debug_macinfo   :
+  {
+    *(.debug_macinfo)
+  }
+  /* SGI/MIPS DWARF 2 extensions.  */
+  .debug_weaknames   :
+  {
+    *(.debug_weaknames)
+  }
+  .debug_funcnames   :
+  {
+    *(.debug_funcnames)
+  }
+  .debug_typenames   :
+  {
+    *(.debug_typenames)
+  }
+  .debug_varnames   :
+  {
+    *(.debug_varnames)
+  }
+  /* DWARF 3.  */
+  .debug_ranges   :
+  {
+    *(.debug_ranges)
+  }
+}

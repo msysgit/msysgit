@@ -1,0 +1,96 @@
+{\rtf1\ansi\ansicpg1252\deff0\deftab720{\fonttbl{\f0\fswiss MS Sans Serif;}{\f1\froman\fcharset2 Symbol;}{\f2\fmodern\fprq1 Courier New;}{\f3\froman Times New Roman;}{\f4\fmodern\fprq1 Lucida Console;}}
+{\colortbl\red0\green0\blue0;}
+\deflang1033\horzdoc{\*\fchars }{\*\lchars }\pard\tx2610\plain\f2\fs20\b\i File:\plain\f2\fs20\i \tab \plain\f2\fs20 README
+\par \plain\f2\fs20\b\i Copyright (C):\plain\f2\fs20 \tab 2001, 2002  Earnie Boyd  <earnie@users.sf.net>
+\par \plain\f2\fs20\b\i Distribution:\plain\f2\fs20 \tab See MSYS_LICENSE
+\par \plain\f2\fs20\b\i MSYS Revision:\plain\f2\fs20 \tab 1.0.10
+\par \plain\f2\fs20\b\i MSYS Revision date:\plain\f2\fs20\i \tab \plain\lang1024\f2\fs20 October 31, 2002\plain\f2\fs20 
+\par \pard\qc\tx2610\plain\f2\fs20\i 
+\par \pard\plain\f2\fs20\b\i Preface:\plain\f2\fs20 
+\par Ok, you have installed msys and now you're reading this to understand how to get started.  However, I must first explain some important facts about Msys.  Msys file system bindings (mounts) are automatic and happens as described in table 1.  These automatic file system bindings are not changable by the user.  User defined file system bindings can be created by specifying them in the /etc/fstab directory as explained in table 2.
+\par 
+\par \plain\f2\fs20\b\i TABLE 1 - Automatic file system maps:\plain\f2\fs20 
+\par \plain\f4\fs16 + ---------------------------------------------------------------------------- +
+\par | The automatic mounts are relative to where the msys-1.0.dll (DLL) is located |
+\par | such that the following is true:                                             |
+\par |                                                                              |
+\par | / - is the parent directory of the directory containing the DLL              |
+\par | /bin - the direcotry containing the DLL                                      |
+\par | /usr - the parent directory of the directory containing the DLL              |
+\par | /usr/bin - the directory containing the DLL                                  |
+\par | /tmp - the value of the TMP environment variable                             |
+\par | /c - C:\\                                                                     |
+\par | /d - D:\\                                                                     |
+\par | . . .                                                                        |
+\par | /z - Z:\\                                                                     |
+\par |                                                                              |
+\par + ---------------------------------------------------------------------------- +
+\par \plain\f2\fs20 
+\par \plain\f2\fs20\b\i TABLE 2 - /etc/fstab layout:\plain\f2\fs20 
+\par \plain\f4\fs16 + ---------------------------------------------------------------------------- +
+\par | The record format for the /etc/fstab is current a simple one.  I need to     |
+\par | work on the syntax parsing more so that things like embedded spaces work.    |
+\par | If you wish to map a path with spaces you must use the DOS style name.       |
+\par |                                                                              |
+\par | The record format is as follows:                                             |
+\par | d:/some/foo/path /bar                                                        |
+\par |                                                                              |
+\par | As you can see this is simply the Win32 path mapped to a mount point.  It is |
+\par | unix practice to have the /bar created as an empty directory before it can   |
+\par | mount the mount point.  Msys doesn't force this but it will be to advantage  |
+\par | if you do.  Some programs, e.g. find, and some operations, e.g. tab          |
+\par | operate better if the physical directory is present for those mount points.  |
+\par |                                                                              |
+\par | If you create a /etc/fstab record that maps to an automatic mount point Msys |
+\par | will remove it when it adds the automatic point.  This means that at some    |
+\par | small moment in time your mount point actually exists.  However it doesn't   |
+\par | exist long enough to be of any use to you.                                   |
+\par |                                                                              |
+\par + ---------------------------------------------------------------------------- +
+\par \plain\f2\fs20 
+\par Msys will convert POSIX paths that are used as arguments to Win32 paths.  This is done for any executable not in /bin and /usr/bin.  If the executable is dependant on the msys-1.0.dll then it must be located in the /bin or /usr/bin directory.  This means that you now have a POSIX environment that will automagically do the right thing w.r.t. changing the paths passed as arguments.  Arguments beginning with a // are considered to be Win32 style switches and will be passed to the program with // converted to / to allow for the command.com/cmd.exe (Win32) style switch.  An example of a Win32 style switch is `write //p /mydocs/msys-rocks.'  In this example write (a.k.a. WordPad) exists in the c:\\winnt\\system32 path on my system.  The //p becomes /p which tells write to print the document.  And mydocs/msys-rocks converts to c:\\msys\\1.0\\mydocs\\msys-rocks so that write can find it.  
+\par \plain\f2\fs20\b\i 
+\par STARTING Msys:
+\par \plain\f2\fs20 Starting Msys should just be a matter of clicking on the MSYS icon on your desktop or Start menu.  If you have the File Manager window open, you may now click on it and have it start also.  Doing these presents you with a console window within which you may enter commands.
+\par 
+\par \plain\f2\fs20\b\i Working with MinGW:
+\par \plain\f2\fs20 If you already have MinGW installed then simply bind the path to MinGW to the /mingw mount point in the /etc/fstab as described above.  If you don't have MinGW installed already then simply unarchive the MinGW tar.gz file in the /mingw directory.  \plain\f2\fs20\b\ul DO NOT\plain\f2\fs20  unarchive the MinGW tar.gz file in the / directory.
+\par \plain\f2\fs20\b\i 
+\par Working with other products:
+\par \plain\f2\fs20 I find that the easiest thing for working with other products, such as Microsoft Office, is to create a script pointing to the executable.  An example of a script for Microsoft Word on my system looks like the example in Table 3.  I have this stored in my /usr/local/bin directory with a filename of word.  Now all I need to do to edit a word document is `word /mydoc/proposal.doc' and voila up pops a Microsoft Word window with my document in it.
+\par 
+\par \plain\f2\fs20\b\i Table 3 - Script to execute MS Word from the command line:
+\par \plain\f4\fs16 + ---------------------------------------------------------------------------- +
+\par + #!/bin/sh                                                                    +
+\par + start '/c/Program\\ Files/Microsoft\\ Office/Office/WINWORD' $@                +
+\par + ---------------------------------------------------------------------------- +
+\par \plain\f2\fs20\b\i 
+\par Other documentation:\plain\f2\fs20 
+\par Be sure to read the MSYS_ series.  I have tried to document how I'm changing the cygwin code to allow us to use it with MSYS.  These can be found in the /doc/msys directory, or you can find them in the /usr/doc/msys directory.
+\par 
+\par \plain\f2\fs20\b\i Using binaries with different runtimes:\plain\f2\fs20 
+\par You can't use Cygwin binaries at all and if you try you'll most likely just cause the processes to "hang".  You can use Win32 native binaries but you should put them into the /mingw/bin or your /usr/local/bin directory tree.  If you wish to replace an MSYS binary with a native win32 version then delete or rename the /bin version.
+\par 
+\par \plain\f2\fs20\b\i Effective use of the clipboard:
+\par \plain\f2\fs20 You may use the clipboard with MSYS.  When using rxvt (the default installation) as the terminal, just selecting with data with click and drag of the mouse, copies the data to the clipboard.  To paste the clipboard data in the rxvt terminal you can Shift and Left Click or press both mouse buttons if 3 button mouse emulation is on or press the mouse wheel.  To copy the highlighted data to your favorite windows email client the you use the paste options for that program, typically Ctrl-V.  You can also use interesting bash shell commands such as `cat /dev/clipboard > /tmp/foo' or `less -f /dev/clipboard'.  Data entered into the clipboard by non-MSYS programs can also be used by MSYS programs and vice versa.\plain\f2\fs20\b\i 
+\par 
+\par Bug Reports:\plain\f2\fs20 
+\par Send your bug reports to MinGW-msys@lists.sf.net.
+\par 
+\par \plain\f2\fs20\b\i User Posts:\plain\f2\fs20 
+\par MinGW-msys@lists.sf.net
+\par 
+\par \plain\f2\fs20\b\i Disclaimer:
+\par \plain\f2\fs20 Products mentioned in this and other documents are solely owned by their trademark owners.  We claim no rights to those trademarks and any mention of those products are for example only.  Your uses of those products are your responsibility and no endorsement of any mentioned product is being given.
+\par 
+\par \plain\f2\fs20\b\i Change History:
+\par \plain\f2\fs20 Version 1.0.3 added checks for paths following an `=' and `-X' where X
+\par is a program switch.
+\par 
+\par Version 1.0.4 added symlink resolution, removed the dependancy that the pathmust begin with a / and removed bash.exe since sh.exe is bash.exe anyway.  Also added diff, diff3 and head to the distribution.  An MSYS icon exists in the rxvt binary.
+\par 
+\par Version 1.0.5 is a bug fix release that filters out the conversion of quoted relative paths.  So that -DSOME_CONSTANT=\\"1.0.5\\" can be properly input into gcc.  Also fixed the problem with sh.exe reading /etc/profile with \\r\\n line endings.  Added the binaries true.exe, false.exe, tail.exe and fold.exe.  Updated the gmake binary to the Cygwin version including the --win32 switch.  I am suggesting to use this version of make and have copied /bin/gmake.exe to /bin/make (yes without the .exe).  If you wish to go back to the "native" version of make typing make.exe will get you there.
+\par 
+\par Version 1.0.6 through current: See the appropriate MSYS-<version>-changes.rtf document.
+\par }
+ 
