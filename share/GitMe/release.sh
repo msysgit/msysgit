@@ -30,5 +30,6 @@ cp "$SHARE"/config.mak "$SHARE"/setup-msysgit.sh ./ &&
 echo "Creating archive" &&
 cd .. &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&
-cat /mingw/bin/7zSD.sfx "$SHARE"/7z-install.txt "$TMPPACK" > "$TARGET"
-
+cat /mingw/bin/7zSD.sfx "$SHARE"/7z-install.txt "$TMPPACK" > "$TARGET" &&
+echo Success! You\'ll find the new installer at $TARGET
+rm $TMPPACK
