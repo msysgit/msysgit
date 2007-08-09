@@ -18,7 +18,6 @@ echo Fetching the latest MSys environment
 echo -------------------------------------------------------
 MSYSGIT_REPO_GIT=repo.or.cz/msysgit.git
 MSYSGIT_REPO_HTTP=repo.or.cz/r/msysgit.git
-MSYSGIT_PROT=git
 
 git init &&
 git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
@@ -28,8 +27,7 @@ git config remote.mob.url \
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 (git fetch ||
-        (MSYSGIT_PROT=http &&
-         git config remote.origin.url \
+        (git config remote.origin.url \
                 http://$MSYSGIT_REPO_HTTP &&
          git fetch))
 
@@ -56,14 +54,14 @@ echo
 echo -------------------------------------------------------
 echo Fetching the latest MinGW Git sources
 echo -------------------------------------------------------
-MINGW_REPO=git://repo.or.cz/git/mingw/4msysgit.git
-if [ "$MSYSGIT_PROT" == "http" ]; then
-    MINGW_REPO=http://repo.or.cz/r/git/mingw/4msysgit.git
-fi
+MINGW_REPO_GIT=git://repo.or.cz/git/mingw/4msysgit.git
+MINGW_REPO_HTTP=http://repo.or.cz/r/git/mingw/4msysgit.git
 
 git-submodule init &&
-git config submodule.git.url $MINGW_REPO &&
-git-submodule update ||
+(git-submodule update ||
+    (git config submodule.git.url $MINGW_REPO_HTTP &&
+    rm -rf $INSTALL_PATH/git &&  # Need to clean up after the previous failed submodule update
+    git-submodule update)) ||
     error Couldn\'t update submodules!
 
 
