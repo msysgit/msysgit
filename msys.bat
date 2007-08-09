@@ -63,7 +63,7 @@ start rxvt -backspacekey  -sl 2500 -fg %FGCOLOR% -bg %BGCOLOR% -sr -fn Courier-
 exit
 
 :startsh
-sh --login -i
+start sh --login -i
 
 :EOF
 
