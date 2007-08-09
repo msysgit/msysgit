@@ -1,7 +1,7 @@
 # Copyright (C) 2001, 2002  Earnie Boyd  <earnie@users.sf.net>
 # This file is part of the Minimal SYStem.
 #   http://www.mingw.org/msys.shtml
-# 
+#
 #         File:	profile
 #  Description:	Shell environment initialization script
 # Last Revised:	2002.05.04
@@ -44,6 +44,12 @@ if [ "x$HISTFILE" == "x/.bash_history" ]; then
   HISTFILE=$HOME/.bash_history
 fi
 
+if [ -e ~/.inputrc ]; then
+    export INPUTRC=~/.inputrc
+else
+    export INPUTRC=/etc/inputrc
+fi
+
 export HOME LOGNAME MSYSTEM HISTFILE
 
 for i in /etc/profile.d/*.sh ; do
@@ -59,12 +65,15 @@ $ '
 
 alias clear=clsb
 
-cd "$HOME"
-
-test -e .bash_profile && . .bash_profile
+if [ -e ~/.bashrc ]; then
+    . ~/.bashrc
+elif [ -e ~/.bash_profile ]; then
+    . ~/.bash_profile
+elif [ -e /etc/bash_profile ]; then
+    . /etc/bash_profile
+fi
 
 # Git specific stuff
-
 test -e /bin/git.exe || {
 	echo "Setting up git"
 
