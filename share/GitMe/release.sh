@@ -29,6 +29,14 @@ cp "$SHARE"/gitconfig etc/ &&
 cp "$SHARE"/config.mak "$SHARE"/setup-msysgit.sh ./ &&
 echo "Creating archive" &&
 cd .. &&
+for file in "$TMPDIR/bin/"*; do
+    fixfile=`echo ${file} | sed -e "s,.*exe$,,"  -e "s,.*dll$,,"`
+    if [ -n "$fixfile" ]; then
+        echo Fixing interpreter line on file ${fixfile}
+        sed -e "s,^#!.*/bin/sh$,#!/bin/sh," ${fixfile} > ${fixfile}.tmp
+        mv ${fixfile}.tmp ${fixfile}
+    fi
+done &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&
 cat /mingw/bin/7zSD.sfx "$SHARE"/7z-install.txt "$TMPPACK" > "$TARGET" &&
 echo Success! You\'ll find the new installer at $TARGET
