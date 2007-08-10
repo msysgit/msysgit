@@ -63,10 +63,3 @@ git-submodule init &&
     rm -rf $INSTALL_PATH/git &&  # Need to clean up after the previous failed submodule update
     git-submodule update)) ||
     error Couldn\'t update submodules!
-
-
-echo
-echo -------------------------------------------------------
-echo Install config.mak file in /git
-echo -------------------------------------------------------
-cp $INSTALL_PATH/installer-tmp/config.mak $INSTALL_PATH/git/config.mak

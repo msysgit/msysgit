@@ -26,7 +26,7 @@ cat "$SHARE"/fileList-mingw.txt |
 strip bin/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
-cp "$SHARE"/config.mak "$SHARE"/setup-msysgit.sh ./ &&
+cp "$SHARE"/setup-msysgit.sh ./ &&
 echo "Creating archive" &&
 cd .. &&
 for file in "$TMPDIR/bin/"*; do
