@@ -54,6 +54,8 @@ extern "C" {
 #define NOTIFYICON_VERSION 3
 #define NIM_SETFOCUS	3
 #define NIM_SETVERSION	4
+#define NIN_POPUPOPEN WM_USER+6
+#define NIN_POPUPCLOSE WM_USER+7
 #endif
 #define NIF_MESSAGE	0x00000001
 #define NIF_ICON	0x00000002
@@ -151,54 +153,60 @@ typedef struct _AppBarData {
 DECLARE_HANDLE(HDROP);
 
 typedef struct _NOTIFYICONDATAA {
-	DWORD cbSize;
-	HWND hWnd;
-	UINT uID;
-	UINT uFlags;
-	UINT uCallbackMessage;
-	HICON hIcon;
+  DWORD cbSize;
+  HWND hWnd;
+  UINT uID;
+  UINT uFlags;
+  UINT uCallbackMessage;
+  HICON hIcon;
 #if _WIN32_IE >= 0x0500
-	CHAR szTip[128];
-	DWORD dwState;
-	DWORD dwStateMask;
-	CHAR szInfo[256];
-	_ANONYMOUS_UNION union {
-		UINT uTimeout;
-		UINT uVersion;
-	} DUMMYUNIONNAME;
-	CHAR szInfoTitle[64];
-	DWORD dwInfoFlags;
+  CHAR szTip[128];
+  DWORD dwState;
+  DWORD dwStateMask;
+  CHAR szInfo[256];
+  _ANONYMOUS_UNION union {
+    UINT uTimeout;
+    UINT uVersion;
+  } DUMMYUNIONNAME;
+  CHAR szInfoTitle[64];
+  DWORD dwInfoFlags;
 #else
-	CHAR szTip[64];
+  CHAR szTip[64];
 #endif
 #if _WIN32_IE >= 0x600
-	GUID guidItem;
+  GUID guidItem;
+#endif
+#if _WIN32_WINNT >= 0x600
+  HICON hBalloonIcon;
 #endif
 } NOTIFYICONDATAA,*PNOTIFYICONDATAA;
 
 typedef struct _NOTIFYICONDATAW {
-	DWORD cbSize;
-	HWND hWnd;
-	UINT uID;
-	UINT uFlags;
-	UINT uCallbackMessage;
-	HICON hIcon;
+  DWORD cbSize;
+  HWND hWnd;
+  UINT uID;
+  UINT uFlags;
+  UINT uCallbackMessage;
+  HICON hIcon;
 #if _WIN32_IE >= 0x0500
-	WCHAR szTip[128];
-	DWORD dwState;
-	DWORD dwStateMask;
-	WCHAR szInfo[256];
-	_ANONYMOUS_UNION union {
-		UINT uTimeout;
-		UINT uVersion;
-	} DUMMYUNIONNAME;
-	WCHAR szInfoTitle[64];
-	DWORD dwInfoFlags;
+  WCHAR szTip[128];
+  DWORD dwState;
+  DWORD dwStateMask;
+  WCHAR szInfo[256];
+  _ANONYMOUS_UNION union {
+    UINT uTimeout;
+    UINT uVersion;
+  } DUMMYUNIONNAME;
+  WCHAR szInfoTitle[64];
+  DWORD dwInfoFlags;
 #else
-	WCHAR szTip[64];
+  WCHAR szTip[64];
 #endif
 #if _WIN32_IE >= 0x600
-	GUID guidItem;
+  GUID guidItem;
+#endif
+#if _WIN32_WINNT >= 0x600
+  HICON hBalloonIcon;
 #endif
 } NOTIFYICONDATAW,*PNOTIFYICONDATAW;
 

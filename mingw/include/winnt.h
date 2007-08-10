@@ -377,6 +377,7 @@ typedef DWORD FLONG;
 #define FILE_SUPPORTS_OBJECT_IDS        0x00010000
 #define FILE_SUPPORTS_ENCRYPTION        0x00020000
 #define FILE_NAMED_STREAMS              0x00040000
+#define FILE_READ_ONLY_VOLUME           0x00080000
 
 #define IO_COMPLETION_QUERY_STATE       0x0001
 #define IO_COMPLETION_MODIFY_STATE      0x0002
@@ -503,6 +504,7 @@ typedef DWORD FLONG;
 #define SE_IMPERSONATE_NAME TEXT("SeImpersonatePrivilege")
 #define SE_ENABLE_DELEGATION_NAME TEXT("SeEnableDelegationPrivilege")
 #define SE_SYNC_AGENT_NAME TEXT("SeSyncAgentPrivilege")
+#define SE_TRUSTED_CREDMAN_ACCESS_NAME	TEXT("SeTrustedCredManAccessPrivilege")
 #define SE_RELABEL_NAME TEXT("SeRelabelPrivilege")
 #define SE_INCREASE_WORKING_SET_NAME TEXT("SeIncreaseWorkingSetPrivilege")
 #define SE_TIME_ZONE_NAME TEXT("SeTimeZonePrivilege")

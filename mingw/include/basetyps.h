@@ -124,7 +124,10 @@ typedef struct _GUID
 #define UUID_DEFINED
 typedef GUID UUID;
 #endif /* UUID_DEFINED */
+#ifndef __IID_DEFINED__
+#define __IID_DEFINED__
 typedef GUID IID;
+#endif /* __IID_DEFINED__ */
 typedef GUID CLSID;
 typedef CLSID *LPCLSID;
 typedef IID *LPIID;

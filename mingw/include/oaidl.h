@@ -1,7 +1,12 @@
 #ifndef _OAIDL_H
 #define _OAIDL_H
-#if __GNUC__ >=3
+#if __GNUC__ >= 3
 #pragma GCC system_header
+#endif
+
+#ifndef COM_NO_WINDOWS_H
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifdef __cplusplus
@@ -213,6 +218,7 @@ typedef struct tagVARIANT {
 		unsigned char *pbVal;
 		short *piVal;
 		long *plVal;
+		LONGLONG  * pllVal;
 		float *pfltVal;
 		double *pdblVal;
 		VARIANT_BOOL *pboolVal;
@@ -236,6 +242,7 @@ typedef struct tagVARIANT {
 		CHAR  *pcVal;
 		USHORT  *puiVal;
 		ULONG  *pulVal;
+		ULONGLONG * pullVal;
 		INT  *pintVal;
 		UINT  *puintVal;
 		_ANONYMOUS_STRUCT struct {

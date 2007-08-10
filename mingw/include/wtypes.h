@@ -14,12 +14,6 @@ extern "C" {
 #define IID_NULL GUID_NULL
 #define CLSID_NULL GUID_NULL
 #define CBPCLIPDATA(d) ((d).cbSize-sizeof((d).ulClipFmt))
-#define DECIMAL_NEG ((BYTE)0x80)
-#ifdef NONAMELESSUNION
-#define DECIMAL_SETZERO(d) {(d).DUMMYUNIONNAME2.Lo64=(d).Hi32=(d).DUMMYUNIONNAME.signscale=0;}
-#else
-#define DECIMAL_SETZERO(d) {(d).Lo64=(d).Hi32=(d).signscale=0;}
-#endif
 #define ROTFLAGS_REGISTRATIONKEEPSALIVE	0x01
 #define ROTFLAGS_ALLOWANYCLIENT		0x02
 
@@ -163,6 +157,13 @@ typedef struct tagDEC {
 		ULONGLONG Lo64;
 	} DUMMYUNIONNAME2;
 } DECIMAL;
+typedef DECIMAL *LPDECIMAL;
+#define DECIMAL_NEG ((BYTE)0x80)
+#ifdef NONAMELESSUNION
+#define DECIMAL_SETZERO(d) {(d).DUMMYUNIONNAME2.Lo64=(d).Hi32=(d).DUMMYUNIONNAME.signscale=0;}
+#else
+#define DECIMAL_SETZERO(d) {(d).Lo64=(d).Hi32=(d).signscale=0;}
+#endif
 typedef void *HMETAFILEPICT;
 #ifdef __cplusplus
 }
