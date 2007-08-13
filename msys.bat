@@ -12,6 +12,11 @@ rem ember to set the "Start in:" field of the shortcut.
 rem A value similar to C:\msys\1.0\bin is what the "Start in:" field needs
 rem to represent.
 
+rem this should let run MSYS shell on x64
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
+  SET COMSPEC=%WINDIR%\SysWOW64\cmd.exe
+)
+
 rem ember value of GOTO: is used to know recursion has happened.
 if "%1" == "GOTO:" goto %2
 
@@ -76,11 +81,11 @@ if "%MSYSTEM%" == "MSYS" set FGCOLOR=%MSYSFGCOLOR%
 if "%MSYSTEM%" == "MINGW32" set BGCOLOR=%MINGW32BGCOLOR%
 if "%MSYSTEM%" == "MINGW32" set FGCOLOR=%MINGW32FGCOLOR%
 
-start %BIN%rxvt -backspacekey  -sl 2500 -fg %FGCOLOR% -bg %BGCOLOR% -sr -fn Courier-12 -tn msys -geometry 80x25 -e /bin/bash --login -i
+start %COMSPEC% /c %BIN%rxvt -backspacekey  -sl 2500 -fg %FGCOLOR% -bg %BGCOLOR% -sr -fn Courier-12 -tn msys -geometry 80x25 -e /bin/bash --login -i
 exit
 
 :startbash
-call %BIN%bash --login -i
+call %COMSPEC% /c %BIN%bash --login -i
 
 :EOF
 
