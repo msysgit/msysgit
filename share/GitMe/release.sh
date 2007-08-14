@@ -39,6 +39,6 @@ for file in "$TMPDIR/bin/"*; do
     fi
 done &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&
-cat /mingw/bin/7zSD.sfx "$SHARE"/7z-install.txt "$TMPPACK" > "$TARGET" &&
+cat /share/7-Zip/7zSD.sfx "$SHARE"/7z-install.txt "$TMPPACK" > "$TARGET" &&
 echo Success! You\'ll find the new installer at $TARGET
 rm $TMPPACK

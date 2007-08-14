@@ -28,7 +28,7 @@ find * -type f | sed "s|^\./||" > "$LIST7" &&
 7z a $OPTS7 $TARGET7 @"$LIST7" ||
 exit
 
-(cat /mingw/bin/7zSD.sfx &&
+(cat /share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
  echo 'Progress="yes"' &&
  echo 'Directory="%%T\bin"' &&
