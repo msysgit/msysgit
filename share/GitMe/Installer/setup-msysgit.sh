@@ -55,7 +55,7 @@ git config remote.mob.push master:mob &&
 #git-clone -n $MSYSGIT_REPO /msysgit-tmp ||
 #mv /msysgit-tmp/.git $INSTALL_PATH/.git
 #rm -rf /msysgit-tmp ||
-#    error Couldn\'t clone $MSYSGIT_REPO! 
+#    error Couldn\'t clone $MSYSGIT_REPO!
 
 
 echo
