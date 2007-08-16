@@ -46,6 +46,9 @@ git config remote.mob.url \
         ssh://mob@$MSYSGIT_REPO_GIT &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
+
+cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe
+
 (git fetch ||
         (git config remote.origin.url \
                 http://$MSYSGIT_REPO_HTTP &&
