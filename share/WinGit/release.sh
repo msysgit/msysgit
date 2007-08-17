@@ -17,6 +17,9 @@ cd "$TMPDIR" &&
 echo "Copying files" &&
 (cd / && tar cf - bin/ lib/perl5/) |
 tar xvf - &&
+gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
+md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > fileList-builtins.txt &&
+rm $(cat fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&

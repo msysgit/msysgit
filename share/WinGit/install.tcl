@@ -39,7 +39,8 @@ proc installGit {} {
 	# copy files
 	set list [open "$currentDirectory/fileList.txt" r]
 	while {[gets $list line] >= 0} {
-		if {$line == "fileList.txt" || $line == "install.tcl"} {
+		if {$line == "fileList.txt" || $line == "install.tcl" ||
+				$line == "fileList-builtins.txt"} {
 			continue
 		}
 		.listbox.list insert end "copying file: $line\n"
@@ -55,7 +56,16 @@ proc installGit {} {
 	}
 	close $list
 
-	destroy .listbox
+	set list [open "$currentDirectory/fileList-builtins.txt" r]
+	while {[gets $list line] >= 0} {
+		.listbox.list nisert end "copying builtin: $line\n"
+		.listbox.list yview moveto 1
+		update
+		file copy "$currentDirectory/bin/git.exe $targetDirectory/$line"
+	}
+	close $list
+
+	#destroy .listbox
 
 	tk_dialog .info "WinGit installed" \
 			"WinGit was successfully installed" info 0 OK
