@@ -9,9 +9,6 @@ echo.
 set INSTALL_ROOT=%cd%
 set INSTALL_DIR=%~dp0
 
-%INSTALL_DIR%\bin\sh.exe /bootstrap.sh
-
-if NOT EXIST %INSTALL_DIR%\setup-msysgit.sh call :error Unable to fetch installation files
 %INSTALL_DIR%\bin\sh.exe /setup-msysgit.sh
 if ERRORLEVEL 1 call :error Setting up MSys failed
 

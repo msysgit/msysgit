@@ -39,6 +39,12 @@ echo -------------------------------------------------------
 MSYSGIT_REPO_GIT=repo.or.cz/msysgit.git
 MSYSGIT_REPO_HTTP=repo.or.cz/r/msysgit.git
 
+# Multiply git.exe
+
+cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-init.exe
+cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe
+cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-update-ref.exe
+
 git init &&
 git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
@@ -46,8 +52,6 @@ git config remote.mob.url \
         ssh://mob@$MSYSGIT_REPO_GIT &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
-
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe
 
 (git fetch ||
         (git config remote.origin.url \
