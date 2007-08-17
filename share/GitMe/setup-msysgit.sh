@@ -48,22 +48,15 @@ cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-u
 git init &&
 git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git config remote.mob.url \
-        ssh://mob@$MSYSGIT_REPO_GIT &&
+git config remote.mob.url ssh://mob@$MSYSGIT_REPO_GIT &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
-(git fetch ||
-        (git config remote.origin.url \
-                http://$MSYSGIT_REPO_HTTP &&
-         git fetch))
-
-# This following works, but would not fall back on curl if git:// protocol couldn't be used
-#git-clone -n $MSYSGIT_REPO /msysgit-tmp ||
-#mv /msysgit-tmp/.git $INSTALL_PATH/.git
-#rm -rf /msysgit-tmp ||
-#    error Couldn\'t clone $MSYSGIT_REPO!
-
+USE_HTTP=
+git fetch ||
+	USE_HTTP=t &&
+        git config remote.origin.url http://$MSYSGIT_REPO_HTTP &&
+        git fetch
 
 echo
 echo -------------------------------------------------------
@@ -81,12 +74,36 @@ echo
 echo -------------------------------------------------------
 echo Fetching the latest MinGW Git sources
 echo -------------------------------------------------------
-MINGW_REPO_GIT=git://repo.or.cz/git/mingw/4msysgit.git
-MINGW_REPO_HTTP=http://repo.or.cz/r/git/mingw/4msysgit.git
 
-git-submodule init &&
-(git-submodule update ||
-    (git config submodule.git.url $MINGW_REPO_HTTP &&
-    rm -rf $INSTALL_PATH/git &&  # Need to clean up after the previous failed submodule update
-    git-submodule update)) ||
-    error Couldn\'t update submodules!
+case "$USE_HTTP" in
+t)
+	GIT_REPO_URL=http://repo.or.cz/r/git.git/
+	MINGW_REPO_URL=http://repo.or.cz/r/git/mingw.git/
+	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
+;;
+'')
+	GIT_REPO_URL=git://repo.or.cz/git.git
+	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
+	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
+	# WORKAROUND current repo.or.cz breakage
+	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
+;;
+esac
+
+git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
+mkdir git &&
+cd git &&
+git init &&
+git config remote.junio.url $GIT_REPO_URL &&
+git config remote.junio.fetch '+refs/heads/*:refs/remotes/junio/*' &&
+git fetch junio &&
+git config remote.mingw.url $MINGW_REPO_URL &&
+git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
+git fetch mingw &&
+git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git fetch origin &&
+git read-tree -m -u $(cd .. && git ls-tree HEAD git |
+	sed -n "s/^160000 commit \(.*\)	git$/\1/p") ||
+error Couldn\'t update submodules!
+
