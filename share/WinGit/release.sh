@@ -20,6 +20,7 @@ tar xvf - &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&
+strip bin/{[a-fh-z],g[a-oq-z],gp[a-fh-z]}*.exe &&
 mkdir etc &&
 cp /etc/profile etc/ &&
 cp /share/WinGit/install.tcl ./ &&
