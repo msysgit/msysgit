@@ -2,19 +2,12 @@
 
 case "$1" in
 '')
-	echo "Usage: $0 <version> [<installer-to-update>]"
+	echo "Usage: $0 <version>"
 	exit 1
 esac
 
 VERSION="$1"
-UPDATE="$2"
-ACTION=a
 TARGET="$HOME"/msysGit-$VERSION.exe
-
-test -z "$UPDATE" || {
-	test "$UPDATE" = "$TARGET" || mv "$UPDATE" "$TARGET" || exit
-	ACTION=u
-} &&
 
 case "$(basename "$(cd /; pwd -W)")" in
 msysGit) ;;
@@ -36,4 +29,4 @@ sed "s|^|msysGit/|" > $LIST &&
 # make installer
 OPTS7="-m0=lzma -mx=9 -md=64M -sfx7z.sfx $TARGET" &&
 
-"$PROGRAMFILES"/7-Zip/7z.exe $ACTION $OPTS7 @$LIST
+"$PROGRAMFILES"/7-Zip/7z.exe a $OPTS7 @$LIST
