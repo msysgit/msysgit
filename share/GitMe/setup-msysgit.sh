@@ -47,7 +47,9 @@ cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-u
 
 git init &&
 git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
-git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git config remote.origin.fetch +refs/heads/master:refs/remotes/origin/master &&
+git config branch.master.remote origin &&
+git config branch.master.merge refs/heads/master &&
 git config remote.mob.url ssh://mob@$MSYSGIT_REPO_GIT &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
@@ -56,7 +58,10 @@ USE_HTTP=
 git fetch ||
 	USE_HTTP=t &&
         git config remote.origin.url http://$MSYSGIT_REPO_HTTP &&
-        git fetch
+        git fetch ||
+	error "Could not get msysgit.git"
+
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
 echo
 echo -------------------------------------------------------
