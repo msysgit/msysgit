@@ -22,7 +22,8 @@ cd "$(dirname "$(cd /; pwd -W)")"
 LIST=list.txt
 
 (cd / &&
- git ls-files | grep -v '^\"\?git/gitweb' &&
+ git ls-files | grep -v "^git$" &&
+ cd git && git ls-files | grep -v '^\"\?gitweb' | sed 's|^|git/|' &&
  echo "git/gitweb") |
 sed "s|^|msysGit/|" > $LIST &&
 
