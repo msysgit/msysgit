@@ -26,7 +26,6 @@ cat "$SHARE"/fileList-mingw.txt |
 strip bin/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
-cp "$SHARE"/bootstrap.cmd ./ &&
 cp "$SHARE"/setup-msysgit.sh ./ &&
 echo "Creating archive" &&
 cd .. &&
