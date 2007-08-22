@@ -1,0 +1,271 @@
+#! /bin/sh
+## --------------------- ##
+## M4sh Initialization.  ##
+## --------------------- ##
+
+# Be Bourne compatible
+if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
+  emulate sh
+  NULLCMD=:
+  # Zsh 3.x and 4.x performs word splitting on ${1+"$@"}, which
+  # is contrary to our usage.  Disable this feature.
+  alias -g '${1+"$@"}'='"$@"'
+elif test -n "${BASH_VERSION+set}" && (set -o posix) >/dev/null 2>&1; then
+  set -o posix
+fi
+
+# Support unset when possible.
+if (FOO=FOO; unset FOO) >/dev/null 2>&1; then
+  as_unset=unset
+else
+  as_unset=false
+fi
+
+
+# Work around bugs in pre-3.0 UWIN ksh.
+$as_unset ENV MAIL MAILPATH
+PS1='$ '
+PS2='> '
+PS4='+ '
+
+# NLS nuisances.
+for as_var in \
+  LANG LANGUAGE LC_ADDRESS LC_ALL LC_COLLATE LC_CTYPE LC_IDENTIFICATION \
+  LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER \
+  LC_TELEPHONE LC_TIME
+do
+  if (set +x; test -n "`(eval $as_var=C; export $as_var) 2>&1`"); then
+    eval $as_var=C; export $as_var
+  else
+    $as_unset $as_var
+  fi
+done
+
+# Required to use basename.
+if expr a : '\(a\)' >/dev/null 2>&1; then
+  as_expr=expr
+else
+  as_expr=false
+fi
+
+if (basename /) >/dev/null 2>&1 && test "X`basename / 2>&1`" = "X/"; then
+  as_basename=basename
+else
+  as_basename=false
+fi
+
+
+# Name of the executable.
+as_me=`$as_basename "$0" ||
+$as_expr X/"$0" : '.*/\([^/][^/]*\)/*$' \| \
+	 X"$0" : 'X\(//\)$' \| \
+	 X"$0" : 'X\(/\)$' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X/"$0" |
+    sed '/^.*\/\([^/][^/]*\)\/*$/{ s//\1/; q; }
+  	  /^X\/\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\/\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+
+
+# autoconf -- create `configure' using m4 macros
+# Copyright (C) 1992, 1993, 1994, 1996, 1999, 2000, 2001, 2002
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+usage="\
+Usage: $0 [OPTION] ... [TEMPLATE-FILE]
+
+Generate a configuration script from a TEMPLATE-FILE if given, or
+\`configure.ac' if present, or else \`configure.in'.  Output is sent
+to the standard output if TEMPLATE-FILE is given, else into
+\`configure'.
+
+Operation modes:
+  -h, --help                print this help, then exit
+  -V, --version             print version number, then exit
+  -v, --verbose             verbosely report processing
+  -d, --debug               don't remove temporary files
+  -f, --force               consider all files obsolete
+  -o, --output=FILE         save output in FILE (stdout is the default)
+  -W, --warnings=CATEGORY   report the warnings falling in CATEGORY [syntax]
+
+Warning categories include:
+  \`cross'         cross compilation issues
+  \`obsolete'      obsolete constructs
+  \`syntax'        dubious syntactic constructs
+  \`all'           all the warnings
+  \`no-CATEGORY'   turn off the warnings on CATEGORY
+  \`none'          turn off all the warnings
+  \`error'         warnings are error
+
+The environment variable \`WARNINGS' is honored.
+
+Library directories:
+  -B, --prepend-include=DIR  prepend directory DIR to search path
+  -I, --include=DIR          append directory DIR to search path
+
+Tracing:
+  -t, --trace=MACRO     report the list of calls to MACRO
+  -i, --initialization  also trace Autoconf's initialization process
+
+In tracing mode, no configuration script is created.
+
+Report bugs to <bug-autoconf@gnu.org>."
+
+version="\
+autoconf (GNU Autoconf) 2.56
+Written by David J. MacKenzie and Akim Demaille.
+
+Copyright 2002 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+
+me=`$as_basename $0 ||
+$as_expr X/$0 : '.*/\([^/][^/]*\)/*$' \| \
+	 X$0 : 'X\(//\)$' \| \
+	 X$0 : 'X\(/\)$' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X/$0 |
+    sed '/^.*\/\([^/][^/]*\)\/*$/{ s//\1/; q; }
+  	  /^X\/\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\/\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+
+help="\
+Try \`$me --help' for more information."
+
+exit_missing_arg="\
+echo \"$me: option \\\`\$1' requires an argument\" >&2
+echo \"\$help\" >&2
+exit 1"
+
+# Variables.
+: ${AUTOM4TE='/usr/bin/autom4te'}
+dir=`(dirname $0) 2>/dev/null ||
+$as_expr X$0 : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+         X$0 : 'X\(//\)[^/]' \| \
+         X$0 : 'X\(//\)$' \| \
+         X$0 : 'X\(/\)' \| \
+         .     : '\(.\)' 2>/dev/null ||
+echo X$0 |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+outfile=
+verbose=:
+
+# Parse command line.
+while test $# -gt 0 ; do
+  option=`expr "x$1" : 'x\(--[^=]*\)' \| \
+               "x$1" : 'x\(-.\)'`
+  optarg=`expr "x$1" : 'x--[^=]*=\(.*\)' \| \
+               "x$1" : 'x-.\(.*\)'`
+  case $1 in
+    --version | -V )
+       echo "$version" ; exit 0 ;;
+    --help | -h )
+       echo "$usage"; exit 0 ;;
+
+    --verbose | -v )
+       verbose=echo
+       AUTOM4TE="$AUTOM4TE $1"; shift ;;
+
+    # Arguments passed as is to autom4te.
+    --debug      | -d   | \
+    --force      | -f   | \
+    --include=*  | -I?* | \
+    --prepend-include=* | -B?* | \
+    --warnings=* | -W?* )
+       AUTOM4TE="$AUTOM4TE $1"; shift ;;
+
+    # Options with separated arg passed as is to autom4te.
+    --include | -I | \
+    --prepend-include | -B | \
+    --warnings | -W )
+       test $# = 1 && eval "$exit_missing_arg"
+       AUTOM4TE="$AUTOM4TE $option $2"
+       shift 2 ;;
+
+    --trace=* | -t?* )
+       traces="$traces --trace='"`echo "$optarg" | sed "s/'/'\\\\\\\\''/g"`"'"
+       shift ;;
+    --trace | -t )
+       test $# = 1 && eval "$exit_missing_arg"
+       shift
+       traces="$traces --trace='"`echo "$1" | sed "s/'/'\\\\\\\\''/g"`"'"
+       shift ;;
+    --initialization | -i )
+       AUTOM4TE="$AUTOM4TE --melt"
+       shift;;
+
+    --output=* | -o?* )
+       outfile=$optarg
+       shift ;;
+    --output | -o )
+       test $# = 1 && eval "$exit_missing_arg"
+       shift
+       outfile=$1
+       shift ;;
+
+    -- )     # Stop option processing
+       shift; break ;;
+    - )	# Use stdin as input.
+       break ;;
+    -* )
+       exec >&2
+       echo "$me: invalid option $1"
+       echo "$help"
+       exit 1 ;;
+    * )
+       break ;;
+  esac
+done
+
+# Find the input file.
+case $# in
+  0)
+    if test -f configure.ac; then
+      if test -f configure.in; then
+        echo "$me: warning: both \`configure.ac' and \`configure.in' are present." >&2
+        echo "$me: warning: proceeding with \`configure.ac'." >&2
+      fi
+      infile=configure.ac
+    elif test -f configure.in; then
+      infile=configure.in
+    else
+      echo "$me: no input file" >&2
+      exit 1
+    fi
+    test -z "$traces" && test -z "$outfile" && outfile=configure;;
+  1) # autom4te doesn't like `-'.
+     test "x$1" != "x-" && infile=$1 ;;
+  *) exec >&2
+     echo "$me: invalid number of arguments."
+     echo "$help"
+     (exit 1); exit 1 ;;
+esac
+
+# Unless specified, the output is stdout.
+test -z "$outfile" && outfile=-
+
+# Run autom4te with expansion.
+eval set \$AUTOM4TE --language=autoconf --output=\$outfile "$traces" \$infile
+$verbose "$me: running $*" >&2
+exec "$@"
