@@ -1,13 +1,14 @@
 #! /bin/perl
 # -*- Perl -*-
-# @configure_input@
+# Generated from autoheader.in; do not edit by hand.
 
 eval 'case $# in 0) exec /bin/perl -S "$0";; *) exec /bin/perl -S "$0" "$@";; esac'
     if 0;
 
 # autoheader -- create `config.h.in' from `configure.ac'
-# Copyright (C) 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001, 2002
-# Free Software Foundation, Inc.
+
+# Copyright (C) 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001, 2002,
+# 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,18 +22,28 @@ eval 'case $# in 0) exec /bin/perl -S "$0";; *) exec /bin/perl -S "$0" "$@";; es
 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
 
 # Written by Roland McGrath.
 # Rewritten in Perl by Akim Demaille.
 
 BEGIN
 {
-  my $perllibdir = $ENV{'autom4te_perllibdir'} || '/usr/share/autoconf';
-  unshift @INC, "$perllibdir";
+  my $datadir = $ENV{'autom4te_perllibdir'} || '/usr/share/autoconf';
+  unshift @INC, "$datadir";
+
+  # Override SHELL.  On DJGPP SHELL may not be set to a shell
+  # that can handle redirection and quote arguments correctly,
+  # e.g.: COMMAND.COM.  For DJGPP always use the shell that configure
+  # has detected.
+  $ENV{'SHELL'} = '/bin/sh' if ($^O eq 'dos');
 }
 
+use Autom4te::ChannelDefs;
+use Autom4te::Channels;
+use Autom4te::Configure_ac;
+use Autom4te::FileUtils;
 use Autom4te::General;
 use Autom4te::XFile;
 use strict;
@@ -46,13 +57,11 @@ local $config_h;
 my $config_h_in;
 my @prepend_include;
 my @include;
-my @warning;
 
 
 # $HELP
 # -----
-$help = <<"END";
-Usage: $0 [OPTION] ... [TEMPLATE-FILE]
+$help = "Usage: $0 [OPTION] ... [TEMPLATE-FILE]
 
 Create a template file of C \`\#define\' statements for \`configure\' to
 use.  To this end, scan TEMPLATE-FILE, or \`configure.ac\' if present,
@@ -65,31 +74,26 @@ or else \`configure.in\'.
   -f, --force              consider all files obsolete
   -W, --warnings=CATEGORY  report the warnings falling in CATEGORY
 
-Warning categories include:
-  \`obsolete\'      obsolete constructs
-  \`all\'           all the warnings
-  \`no-CATEGORY\'   turn off the warnings on CATEGORY
-  \`none\'          turn off all the warnings
-  \`error\'         warnings are error
+" . Autom4te::ChannelDefs::usage () . "
 
 Library directories:
   -B, --prepend-include=DIR  prepend directory DIR to search path
   -I, --include=DIR          append directory DIR to search path
 
 Report bugs to <bug-autoconf\@gnu.org>.
-END
+";
 
 
 # $VERSION
 # --------
-$version = <<"END";
-autoheader (GNU Autoconf) 2.56
-Written by Roland McGrath and Akim Demaille.
+$version = "autoheader (GNU Autoconf) 2.61
+Copyright (C) 2006 Free Software Foundation, Inc.
+This is free software.  You may redistribute copies of it under the terms of
+the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
+There is NO WARRANTY, to the extent permitted by law.
 
-Copyright 2002 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-END
+Written by Roland McGrath and Akim Demaille.
+";
 
 
 ## ---------- ##
@@ -104,15 +108,14 @@ sub parse_args ()
 {
   my $srcdir;
 
-  getopt ('I|include=s' => \@include,
+  parse_WARNINGS;
+  getopt ('I|include=s'         => \@include,
 	  'B|prepend-include=s' => \@prepend_include,
-	  'W|warnings=s' => \@warning);
+	  'W|warnings=s'        => \&parse_warnings);
 
   if (! @ARGV)
     {
-      my $configure_ac = find_configure_ac;
-      error "no input file"
-	unless $configure_ac;
+      my $configure_ac = require_configure_ac;
       push @ARGV, $configure_ac;
     }
 }
@@ -123,6 +126,7 @@ sub parse_args ()
 ## -------------- ##
 
 mktmpdir ('ah');
+switch_warning 'obsolete';
 parse_args;
 
 # Preach.
@@ -140,23 +144,23 @@ if ($config_h_top || $config_h_bot || $acconfig_h)
     is deprecated and discouraged.
 
     Using the third argument of \`AC_DEFINE\' and
-    \`AC_DEFINE_UNQUOTED\' allows to define a template without
+    \`AC_DEFINE_UNQUOTED\' allows one to define a template without
     \`acconfig.h\':
 
-      AC_DEFINE([NEED_MAIN], 1,
-                [Define if a function \`main\' is needed.])
+      AC_DEFINE([NEED_FUNC_MAIN], 1,
+		[Define if a function \`main\' is needed.])
 
     More sophisticated templates can also be produced, see the
     documentation.
 END
     $msg =~ s/^    /WARNING: /gm;
-    print STDERR $msg;
+    msg 'obsolete', $msg;
   }
 
 # Set up autoconf.
-my $autoconf = "$autom4te --language=autoconf ";
-$autoconf .= join (' ', map { "--include=$_" } @include);
-$autoconf .= join (' ', map { "--prepend-include=$_" } @prepend_include);
+my $autoconf = "'$autom4te' --language=autoconf ";
+$autoconf .= join (' ', map { "--include='$_'" } @include);
+$autoconf .= join (' ', map { "--prepend-include='$_'" } @prepend_include);
 $autoconf .= ' --debug' if $debug;
 $autoconf .= ' --force' if $force;
 $autoconf .= ' --verbose' if $verbose;
@@ -166,7 +170,7 @@ $autoconf .= ' --verbose' if $verbose;
 # ----------------------- #
 
 # Source what the traces are trying to tell us.
-verbose "$me: running $autoconf to trace from $ARGV[0]";
+verb "$me: running $autoconf to trace from $ARGV[0]";
 xsystem ("$autoconf"
 	 # If you change this list, update the
 	 # `Autoheader-preselections' section of autom4te.in.
@@ -179,8 +183,11 @@ local (%verbatim, %symbol);
 debug "$me: \`do'ing $tmp/traces.pl:\n" . `sed 's/^/| /' $tmp/traces.pl`;
 do "$tmp/traces.pl";
 warn "couldn't parse $tmp/traces.pl: $@" if $@;
-error "error: AC_CONFIG_HEADERS not found in $ARGV[0]"
-  unless $config_h;
+unless ($config_h)
+  {
+    error "error: AC_CONFIG_HEADERS not found in $ARGV[0]";
+    exit 1;
+  }
 
 # We template only the first CONFIG_HEADER.
 $config_h =~ s/ .*//;
@@ -262,10 +269,10 @@ $out->close;
     }
   foreach (sort keys %symbol)
     {
-      print STDERR "$me: missing template: $_\n";
+      msg 'syntax', "warning: missing template: $_";
       if ($suggest_ac_define)
 	{
-	  print STDERR "Use AC_DEFINE([$_], [], [Description])";
+	  msg 'syntax',  "Use AC_DEFINE([$_], [], [Description])";
 	  $suggest_ac_define = 0;
 	}
 
@@ -274,7 +281,7 @@ $out->close;
     if keys %symbol;
 }
 
-update_file ("$tmp/config.hin", "$config_h_in");
+update_file ("$tmp/config.hin", "$config_h_in", $force);
 
 ### Setup "GNU" style for perl-mode and cperl-mode.
 ## Local Variables:
