@@ -1,5 +1,15 @@
 #!/bin/sh
 
+case "$1" in
+-*)
+	COUNT=$(echo "$1" | sed "s/-//")
+	shift
+;;
+*)
+	COUNT=9999
+;;
+esac
+
 start_test="$1"
 
 cd /git/t
@@ -22,12 +32,14 @@ do
 		cat /tmp/test.out >> /tmp/failed-tests.out
 		echo -e '\033[31mfailed\033[0m'
 	fi
+	COUNT=$(($COUNT-1))
+	test $COUNT -gt 0 || break
 done
 
 test -s /tmp/failed-tests.out &&
 echo "Do you want to see the output?" &&
 read answer &&
-case answer in y*|Y*)
-	less /tmp/tests.out
+case $answer in y*|Y*|j*|J*)
+	less /tmp/failed-tests.out
 esac
 
