@@ -55,10 +55,10 @@ git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
-git fetch ||
+git fetch --keep ||
 	USE_HTTP=t &&
         git config remote.origin.url http://$MSYSGIT_REPO_HTTP &&
-        git fetch ||
+        git fetch --keep ||
 	error "Could not get msysgit.git"
 
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
@@ -107,7 +107,7 @@ git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
 git fetch mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git fetch origin &&
+git fetch --keep origin &&
 git read-tree -m -u $(cd .. && git ls-tree HEAD git |
 	sed -n "s/^160000 commit \(.*\)	git$/\1/p") ||
 error Couldn\'t update submodules!
