@@ -136,7 +136,7 @@ proc installGit {} {
 	# TODO: incorporate git-cheetah
 
 	foreach location $destinations {
-		exec create-shortcut.exe --work-dir $targetDirectory \
+		exec bin/create-shortcut.exe --work-dir $targetDirectory \
 			--icon-file $targetDirectory/git.ico \
 			--arguments "--login -i" \
 			--description "Git for MSys" \

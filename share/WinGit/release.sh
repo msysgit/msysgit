@@ -15,7 +15,8 @@ TMPDIR=/tmp/WinGit
 mkdir "$TMPDIR" &&
 (cd "$(dirname "$0")" &&
  make &&
- cp create-shortcut.exe "$TMPDIR") &&
+ mkdir "$TMPDIR"/bin &&
+ cp create-shortcut.exe "$TMPDIR"/bin) &&
 cp /share/resources/git.ico "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
