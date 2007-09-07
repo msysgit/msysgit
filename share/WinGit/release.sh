@@ -29,7 +29,9 @@ rm $(cat fileList-builtins.txt) &&
 tar xvf - &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
 mkdir etc &&
-cp /etc/profile etc/ &&
+cp /git/contrib/completion/git-completion.bash etc/ &&
+sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
+	< /etc/profile > etc/profile &&
 cp /share/resources/git.ico etc/ &&
 cp /share/WinGit/install.tcl ./ &&
 : > "$LIST7" &&
