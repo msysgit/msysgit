@@ -13,6 +13,10 @@ TMPDIR=/tmp/WinGit
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
 mkdir "$TMPDIR" &&
+(cd "$(dirname "$0")" &&
+ make &&
+ cp create-shortcut.exe "$TMPDIR") &&
+cp /share/resources/git.ico "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
 (cd / && tar cf - bin/ lib/perl5/) |
