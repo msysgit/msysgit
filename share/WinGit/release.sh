@@ -20,7 +20,7 @@ mkdir "$TMPDIR" &&
 cp /share/resources/git.ico "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
-(cd / && tar cf - bin/ lib/perl5/) |
+(cd / && tar cf - bin/{git*,awk,basename.exe,bash.exe,bunzip2,bzip2.exe,cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cpio,cut.exe,cvs.exe,date.exe,diff.exe,du.exe,echo,egrep,env.exe,ex,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,gunzip,gzip.exe,head.exe,id.exe,less.exe,libW11.dll,ln.exe,ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,vim.exe,wc.exe,which,xargs.exe} lib/perl5/) |
 tar xvf - &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > fileList-builtins.txt &&
@@ -28,7 +28,7 @@ rm $(cat fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&
-strip bin/{[a-fh-z],g[a-oq-z],gp[a-fh-z]}*.exe &&
+strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
 mkdir etc &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
