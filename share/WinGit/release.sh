@@ -42,8 +42,17 @@ exit
 (cat /share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
  echo 'Progress="yes"' &&
- echo 'Directory="%%T\bin"' &&
- echo 'RunProgram="wish.exe %%T\install.tcl %%T"' &&
+ echo 'Title="WinGit: MinGW Git + minimal MSys installation"' &&
+ echo 'BeginPrompt="This program installes a complete Git for MSys setup"' &&
+ echo 'CancelPrompt="Do you want to cancel WinGit installation?"' &&
+ echo 'ExtractDialogText="Please, wait..."' &&
+ echo 'ExtractPathText="Where do you want to install WinGit?"' &&
+ echo 'ExtractTitle="Extracting..."' &&
+ echo 'GUIFlags="8+32+64+256+4096"' &&
+ echo 'GUIMode="1"' &&
+ echo 'InstallPath="%PROGRAMFILES%\\Git"' &&
+ echo 'OverwriteMode="2"' &&
+ echo 'RunProgram="\"%%T\\bin\\wish.exe\" \"%%T\install.tcl\" \"%%T\""' &&
  echo ';!@InstallEnd@!7z' &&
  cat $TARGET7) > "$TARGET"
 exit
