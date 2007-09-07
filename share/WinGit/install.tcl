@@ -105,6 +105,9 @@ proc installGit {} {
 			$currentDirectory/bin/sh.exe $location/Git.lnk
 	}
 
+	file delete $currentDirectory/fileList.txt
+	file delete $currentDirectory/fileList-builtins.txt
+
 	tk_dialog .info "WinGit installed" \
 			"WinGit was successfully installed" info 0 OK
 
