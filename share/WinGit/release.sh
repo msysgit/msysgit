@@ -13,6 +13,10 @@ TMPDIR=/tmp/WinGit
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
 mkdir "$TMPDIR" &&
+(cd "$(dirname "$0")" &&
+ make &&
+ mkdir "$TMPDIR"/bin &&
+ cp create-shortcut.exe "$TMPDIR"/bin) &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
 (cd / && tar cf - bin/ lib/perl5/) |
@@ -23,9 +27,10 @@ rm $(cat fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&
-strip bin/{[a-fh-z],g[a-oq-z],gp[a-fh-z]}*.exe &&
+strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
 mkdir etc &&
 cp /etc/profile etc/ &&
+cp /share/resources/git.ico etc/ &&
 cp /share/WinGit/install.tcl ./ &&
 : > "$LIST7" &&
 find * -type f | sed "s|^\./||" > "$LIST7" &&
