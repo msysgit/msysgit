@@ -62,7 +62,7 @@ exit
  echo 'GUIFlags="8+32+64+256+4096"' &&
  echo 'GUIMode="1"' &&
  echo 'InstallPath="%PROGRAMFILES%\\Git"' &&
- echo 'OverwriteMode="2"' &&
+ echo 'OverwriteMode="0"' &&
  echo 'RunProgram="\"%%T\\bin\\wish.exe\" \"%%T\install.tcl\" \"%%T\""' &&
  echo ';!@InstallEnd@!7z' &&
  cat $TARGET7) > "$TARGET"
