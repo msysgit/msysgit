@@ -67,7 +67,7 @@ echo
 echo -------------------------------------------------------
 echo Checking out the master branch
 echo -------------------------------------------------------
-git-checkout -l -f -b master origin/master ||
+git-checkout -l -f -q -b master origin/master ||
     error Couldn\'t checkout the master branch!
 
 
@@ -108,7 +108,7 @@ git fetch mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch --keep origin &&
-git read-tree -m -u $(cd .. && git ls-tree HEAD git |
+git checkout -l -f -q $(cd .. && git ls-tree HEAD git |
 	sed -n "s/^160000 commit \(.*\)	git$/\1/p") ||
 error Couldn\'t update submodules!
 
