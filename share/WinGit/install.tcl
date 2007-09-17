@@ -49,6 +49,14 @@ proc installGit {} {
 	}
 	toplevel .question
 	wm title .question "Start Menu item"
+	# center it
+	set maxsize [wm maxsize .question]
+	set question_width 320
+	set question_height 80
+	set question_x [expr ([lindex $maxsize 0] - $question_width) / 2]
+	set question_y [expr ([lindex $maxsize 1] - $question_height) / 2]
+	wm geometry .question [format "%dx%d+%d+%d" \
+		$question_width $question_height $question_x $question_y]
 	label .question.label -text \
 		"Would you like to add a start menu item?"
 	frame .question.name
