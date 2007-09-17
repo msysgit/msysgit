@@ -101,8 +101,7 @@ proc installGit {} {
 		exec bin/create-shortcut.exe --work-dir $currentDirectory \
 			--icon-file $currentDirectory/etc/git.ico \
 			--arguments "--login -i" \
-			--description "Git for MSys" \
-			$currentDirectory/bin/sh.exe $location/Git.lnk
+			$currentDirectory/bin/sh.exe $location/Git\ Shell.lnk
 	}
 
 	file delete $currentDirectory/fileList.txt
