@@ -1,0 +1,42 @@
+This is a recipe how to recompile perl on msysGit
+
+First, you need to get dmake.
+-----------------------------
+
+Either install the precompiled version from
+
+	http://search.cpan.org/dist/dmake/
+
+and unpack it in /bin/, or build from scratch:
+
+---------------------------------------------------------------------
+cvs -d :pserver:anoncvs@anoncvs.services.openoffice.org:/cvs co dmake
+cd dmake
+git apply /share/msysGit/dmake.patch
+./configure --prefix=/
+make
+cp -R dmake.exe startup/ /bin/
+---------------------------------------------------------------------
+
+(When I tried, make install did not work, because startup/ was installed
+into /share/, and dmake.exe did not find it.)
+
+Second, get & compile the perl sources
+--------------------------------------
+
+Get them from http://ftp.funet.fi/pub/CPAN/src/.  (Tried and tested with
+version 5.8.8.)
+
+Then, do something like
+
+---------------------------------------------------------------------
+cd perl-5.8.8/win32/
+TMP="$(echo "$TMP" | tr '/' '\\')" dmake install \
+	INST_TOP="$(cd /; pwd -W | tr '/' '\\')"
+---------------------------------------------------------------------
+ 
+The ugly tr calls are needed because dmake does not understand "/" path
+delimiters, but wants "\" ones.
+
+If it worked: congratulations.
+

@@ -1,0 +1,48 @@
+This patch contains minimal fixups to compile dmake in msysGit
+
+If you want to build dmake from scratch, you need to get the source first:
+
+cvs -d :pserver:anoncvs@anoncvs.services.openoffice.org:/cvs co dmake
+
+Then pply this patch, and do
+
+	./configure --prefix=/ && make &&
+	cp -R dmake.exe startup /bin/
+
+(make install installs startup/ to /share/, but somehow dmake.exe does
+not pick up on that.)
+
+Index: configure
+===================================================================
+RCS file: /cvs/tools/dmake/configure,v
+retrieving revision 1.22
+diff -u -r1.22 configure
+--- configure	3 Jul 2007 11:29:09 -0000	1.22
++++ configure	18 Sep 2007 14:57:24 -0000
+@@ -4045,7 +4045,7 @@
+ 	  OS_VERSION=cygwin
+ 	  CASE_INSENSITIVE_FS=true
+ 	  ;;
+-	"MINGW")
++	*"MINGW"*)
+ 	  OS_VERSION=mingw
+ 	  OS_TYPE=winnt
+ 	  BUILDINFO="Windows / MinGW"
+Index: quit.c
+===================================================================
+RCS file: /cvs/tools/dmake/quit.c,v
+retrieving revision 1.6
+diff -u -r1.6 quit.c
+--- quit.c	18 Jan 2007 09:32:09 -0000	1.6
++++ quit.c	18 Sep 2007 14:57:24 -0000
+@@ -32,6 +32,10 @@
+ 				* first time. */
+ 
+ 
++#ifdef __MINGW32__
++#define SIGQUIT -1
++#endif
++
+ PUBLIC void
+ Quit( sig )/*
+ ======== Error or quit */
