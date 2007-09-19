@@ -25,7 +25,7 @@ tar xvf - &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > fileList-builtins.txt &&
 rm $(cat fileList-builtins.txt) &&
-(cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe}* \
+(cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
