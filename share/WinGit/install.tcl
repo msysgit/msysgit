@@ -17,7 +17,7 @@ proc installGit {} {
 	pack .listbox.list -expand yes -fill both
 	raise .listbox
 
-	set list [open "$currentDirectory/fileList-builtins.txt" r]
+	set list [open "$currentDirectory/etc/fileList-builtins.txt" r]
 	while {[gets $list line] >= 0} {
 		.listbox.list insert end "copying builtin: $line\n"
 		.listbox.list yview moveto 1
@@ -111,9 +111,6 @@ proc installGit {} {
 			--arguments "--login -i" \
 			$currentDirectory/bin/sh.exe $location/Git\ Shell.lnk
 	}
-
-	file delete $currentDirectory/fileList.txt
-	file delete $currentDirectory/fileList-builtins.txt
 
 	tk_dialog .info "WinGit installed" \
 			"WinGit was successfully installed" info 0 OK

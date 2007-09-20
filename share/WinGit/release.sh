@@ -8,7 +8,7 @@ test -z "$1" && {
 TARGET="$HOME"/WinGit-$1.exe
 OPTS7="-m0=lzma -mx=9 -md=64M"
 TARGET7=tmp.7z
-LIST7=fileList.txt
+LIST7=etc/fileList.txt
 TMPDIR=/tmp/WinGit
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
@@ -32,13 +32,13 @@ tar xvf - &&
 mkdir lib/perl5/site_perl &&
 cp /lib/{Error.pm,Git.pm} lib/perl5/site_perl/ &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
-md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > fileList-builtins.txt &&
-rm $(cat fileList-builtins.txt) &&
+mkdir etc &&
+md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
+rm $(cat etc/fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xvf - &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
-mkdir etc &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
