@@ -95,9 +95,9 @@ proc installGit {} {
 	tkwait window .question
 	if {$answer == 1} {
 		package require registry 1.0
-		set key "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
+		set key "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows"
 		set key "$key\\CurrentVersion\\Explorer\\Shell Folders"
-		set programs [registry get $key "Programs"]
+		set programs [registry get $key "Common Programs"]
 		file mkdir $programs/$startMenuName
 		lappend destinations $programs/$startMenuName
 	}
