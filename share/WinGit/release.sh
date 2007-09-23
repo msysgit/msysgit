@@ -44,7 +44,8 @@ cp /etc/termcap etc/ &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
 cp /share/resources/git.ico etc/ &&
-cp /share/WinGit/install.tcl ./ &&
+sed "s/@@WINGITVERSION@@/$1/" < /share/WinGit/install.tcl > bin/install.tcl &&
+cp /share/WinGit/uninstaller.exe bin/ &&
 : > "$LIST7" &&
 find * -type f | sed "s|^\./||" > "$LIST7" &&
 7z a $OPTS7 $TARGET7 @"$LIST7" ||
@@ -54,7 +55,7 @@ exit
  echo ';!@Install@!UTF-8!' &&
  echo 'Progress="yes"' &&
  echo 'Title="WinGit: MinGW Git + minimal MSys installation"' &&
- echo 'BeginPrompt="This program installes a complete Git for MSys setup"' &&
+ echo 'BeginPrompt="This program installs a complete Git for MSys setup"' &&
  echo 'CancelPrompt="Do you want to cancel WinGit installation?"' &&
  echo 'ExtractDialogText="Please, wait..."' &&
  echo 'ExtractPathText="Where do you want to install WinGit?"' &&
@@ -63,7 +64,7 @@ exit
  echo 'GUIMode="1"' &&
  echo 'InstallPath="%PROGRAMFILES%\\Git"' &&
  echo 'OverwriteMode="0"' &&
- echo 'RunProgram="\"%%T\\bin\\wish.exe\" \"%%T\install.tcl\" \"%%T\""' &&
+ echo 'RunProgram="\"%%T\\bin\\wish.exe\" \"%%T\bin\install.tcl\" \"%%T\""' &&
  echo ';!@InstallEnd@!7z' &&
  cat $TARGET7) > "$TARGET"
 exit

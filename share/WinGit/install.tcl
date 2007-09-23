@@ -7,8 +7,28 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
+package require registry 1.0
+
 proc installGit {} {
 	global currentDirectory answer env
+
+	set uninstallPath "$env(TMP)/uninstall.Git"
+	if {[file exists $uninstallPath]} {
+		for {set i 1} {[file exists "$uninstallPath.$i"]} {incr i} {
+			# do nothing
+		}
+		set uninstallPath "$uninstallPath.$i"
+	}
+	file mkdir $uninstallPath
+	file copy "$currentDirectory/bin/uninstaller.exe" $uninstallPath
+	set out [open "$uninstallPath/installLocation.txt" "w"]
+	puts $out $currentDirectory
+	close $out
+	set uninstallList [open "$uninstallPath/fileList.txt" "w"]
+	set in [open "$currentDirectory/etc/fileList.txt" "r"]
+	while {[gets $in line] >= 0} {
+		puts $uninstallList "$currentDirectory/$line"
+	}
 
 	toplevel .listbox
 	text .listbox.list -yscrollcommand ".listbox.scroll set"
@@ -24,6 +44,7 @@ proc installGit {} {
 		update
 		file copy -force $currentDirectory/bin/git.exe \
 			$currentDirectory/$line
+		puts $uninstallList "$currentDirectory/$line"
 	}
 	close $list
 
@@ -94,7 +115,6 @@ proc installGit {} {
 	focus -force .question
 	tkwait window .question
 	if {$answer == 1} {
-		package require registry 1.0
 		set key "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows"
 		set key "$key\\CurrentVersion\\Explorer\\Shell Folders"
 		set programs [registry get $key "Common Programs"]
@@ -110,7 +130,23 @@ proc installGit {} {
 			--icon-file $currentDirectory/etc/git.ico \
 			--arguments "--login -i" \
 			$currentDirectory/bin/sh.exe $location/Git\ Shell.lnk
+		puts $uninstallList $location/Git\ Shell.lnk
 	}
+	close $uninstallList
+
+	# Enter information for the Deinstallation
+	set key "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows"
+	set key "$key\\CurrentVersion\\Uninstall\\WinGit"
+	set out [open "$uninstallPath/registryKeys.txt" "w"]
+	puts $out $key
+	close $out
+	registry set $key DisplayName Git
+	registry set $key DisplayVersion "@@WINGITVERSION@@"
+	registry set $key DisplayIcon "\"$currentDirectory/etc/git.ico\""
+	registry set $key UninstallString "\"$uninstallPath\\uninstaller.exe\""
+	registry set $key InstallLocation "\"$currentDirectory\""
+	registry set $key Publisher "\"The msysGit team\""
+	registry set $key HelpLink "\"http://msysgit.googlecode.com\""
 
 	tk_dialog .info "WinGit installed" \
 			"WinGit was successfully installed" info 0 OK
