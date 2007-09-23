@@ -44,7 +44,7 @@ OPTS7="-m0=lzma -mx=9 -md=64M" &&
  echo 'GUIMode="1"' &&
  echo 'InstallPath="C:\\msysgit"' &&
  echo 'OverwriteMode="2"' &&
- echo 'RunProgram="%%T\\msysGit\\bin\\sh.exe --login -i"' &&
+ echo 'RunProgram="\"%%T\\msysGit\\bin\\sh.exe\" --login -i"' &&
  echo ';!@InstallEnd@!7z' &&
  cat "$TARGET".7z) > "$TARGET"
 
