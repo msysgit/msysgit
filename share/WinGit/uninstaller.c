@@ -69,6 +69,13 @@ static int read_list(const char *file_name, struct list *list)
 	int fd = open(file_name, O_RDONLY | O_BINARY), i;
 	struct stat st;
 
+	if (list->buffer) {
+		free(list->buffer);
+		list->buffer = NULL;
+		list->list = NULL;
+		list->count = 0;
+	}
+
 	if (fd < 0)
 		return -1;
 
@@ -160,7 +167,13 @@ void get_root_key(char** key_pointer, HKEY* root_pointer, int* index_pointer)
 		*index_pointer = i;
 }
 
-static int delete_registry_key(char *key)
+/*
+ * If value == NULL, delete the whole key.
+ * If component == NULL, remove the value,
+ * otherwise remove only this substring from the value */
+
+static int delete_from_registry(char *key,
+	const char *value, const char *substring)
 {
 	char* slash = strrchr(key, '\\');
 	LPCTSTR sub_key = NULL;
@@ -174,12 +187,53 @@ static int delete_registry_key(char *key)
 	if (!sub_key || !sub_key[0])
 		die ("Invalid registry key: %s", key);
 
-	get_root_key(&key, &root_key_handle, 0);
+	get_root_key(&key, &root_key_handle, NULL);
 	result = RegOpenKeyEx(root_key_handle,
 			key, 0, KEY_SET_VALUE, &key_handle);
 	if (result != ERROR_SUCCESS)
 		die ("Opening key %s returned 0x%lx!\n", key, result);
-	result = SHDeleteKey(key_handle, sub_key);
+
+	if (value == NULL)
+		result = SHDeleteKey(key_handle, sub_key);
+	else if (substring == NULL) {
+		HKEY sub_key_handle;
+
+		result = RegOpenKey(key_handle, sub_key, &sub_key_handle);
+		if (result != ERROR_SUCCESS)
+			die ("Could not get sub key %s", sub_key);
+
+		result = RegDeleteValue(sub_key_handle, value);
+	} else {
+		char buffer[16384];
+		DWORD size = sizeof(buffer) - 1;
+		int len = strlen(substring);
+		char *match;
+		HKEY sub_key_handle;
+
+		result = RegOpenKey(key_handle, sub_key, &sub_key_handle);
+		if (result != ERROR_SUCCESS)
+			die ("Could not get sub key %s", sub_key);
+		result = RegQueryValueEx(sub_key_handle, value, 0,
+			NULL, (BYTE *)buffer, &size);
+		if (result != ERROR_SUCCESS)
+			die ("Cannot read value from %s %s", sub_key, value);
+
+		/* actually remove the substring */
+		buffer[size] = '\0';
+		match = strstr(buffer, substring);
+		if (!match)
+			return 0;
+		if (strlen(match) == len)
+			*match = '\0';
+		else
+			memmove(match, match + len,
+				size - (match + len - buffer));
+		size -= len;
+
+		result = RegSetValueEx(sub_key_handle, value, 0, REG_EXPAND_SZ,
+			(BYTE *)buffer, size);
+	}
+
 	if (result != ERROR_SUCCESS) {
 		char buffer[1024];
 		die ("Deleting key %s:%s returned 0x%lx (%s)!\n",
@@ -384,8 +438,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance,
 	for (i = 0; i < registry_keys.count; i++) {
 		char *key = registry_keys.list[i];
 		label_printf("%s", key);
-		if (delete_registry_key(key))
+		if (delete_from_registry(key, NULL, NULL))
 			die ("Could not delete key %s", key);
+	}
+
+	if (!read_list(get_aux_file_path(argv0, "pathRegistryKey.txt"),
+			&registry_keys) && registry_keys.count == 2) {
+		delete_from_registry(registry_keys.list[0], "PATH",
+			registry_keys.list[1]);
 	}
 
 	/*

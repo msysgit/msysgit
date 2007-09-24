@@ -152,8 +152,16 @@ proc installGit {} {
 	set key "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control"
 	append key "\\Session Manager\\Environment"
 	set path [registry get $key "PATH"]
-	set path "[regsub -all "/" "$currentDirectory/cmd" "\\"];$path"
+	set git_path "[regsub -all "/" "$currentDirectory/cmd" "\\"];"
+	set path "$git_path$path"
 	registry set $key "PATH" $path expand_sz
+
+	# remember what you did
+	set out [open "$uninstallPath/pathRegistryKey.txt" "w"]
+	puts $out $key
+	puts $out $git_path
+	close $out
+
 	# broadcast "Environment changed!"
 	exec bin/broadcast-environment-change.exe
 
