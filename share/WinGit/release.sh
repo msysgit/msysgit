@@ -16,7 +16,9 @@ mkdir "$TMPDIR" &&
 (cd "$(dirname "$0")" &&
  make &&
  mkdir "$TMPDIR"/bin &&
- cp create-shortcut.exe "$TMPDIR"/bin) &&
+ cp broadcast-environment-change.exe "$TMPDIR"/bin &&
+ cp create-shortcut.exe "$TMPDIR"/bin &&
+ cp uninstaller.exe "$TMPDIR"/bin) &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
 (cd / && tar cf - bin/{git*,awk,basename.exe,bash.exe,bunzip2,bzip2.exe,\
@@ -45,7 +47,6 @@ sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
 cp /share/resources/git.ico etc/ &&
 sed "s/@@WINGITVERSION@@/$1/" < /share/WinGit/install.tcl > bin/install.tcl &&
-cp /share/WinGit/uninstaller.exe bin/ &&
 : > "$LIST7" &&
 find * -type f | sed "s|^\./||" > "$LIST7" &&
 7z a $OPTS7 $TARGET7 @"$LIST7" ||

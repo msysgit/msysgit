@@ -148,6 +148,15 @@ proc installGit {} {
 	registry set $key Publisher "\"The msysGit team\""
 	registry set $key HelpLink "\"http://msysgit.googlecode.com\""
 
+	# set PATH
+	set key "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control"
+	append key "\\Session Manager\\Environment"
+	set path [registry get $key "PATH"]
+	set path "[regsub -all "/" "$currentDirectory/cmd" "\\"];$path"
+	registry set $key "PATH" $path expand_sz
+	# broadcast "Environment changed!"
+	exec bin/broadcast-environment-change.exe
+
 	tk_dialog .info "WinGit installed" \
 			"WinGit was successfully installed" info 0 OK
 
