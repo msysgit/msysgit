@@ -262,7 +262,13 @@ int remove_directory(const char *path)
 	while ((e = readdir(d)))
 		if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, ".."))
 			continue;
-		else {
+		else if (!strcmp(e->d_name, ".bash_history")) {
+			char buffer[1024];
+			if (snprintf(buffer, sizeof(buffer), "%s/%s", path,
+						e->d_name) >= sizeof(buffer) ||
+					unlink(buffer))
+				result = 1;
+		} else {
 			char buffer[1024];
 			if (snprintf(buffer, sizeof(buffer), "%s/%s",
 					path, e->d_name) >= sizeof(buffer))
