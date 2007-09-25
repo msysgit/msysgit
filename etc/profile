@@ -72,7 +72,7 @@ elif [ -e /etc/bash_profile ]; then
 fi
 
 # Git specific stuff
-test -e /bin/git.exe || test -e /git/git.exe || {
+test -e /bin/git.exe -o -e /git/git.exe || {
 	echo
 	echo -------------------------------------------------------
 	echo "Building and Installing Git"
@@ -101,15 +101,24 @@ This is a minimal MSYS environment to work on Git.
 
 $MESSAGE
 
+EOF
+}
+
+test -f /etc/motd && sed "s/\$MESSAGE/$MESSAGE/" < /etc/motd
+
+case "$PATH" in
+*"$(cd / && pwd -W)\\cmd:"*) ;;
+*)
+	cat << EOF
+
 In order to use Git from cmd.exe:
 1. Add c:\msysgit\cmd to cmd's PATH
 2. DON'T add c:\msysgit\bin or c:\msysgit\mingw\bin to cmd's PATH
 Commands like 'git add' will work from cmd.exe now.
 Commands like 'git-add' will NOT work. Add more wrappers as appropriate.
-
-Have fun!
 EOF
-}
+esac
+
 
 . /git/contrib/completion/git-completion.bash
 
