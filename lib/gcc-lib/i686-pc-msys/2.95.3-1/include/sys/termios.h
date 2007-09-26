@@ -45,7 +45,7 @@ details. */
 
 #define FIONBIO 0x8004667e /* To be compatible with socket version */
 
-#define CTRL(c'h')	((ch)&0x1F)
+#define CTRL(ch)	((ch)&0x1F)
 
 #define CNUL	0
 #define CDEL	0x0007f
