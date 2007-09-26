@@ -1,0 +1,88 @@
+*asm:
+
+
+*asm_final:
+
+
+*cpp:
+  %(cpp_cpu) %{posix:-D_POSIX_SOURCE}   -D__stdcall=__attribute__((__stdcall__))   -D__cdecl=__attribute__((__cdecl__))   %{!ansi:-D_stdcall=__attribute__((__stdcall__))     -D_cdecl=__attribute__((__cdecl__))}   -D__declspec(x)=__attribute__((x))   -D__MSYS__ %{!ansi:-Dunix -D_unix} -D__unix__ -D__unix -isystem /usr/local/include -idirafter /usr/include  %{mwin32:{!ansi:-DWIN32 -DWINNT -D_WIN32} -D_WIN32 -D__WIN32 -D__WIN32__}  %{!mno-win32:-idirafter /usr/include/w32api}
+
+*cc1:
+%(cc1_spec) 
+
+*cc1plus:
+
+
+*endfile:
+
+
+*link:
+%q/usr/lib/w32api/  %q/usr/lib %q/usr/local/lib %q/usr/lib/ %q/usr/local/lib/  %{mwindows:--subsystem windows}   %{mconsole:--subsystem console}   %{shared: %{mdll: %eshared and mdll are not compatible}}   %{shared: --shared} %{mdll:--dll}   %{static:-Bstatic} %{!static:-Bdynamic}   %{shared|mdll: -e     __msys_dll_entry@12 --dll-search-prefix=msys   }  
+
+*lib:
+  %{pg:-lgmon}   -lmsys-1.0   %{mwindows:-lgdi32 -lcomdlg32}   -luser32 -lkernel32 -ladvapi32 -lshell32
+
+*libgcc:
+ -lgcc 
+
+*startfile:
+  %{!shared:%{!mdll:/usr/lib/crt0%O%s     %{pg:gcrt0%O%s}}}
+
+*switches_need_spaces:
+
+
+*signed_char:
+%{funsigned-char:-D__CHAR_UNSIGNED__}
+
+*predefines:
+-D_X86_=1 -Asystem(winnt)
+
+*cross_compile:
+0
+
+*version:
+2.95.3-1
+
+*multilib:
+. ;
+
+*multilib_defaults:
+
+
+*multilib_extra:
+
+
+*multilib_matches:
+
+
+*linker:
+collect2
+
+*cpp_486:
+%{!ansi:-Di486} -D__i486 -D__i486__
+
+*cpp_586:
+%{!ansi:-Di586 -Dpentium} 	-D__i586 -D__i586__ -D__pentium -D__pentium__
+
+*cpp_k6:
+%{!ansi:-Di586 -Dk6} 	-D__i586 -D__i586__ -D__k6 -D__k6__
+
+*cpp_686:
+%{!ansi:-Di686 -Dpentiumpro} 	-D__i686 -D__i686__ -D__pentiumpro -D__pentiumpro__
+
+*cpp_cpu_default:
+%(cpp_686)
+
+*cpp_cpu:
+-Acpu(i386) -Amachine(i386) %{!ansi:-Di386} -D__i386 -D__i386__ %{mcpu=i486:%(cpp_486)} %{m486:%(cpp_486)} %{mpentium:%(cpp_586)} %{mcpu=pentium:%(cpp_586)} %{mpentiumpro:%(cpp_686)} %{mcpu=pentiumpro:%(cpp_686)} %{mcpu=k6:%(cpp_k6)} %{!mcpu*:%{!m486:%{!mpentium*:%(cpp_cpu_default)}}}
+
+*cc1_cpu:
+%{!mcpu*: %{m386:-mcpu=i386 -march=i386} %{m486:-mcpu=i486 -march=i486} %{mpentium:-mcpu=pentium} %{mpentiumpro:-mcpu=pentiumpro}}
+
+*mingw_include_path:
+i686-pc-msys
+
+*link_command:
+%{!fsyntax-only:  %{!c:%{!M:%{!MM:%{!E:%{!S:%(linker) %l %X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} 			%{r} %{s} %{t} %{u*} %{x} %{z} %{Z}			%{!A:%{!nostdlib:%{!nostartfiles:%S}}}			%{static:} %{L*} %D %o			%{!nostdlib:%{!nodefaultlibs:%G %L %G}}			%{!A:%{!nostdlib:%{!nostartfiles:%E}}}			%{T*}			
+ }}}}}}
+

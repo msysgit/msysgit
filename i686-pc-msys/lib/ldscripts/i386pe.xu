@@ -1,0 +1,81 @@
+OUTPUT_FORMAT(pe-i386)
+SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/lib/w32api); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/i686-pc-msys/lib);
+ENTRY(_mainCRTStartup)
+SECTIONS
+{
+  .text  : 
+  {
+    *(.text)
+    *(.glue_7t)
+    *(.glue_7)
+     ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
+			LONG (-1); *(.ctors); *(.ctor); LONG (0); 
+     ___DTOR_LIST__ = .; __DTOR_LIST__ = . ; 
+			LONG (-1); *(.dtors); *(.dtor);  LONG (0); 
+    /* ??? Why is .gcc_exc here?  */
+    *(.gcc_except_table)
+  }
+  /* The Cygwin32 library uses a section to avoid copying certain data
+     on fork.  This used to be named ".data".  The linker used
+     to include this between __data_start__ and __data_end__, but that
+     breaks building the cygwin32 dll.  Instead, we name the section
+     ".data_cygwin_nocopy" and explictly include it after __data_end__. */
+  .data  : 
+  {
+    *(.data)
+    *(.data2)
+  }
+  .rdata  :
+  {
+    *(.rdata)
+    *(.eh_frame)
+  }
+  .pdata  :
+  {
+    *(.pdata)
+  }
+  .bss  :
+  {
+    *(.bss)
+    *(COMMON)
+  }
+  .edata  :
+  {
+    *(.edata)
+  }
+  /DISCARD/ :
+  {
+    *(.debug$S)
+    *(.debug$T)
+    *(.debug$F)
+    *(.drectve)
+  }
+  .idata  :
+  {
+    /* This cannot currently be handled with grouped sections.
+	See pe.em:sort_sections.  */
+  }
+  .CRT  :
+  { 					
+  }
+  .endjunk  :
+  {
+    /* end is deprecated, don't use it */
+  }
+  .rsrc  :
+  { 					
+    *(.rsrc)
+  }
+  .reloc  :
+  { 					
+    *(.reloc)
+  }
+  .stab   :
+  {
+    [ .stab ]
+  }
+  .stabstr   :
+  {
+    [ .stabstr ]
+  }
+}
