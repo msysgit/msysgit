@@ -5,6 +5,8 @@ test -z "$1" && {
 	exit 1
 }
 
+test -d /doc/git/html/.git || { echo "Error: html pages in /doc/git/html/.git missing"; exit 1; }
+
 TARGET="$HOME"/WinGit-$1.exe
 OPTS7="-m0=lzma -mx=9 -md=64M"
 TARGET7=tmp.7z
@@ -21,6 +23,9 @@ mkdir "$TMPDIR" &&
  cp uninstaller.exe "$TMPDIR"/bin) &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
+(git --git-dir=/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
+ mkdir -p doc/git/html && cd doc/git/html &&
+ git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - bin/{git*,awk,basename.exe,bash.exe,bunzip2,bzip2.exe,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cpio,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
