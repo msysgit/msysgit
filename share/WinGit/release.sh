@@ -29,7 +29,7 @@ ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
-vim.exe,wc.exe,which,xargs.exe,ssh-add.exe} lib/perl5/ share/git* share/vim) |
+vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} lib/perl5/ share/git* share/vim) |
 tar xvf - &&
 mkdir lib/perl5/site_perl &&
 cp /lib/{Error.pm,Git.pm} lib/perl5/site_perl/ &&
