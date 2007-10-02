@@ -116,5 +116,23 @@ else
 	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
 fi &&
 git checkout -l -f -q $FOURMSYS ||
-error Couldn\'t update submodules!
+error Couldn\'t update submodule git!
+
+echo
+echo -------------------------------------------------------
+echo Fetching HTML help pages
+echo -------------------------------------------------------
+
+cd .. &&
+rm -rf /doc/git/html &&
+git config submodule.html.url $GIT_REPO_URL &&
+mkdir -p doc/git/html &&
+cd doc/git/html &&
+git init &&
+git config remote.origin.url $GIT_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/html:refs/remotes/origin/html' &&
+git fetch --keep origin &&
+git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
+	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
+error "Couldn't update submodule doc/git/html (HTML help will not work)."
 
