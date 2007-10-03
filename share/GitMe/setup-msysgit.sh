@@ -36,8 +36,9 @@ echo
 echo -------------------------------------------------------
 echo Fetching the latest MSys environment
 echo -------------------------------------------------------
-MSYSGIT_REPO_GIT=repo.or.cz/msysgit.git
-MSYSGIT_REPO_HTTP=repo.or.cz/r/msysgit.git
+MSYSGIT_REPO_GIT=git://repo.or.cz/msysgit.git
+MSYSGIT_REPO_GIT_MOB=ssh://mob@repo.or.cz/srv/git/msysgit.git
+MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
@@ -46,18 +47,18 @@ cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-u
 cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-update-ref.exe
 
 git init &&
-git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
+git config remote.origin.url $MSYSGIT_REPO_GIT &&
 git config remote.origin.fetch +refs/heads/master:refs/remotes/origin/master &&
 git config branch.master.remote origin &&
 git config branch.master.merge refs/heads/master &&
-git config remote.mob.url ssh://mob@$MSYSGIT_REPO_GIT &&
+git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
 git fetch --keep ||
 	USE_HTTP=t &&
-        git config remote.origin.url http://$MSYSGIT_REPO_HTTP &&
+        git config remote.origin.url $MSYSGIT_REPO_HTTP &&
         git fetch --keep ||
 	error "Could not get msysgit.git"
 
