@@ -90,8 +90,6 @@ t)
 	GIT_REPO_URL=git://repo.or.cz/git.git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
 	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
-	# WORKAROUND current repo.or.cz breakage
-	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
 ;;
 esac
 
