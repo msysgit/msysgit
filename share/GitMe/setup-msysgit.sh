@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # We're already in the install directory
-INSTALL_PATH=`pwd`
-export PATH=$INSTALL_PATH/installer-tmp/bin:$PATH
+INSTALL_PATH="$(pwd)"
+export PATH="$INSTALL_PATH/installer-tmp/bin:$PATH"
 
 error () {
     echo "* error: $*"
@@ -42,9 +42,9 @@ MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-init.exe
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-update-ref.exe
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-init.exe"
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe"
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-update-ref.exe"
 
 git init &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&

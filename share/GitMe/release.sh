@@ -42,9 +42,9 @@ cd .. &&
  echo 'GUIMode="1"' &&
  echo 'InstallPath="C:\\msysgit"' &&
  echo 'OverwriteMode="2"' &&
- echo 'RunProgram="%%T\installer-tmp\bin\sh.exe /setup-msysgit.sh"' &&
+ echo 'RunProgram="\"%%T\installer-tmp\bin\sh.exe\" /setup-msysgit.sh"' &&
  echo 'Delete="%%T\installer-tmp"' &&
- echo 'RunProgram="%%T\bin\sh.exe --login -i"' &&
+ echo 'RunProgram="\"%%T\bin\sh.exe\" --login -i"' &&
  echo ';!@InstallEnd@!' &&
  cat "$TMPPACK") > "$TARGET" &&
 echo Success! You\'ll find the new installer at $TARGET
