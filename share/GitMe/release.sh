@@ -3,9 +3,13 @@
 # Recreate GitMe-$VERSION.exe
 
 test -z "$1" && {
-	echo "Usage: $0 <version>"
+	echo "Usage: $0 <version> [<msysgitbranch> [<4msysgitbranch>]]"
 	exit 1
 }
+
+MSYSGITBRANCH="$2"
+test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=master
+FOURMSYSGITBRANCH="$3"
 
 TARGET="$HOME"/GitMe-"$1".exe
 TMPDIR=/tmp/installer-tmp
@@ -26,7 +30,9 @@ cat "$SHARE"/fileList-mingw.txt |
 strip bin/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
-cp "$SHARE"/setup-msysgit.sh ./ &&
+sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
+    -e "s|@@FOURMSYSGITBRANCH@@|$FOURMSYSGITBRANCH|g" \
+  < "$SHARE"/setup-msysgit.sh > setup-msysgit.sh &&
 echo "Creating archive" &&
 cd .. &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&

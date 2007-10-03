@@ -48,9 +48,10 @@ cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/gi
 
 git init &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
-git config remote.origin.fetch +refs/heads/master:refs/remotes/origin/master &&
+git config remote.origin.fetch \
+	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
 git config branch.master.remote origin &&
-git config branch.master.merge refs/heads/master &&
+git config branch.master.merge refs/heads/@@MSYSGITBRANCH@@ &&
 git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
@@ -68,7 +69,7 @@ echo
 echo -------------------------------------------------------
 echo Checking out the master branch
 echo -------------------------------------------------------
-git-checkout -l -f -q -b master origin/master ||
+git-checkout -l -f -q -b master origin/@@MSYSGITBRANCH@@ ||
     error Couldn\'t checkout the master branch!
 
 
@@ -107,7 +108,13 @@ git fetch mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch --keep origin &&
-git checkout -l -f -q $(cd .. && git ls-tree HEAD git |
-	sed -n "s/^160000 commit \(.*\)	git$/\1/p") ||
+if test -z "@@FOURMSYSGITBRANCH@@"
+then
+	FOURMSYS=$(cd .. && git ls-tree HEAD git |
+		sed -n "s/^160000 commit \(.*\)	git$/\1/p")
+else
+	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
+fi &&
+git checkout -l -f -q $FOURMSYS ||
 error Couldn\'t update submodules!
 
