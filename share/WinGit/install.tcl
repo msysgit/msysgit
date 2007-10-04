@@ -126,7 +126,8 @@ proc installGit {} {
 	# TODO: incorporate git-cheetah
 
 	foreach location $destinations {
-		exec bin/create-shortcut.exe --work-dir $currentDirectory \
+		exec bin/create-shortcut.exe \
+			--work-dir "%USERPROFILE%" \
 			--icon-file $currentDirectory/etc/git.ico \
 			--arguments "--login -i" \
 			$currentDirectory/bin/sh.exe $location/Git\ Shell.lnk
