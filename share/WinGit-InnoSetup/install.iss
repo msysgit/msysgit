@@ -1,8 +1,8 @@
 #define APP_NAME     'Git'
-#define APP_VERSION  '%VERSION%'
+#define APP_VERSION  '%APPVERSION%'
 #define APP_STATUS   'Alpha-Inno'
 #define APP_URL      'http://code.google.com/p/msysgit/'
-#define APP_BUILTINS 'fileList-builtins.txt'
+#define APP_BUILTINS 'etc\fileList-builtins.txt'
 
 [Setup]
 ; Compiler-related
@@ -29,10 +29,10 @@ WizardSmallImageFile=install.bmp
 Name: quicklaunchicon; Description: "Create a &Quick Launch icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
 Name: desktopicon; Description: "Create a &Desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
 Name: shellextension; Description: "Add ""Git Shell Here"" "; GroupDescription: "Shell extensions:"; Flags: checkedonce
+Name: guiextension; Description: "Add ""Git GUI Here"" "; GroupDescription: "Shell extensions:"; Flags: checkedonce
 
 [Files]
-Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*"; Flags: recursesubdirs
-Source: {#emit APP_BUILTINS}; DestDir: "{app}"; Flags: dontcopy
+Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
 
 [Icons]
 Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "{app}"; IconFilename: "{app}\etc\git.ico"
@@ -44,8 +44,10 @@ Name: "{userdesktop}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--lo
 BeveledLabel={#emit APP_URL}
 
 [Registry]
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "&Git Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"" "; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
+Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "Git &Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
+Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
+Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui"; ValueType: string; ValueData: "Git &GUI Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
+Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: """{app}\bin\sh.exe"" --login -c ""cd ""%1"" && /bin/git-gui"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
@@ -55,8 +57,8 @@ Type: dirifempty; Name: "{app}\home"
 [Code]
 procedure InitializeWizard;
 begin
-   // Use a mono spaced font in the license dialog.
-   WizardForm.LicenseMemo.Font.Name:='Courier New';
+   // Use a mono spaced font in the license dialog. NOTE: This might be too small.
+   WizardForm.LicenseMemo.Font.Name:='Lucida Console';
    WizardForm.LicenseMemo.Font.Size:=7;
 end;
 
@@ -75,8 +77,7 @@ begin
     end;
 
     // Load the built-ins from a text file.
-    ExtractTemporaryFile('{#emit APP_BUILTINS}');
-    ListFile:=ExpandConstant('{tmp}\'+'{#emit APP_BUILTINS}');
+    ListFile:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
     if not LoadStringsFromFile(ListFile,BuiltIns) then begin
         MsgBox('Unable to read file "{#emit APP_BUILTINS}".', mbError, MB_OK);
         Exit;
@@ -89,7 +90,7 @@ begin
     if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
         IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
     end;
-    
+
     // Map the built-ins to git.exe.
     if IsNTFS then begin
         for i:=0 to GetArrayLength(BuiltIns)-1 do begin
