@@ -1,12 +1,11 @@
 #define APP_NAME     'Git'
 #define APP_VERSION  '%APPVERSION%'
-#define APP_STATUS   'Alpha-Inno'
 #define APP_URL      'http://code.google.com/p/msysgit/'
 #define APP_BUILTINS 'etc\fileList-builtins.txt'
 
 [Setup]
 ; Compiler-related
-OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION+'-'+APP_STATUS}
+OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
 OutputDir=%OUTPUTDIR%
 SolidCompression=yes
 
@@ -14,8 +13,8 @@ SolidCompression=yes
 AllowNoIcons=yes
 AppName={#emit APP_NAME}
 AppPublisherURL={#emit APP_URL}
-AppVersion={#emit APP_VERSION+' '+APP_STATUS}
-AppVerName={#emit APP_NAME+' '+APP_VERSION+' '+APP_STATUS}
+AppVersion={#emit APP_VERSION}
+AppVerName={#emit APP_NAME+' '+APP_VERSION}
 DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
