@@ -34,10 +34,10 @@ Name: guiextension; Description: "Add ""Git GUI Here"" "; GroupDescription: "She
 Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "{app}\home\%USERNAME%"; IconFilename: "{app}\etc\git.ico"
+Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "{app}\home\%USERNAME%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
-Name: "{userdesktop}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "{app}\home\%USERNAME%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
+Name: "{userdesktop}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
 
 [Messages]
 BeveledLabel={#emit APP_URL}
