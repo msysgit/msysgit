@@ -34,7 +34,7 @@ Name: guiextension; Description: "Add ""Git GUI Here"" "; GroupDescription: "She
 Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\Git GUI"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -c ""/bin/git-gui"""; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
+Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: "{app}\bin\git-gui"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
@@ -47,7 +47,7 @@ BeveledLabel={#emit APP_URL}
 Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "Git &Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
 Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
 Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui"; ValueType: string; ValueData: "Git &GUI Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -c ""/bin/git-gui"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
+Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: """{app}\bin\wish.exe"" ""{app}\bin\git-gui"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
