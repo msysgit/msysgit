@@ -34,7 +34,7 @@ Name: guiextension; Description: "Add ""Git GUI Here"" "; GroupDescription: "She
 Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: "{app}\bin\git-gui"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
+Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bin\git-gui"""; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%APPDATA%\Git"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
