@@ -20,6 +20,7 @@ DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
 LicenseFile=gpl-2.0.txt
+UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
