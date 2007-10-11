@@ -5,6 +5,7 @@
 
 [Setup]
 ; Compiler-related
+InternalCompressLevel=max
 OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
 OutputDir=%OUTPUTDIR%
 SolidCompression=yes
