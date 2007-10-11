@@ -29,7 +29,7 @@ WizardSmallImageFile=install.bmp
 [Tasks]
 Name: quicklaunchicon; Description: "Create a &Quick Launch icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
 Name: desktopicon; Description: "Create a &Desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
-Name: shellextension; Description: "Add ""Git Shell Here"" "; GroupDescription: "Shell extensions:"; Flags: checkedonce
+Name: shellextension; Description: "Add ""Git Bash Here"" "; GroupDescription: "Shell extensions:"; Flags: checkedonce
 Name: guiextension; Description: "Add ""Git GUI Here"" "; GroupDescription: "Shell extensions:"; Flags: checkedonce
 
 [Files]
@@ -37,10 +37,10 @@ Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*inst
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bin\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
-Name: "{group}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
+Name: "{group}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
-Name: "{userdesktop}\Git Shell"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
+Name: "{userdesktop}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
 
 [Messages]
 BeveledLabel={#emit APP_URL}
