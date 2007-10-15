@@ -1,4 +1,8 @@
 @echo off
-for /F %%I in ("%~dp0..") do set path=%%~fI\bin;%%~fI\mingw\bin
-set home=%HOMEDRIVE%%HOMEPATH%
+set MSYSGIT_SAVED_PATH=%PATH%
+set MSYSGIT_SAVED_HOME=%HOME%
+for /F "delims=" %%I in ("%~dp0..") do set path=%%~fI\bin;%%~fI\mingw\bin
+if "%HOME%"=="" set HOME=%USERPROFILE%
 git.exe %*
+set PATH=%MSYSGIT_SAVED_PATH%
+set HOME=%MSYSGIT_SAVED_HOME%
