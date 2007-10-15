@@ -11,12 +11,6 @@ TMPDIR=$1
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
 mkdir "$TMPDIR" &&
-(cd "$(dirname "$0")" &&
- make &&
- mkdir "$TMPDIR"/bin &&
- cp broadcast-environment-change.exe "$TMPDIR"/bin &&
- cp create-shortcut.exe "$TMPDIR"/bin &&
- cp uninstaller.exe "$TMPDIR"/bin) &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
 (git --git-dir=/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
