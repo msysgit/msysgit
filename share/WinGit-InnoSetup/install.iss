@@ -25,7 +25,7 @@ UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
-WizardSmallImageFile=install.bmp
+WizardSmallImageFile=git.bmp
 
 [Tasks]
 Name: modifypath; Description: "Modify &PATH environment variable"; Flags: checkedonce
