@@ -300,3 +300,28 @@ begin
         SetEnvPathStrings(True,DirStrings);
     end;
 end;
+
+procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
+var
+    AppDir:string;
+    DirStrings:TArrayOfString;
+    i:Longint;
+begin
+    if CurUninstallStep=usDone then begin
+        AppDir:=ExpandConstant('{app}');
+
+        // Get the current user's directories in PATH.
+        DirStrings:=GetEnvPathStrings(True);
+
+        // Remove the installation directory from PATH in any case, even if it
+        // was not added by the installer.
+        for i:=0 to GetArrayLength(DirStrings)-1 do begin
+            if Pos(AppDir,DirStrings[i])=1 then begin
+                DirStrings[i]:='';
+            end;
+        end;
+
+        // Set the current user's directories in PATH.
+        SetEnvPathStrings(True,DirStrings);
+    end;
+end;
