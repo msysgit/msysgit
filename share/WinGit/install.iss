@@ -133,7 +133,7 @@ begin
       Caption:='Run Git and included Unix tools from the Windows Command Prompt';
       Left:=ScaleX(4);
       Top:=ScaleY(152);
-      Width:=ScaleX(393);
+      Width:=ScaleX(405);
       Height:=ScaleY(17);
       Font.Style:=[fsBold];
       TabOrder:=2;
