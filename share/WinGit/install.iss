@@ -104,19 +104,23 @@ external 'CreateHardLinkA@Kernel32.dll';
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    ListFile,AppDir:string;
+    LinkOrCopy:TOutputProgressWizardPage;
+    FileName,AppDir:string;
     BuiltIns:TArrayOfString;
-    i:Longint;
+    i,Count:Longint;
     IsNTFS:Boolean;
 begin
-    if CurStep=ssPostInstall then begin
+    if CurStep=ssDone then begin
         if IsTaskSelected('modifypath') then begin
             ModPath();
         end;
-    end else if CurStep=ssDone then begin
+    end else if CurStep=ssPostInstall then begin
+        LinkOrCopy:=CreateOutputProgressPage('Creating Build-Ins','Please wait while Setup creates built-in command files.');
+        LinkOrCopy.Show;
+
         // Load the built-ins from a text file.
-        ListFile:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
-        if not LoadStringsFromFile(ListFile,BuiltIns) then begin
+        FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
+        if not LoadStringsFromFile(FileName,BuiltIns) then begin
             MsgBox('Unable to read file "{#emit APP_BUILTINS}".', mbError, MB_OK);
             Exit;
         end;
@@ -129,17 +133,29 @@ begin
             IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
         end;
 
+        Count:=GetArrayLength(BuiltIns)-1;
+
         // Map the built-ins to git.exe.
         if IsNTFS then begin
-            for i:=0 to GetArrayLength(BuiltIns)-1 do begin
+            for i:=0 to Count do begin
+                FileName:=AppDir+'\'+BuiltIns[i];
+
                 // On non-NTFS partitions, create hard links.
-                CreateHardLink(AppDir+'\'+BuiltIns[i],AppDir+'\bin\git.exe',0);
+                LinkOrCopy.SetText('Creating hard link...',FileName);
+                LinkOrCopy.SetProgress(i,Count);
+                CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
             end;
         end else begin
             for i:=0 to GetArrayLength(BuiltIns)-1 do begin
+                FileName:=AppDir+'\'+BuiltIns[i];
+
                 // On non-NTFS partitions, copy simply the files.
-                FileCopy(AppDir+'\bin\git.exe',AppDir+'\'+BuiltIns[i],false);
+                LinkOrCopy.SetText('Copying file...',FileName);
+                LinkOrCopy.SetProgress(i,Count);
+                FileCopy(AppDir+'\bin\git.exe',FileName,false);
             end;
         end;
+
+        LinkOrCopy.Hide;
     end;
 end;
