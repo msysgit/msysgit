@@ -34,7 +34,7 @@ Name: shellextension; Description: "Add ""Git &Bash Here"""; GroupDescription: "
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
 
 [Files]
-Source: "*"; DestDir: "{app}"; Excludes: "\*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
+Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, \*.txt, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bin\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
@@ -162,17 +162,19 @@ begin
     end;
 end;
 
-function GetEnvPathStrings(CurrentUser:Boolean):TArrayOfString;
+function GetEnvStrings(VarName:string;CurrentUser:Boolean):TArrayOfString;
 var
     Path:string;
     i:Longint;
     p:Integer;
 begin
+    Path:='';
+
     // See http://www.jrsoftware.org/isfaq.php#env
     if CurrentUser then begin
-        RegQueryStringValue(HKEY_CURRENT_USER,'Environment','Path',Path);
+        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
     end else begin
-        RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment','Path',Path);
+        RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
     end;
 
     // Make sure we have at least one semicolon.
@@ -180,6 +182,8 @@ begin
 
     // Split the directories in PATH into an array of strings.
     i:=0;
+    SetArrayLength(Result,0);
+
     p:=Pos(';',Path);
     while p>0 do begin
         SetArrayLength(Result,i+1);
@@ -192,9 +196,9 @@ begin
     end;
 end;
 
-function SetEnvPathStrings(CurrentUser:Boolean;DirStrings:TArrayOfString):Boolean;
+function SetEnvStrings(VarName:string;CurrentUser,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
 var
-    Path:string;
+    Path,KeyName:string;
     i:Longint;
 begin
     // Merge all non-empty directory strings into a PATH variable.
@@ -211,9 +215,20 @@ begin
 
     // See http://www.jrsoftware.org/isfaq.php#env
     if CurrentUser then begin
-        Result:=RegWriteStringValue(HKEY_CURRENT_USER,'Environment','Path',Path);
+        KeyName:='Environment';
+        if DeleteIfEmpty and (Length(Path)=0) then begin
+            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName))
+                      or RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
+        end else begin
+            Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
+        end;
     end else begin
-        Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment','Path',Path);
+        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+        if DeleteIfEmpty and (Length(Path)=0) then begin
+            Result:=RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
+        end else begin
+            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+        end;
     end;
 end;
 
@@ -223,7 +238,7 @@ external 'CreateHardLinkA@Kernel32.dll';
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,FileName:string;
-    BuiltIns,DirStrings:TArrayOfString;
+    BuiltIns,EnvPath,EnvHome:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
 begin
@@ -277,38 +292,50 @@ begin
     }
 
     // Get the current user's directories in PATH.
-    DirStrings:=GetEnvPathStrings(True);
+    EnvPath:=GetEnvStrings('PATH',True);
 
     // First, remove the installation directory from PATH in any case.
-    for i:=0 to GetArrayLength(DirStrings)-1 do begin
-        if Pos(AppDir,DirStrings[i])=1 then begin
-            DirStrings[i]:='';
+    for i:=0 to GetArrayLength(EnvPath)-1 do begin
+        if Pos(AppDir,EnvPath[i])=1 then begin
+            EnvPath[i]:='';
         end;
     end;
 
     // Modify the PATH variable as requested by the user.
-    if RdbGitCmd.Checked then begin
-        i:=GetArrayLength(DirStrings);
-        SetArrayLength(DirStrings,i+1);
-        DirStrings[i]:=ExpandConstant('{app}\cmd');
-    end else if RdbGitCmdTools.Checked then begin
-        i:=GetArrayLength(DirStrings);
-        SetArrayLength(DirStrings,i+2);
+    if RdbGitCmd.Checked or RdbGitCmdTools.Checked then begin
+        i:=GetArrayLength(EnvPath);
+        SetArrayLength(EnvPath,i+1);
 
         // List \cmd before \bin so \cmd has higher priority and programs in
         // there will be called in favor of those in \bin.
-        DirStrings[i]:=ExpandConstant('{app}\cmd');
-        DirStrings[i+1]:=ExpandConstant('{app}\bin');
+        EnvPath[i]:=ExpandConstant('{app}\cmd');
+
+        if RdbGitCmdTools.Checked then begin
+            SetArrayLength(EnvPath,i+2);
+            EnvPath[i+1]:=ExpandConstant('{app}\bin');
+        end;
+
+        // Set HOME for the Windows Command Prompt.
+        EnvHome:=GetEnvStrings('HOME',True);
+        i:=GetArrayLength(EnvHome);
+        if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
+            SetArrayLength(EnvHome,1);
+            EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
+            SetEnvStrings('HOME',True,True,EnvHome);
+            
+            // Mark that we have changed HOME.
+            SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
+        end;
     end;
 
     // Set the current user's directories in PATH.
-    SetEnvPathStrings(True,DirStrings);
+    SetEnvStrings('PATH',True,True,EnvPath);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir:string;
-    DirStrings:TArrayOfString;
+    AppDir,a,b:string;
+    EnvPath,EnvHome:TArrayOfString;
     i:Longint;
 begin
     if CurUninstallStep<>usUninstall then begin
@@ -325,18 +352,28 @@ begin
     AppDir:=ExpandConstant('{app}');
 
     // Get the current user's directories in PATH.
-    DirStrings:=GetEnvPathStrings(True);
+    EnvPath:=GetEnvStrings('PATH',True);
 
     // Remove the installation directory from PATH in any case, even if it
     // was not added by the installer.
-    for i:=0 to GetArrayLength(DirStrings)-1 do begin
-        if Pos(AppDir,DirStrings[i])=1 then begin
-            DirStrings[i]:='';
+    for i:=0 to GetArrayLength(EnvPath)-1 do begin
+        if Pos(AppDir,EnvPath[i])=1 then begin
+            EnvPath[i]:='';
         end;
     end;
 
-    // Set the current user's directories in PATH.
-    if not SetEnvPathStrings(True,DirStrings) then begin
+    // Reset the current user's directories in PATH.
+    if not SetEnvStrings('PATH',True,True,EnvPath) then begin
         MsgBox('Unable to revert any possible changes to PATH.',mbError,MB_OK);
     end;
+    
+    // Reset the current user's HOME if we modified it.
+    EnvHome:=GetEnvStrings('HOME',True);
+    if (GetArrayLength(EnvHome)=1) and
+       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
+        if not SetEnvStrings('HOME',True,True,[]) then begin
+            MsgBox('Unable to revert any possible changes to HOME.',mbError,MB_OK);
+        end;
+    end;
+    DeleteFile(AppDir+'\setup.ini');
 end;
