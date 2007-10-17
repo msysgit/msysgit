@@ -222,20 +222,14 @@ external 'CreateHardLinkA@Kernel32.dll';
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    DirStrings:TArrayOfString;
-
-    LinkOrCopy:TOutputProgressWizardPage;
-    FileName,AppDir:string;
-    BuiltIns:TArrayOfString;
-    i,Count:Longint;
+    AppDir,FileName:string;
+    BuiltIns,DirStrings:TArrayOfString;
+    Count,i:Longint;
     IsNTFS:Boolean;
 begin
     AppDir:=ExpandConstant('{app}');
 
     if CurStep=ssPostInstall then begin
-        LinkOrCopy:=CreateOutputProgressPage('Creating Build-Ins','Please wait while Setup creates built-in command files.');
-        LinkOrCopy.Show;
-
         // Load the built-ins from a text file.
         FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
         if not LoadStringsFromFile(FileName,BuiltIns) then begin
@@ -257,8 +251,6 @@ begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
                 // On non-NTFS partitions, create hard links.
-                LinkOrCopy.SetText('Creating hard link...',FileName);
-                LinkOrCopy.SetProgress(i,Count);
                 CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
             end;
         end else begin
@@ -266,13 +258,9 @@ begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
                 // On non-NTFS partitions, copy simply the files.
-                LinkOrCopy.SetText('Copying file...',FileName);
-                LinkOrCopy.SetProgress(i,Count);
                 FileCopy(AppDir+'\bin\git.exe',FileName,false);
             end;
         end;
-
-        LinkOrCopy.Hide;
     end else if CurStep=ssDone then begin
         // Get the current user's directories in PATH.
         DirStrings:=GetEnvPathStrings(True);
