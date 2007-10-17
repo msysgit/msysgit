@@ -313,18 +313,18 @@ begin
         if RdbGitCmdTools.Checked then begin
             SetArrayLength(EnvPath,i+2);
             EnvPath[i+1]:=ExpandConstant('{app}\bin');
-        end;
 
-        // Set HOME for the Windows Command Prompt.
-        EnvHome:=GetEnvStrings('HOME',True);
-        i:=GetArrayLength(EnvHome);
-        if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
-            SetArrayLength(EnvHome,1);
-            EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
-            SetEnvStrings('HOME',True,True,EnvHome);
+            // Set HOME for the Windows Command Prompt.
+            EnvHome:=GetEnvStrings('HOME',True);
+            i:=GetArrayLength(EnvHome);
+            if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
+                SetArrayLength(EnvHome,1);
+                EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
+                SetEnvStrings('HOME',True,True,EnvHome);
 
-            // Mark that we have changed HOME.
-            SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
+                // Mark that we have changed HOME.
+                SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
+            end;
         end;
     end;
 
