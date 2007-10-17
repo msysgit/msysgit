@@ -322,7 +322,7 @@ begin
             SetArrayLength(EnvHome,1);
             EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
             SetEnvStrings('HOME',True,True,EnvHome);
-            
+
             // Mark that we have changed HOME.
             SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
         end;
@@ -334,7 +334,7 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir,a,b:string;
+    AppDir:string;
     EnvPath,EnvHome:TArrayOfString;
     i:Longint;
 begin
@@ -366,7 +366,7 @@ begin
     if not SetEnvStrings('PATH',True,True,EnvPath) then begin
         MsgBox('Unable to revert any possible changes to PATH.',mbError,MB_OK);
     end;
-    
+
     // Reset the current user's HOME if we modified it.
     EnvHome:=GetEnvStrings('HOME',True);
     if (GetArrayLength(EnvHome)=1) and
