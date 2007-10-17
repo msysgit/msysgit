@@ -38,6 +38,7 @@ tar xvf - &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
+cp /share/WinGit/ReleaseNotes.txt . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
 cp /share/resources/git.ico etc/ ||
