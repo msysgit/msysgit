@@ -72,7 +72,7 @@ begin
 
     // Create a custom page for modifying the environment.
     EnvPage:=CreateCustomPage(
-        wpInstalling,
+        wpSelectTasks,
         'Adjusting your PATH environment',
         'How would you like to use Git from the command line?'
     );
@@ -192,7 +192,7 @@ begin
     end;
 end;
 
-procedure SetEnvPathStrings(CurrentUser:Boolean;DirStrings:TArrayOfString);
+function SetEnvPathStrings(CurrentUser:Boolean;DirStrings:TArrayOfString):Boolean;
 var
     Path:string;
     i:Longint;
@@ -211,9 +211,9 @@ begin
 
     // See http://www.jrsoftware.org/isfaq.php#env
     if CurrentUser then begin
-        RegWriteStringValue(HKEY_CURRENT_USER,'Environment','Path',Path);
+        Result:=RegWriteStringValue(HKEY_CURRENT_USER,'Environment','Path',Path);
     end else begin
-        RegWriteStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment','Path',Path);
+        Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment','Path',Path);
     end;
 end;
 
@@ -227,66 +227,82 @@ var
     Count,i:Longint;
     IsNTFS:Boolean;
 begin
+    if CurStep<>ssPostInstall then begin
+        Exit;
+    end;
+
     AppDir:=ExpandConstant('{app}');
 
-    if CurStep=ssPostInstall then begin
-        // Load the built-ins from a text file.
-        FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
-        if not LoadStringsFromFile(FileName,BuiltIns) then begin
-            MsgBox('Unable to read file "{#emit APP_BUILTINS}".', mbError, MB_OK);
-            Exit;
-        end;
+    {
+        Create the built-ins
+    }
 
-        // Check if we are running on NTFS.
-        IsNTFS:=False;
-        if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
-            IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
-        end;
-
-        Count:=GetArrayLength(BuiltIns)-1;
-
-        // Map the built-ins to git.exe.
-        if IsNTFS then begin
-            for i:=0 to Count do begin
-                FileName:=AppDir+'\'+BuiltIns[i];
-
-                // On non-NTFS partitions, create hard links.
-                CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
-            end;
-        end else begin
-            for i:=0 to GetArrayLength(BuiltIns)-1 do begin
-                FileName:=AppDir+'\'+BuiltIns[i];
-
-                // On non-NTFS partitions, copy simply the files.
-                FileCopy(AppDir+'\bin\git.exe',FileName,false);
-            end;
-        end;
-    end else if CurStep=ssDone then begin
-        // Get the current user's directories in PATH.
-        DirStrings:=GetEnvPathStrings(True);
-
-        // First, remove the installation directory from PATH in any case.
-        for i:=0 to GetArrayLength(DirStrings)-1 do begin
-            if Pos(AppDir,DirStrings[i])=1 then begin
-                DirStrings[i]:='';
-            end;
-        end;
-
-        // Modify the PATH variable as requested by the user.
-        if RdbGitCmd.Checked then begin
-            i:=GetArrayLength(DirStrings);
-            SetArrayLength(DirStrings,i+1);
-            DirStrings[i]:=ExpandConstant('{app}\cmd');
-        end else if RdbGitCmdTools.Checked then begin
-            i:=GetArrayLength(DirStrings);
-            SetArrayLength(DirStrings,i+2);
-            DirStrings[i]:=ExpandConstant('{app}\cmd');
-            DirStrings[i+1]:=ExpandConstant('{app}\bin');
-        end;
-
-        // Set the current user's directories in PATH.
-        SetEnvPathStrings(True,DirStrings);
+    // Load the built-ins from a text file.
+    FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
+    if not LoadStringsFromFile(FileName,BuiltIns) then begin
+        MsgBox('Unable to read file "{#emit APP_BUILTINS}".',mbError,MB_OK);
+        Exit;
     end;
+
+    // Check if we are running on NTFS.
+    IsNTFS:=False;
+    if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
+        IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
+    end;
+
+    Count:=GetArrayLength(BuiltIns)-1;
+
+    // Map the built-ins to git.exe.
+    if IsNTFS then begin
+        for i:=0 to Count do begin
+            FileName:=AppDir+'\'+BuiltIns[i];
+
+            // On non-NTFS partitions, create hard links.
+            CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
+        end;
+    end else begin
+        for i:=0 to GetArrayLength(BuiltIns)-1 do begin
+            FileName:=AppDir+'\'+BuiltIns[i];
+
+            // On non-NTFS partitions, copy simply the files.
+            FileCopy(AppDir+'\bin\git.exe',FileName,false);
+        end;
+    end;
+
+    {
+        Modify the environment
+
+        This must happen no later than ssPostInstall to make
+        "ChangesEnvironment=yes" not happend before the change!
+    }
+
+    // Get the current user's directories in PATH.
+    DirStrings:=GetEnvPathStrings(True);
+
+    // First, remove the installation directory from PATH in any case.
+    for i:=0 to GetArrayLength(DirStrings)-1 do begin
+        if Pos(AppDir,DirStrings[i])=1 then begin
+            DirStrings[i]:='';
+        end;
+    end;
+
+    // Modify the PATH variable as requested by the user.
+    if RdbGitCmd.Checked then begin
+        i:=GetArrayLength(DirStrings);
+        SetArrayLength(DirStrings,i+1);
+        DirStrings[i]:=ExpandConstant('{app}\cmd');
+    end else if RdbGitCmdTools.Checked then begin
+        i:=GetArrayLength(DirStrings);
+        SetArrayLength(DirStrings,i+2);
+
+        // List \cmd before \bin so \cmd has higher priority and programs in
+        // there will be called in favor of those in \bin.
+        DirStrings[i]:=ExpandConstant('{app}\cmd');
+        DirStrings[i+1]:=ExpandConstant('{app}\bin');
+    end;
+
+    // Set the current user's directories in PATH.
+    SetEnvPathStrings(True,DirStrings);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
@@ -295,21 +311,32 @@ var
     DirStrings:TArrayOfString;
     i:Longint;
 begin
-    if CurUninstallStep=usDone then begin
-        AppDir:=ExpandConstant('{app}');
+    if CurUninstallStep<>usUninstall then begin
+        Exit;
+    end;
 
-        // Get the current user's directories in PATH.
-        DirStrings:=GetEnvPathStrings(True);
+    {
+        Modify the environment
 
-        // Remove the installation directory from PATH in any case, even if it
-        // was not added by the installer.
-        for i:=0 to GetArrayLength(DirStrings)-1 do begin
-            if Pos(AppDir,DirStrings[i])=1 then begin
-                DirStrings[i]:='';
-            end;
+        This must happen no later than usUninstall to make
+        "ChangesEnvironment=yes" not happend before the change!
+    }
+
+    AppDir:=ExpandConstant('{app}');
+
+    // Get the current user's directories in PATH.
+    DirStrings:=GetEnvPathStrings(True);
+
+    // Remove the installation directory from PATH in any case, even if it
+    // was not added by the installer.
+    for i:=0 to GetArrayLength(DirStrings)-1 do begin
+        if Pos(AppDir,DirStrings[i])=1 then begin
+            DirStrings[i]:='';
         end;
+    end;
 
-        // Set the current user's directories in PATH.
-        SetEnvPathStrings(True,DirStrings);
+    // Set the current user's directories in PATH.
+    if not SetEnvPathStrings(True,DirStrings) then begin
+        MsgBox('Unable to revert any possible changes to PATH.',mbError,MB_OK);
     end;
 end;
