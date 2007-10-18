@@ -309,6 +309,15 @@ begin
         end;
     end;
 
+    // Delete HOME if a previous installation modified it.
+    EnvHome:=GetEnvStrings('HOME',True);
+    if (GetArrayLength(EnvHome)=1) and
+       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
+        if not SetEnvStrings('HOME',True,True,[]) then begin
+            MsgBox('Unable to reset HOME prior to install.',mbError,MB_OK);
+        end;
+    end;
+
     // Modify the PATH variable as requested by the user.
     if RdbGitCmd.Checked or RdbGitCmdTools.Checked then begin
         i:=GetArrayLength(EnvPath);
