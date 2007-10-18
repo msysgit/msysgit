@@ -340,6 +340,18 @@ begin
     SetEnvStrings('PATH',True,True,EnvPath);
 end;
 
+{
+    Uninstaller code
+}
+
+function InitializeUninstall:Boolean;
+begin
+    Result:=DeleteFile(ExpandConstant('{app}')+'\bin\ssh-agent.exe');
+    if not Result then begin
+        MsgBox('Please stop all ssh-agent processes and run uninstall again.',mbError,MB_OK);
+    end;
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
     AppDir:string;
