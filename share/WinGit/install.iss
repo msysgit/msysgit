@@ -58,6 +58,87 @@ Type: dirifempty; Name: "{app}\home\{username}"
 Type: dirifempty; Name: "{app}\home"
 
 [Code]
+{
+    Helper methods
+}
+
+function CreateHardLink(lpFileName,lpExistingFileName:string;lpSecurityAttributes:Integer):Boolean;
+external 'CreateHardLinkA@Kernel32.dll';
+
+function GetEnvStrings(VarName:string;CurrentUser:Boolean):TArrayOfString;
+var
+    Path:string;
+    i:Longint;
+    p:Integer;
+begin
+    Path:='';
+
+    // See http://www.jrsoftware.org/isfaq.php#env
+    if CurrentUser then begin
+        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
+    end else begin
+        RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
+    end;
+
+    // Make sure we have at least one semicolon.
+    Path:=Path+';';
+
+    // Split the directories in PATH into an array of strings.
+    i:=0;
+    SetArrayLength(Result,0);
+
+    p:=Pos(';',Path);
+    while p>0 do begin
+        SetArrayLength(Result,i+1);
+        if p>1 then begin
+            Result[i]:=Copy(Path,1,p-1);
+            i:=i+1;
+        end;
+        Path:=Copy(Path,p+1,Length(Path));
+        p:=Pos(';',Path);
+    end;
+end;
+
+function SetEnvStrings(VarName:string;CurrentUser,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
+var
+    Path,KeyName:string;
+    i:Longint;
+begin
+    // Merge all non-empty directory strings into a PATH variable.
+    Path:='';
+    for i:=0 to GetArrayLength(DirStrings)-1 do begin
+        if Length(DirStrings[i])>0 then begin
+            if Length(Path)>0 then begin
+                Path:=Path+';'+DirStrings[i];
+            end else begin
+                Path:=DirStrings[i];
+            end;
+        end;
+    end;
+
+    // See http://www.jrsoftware.org/isfaq.php#env
+    if CurrentUser then begin
+        KeyName:='Environment';
+        if DeleteIfEmpty and (Length(Path)=0) then begin
+            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName))
+                      or RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
+        end else begin
+            Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
+        end;
+    end else begin
+        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+        if DeleteIfEmpty and (Length(Path)=0) then begin
+            Result:=RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
+        end else begin
+            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+        end;
+    end;
+end;
+
+{
+    Installer code
+}
+
 var
     EnvPage:TWizardPage;
     RdbGitBash,RdbGitCmd,RdbGitCmdTools:TRadioButton;
@@ -161,79 +242,6 @@ begin
         Font.Style:=[fsBold];
     end;
 end;
-
-function GetEnvStrings(VarName:string;CurrentUser:Boolean):TArrayOfString;
-var
-    Path:string;
-    i:Longint;
-    p:Integer;
-begin
-    Path:='';
-
-    // See http://www.jrsoftware.org/isfaq.php#env
-    if CurrentUser then begin
-        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
-    end else begin
-        RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
-    end;
-
-    // Make sure we have at least one semicolon.
-    Path:=Path+';';
-
-    // Split the directories in PATH into an array of strings.
-    i:=0;
-    SetArrayLength(Result,0);
-
-    p:=Pos(';',Path);
-    while p>0 do begin
-        SetArrayLength(Result,i+1);
-        if p>1 then begin
-            Result[i]:=Copy(Path,1,p-1);
-            i:=i+1;
-        end;
-        Path:=Copy(Path,p+1,Length(Path));
-        p:=Pos(';',Path);
-    end;
-end;
-
-function SetEnvStrings(VarName:string;CurrentUser,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
-var
-    Path,KeyName:string;
-    i:Longint;
-begin
-    // Merge all non-empty directory strings into a PATH variable.
-    Path:='';
-    for i:=0 to GetArrayLength(DirStrings)-1 do begin
-        if Length(DirStrings[i])>0 then begin
-            if Length(Path)>0 then begin
-                Path:=Path+';'+DirStrings[i];
-            end else begin
-                Path:=DirStrings[i];
-            end;
-        end;
-    end;
-
-    // See http://www.jrsoftware.org/isfaq.php#env
-    if CurrentUser then begin
-        KeyName:='Environment';
-        if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName))
-                      or RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
-        end else begin
-            Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
-        end;
-    end else begin
-        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
-        if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
-        end else begin
-            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
-        end;
-    end;
-end;
-
-function CreateHardLink(lpFileName,lpExistingFileName:string;lpSecurityAttributes:Integer):Boolean;
-external 'CreateHardLinkA@Kernel32.dll';
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
