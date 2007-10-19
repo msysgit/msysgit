@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # We're already in the install directory
-INSTALL_PATH=`pwd`
-export PATH=$INSTALL_PATH/installer-tmp/bin:$PATH
+INSTALL_PATH="$(pwd)"
+export PATH="$INSTALL_PATH/installer-tmp/bin:$PATH"
 
 error () {
     echo "* error: $*"
@@ -36,28 +36,30 @@ echo
 echo -------------------------------------------------------
 echo Fetching the latest MSys environment
 echo -------------------------------------------------------
-MSYSGIT_REPO_GIT=repo.or.cz/msysgit.git
-MSYSGIT_REPO_HTTP=repo.or.cz/r/msysgit.git
+MSYSGIT_REPO_GIT=git://repo.or.cz/msysgit.git
+MSYSGIT_REPO_GIT_MOB=ssh://mob@repo.or.cz/srv/git/msysgit.git
+MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-init.exe
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe
-cp $INSTALL_PATH/installer-tmp/bin/git.exe $INSTALL_PATH/installer-tmp/bin/git-update-ref.exe
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-init.exe"
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe"
+cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-update-ref.exe"
 
 git init &&
-git config remote.origin.url git://$MSYSGIT_REPO_GIT &&
-git config remote.origin.fetch +refs/heads/master:refs/remotes/origin/master &&
+git config remote.origin.url $MSYSGIT_REPO_GIT &&
+git config remote.origin.fetch \
+	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
 git config branch.master.remote origin &&
-git config branch.master.merge refs/heads/master &&
-git config remote.mob.url ssh://mob@$MSYSGIT_REPO_GIT &&
+git config branch.master.merge refs/heads/@@MSYSGITBRANCH@@ &&
+git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
 git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
 git fetch --keep ||
 	USE_HTTP=t &&
-        git config remote.origin.url http://$MSYSGIT_REPO_HTTP &&
+        git config remote.origin.url $MSYSGIT_REPO_HTTP &&
         git fetch --keep ||
 	error "Could not get msysgit.git"
 
@@ -67,7 +69,7 @@ echo
 echo -------------------------------------------------------
 echo Checking out the master branch
 echo -------------------------------------------------------
-git-checkout -l -f -q -b master origin/master ||
+git-checkout -l -f -q -b master origin/@@MSYSGITBRANCH@@ ||
     error Couldn\'t checkout the master branch!
 
 
@@ -90,8 +92,6 @@ t)
 	GIT_REPO_URL=git://repo.or.cz/git.git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
 	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
-	# WORKAROUND current repo.or.cz breakage
-	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
 ;;
 esac
 
@@ -108,7 +108,31 @@ git fetch mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch --keep origin &&
-git checkout -l -f -q $(cd .. && git ls-tree HEAD git |
-	sed -n "s/^160000 commit \(.*\)	git$/\1/p") ||
-error Couldn\'t update submodules!
+if test -z "@@FOURMSYSGITBRANCH@@"
+then
+	FOURMSYS=$(cd .. && git ls-tree HEAD git |
+		sed -n "s/^160000 commit \(.*\)	git$/\1/p")
+else
+	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
+fi &&
+git checkout -l -f -q $FOURMSYS ||
+error Couldn\'t update submodule git!
+
+echo
+echo -------------------------------------------------------
+echo Fetching HTML help pages
+echo -------------------------------------------------------
+
+cd .. &&
+rm -rf /doc/git/html &&
+git config submodule.html.url $GIT_REPO_URL &&
+mkdir -p doc/git/html &&
+cd doc/git/html &&
+git init &&
+git config remote.origin.url $GIT_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/html:refs/remotes/origin/html' &&
+git fetch --keep origin &&
+git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
+	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
+error "Couldn't update submodule doc/git/html (HTML help will not work)."
 

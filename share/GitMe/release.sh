@@ -3,9 +3,13 @@
 # Recreate GitMe-$VERSION.exe
 
 test -z "$1" && {
-	echo "Usage: $0 <version>"
+	echo "Usage: $0 <version> [<msysgitbranch> [<4msysgitbranch>]]"
 	exit 1
 }
+
+MSYSGITBRANCH="$2"
+test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=master
+FOURMSYSGITBRANCH="$3"
 
 TARGET="$HOME"/GitMe-"$1".exe
 TMPDIR=/tmp/installer-tmp
@@ -26,7 +30,9 @@ cat "$SHARE"/fileList-mingw.txt |
 strip bin/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
-cp "$SHARE"/setup-msysgit.sh ./ &&
+sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
+    -e "s|@@FOURMSYSGITBRANCH@@|$FOURMSYSGITBRANCH|g" \
+  < "$SHARE"/setup-msysgit.sh > setup-msysgit.sh &&
 echo "Creating archive" &&
 cd .. &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&
@@ -42,9 +48,9 @@ cd .. &&
  echo 'GUIMode="1"' &&
  echo 'InstallPath="C:\\msysgit"' &&
  echo 'OverwriteMode="2"' &&
- echo 'RunProgram="%%T\installer-tmp\bin\sh.exe /setup-msysgit.sh"' &&
+ echo 'RunProgram="\"%%T\installer-tmp\bin\sh.exe\" /setup-msysgit.sh"' &&
  echo 'Delete="%%T\installer-tmp"' &&
- echo 'RunProgram="%%T\bin\sh.exe --login -i"' &&
+ echo 'RunProgram="\"%%T\bin\sh.exe\" --login -i"' &&
  echo ';!@InstallEnd@!' &&
  cat "$TMPPACK") > "$TARGET" &&
 echo Success! You\'ll find the new installer at $TARGET

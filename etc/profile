@@ -29,14 +29,21 @@ fi
 
 # Set up USER's home directory
 if [ -z "$HOME" ]; then
-  HOME="/home/$LOGNAME"
+  HOME="$USERPROFILE"
 fi
-
-export PATH="$HOME/bin:$PATH"
 
 if [ ! -d "$HOME" ]; then
-  mkdir -p "$HOME"
+	echo "Error: HOME directory '$HOME' doen't exist!"
+	echo "Please fix this error and restart shell."
+	echo "Press key to quit."
+	read dummy
+	exit 1
 fi
+
+# normalize HOME to unix path
+HOME="$(cd "$HOME" ; pwd)"
+
+export PATH="$HOME/bin:$PATH"
 
 export GNUPGHOME=~/.gnupg
 
@@ -72,7 +79,7 @@ elif [ -e /etc/bash_profile ]; then
 fi
 
 # Git specific stuff
-test -e /bin/git.exe || test -e /git/git.exe || {
+test -e /bin/git.exe -o -e /git/git.exe || {
 	echo
 	echo -------------------------------------------------------
 	echo "Building and Installing Git"
@@ -101,9 +108,25 @@ This is a minimal MSYS environment to work on Git.
 
 $MESSAGE
 
-Have fun!
 EOF
+	cd "$HOME"
 }
+
+test -f /etc/motd && sed "s/\$MESSAGE/$MESSAGE/" < /etc/motd
+
+case ":$PATH:" in
+*:/cmd:*|*:/bin:*) ;;
+*)
+	cat << EOF
+
+In order to use Git from cmd.exe:
+1. Add c:\msysgit\cmd to cmd's PATH
+2. DON'T add c:\msysgit\bin or c:\msysgit\mingw\bin to cmd's PATH
+Commands like 'git add' will work from cmd.exe now.
+Commands like 'git-add' will NOT work. Add more wrappers as appropriate.
+EOF
+esac
+
 
 . /git/contrib/completion/git-completion.bash
 
