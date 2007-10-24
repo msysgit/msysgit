@@ -9,6 +9,7 @@ version=$1
 TMPDIR=/tmp/WinGit
 
 /share/WinGit/copy-files.sh $TMPDIR &&
+sed "s/msysGit/Git (version $version)/" < /etc/motd > $TMPDIR/etc/motd &&
 cp /share/resources/gpl-2.0.txt /share/resources/git.bmp $TMPDIR &&
 homewinpath=$(cd ~ ; pwd -W) &&
 sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
