@@ -20,7 +20,7 @@ ChangesEnvironment=yes
 DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
-LicenseFile=gpl-2.0.txt
+LicenseFile=gpl-2.0.rtf
 UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
@@ -147,10 +147,6 @@ procedure InitializeWizard;
 var
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
 begin
-    // Use a mono spaced font in the license dialog. NOTE: This might be too small.
-    WizardForm.LicenseMemo.Font.Name:='Lucida Console';
-    WizardForm.LicenseMemo.Font.Size:=7;
-
     // Create a custom page for modifying the environment.
     EnvPage:=CreateCustomPage(
         wpSelectTasks,
