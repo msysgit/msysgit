@@ -42,16 +42,10 @@ Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bi
 Name: "{group}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
-Name: "{userdesktop}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
+Name: "{code:GetShellFolder|desktop}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
 
 [Messages]
 BeveledLabel={#emit APP_URL}
-
-[Registry]
-Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "Git &Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
-Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
-Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui"; ValueType: string; ValueData: "Git &GUI Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
-Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: """{app}\bin\wish.exe"" ""{app}\bin\git-gui"" ""--working-dir"" ""%1"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
@@ -63,10 +57,20 @@ Type: dirifempty; Name: "{app}\home"
     Helper methods
 }
 
+function GetShellFolder(Param:string):string;
+begin
+    if IsAdminLoggedOn then begin
+        Param:='{common'+Param+'}';
+    end else begin
+        Param:='{user'+Param+'}';
+    end;
+    Result:=ExpandConstant(Param);
+end;
+
 function CreateHardLink(lpFileName,lpExistingFileName:string;lpSecurityAttributes:Integer):Boolean;
 external 'CreateHardLinkA@Kernel32.dll';
 
-function GetEnvStrings(VarName:string;CurrentUser:Boolean):TArrayOfString;
+function GetEnvStrings(VarName:string;AllUsers:Boolean):TArrayOfString;
 var
     Path:string;
     i:Longint;
@@ -75,10 +79,10 @@ begin
     Path:='';
 
     // See http://www.jrsoftware.org/isfaq.php#env
-    if CurrentUser then begin
-        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
-    end else begin
+    if AllUsers then begin
         RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
+    end else begin
+        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
     end;
 
     // Make sure we have at least one semicolon.
@@ -100,7 +104,7 @@ begin
     end;
 end;
 
-function SetEnvStrings(VarName:string;CurrentUser,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
+function SetEnvStrings(VarName:string;AllUsers,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
 var
     Path,KeyName:string;
     i:Longint;
@@ -118,20 +122,21 @@ begin
     end;
 
     // See http://www.jrsoftware.org/isfaq.php#env
-    if CurrentUser then begin
+    if AllUsers then begin
+        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+        if DeleteIfEmpty and (Length(Path)=0) then begin
+            Result:=(not RegValueExists(HKEY_LOCAL_MACHINE,KeyName,VarName))
+                      or RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
+        end else begin
+            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+        end;
+    end else begin
         KeyName:='Environment';
         if DeleteIfEmpty and (Length(Path)=0) then begin
             Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName))
                       or RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
         end else begin
             Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
-        end;
-    end else begin
-        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
-        if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
-        end else begin
-            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
         end;
     end;
 end;
@@ -246,6 +251,7 @@ var
     BuiltIns,EnvPath,EnvHome:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
+    RootKey:Integer;
 begin
     if CurStep<>ssPostInstall then begin
         Exit;
@@ -297,7 +303,7 @@ begin
     }
 
     // Get the current user's directories in PATH.
-    EnvPath:=GetEnvStrings('PATH',True);
+    EnvPath:=GetEnvStrings('PATH',IsAdminLoggedOn);
 
     // First, remove the installation directory from PATH in any case.
     for i:=0 to GetArrayLength(EnvPath)-1 do begin
@@ -307,10 +313,10 @@ begin
     end;
 
     // Delete HOME if a previous installation modified it.
-    EnvHome:=GetEnvStrings('HOME',True);
+    EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
-        if not SetEnvStrings('HOME',True,True,[]) then begin
+        if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             MsgBox('Unable to reset HOME prior to install.',mbError,MB_OK);
         end;
     end;
@@ -329,12 +335,12 @@ begin
             EnvPath[i+1]:=ExpandConstant('{app}\bin');
 
             // Set HOME for the Windows Command Prompt.
-            EnvHome:=GetEnvStrings('HOME',True);
+            EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
             i:=GetArrayLength(EnvHome);
             if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
                 SetArrayLength(EnvHome,1);
                 EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
-                SetEnvStrings('HOME',True,True,EnvHome);
+                SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome);
 
                 // Mark that we have changed HOME.
                 SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
@@ -343,7 +349,27 @@ begin
     end;
 
     // Set the current user's directories in PATH.
-    SetEnvStrings('PATH',True,True,EnvPath);
+    SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath);
+
+    {
+        Create the Windows Explorer shell extensions
+    }
+
+    if IsAdminLoggedOn then begin
+        RootKey:=HKEY_LOCAL_MACHINE;
+    end else begin
+        RootKey:=HKEY_CURRENT_USER;
+    end;
+
+    if IsTaskSelected('shellextension') then begin
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git &Shell Here');
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','cmd.exe /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
+    end;
+
+    if IsTaskSelected('guiextension') then begin
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here');
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\bin\git-gui" "--working-dir" "%1"');
+    end;
 end;
 
 {
@@ -360,9 +386,10 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir:string;
+    AppDir,Command:string;
     EnvPath,EnvHome:TArrayOfString;
     i:Longint;
+    RootKey:Integer;
 begin
     if CurUninstallStep<>usUninstall then begin
         Exit;
@@ -378,7 +405,7 @@ begin
     AppDir:=ExpandConstant('{app}');
 
     // Get the current user's directories in PATH.
-    EnvPath:=GetEnvStrings('PATH',True);
+    EnvPath:=GetEnvStrings('PATH',IsAdminLoggedOn);
 
     // Remove the installation directory from PATH in any case, even if it
     // was not added by the installer.
@@ -389,17 +416,39 @@ begin
     end;
 
     // Reset the current user's directories in PATH.
-    if not SetEnvStrings('PATH',True,True,EnvPath) then begin
+    if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
         MsgBox('Unable to revert any possible changes to PATH.',mbError,MB_OK);
     end;
 
     // Reset the current user's HOME if we modified it.
-    EnvHome:=GetEnvStrings('HOME',True);
+    EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
-        if not SetEnvStrings('HOME',True,True,[]) then begin
+        if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             MsgBox('Unable to revert any possible changes to HOME.',mbError,MB_OK);
         end;
     end;
     DeleteFile(AppDir+'\setup.ini');
+
+    {
+        Delete the Windows Explorer shell extensions
+    }
+
+    if IsAdminLoggedOn then begin
+        RootKey:=HKEY_LOCAL_MACHINE;
+    end else begin
+        RootKey:=HKEY_CURRENT_USER;
+    end;
+    
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell');
+    end;
+
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui');
+    end;
 end;
