@@ -21,6 +21,7 @@ DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
 LicenseFile=gpl-2.0.rtf
+PrivilegesRequired=none
 UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
@@ -47,10 +48,10 @@ Name: "{userdesktop}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--log
 BeveledLabel={#emit APP_URL}
 
 [Registry]
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "Git &Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui"; ValueType: string; ValueData: "Git &GUI Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
-Root: HKLM; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: """{app}\bin\wish.exe"" ""{app}\bin\git-gui"" ""--working-dir"" ""%1"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
+Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell"; ValueType: string; ValueData: "Git &Shell Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
+Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_shell\command"; ValueType: string; ValueData: "cmd.exe /c ""pushd ""%1"" && ""{app}\bin\sh.exe"" --login -i"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: shellextension
+Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui"; ValueType: string; ValueData: "Git &GUI Here"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
+Root: HKCU; Subkey: "SOFTWARE\Classes\Directory\shell\git_gui\command"; ValueType: string; ValueData: """{app}\bin\wish.exe"" ""{app}\bin\git-gui"" ""--working-dir"" ""%1"""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: guiextension
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
