@@ -1,0 +1,3615 @@
+From 2df4b7b9de0c03cf17c3b5648905a25ad3b26e15 Mon Sep 17 00:00:00 2001
+From: Simon Sasburg <Simon.Sasburg@gmail.com>
+Date: Sat, 10 Nov 2007 13:27:59 +0100
+Subject: [PATCH] Import test changes from perl-5.6.1-MSYS-1.0.11-src.tar.bz2
+
+---
+ MANIFEST                |    1 +
+ t/TEST                  |    2 +-
+ t/base/term.t           |   12 +-
+ t/comp/cpp.t            |    2 +-
+ t/comp/multiline.t      |    4 +-
+ t/comp/script.t         |    3 +-
+ t/echo12128             |    1 +
+ t/echo12296             |    1 +
+ t/echo1432              |    1 +
+ t/echo5404              |    1 +
+ t/echo5728              |    1 +
+ t/echo5888              |    1 +
+ t/harness               |    4 +-
+ t/io/argv.t             |    9 +
+ t/io/dup.t              |    9 +-
+ t/io/fs.t               |   27 +-
+ t/io/inplace.t          |    6 +
+ t/io/iprefix.t          |    6 +
+ t/io/open.t             |   13 +-
+ t/io/openpid.t          |    2 +-
+ t/io/tell.t             |    2 +-
+ t/lib/anydbm.t          |    2 +-
+ t/lib/autoloader.t      |   36 ++-
+ t/lib/b.t               |    1 +
+ t/lib/db-btree.t        |    3 +-
+ t/lib/db-hash.t         |    3 +-
+ t/lib/db-recno.t        |    2 +-
+ t/lib/dirhand.t         |    3 +-
+ t/lib/filecopy.t        |   78 +++-
+ t/lib/filefind-taint.t  |  416 ++++++++++++++++++++++
+ t/lib/filefind.t        |  876 ++++++++++++++++++++++++++++++++++++++---------
+ t/lib/filepath.t        |   14 +-
+ t/lib/findbin.t         |    3 +-
+ t/lib/glob-basic.t      |    2 +-
+ t/lib/io_dir.t          |    8 +-
+ t/lib/io_dup.t          |    9 +-
+ t/lib/ndbm.t            |    4 +-
+ t/lib/posix.t           |   29 ++-
+ t/lib/selfloader.t      |   13 +-
+ t/lib/socket.t          |    4 +-
+ t/op/anonsub.t          |   11 +-
+ t/op/closure.t          |    1 +
+ t/op/defins.t           |    9 +-
+ t/op/die_exit.t         |    2 +-
+ t/op/eval.t             |    4 +-
+ t/op/exec.t             |    6 +
+ t/op/goto.t             |    2 +-
+ t/op/groups.t           |    2 +-
+ t/op/magic.t            |    5 +-
+ t/op/misc.t             |   43 +++-
+ t/op/mkdir.t            |    2 +-
+ t/op/pack.t             |    2 +-
+ t/op/pat.t              |   47 +++-
+ t/op/read.t             |    2 +-
+ t/op/readdir.t          |    5 +-
+ t/op/regexp.t           |    2 +-
+ t/op/regexp_noamp.t     |    4 +-
+ t/op/runlevel.t         |   11 +-
+ t/op/split.t            |    1 +
+ t/op/stat.t             |   41 ++-
+ t/op/subst_wamp.t       |    2 +-
+ t/op/taint.t            |   21 +-
+ t/op/write.t            |    3 +-
+ t/pod/find.t            |   15 +-
+ t/pod/testp2pt.pl       |    5 +-
+ t/pragma/diagnostics.t  |   11 +-
+ t/pragma/locale.t       |    3 +-
+ t/pragma/strict.t       |    8 +-
+ t/pragma/sub_lval.t     |   26 +-
+ t/pragma/subs.t         |   13 +-
+ t/pragma/warn/doio      |   12 +
+ t/pragma/warn/mg        |    6 +-
+ t/pragma/warn/op        |   14 +-
+ t/pragma/warn/pp_sys    |    2 +-
+ t/pragma/warn/universal |    2 -
+ t/pragma/warnings.t     |   39 ++-
+ t/run/runenv.t          |    2 +
+ t/tmp0001               |    5 +
+ t/tmp0002               |    5 +
+ t/tmp0003               |    5 +
+ 80 files changed, 1652 insertions(+), 363 deletions(-)
+ create mode 100644 t/echo12128
+ create mode 100644 t/echo12296
+ create mode 100644 t/echo1432
+ create mode 100644 t/echo5404
+ create mode 100644 t/echo5728
+ create mode 100644 t/echo5888
+ create mode 100644 t/lib/filefind-taint.t
+ create mode 100644 t/tmp0001
+ create mode 100644 t/tmp0002
+ create mode 100644 t/tmp0003
+
+diff --git a/MANIFEST b/MANIFEST
+index 05e3cbc..3bb15ef 100644
+--- a/MANIFEST
++++ b/MANIFEST
+@@ -1338,6 +1338,7 @@ t/lib/fields.t          See if base/fields works
+ t/lib/filecache.t	See if FileCache works
+ t/lib/filecopy.t	See if File::Copy works
+ t/lib/filefind.t	See if File::Find works
++t/lib/filefind-taint.t	See if File::Find works
+ t/lib/filefunc.t	See if File::Spec::Functions works
+ t/lib/filehand.t	See if FileHandle works
+ t/lib/filepath.t	See if File::Path works
+diff --git a/t/TEST b/t/TEST
+index bce9545..46dd61f 100644
+--- a/t/TEST
++++ b/t/TEST
+@@ -24,7 +24,7 @@ $ENV{EMXSHELL} = 'sh';        # For OS/2
+ 
+ if ($#ARGV == -1) {
+     @ARGV = split(/[ \n]/,
+-      `echo base/*.t comp/*.t cmd/*.t run/*.t io/*.t; echo op/*.t pragma/*.t lib/*.t`);
++      `echo base/*.t comp/*.t cmd/*.t run/*.t io/*.t; echo op/*.t pragma/*.t lib/*.t pod/*.t`);
+ }
+ 
+ # %infinite = ( 'comp/require.t', 1, 'op/bop.t', 1, 'lib/hostname.t', 1 ); 
+diff --git a/t/base/term.t b/t/base/term.t
+index 818eb71..e866337 100644
+--- a/t/base/term.t
++++ b/t/base/term.t
+@@ -4,19 +4,17 @@
+ 
+ BEGIN {
+     chdir 't' if -d 't';
+-    @INC = '../lib';
+ }
+ 
+-use Config;
+-
+ print "1..7\n";
+ 
+ # check "" interpretation
+ 
+ $x = "\n";
+-# 10 is ASCII/Iso Latin, 21 is EBCDIC.
+-if ($x eq chr(10) ||
+-    ($Config{ebcdic} eq 'define' && $x eq chr(21))) {print "ok 1\n";}
++# 10 is ASCII/Iso Latin, 13 in Mac OS, 21 is EBCDIC.
++if ($x eq chr(10)) { print "ok 1\n";}
++elsif ($x eq chr(13)) { print "ok 1 # Mac OS\n"; }
++elsif ($x eq chr(21)) { print "ok 1 # EBCDIC\n"; }
+ else {print "not ok 1\n";}
+ 
+ # check `` processing
+@@ -42,7 +40,7 @@ if (($x | 1) == 101) {print "ok 5\n";} else {print "not ok 5\n";}
+ 
+ # check <> pseudoliteral
+ 
+-open(try, "/dev/null") || open(try,"nla0:") || (die "Can't open /dev/null.");
++open(try, "/dev/null") || open(try,"Dev:Null") || open(try,"nla0:") || (die "Can't open /dev/null.");
+ if (<try> eq '') {
+     print "ok 6\n";
+ }
+diff --git a/t/comp/cpp.t b/t/comp/cpp.t
+index 5b061ee..cb8df50 100644
+--- a/t/comp/cpp.t
++++ b/t/comp/cpp.t
+@@ -8,7 +8,7 @@ BEGIN {
+ }
+ 
+ use Config;
+-if ( $^O eq 'MSWin32' or
++if ( $^O eq 'MSWin32' or $^O eq 'MacOS' or
+      ($Config{'cppstdin'} =~ /\bcppstdin\b/) and
+      ( ! -x $Config{'binexp'} . "/cppstdin") ) {
+     print "1..0 # Skip: \$Config{cppstdin} unavailable\n";
+diff --git a/t/comp/multiline.t b/t/comp/multiline.t
+index ed418b8..309ac71 100644
+--- a/t/comp/multiline.t
++++ b/t/comp/multiline.t
+@@ -36,7 +36,9 @@ if ($z eq $y) {print "ok 2\n";} else {print "not ok 2\n";}
+ 
+ if ($count == 7) {print "ok 3\n";} else {print "not ok 3\n";}
+ 
+-$_ = ($^O eq 'MSWin32') ? `type Comp.try` : `cat Comp.try`;
++$_ = ($^O eq 'MSWin32') ? `type Comp.try`
++    : ($^O eq 'MacOS') ? `catenate Comp.try`
++    : `cat Comp.try`;
+ 
+ if (/.*\n.*\n.*\n$/) {print "ok 4\n";} else {print "not ok 4\n";}
+ 
+diff --git a/t/comp/script.t b/t/comp/script.t
+index a9bc47d..9ae83e4 100644
+--- a/t/comp/script.t
++++ b/t/comp/script.t
+@@ -4,7 +4,8 @@
+ 
+ print "1..3\n";
+ 
+-$PERL = ($^O eq 'MSWin32') ? '.\perl' : './perl';
++$PERL = ($^O eq 'MSWin32') ? '.\perl'
++    : ($^O eq 'MacOS') ? $^X : './perl';
+ $x = `$PERL -le "print 'ok';"`;
+ 
+ if ($x eq "ok\n") {print "ok 1\n";} else {print "not ok 1\n";}
+diff --git a/t/echo12128 b/t/echo12128
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo12128
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/echo12296 b/t/echo12296
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo12296
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/echo1432 b/t/echo1432
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo1432
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/echo5404 b/t/echo5404
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo5404
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/echo5728 b/t/echo5728
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo5728
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/echo5888 b/t/echo5888
+new file mode 100644
+index 0000000..841ea7f
+--- /dev/null
++++ b/t/echo5888
+@@ -0,0 +1 @@
++print "@ARGV\n"
+diff --git a/t/harness b/t/harness
+index c24d46f..3a0b74c 100644
+--- a/t/harness
++++ b/t/harness
+@@ -7,6 +7,7 @@ BEGIN {
+     chdir 't' if -d 't';
+     unshift @INC, '../lib';
+     $ENV{PERL5LIB} = '../lib';    # so children will see it too
++    $ENV{HARNESS_NOTTY} = 1 if $^O eq 'MacOS';
+ }
+ use lib '../lib';
+ 
+@@ -37,7 +38,8 @@ foreach (keys %datahandle) {
+ }
+ 
+ @tests = @ARGV;
+-@tests = <base/*.t comp/*.t cmd/*.t io/*.t op/*.t pragma/*.t lib/*.t> unless @tests;
++@tests = <base/*.t comp/*.t cmd/*.t run/*.t io/*.t op/*.t pragma/*.t lib/*.t pod/*.t>
++    unless @tests;
+ 
+ Test::Harness::runtests @tests;
+ exit(0) unless -e "../testcompile";
+diff --git a/t/io/argv.t b/t/io/argv.t
+index 2b8f23b..0c287ee 100644
+--- a/t/io/argv.t
++++ b/t/io/argv.t
+@@ -18,6 +18,9 @@ close try;
+ if ($^O eq 'MSWin32') {
+   $x = `.\\perl -e "while (<>) {print \$.,\$_;}" Io_argv1.tmp Io_argv1.tmp`;
+ }
++elsif ($^O eq 'MacOS') {
++  $x = `$^X -e 'while (<>) {print \$.,\$_;}' Io_argv1.tmp Io_argv1.tmp`;
++}
+ else {
+   $x = `./perl -e 'while (<>) {print \$.,\$_;}' Io_argv1.tmp Io_argv1.tmp`;
+ }
+@@ -26,6 +29,9 @@ if ($x eq "1a line\n2a line\n") {print "ok 1\n";} else {print "not ok 1\n";}
+ if ($^O eq 'MSWin32') {
+   $x = `.\\perl -le "print 'foo'" | .\\perl -e "while (<>) {print \$_;}" Io_argv1.tmp -`;
+ }
++elsif ($^O eq 'MacOS') {
++  $x = `echo foo|$^X -e 'while (<>) {print $_;}' Io_argv1.tmp -`;
++}
+ else {
+   $x = `echo foo|./perl -e 'while (<>) {print $_;}' Io_argv1.tmp -`;
+ }
+@@ -34,6 +40,9 @@ if ($x eq "a line\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
+ if ($^O eq 'MSWin32') {
+   $x = `.\\perl -le "print 'foo'" |.\\perl -e "while (<>) {print \$_;}"`;
+ }
++elsif ($^O eq 'MacOS') {
++  $x = `echo foo|$^X -e 'while (<>) {print $_;}'`;
++}
+ else {
+   $x = `echo foo|./perl -e 'while (<>) {print $_;}'`;
+ }
+diff --git a/t/io/dup.t b/t/io/dup.t
+index af13d4d..759e33b 100644
+--- a/t/io/dup.t
++++ b/t/io/dup.t
+@@ -21,6 +21,10 @@ if ($^O eq 'MSWin32') {
+     print `echo ok 4`;
+     print `echo ok 5 1>&2`; # does this work?
+ }
++elsif ($^O eq 'MacOS') {
++    system 'echo ok 4';
++    system 'echo ok 5';  # no real way to do this, i think
++}
+ else {
+     system 'echo ok 4';
+     system 'echo ok 5 1>&2';
+@@ -32,8 +36,9 @@ close(STDERR);
+ open(STDOUT,">&dupout");
+ open(STDERR,">&duperr");
+ 
+-if ($^O eq 'MSWin32') { print `type Io.dup` }
+-else                  { system 'cat Io.dup' }
++if ($^O eq 'MSWin32')  { print `type Io.dup`      }
++elsif ($^O eq 'MacOS') { system 'catenate Io.dup' }
++else                   { system 'cat Io.dup'      }
+ unlink 'Io.dup';
+ 
+ print STDOUT "ok 6\n";
+diff --git a/t/io/fs.t b/t/io/fs.t
+index 8170b33..6dbcf5a 100644
+--- a/t/io/fs.t
++++ b/t/io/fs.t
+@@ -8,7 +8,9 @@ BEGIN {
+ }
+ 
+ use Config;
++use File::Spec::Functions;
+ 
++$Is_MacOS  = $^O eq 'MacOS';
+ $Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'dos' or
+ 	      $^O eq 'os2' or $^O eq 'mint');
+ 
+@@ -21,25 +23,26 @@ print "1..29\n";
+ $wd = (($^O eq 'MSWin32') ? `cd` : `pwd`);
+ chop($wd);
+ 
+-if ($^O eq 'MSWin32') { `rmdir /s /q tmp 2>nul`; `mkdir tmp`; }
++if ($^O eq 'MSWin32')  { `rmdir /s /q tmp 2>nul`; `mkdir tmp`; }
++elsif ($^O eq 'MacOS') { rmdir "tmp"; mkdir "tmp"; }
+ else {  `rm -f tmp 2>/dev/null; mkdir tmp 2>/dev/null`; }
+-chdir './tmp';
++chdir catdir(curdir(), 'tmp');
+ `/bin/rm -rf a b c x` if -x '/bin/rm';
+ 
+ umask(022);
+ 
+-if ($^O eq 'MSWin32') { print "ok 1 # skipped: bogus umask()\n"; }
++if ($^O eq 'MSWin32' || $Is_MacOS) { print "ok 1 # skipped: bogus umask()\n"; }
+ elsif ((umask(0)&0777) == 022) {print "ok 1\n";} else {print "not ok 1\n";}
+ open(fh,'>x') || die "Can't create x";
+ close(fh);
+ open(fh,'>a') || die "Can't create a";
+ close(fh);
+ 
+-if ($Is_Dosish) {print "ok 2 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 2 # skipped: no link\n";}
+ elsif (eval {link('a','b')}) {print "ok 2\n";} 
+ else {print "not ok 2\n";}
+ 
+-if ($Is_Dosish) {print "ok 3 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 3 # skipped: no link\n";}
+ elsif (eval {link('b','c')}) {print "ok 3\n";} 
+ else {print "not ok 3\n";}
+ 
+@@ -52,7 +55,7 @@ elsif ($nlink == 3)
+     {print "ok 4\n";} 
+ else {print "not ok 4\n";}
+ 
+-if ($^O eq 'amigaos' || $Is_Dosish)
++if ($^O eq 'amigaos' || $Is_Dosish || $Is_MacOS)
+     {print "ok 5 # skipped: no link\n";} 
+ elsif (($mode & 0777) == 0666)
+     {print "ok 5\n";} 
+@@ -63,7 +66,7 @@ if ((chmod $newmode,'a') == 1) {print "ok 6\n";} else {print "not ok 6\n";}
+ 
+ ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('c');
+-if ($Is_Dosish) {print "ok 7 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 7 # skipped: no link\n";}
+ elsif (($mode & 0777) == $newmode) {print "ok 7\n";} 
+ else {print "not ok 7\n";}
+ 
+@@ -73,23 +76,23 @@ if ($^O eq 'MSWin32') {
+     $newmode = 0666;
+ }
+ 
+-if ($Is_Dosish) {print "ok 8 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 8 # skipped: no link\n";}
+ elsif ((chmod $newmode,'c','x') == 2) {print "ok 8\n";} 
+ else {print "not ok 8\n";}
+ 
+ ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('c');
+-if ($Is_Dosish) {print "ok 9 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 9 # skipped: no link\n";}
+ elsif (($mode & 0777) == $newmode) {print "ok 9\n";} 
+ else {print "not ok 9\n";}
+ 
+ ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('x');
+-if ($Is_Dosish) {print "ok 10 # skipped: no link\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 10 # skipped: no link\n";}
+ elsif (($mode & 0777) == $newmode) {print "ok 10\n";} 
+ else {print "not ok 10\n";}
+ 
+-if ($Is_Dosish) {print "ok 11 # skipped: no link\n"; unlink 'b','x'; } 
++if ($Is_Dosish || $Is_MacOS) {print "ok 11 # skipped: no link\n"; unlink 'b','x'; }
+ elsif ((unlink 'b','x') == 2) {print "ok 11\n";} 
+ else {print "not ok 11\n";}
+ ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+@@ -111,7 +114,7 @@ if ($foo == 1) {print "ok 16\n";} else {print "not ok 16 $foo\n";}
+     $blksize,$blocks) = stat('b');
+ if ($^O eq 'MSWin32') { print "ok 17 # skipped: bogus (stat)[1]\n"; }
+ elsif ($ino) {print "ok 17\n";} else {print "not ok 17\n";}
+-if ($wd =~ m#/afs/# || $^O eq 'amigaos' || $^O eq 'dos' || $^O eq 'MSWin32')
++if ($wd =~ m#/afs/# || $^O eq 'amigaos' || $^O eq 'dos' || $^O eq 'MSWin32' || $Is_MacOS)
+     {print "ok 18 # skipped: granularity of the filetime\n";}
+ elsif ($atime == 500000000 && $mtime == 500000000 + $delta)
+     {print "ok 18\n";}
+diff --git a/t/io/inplace.t b/t/io/inplace.t
+index ff410a7..c558cc6 100644
+--- a/t/io/inplace.t
++++ b/t/io/inplace.t
+@@ -19,6 +19,12 @@ elsif ($^O eq 'VMS') {
+   `MCR []perl. -le "print 'foo'" > ./.b`;
+   `MCR []perl. -le "print 'foo'" > ./.c`;
+ }
++elsif ($^O eq 'MacOS') {
++  $CAT = "$^X -e \"print<>\"";
++  `$^X -le "print 'foo'" > .a`;
++  `$^X -le "print 'foo'" > .b`;
++  `$^X -le "print 'foo'" > .c`;
++}
+ else {
+   $CAT = 'cat';
+   `echo foo | tee .a .b .c`;
+diff --git a/t/io/iprefix.t b/t/io/iprefix.t
+index 10a5c5f..bdbd21d 100644
+--- a/t/io/iprefix.t
++++ b/t/io/iprefix.t
+@@ -19,6 +19,12 @@ elsif ($^O eq 'VMS') {
+   `MCR []perl. -le "print 'foo'" > ./.b`;
+   `MCR []perl. -le "print 'foo'" > ./.c`;
+ }
++elsif ($^O eq 'MacOS') {
++  $CAT = "$^X -e \"print<>\"";
++  `$^X -le "print 'foo'" > .a`;
++  `$^X -le "print 'foo'" > .b`;
++  `$^X -le "print 'foo'" > .c`;
++}
+ else {
+   $CAT = 'cat';
+   `echo foo | tee .a .b .c`;
+diff --git a/t/io/open.t b/t/io/open.t
+index 0e2d57c..86f9c26 100644
+--- a/t/io/open.t
++++ b/t/io/open.t
+@@ -8,8 +8,9 @@ BEGIN {
+ # $RCSfile$    
+ $|  = 1;
+ use warnings;
+-$Is_VMS = $^O eq 'VMS';
+-$Is_Dos = $^O eq 'dos';
++$Is_MacOS = $^O eq 'MacOS';
++$Is_VMS   = $^O eq 'VMS';
++$Is_Dos   = $^O eq 'dos';
+ 
+ print "1..66\n";
+ 
+@@ -100,7 +101,7 @@ sub ok { print "ok $test\n"; $test++ }
+ }
+ 
+ # 24..26
+-if ($Is_VMS) {
++if ($Is_VMS || $Is_MacOS) {
+     for (24..26) { print "ok $_ # skipped: not Unix fork\n"; $test++;}
+ }
+ else {
+@@ -116,7 +117,7 @@ EOC
+ }
+ 
+ # 27..30
+-if ($Is_VMS) {
++if ($Is_VMS || $Is_MacOS) {
+     for (27..30) { print "ok $_ # skipped: not Unix fork\n"; $test++;}
+ }
+ else {
+@@ -224,7 +225,7 @@ ok;
+ }
+ 
+ # 56..58
+-if ($Is_VMS) {
++if ($Is_VMS || $Is_MacOS) {
+     for (56..58) { print "ok $_ # skipped: not Unix fork\n"; $test++;}
+ }
+ else {
+@@ -240,7 +241,7 @@ EOC
+ }
+ 
+ # 59..62
+-if ($Is_VMS) {
++if ($Is_VMS || $Is_MacOS) {
+     for (59..62) { print "ok $_ # skipped: not Unix fork\n"; $test++;}
+ }
+ else {
+diff --git a/t/io/openpid.t b/t/io/openpid.t
+index 7c04a29..487f80a 100644
+--- a/t/io/openpid.t
++++ b/t/io/openpid.t
+@@ -10,7 +10,7 @@
+ BEGIN {
+     chdir 't' if -d 't';
+     @INC = '../lib';
+-    if ($^O eq 'dos') {
++    if ($^O eq 'dos' || $^O eq 'MacOS') {
+         print "1..0 # Skip: no multitasking\n";
+         exit 0;
+     }
+diff --git a/t/io/tell.t b/t/io/tell.t
+index c840c92..a72f442 100644
+--- a/t/io/tell.t
++++ b/t/io/tell.t
+@@ -7,7 +7,7 @@ print "1..23\n";
+ $TST = 'tst';
+ 
+ $Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'dos' or
+-	      $^O eq 'os2' or $^O eq 'mint' or $^O eq 'cygwin');
++	      $^O eq 'os2' or $^O eq 'mint' or $^O eq 'cygwin' or $^O eq 'msys');
+ 
+ open($TST, 'harness') || (die "Can't open harness");
+ binmode $TST if $Is_Dosish;
+diff --git a/t/lib/anydbm.t b/t/lib/anydbm.t
+index 40c4366..08d1f7c 100644
+--- a/t/lib/anydbm.t
++++ b/t/lib/anydbm.t
+@@ -29,7 +29,7 @@ $Dfile = "Op_dbmx.pag";
+ if (! -e $Dfile) {
+ 	($Dfile) = <Op_dbmx*>;
+ }
+-if ($Is_Dosish) {
++if ($Is_Dosish || $^O eq 'MacOS') {
+     print "ok 2 # Skipped: different file permission semantics\n";
+ }
+ else {
+diff --git a/t/lib/autoloader.t b/t/lib/autoloader.t
+index b53b9fe..f2fae7f 100644
+--- a/t/lib/autoloader.t
++++ b/t/lib/autoloader.t
+@@ -2,7 +2,13 @@
+ 
+ BEGIN {
+     chdir 't' if -d 't';
+-    $dir = "auto-$$";
++    if ($^O eq 'MacOS') {
++	$dir = ":auto-$$";
++	$sep = ":";
++    } else {
++	$dir = "auto-$$";
++	$sep = "/";
++    }
+     @INC = $dir;
+     push @INC, '../lib';
+ }
+@@ -11,10 +17,10 @@ print "1..11\n";
+ 
+ # First we must set up some autoloader files
+ mkdir $dir, 0755            or die "Can't mkdir $dir: $!";
+-mkdir "$dir/auto", 0755     or die "Can't mkdir: $!";
+-mkdir "$dir/auto/Foo", 0755 or die "Can't mkdir: $!";
++mkdir "$dir${sep}auto", 0755     or die "Can't mkdir: $!";
++mkdir "$dir${sep}auto${sep}Foo", 0755 or die "Can't mkdir: $!";
+ 
+-open(FOO, ">$dir/auto/Foo/foo.al") or die;
++open(FOO, ">$dir${sep}auto${sep}Foo${sep}foo.al") or die;
+ print FOO <<'EOT';
+ package Foo;
+ sub foo { shift; shift || "foo" }
+@@ -22,7 +28,7 @@ sub foo { shift; shift || "foo" }
+ EOT
+ close(FOO);
+ 
+-open(BAR, ">$dir/auto/Foo/bar.al") or die;
++open(BAR, ">$dir${sep}auto${sep}Foo${sep}bar.al") or die;
+ print BAR <<'EOT';
+ package Foo;
+ sub bar { shift; shift || "bar" }
+@@ -30,7 +36,7 @@ sub bar { shift; shift || "bar" }
+ EOT
+ close(BAR);
+ 
+-open(BAZ, ">$dir/auto/Foo/bazmarkhian.al") or die;
++open(BAZ, ">$dir${sep}auto${sep}Foo${sep}bazmarkhian.al") or die;
+ print BAZ <<'EOT';
+ package Foo;
+ sub bazmarkhianish { shift; shift || "baz" }
+@@ -90,7 +96,7 @@ print "not " unless $foo->bazmarkhianish($1) eq 'foo';
+ print "ok 9\n";
+ 
+ # test recursive autoloads
+-open(F, ">$dir/auto/Foo/a.al") or die;
++open(F, ">$dir${sep}auto${sep}Foo${sep}a.al") or die;
+ print F <<'EOT';
+ package Foo;
+ BEGIN { b() }
+@@ -99,7 +105,7 @@ sub a { print "ok 11\n"; }
+ EOT
+ close(F);
+ 
+-open(F, ">$dir/auto/Foo/b.al") or die;
++open(F, ">$dir${sep}auto${sep}Foo${sep}b.al") or die;
+ print F <<'EOT';
+ package Foo;
+ sub b { print "ok 10\n"; }
+@@ -111,12 +117,12 @@ Foo::a();
+ # cleanup
+ END {
+ return unless $dir && -d $dir;
+-unlink "$dir/auto/Foo/foo.al";
+-unlink "$dir/auto/Foo/bar.al";
+-unlink "$dir/auto/Foo/bazmarkhian.al";
+-unlink "$dir/auto/Foo/a.al";
+-unlink "$dir/auto/Foo/b.al";
+-rmdir "$dir/auto/Foo";
+-rmdir "$dir/auto";
++unlink "$dir${sep}auto${sep}Foo${sep}foo.al";
++unlink "$dir${sep}auto${sep}Foo${sep}bar.al";
++unlink "$dir${sep}auto${sep}Foo${sep}bazmarkhian.al";
++unlink "$dir${sep}auto${sep}Foo${sep}a.al";
++unlink "$dir${sep}auto${sep}Foo${sep}b.al";
++rmdir "$dir${sep}auto${sep}Foo";
++rmdir "$dir${sep}auto";
+ rmdir "$dir";
+ }
+diff --git a/t/lib/b.t b/t/lib/b.t
+index 22156c2..5460cac 100644
+--- a/t/lib/b.t
++++ b/t/lib/b.t
+@@ -126,6 +126,7 @@ $a = join ',', sort split /,/, $a;
+ $a =~ s/-uWin32,// if $^O eq 'MSWin32';
+ $a =~ s/-u(Cwd|File|File::Copy|OS2),//g if $^O eq 'os2';
+ $a =~ s/-uCwd,// if $^O eq 'cygwin';
++$a =~ s/-uCwd,// if $^O eq 'msys';
+ if ($Config{static_ext} eq ' ') {
+   $b = '-uCarp,-uCarp::Heavy,-uDB,-uExporter,-uExporter::Heavy,-uattributes,'
+      . '-umain,-uwarnings';
+diff --git a/t/lib/db-btree.t b/t/lib/db-btree.t
+index 1822823..6d6804c 100644
+--- a/t/lib/db-btree.t
++++ b/t/lib/db-btree.t
+@@ -142,7 +142,8 @@ ok(19, $X = tie(%h, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE )) ;
+ 
+ my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+    $blksize,$blocks) = stat($Dfile);
+-ok(20, ($mode & 0777) == ($^O eq 'os2' ? 0666 : 0640) || $^O eq 'amigaos' || $^O eq 'MSWin32');
++ok(20, ($mode & 0777) == (($^O eq 'os2' || $^O eq 'MacOS') ? 0666 : 0640)
++    || $^O eq 'amigaos' || $^O eq 'MSWin32');
+ 
+ my ($key, $value, $i);
+ while (($key,$value) = each(%h)) {
+diff --git a/t/lib/db-hash.t b/t/lib/db-hash.t
+index effc60b..42fadb6 100644
+--- a/t/lib/db-hash.t
++++ b/t/lib/db-hash.t
+@@ -108,7 +108,8 @@ ok(15, $X = tie(%h, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
+ 
+ my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+    $blksize,$blocks) = stat($Dfile);
+-ok(16, ($mode & 0777) == ($^O eq 'os2' ? 0666 : 0640) || $^O eq 'amigaos' || $^O eq 'MSWin32');
++ok(16, ($mode & 0777) == (($^O eq 'os2' || $^O eq 'MacOS') ? 0666 : 0640)
++    || $^O eq 'amigaos' || $^O eq 'MSWin32');
+ 
+ my ($key, $value, $i);
+ while (($key,$value) = each(%h)) {
+diff --git a/t/lib/db-recno.t b/t/lib/db-recno.t
+index 8b5a88c..41054f4 100644
+--- a/t/lib/db-recno.t
++++ b/t/lib/db-recno.t
+@@ -152,7 +152,7 @@ my $X  ;
+ my @h ;
+ ok(17, $X = tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) ;
+ 
+-ok(18, ((stat($Dfile))[2] & 0777) == ($^O eq 'os2' ? 0666 : 0640)
++ok(18, ((stat($Dfile))[2] & 0777) == (($^O eq 'os2' || $^O eq 'MacOS') ? 0666 : 0640)
+ 	||  $^O eq 'MSWin32' || $^O eq 'amigaos') ;
+ 
+ #my $l = @h ;
+diff --git a/t/lib/dirhand.t b/t/lib/dirhand.t
+index aa7be35..e83ea13 100644
+--- a/t/lib/dirhand.t
++++ b/t/lib/dirhand.t
+@@ -14,7 +14,8 @@ use DirHandle;
+ 
+ print "1..5\n";
+ 
+-$dot = new DirHandle ".";
++$dot = new DirHandle ($^O eq 'MacOS' ? ':' : '.');
++
+ print defined($dot) ? "ok" : "not ok", " 1\n";
+ 
+ @a = sort <*>;
+diff --git a/t/lib/filecopy.t b/t/lib/filecopy.t
+index 3072c54..8b40043 100644
+--- a/t/lib/filecopy.t
++++ b/t/lib/filecopy.t
+@@ -3,20 +3,19 @@
+ BEGIN {
+     chdir 't' if -d 't';
+     @INC = '../lib';
++    push @INC, "::lib:$MacPerl::Architecture" if $^O eq 'MacOS';
+ }
+ 
+ $| = 1;
+ 
+ my @pass = (0,1);
+-my $tests = 11;
++my $tests = $^O eq 'MacOS' ? 14 : 11;
+ printf "1..%d\n", $tests * scalar(@pass);
+ 
+ use File::Copy;
+ 
+ for my $pass (@pass) {
+ 
+-  require File::Copy;
+-
+   my $loopconst = $pass*$tests;
+ 
+   # First we create a file
+@@ -84,26 +83,65 @@ for my $pass (@pass) {
+   print "# foo=`$foo'\nnot " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
+   printf "ok %d\n", 9+$loopconst;
+ 
+-  copy "file-$$", "lib";
+-  open(R, "lib/file-$$") or die; $foo = <R>; close(R);
+-  print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
+-  printf "ok %d\n", 10+$loopconst;
+-  unlink "lib/file-$$" or die "unlink: $!";
+-
+-  move "file-$$", "lib";
+-  open(R, "lib/file-$$") or die "open lib/file-$$: $!"; $foo = <R>; close(R);
+-  print "not " unless $foo eq sprintf("ok %d\n", 3+$loopconst)
+-      and not -e "file-$$";;
+-  printf "ok %d\n", 11+$loopconst;
+-  unlink "lib/file-$$" or die "unlink: $!";
+-
+-  # warn sprintf "INC->".$INC{"File/Copy.pm"};
+-  delete $INC{"File/Copy.pm"};
+-
++  if ($^O eq 'MacOS') {
++
++    copy "file-$$", "lib";
++    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
++    printf "ok %d\n", 10+$loopconst;
++    unlink ":lib:file-$$" or die "unlink: $!";
++
++    copy "file-$$", ":lib";
++    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
++    printf "ok %d\n", 11+$loopconst;
++    unlink ":lib:file-$$" or die "unlink: $!";
++
++    copy "file-$$", ":lib:";
++    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
++    printf "ok %d\n", 12+$loopconst;
++    unlink ":lib:file-$$" or die "unlink: $!";
++
++    unless (-e 'lib:') { # make sure there's no volume called 'lib'
++	undef $@;
++	eval { (copy "file-$$", "lib:") || die "'lib:' is not a volume name"; };
++	print "# Died: $@";
++	print "not " unless ( $@ =~ m|'lib:' is not a volume name| );
++    }
++    printf "ok %d\n", 13+$loopconst;
++
++    move "file-$$", ":lib:";
++    open(R, ":lib:file-$$") or die "open :lib:file-$$: $!"; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf("ok %d\n", 3+$loopconst)
++        and not -e "file-$$";;
++    printf "ok %d\n", 14+$loopconst;
++    unlink ":lib:file-$$" or die "unlink: $!";
++
++  } else {
++
++    copy "file-$$", "lib";
++    open(R, "lib/file-$$") or die; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
++    printf "ok %d\n", 10+$loopconst;
++    unlink "lib/file-$$" or die "unlink: $!";
++
++    move "file-$$", "lib";
++    open(R, "lib/file-$$") or die "open lib/file-$$: $!"; $foo = <R>; close(R);
++    print "not " unless $foo eq sprintf("ok %d\n", 3+$loopconst)
++        and not -e "file-$$";;
++    printf "ok %d\n", 11+$loopconst;
++    unlink "lib/file-$$" or die "unlink: $!";
++
++  }
+ }
+ 
+ 
+ END {
+     1 while unlink "file-$$";
+-    1 while unlink "lib/file-$$";
++    if ($^O eq 'MacOS') {
++        1 while unlink ":lib:file-$$";
++    } else {
++        1 while unlink "lib/file-$$";
++    }
+ }
+diff --git a/t/lib/filefind-taint.t b/t/lib/filefind-taint.t
+new file mode 100644
+index 0000000..7f9d83f
+--- /dev/null
++++ b/t/lib/filefind-taint.t
+@@ -0,0 +1,416 @@
++#!./perl -T
++
++
++my %Expect_File = (); # what we expect for $_
++my %Expect_Name = (); # what we expect for $File::Find::name/fullname
++my %Expect_Dir  = (); # what we expect for $File::Find::dir
++my $symlink_exists = eval { symlink("",""); 1 };
++my $cwd;
++my $cwd_untainted;
++
++BEGIN {
++    chdir 't' if -d 't';
++    unshift @INC => '../lib';
++
++    require Config;
++
++    for (keys %ENV) { # untaint ENV
++	($ENV{$_}) = $ENV{$_} =~ /(.*)/;
++    }
++
++    # Remove insecure directories from PATH
++    my @path;
++    my $sep = $Config{path_sep};
++    foreach my $dir (split(/\Q$sep/,$ENV{'PATH'}))
++    {
++	##
++	## Match the directory taint tests in mg.c::Perl_magic_setenv()
++	##
++	push(@path,$dir) unless (length($dir) >= 256
++				 or
++				 substr($dir,0,1) ne "/"
++				 or
++				 (stat $dir)[2] & 002);
++    }
++    $ENV{'PATH'} = join($sep,@path);
++}
++
++
++if ( $symlink_exists ) { print "1..45\n"; }
++else                   { print "1..27\n";  }
++
++use File::Find;
++use File::Spec;
++use Cwd;
++
++
++my $NonTaintedCwd = $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O eq 'os2' || $^O eq 'msys';
++
++cleanup();
++
++find({wanted => sub { print "ok 1\n" if $_ eq 'if.t'; },
++      untaint => 1, untaint_pattern => qr|^(.+)$|}, File::Spec->curdir);
++
++finddepth({wanted => sub { print "ok 2\n" if $_ eq 'if.t'; },
++           untaint => 1, untaint_pattern => qr|^(.+)$|},
++           File::Spec->curdir);
++
++my $case = 2;
++my $FastFileTests_OK = 0;
++
++sub cleanup {
++    if (-d dir_path('for_find')) {
++        chdir(dir_path('for_find'));
++    }
++    if (-d dir_path('fa')) {
++        unlink file_path('fa', 'fa_ord'),
++               file_path('fa', 'fsl'),
++               file_path('fa', 'faa', 'faa_ord'),
++               file_path('fa', 'fab', 'fab_ord'),
++               file_path('fa', 'fab', 'faba', 'faba_ord'),
++               file_path('fb', 'fb_ord'),
++               file_path('fb', 'fba', 'fba_ord');
++        rmdir dir_path('fa', 'faa');
++        rmdir dir_path('fa', 'fab', 'faba');
++        rmdir dir_path('fa', 'fab');
++        rmdir dir_path('fa');
++        rmdir dir_path('fb', 'fba');
++        rmdir dir_path('fb');
++        chdir File::Spec->updir;
++        rmdir dir_path('for_find');
++    }
++}
++
++END {
++    cleanup();
++}
++
++sub Check($) {
++    $case++;
++    if ($_[0]) { print "ok $case\n"; }
++    else       { print "not ok $case\n"; }
++
++}
++
++sub CheckDie($) {
++    $case++;
++    if ($_[0]) { print "ok $case\n"; }
++    else       { print "not ok $case\n"; exit 0; }
++}
++
++sub Skip($) {
++    $case++;
++    print "ok $case # skipped: ",$_[0],"\n";
++}
++
++sub touch {
++    CheckDie( open(my $T,'>',$_[0]) );
++}
++
++sub MkDir($$) {
++    CheckDie( mkdir($_[0],$_[1]) );
++}
++
++sub wanted_File_Dir {
++    print "# \$File::Find::dir => '$File::Find::dir'\n";
++    print "# \$_ => '$_'\n";
++    s#\.$## if ($^O eq 'VMS' && $_ ne '.');
++    Check( $Expect_File{$_} );
++    if ( $FastFileTests_OK ) {
++        delete $Expect_File{ $_}
++          unless ( $Expect_Dir{$_} && ! -d _ );
++    } else {
++        delete $Expect_File{$_}
++          unless ( $Expect_Dir{$_} && ! -d $_ );
++    }
++}
++
++sub wanted_File_Dir_prune {
++    &wanted_File_Dir;
++    $File::Find::prune=1 if  $_ eq 'faba';
++}
++
++
++sub simple_wanted {
++    print "# \$File::Find::dir => '$File::Find::dir'\n";
++    print "# \$_ => '$_'\n";
++}
++
++
++# Use dir_path() to specify a directory path that's expected for
++# $File::Find::dir (%Expect_Dir). Also use it in file operations like
++# chdir, rmdir etc.
++#
++# dir_path() concatenates directory names to form a _relative_
++# directory path, independant from the platform it's run on, although
++# there are limitations.  Don't try to create an absolute path,
++# because that may fail on operating systems that have the concept of
++# volume names (e.g. Mac OS). Be careful when you want to create an
++# updir path like ../fa (Unix) or ::fa: (Mac OS). Plain directory
++# names will work best. As a special case, you can pass it a "." as
++# first argument, to create a directory path like "./fa/dir" on
++# operating systems other than Mac OS (actually, Mac OS will ignore
++# the ".", if it's the first argument). If there's no second argument,
++# this function will return the empty string on Mac OS and the string
++# "./" otherwise.
++
++sub dir_path {
++    my $first_item = shift @_;
++
++    if ($first_item eq '.') {
++        if ($^O eq 'MacOS') {
++            return '' unless @_;
++            # ignore first argument; return a relative path
++            # with leading ":" and with trailing ":"
++            return File::Spec->catdir("", @_);
++        } else { # other OS
++            return './' unless @_;
++            my $path = File::Spec->catdir(@_);
++            # add leading "./"
++            $path = "./$path";
++            return $path;
++        }
++
++    } else { # $first_item ne '.'
++        return $first_item unless @_; # return plain filename
++        if ($^O eq 'MacOS') {
++            # relative path with leading ":" and with trailing ":"
++            return File::Spec->catdir("", $first_item, @_);
++        } else { # other OS
++            return File::Spec->catdir($first_item, @_);
++        }
++    }
++}
++
++
++# Use topdir() to specify a directory path that you want to pass to
++#find/finddepth Basically, topdir() does the same as dir_path() (see
++#above), except that there's no trailing ":" on Mac OS.
++
++sub topdir {
++    my $path = dir_path(@_);
++    $path =~ s/:$// if ($^O eq 'MacOS');
++    return $path;
++}
++
++
++# Use file_path() to specify a file path that's expected for $_ (%Expect_File).
++# Also suitable for file operations like unlink etc.
++
++# file_path() concatenates directory names (if any) and a filename to
++# form a _relative_ file path (the last argument is assumed to be a
++# file). It's independant from the platform it's run on, although
++# there are limitations (see the warnings for dir_path() above). As a
++# special case, you can pass it a "." as first argument, to create a
++# file path like "./fa/file" on operating systems other than Mac OS
++# (actually, Mac OS will ignore the ".", if it's the first
++# argument). If there's no second argument, this function will return
++# the empty string on Mac OS and the string "./" otherwise.
++
++sub file_path {
++    my $first_item = shift @_;
++
++    if ($first_item eq '.') {
++        if ($^O eq 'MacOS') {
++            return '' unless @_;
++            # ignore first argument; return a relative path
++            # with leading ":", but without trailing ":"
++            return File::Spec->catfile("", @_);
++        } else { # other OS
++            return './' unless @_;
++            my $path = File::Spec->catfile(@_);
++            # add leading "./"
++            $path = "./$path";
++            return $path;
++        }
++
++    } else { # $first_item ne '.'
++        return $first_item unless @_; # return plain filename
++        if ($^O eq 'MacOS') {
++            # relative path with leading ":", but without trailing ":"
++            return File::Spec->catfile("", $first_item, @_);
++        } else { # other OS
++            return File::Spec->catfile($first_item, @_);
++        }
++    }
++}
++
++
++# Use file_path_name() to specify a file path that's expected for
++# $File::Find::Name (%Expect_Name). Note: When the no_chdir => 1
++# option is in effect, $_ is the same as $File::Find::Name. In that
++# case, also use this function to specify a file path that's expected
++# for $_.
++#
++# Basically, file_path_name() does the same as file_path() (see
++# above), except that there's always a leading ":" on Mac OS, even for
++# plain file/directory names.
++
++sub file_path_name {
++    my $path = file_path(@_);
++    $path = ":$path" if (($^O eq 'MacOS') && ($path !~ /:/));
++    return $path;
++}
++
++
++
++MkDir( dir_path('for_find'), 0770 );
++CheckDie(chdir( dir_path('for_find')));
++
++$cwd = cwd(); # save cwd
++( $cwd_untainted ) = $cwd =~ m|^(.+)$|; # untaint it
++
++MkDir( dir_path('fa'), 0770 );
++MkDir( dir_path('fb'), 0770  );
++touch( file_path('fb', 'fb_ord') );
++MkDir( dir_path('fb', 'fba'), 0770  );
++touch( file_path('fb', 'fba', 'fba_ord') );
++if ($^O eq 'MacOS') {
++      CheckDie( symlink(':fb',':fa:fsl') ) if $symlink_exists;
++} else {
++      CheckDie( symlink('../fb','fa/fsl') ) if $symlink_exists;
++}
++touch( file_path('fa', 'fa_ord') );
++
++MkDir( dir_path('fa', 'faa'), 0770  );
++touch( file_path('fa', 'faa', 'faa_ord') );
++MkDir( dir_path('fa', 'fab'), 0770  );
++touch( file_path('fa', 'fab', 'fab_ord') );
++MkDir( dir_path('fa', 'fab', 'faba'), 0770  );
++touch( file_path('fa', 'fab', 'faba', 'faba_ord') );
++
++print "# check untainting (no follow)\n";
++
++# untainting here should work correctly
++
++%Expect_File = (File::Spec->curdir => 1, file_path('fsl') =>
++                1,file_path('fa_ord') => 1, file_path('fab') => 1,
++                file_path('fab_ord') => 1, file_path('faba') => 1,
++                file_path('faa') => 1, file_path('faa_ord') => 1);
++delete $Expect_File{ file_path('fsl') } unless $symlink_exists;
++%Expect_Name = ();
++
++%Expect_Dir = ( dir_path('fa') => 1, dir_path('faa') => 1,
++                dir_path('fab') => 1, dir_path('faba') => 1,
++                dir_path('fb') => 1, dir_path('fba') => 1);
++
++delete @Expect_Dir{ dir_path('fb'), dir_path('fba') } unless $symlink_exists;
++
++File::Find::find( {wanted => \&wanted_File_Dir_prune, untaint => 1,
++		   untaint_pattern => qr|^(.+)$|}, topdir('fa') );
++
++Check( scalar(keys %Expect_File) == 0 );
++
++
++# don't untaint at all, should die
++%Expect_File = ();
++%Expect_Name = ();
++%Expect_Dir  = ();
++undef $@;
++eval {File::Find::find( {wanted => \&simple_wanted}, topdir('fa') );};
++Check( $@ =~ m|Insecure dependency| );
++chdir($cwd_untainted);
++
++
++# untaint pattern doesn't match, should die
++undef $@;
++
++eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
++                         untaint_pattern => qr|^(NO_MATCH)$|},
++                         topdir('fa') );};
++
++Check( $@ =~ m|is still tainted| );
++chdir($cwd_untainted);
++
++
++# untaint pattern doesn't match, should die when we chdir to cwd
++print "# check untaint_skip (No follow)\n";
++undef $@;
++
++eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
++                         untaint_skip => 1, untaint_pattern =>
++                         qr|^(NO_MATCH)$|}, topdir('fa') );};
++
++print "# $@" if $@;
++#$^D = 8;
++if ($NonTaintedCwd) {
++	Skip("$^O does not taint cwd");
++    }
++else {
++	Check( $@ =~ m|insecure cwd| );
++}
++chdir($cwd_untainted);
++
++
++if ( $symlink_exists ) {
++    print "# --- symbolic link tests --- \n";
++    $FastFileTests_OK= 1;
++
++    print "# check untainting (follow)\n";
++
++    # untainting here should work correctly
++    # no_chdir is in effect, hence we use file_path_name to specify the expected paths for %Expect_File
++
++    %Expect_File = (file_path_name('fa') => 1,
++		    file_path_name('fa','fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Name = ();
++
++    %Expect_Dir = (dir_path('fa') => 1,
++		   dir_path('fa', 'faa') => 1,
++                   dir_path('fa', 'fab') => 1,
++		   dir_path('fa', 'fab', 'faba') => 1,
++		   dir_path('fb') => 1,
++		   dir_path('fb', 'fba') => 1);
++
++    File::Find::find( {wanted => \&wanted_File_Dir, follow_fast => 1,
++                       no_chdir => 1, untaint => 1, untaint_pattern =>
++                       qr|^(.+)$| }, topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++
++
++    # don't untaint at all, should die
++    undef $@;
++
++    eval {File::Find::find( {wanted => \&simple_wanted, follow => 1},
++			    topdir('fa') );};
++
++    Check( $@ =~ m|Insecure dependency| );
++    chdir($cwd_untainted);
++
++    # untaint pattern doesn't match, should die
++    undef $@;
++
++    eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
++                             untaint => 1, untaint_pattern =>
++                             qr|^(NO_MATCH)$|}, topdir('fa') );};
++
++    Check( $@ =~ m|is still tainted| );
++    chdir($cwd_untainted);
++
++    # untaint pattern doesn't match, should die when we chdir to cwd
++    print "# check untaint_skip (Follow)\n";
++    undef $@;
++
++    eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
++                             untaint_skip => 1, untaint_pattern =>
++                             qr|^(NO_MATCH)$|}, topdir('fa') );};
++    if ($NonTaintedCwd) {
++	Skip("$^O does not taint cwd");
++    }
++    else {
++	Check( $@ =~ m|insecure cwd| );
++    }
++    chdir($cwd_untainted);
++}
+diff --git a/t/lib/filefind.t b/t/lib/filefind.t
+index 362c1eb..ddd1a5f 100644
+--- a/t/lib/filefind.t
++++ b/t/lib/filefind.t
+@@ -1,197 +1,741 @@
+-####!./perl
++#!./perl
+ 
+ 
+-my %Expect;
++my %Expect_File = (); # what we expect for $_
++my %Expect_Name = (); # what we expect for $File::Find::name/fullname
++my %Expect_Dir  = (); # what we expect for $File::Find::dir
+ my $symlink_exists = eval { symlink("",""); 1 };
++my $warn_msg;
++
+ 
+ BEGIN {
+     chdir 't' if -d 't';
+-    @INC = '../lib';
++    unshift @INC => '../lib';
++
++    $SIG{'__WARN__'} = sub { $warn_msg = $_[0]; warn "# $_[0]"; }
+ }
+ 
+-if ( $symlink_exists ) { print "1..117\n"; }
+-else                   { print "1..61\n"; }
++if ( $symlink_exists ) { print "1..188\n"; }
++else                   { print "1..78\n";  }
+ 
+ use File::Find;
++use File::Spec;
++if ($^O eq 'MSWin32' || $^O eq 'cygwin' || $^O eq 'VMS' || $^O eq 'msys')
++ {
++  # This is a hack - at present File::Find does not produce native names on
++  # Win32 or VMS, so force File::Spec to use Unix names.
++  require File::Spec::Unix;
++  @File::Spec::ISA = 'File::Spec::Unix';
++ }
++
++cleanup();
+ 
+-find(sub { print "ok 1\n" if $_ eq 'filefind.t'; }, ".");
+-finddepth(sub { print "ok 2\n" if $_ eq 'filefind.t'; }, ".");
++find({wanted => sub { print "ok 1\n" if $_ eq 'if.t'; } },
++   File::Spec->curdir);
+ 
++finddepth({wanted => sub { print "ok 2\n" if $_ eq 'if.t'; } },
++	File::Spec->curdir);
+ 
+ my $case = 2;
+ my $FastFileTests_OK = 0;
+ 
++sub cleanup {
++    if (-d dir_path('for_find')) {
++        chdir(dir_path('for_find'));
++    }
++    if (-d dir_path('fa')) {
++        unlink file_path('fa', 'fa_ord'),
++               file_path('fa', 'fsl'),
++               file_path('fa', 'faa', 'faa_ord'),
++               file_path('fa', 'fab', 'fab_ord'),
++               file_path('fa', 'fab', 'faba', 'faba_ord'),
++               file_path('fb', 'fb_ord'),
++               file_path('fb', 'fba', 'fba_ord');
++        rmdir dir_path('fa', 'faa');
++        rmdir dir_path('fa', 'fab', 'faba');
++        rmdir dir_path('fa', 'fab');
++        rmdir dir_path('fa');
++        rmdir dir_path('fb', 'fba');
++        rmdir dir_path('fb');
++        chdir File::Spec->updir;
++        rmdir dir_path('for_find');
++    }
++}
++
+ END {
+-    unlink 'fa/fa_ord','fa/fsl','fa/faa/faa_ord',
+-	   'fa/fab/fab_ord','fa/fab/faba/faba_ord','fb/fb_ord','fb/fba/fba_ord';
+-    rmdir 'fa/faa';
+-    rmdir 'fa/fab/faba';
+-    rmdir 'fa/fab';
+-    rmdir 'fa';
+-    rmdir 'fb/fba';
+-    rmdir 'fb';
+-    chdir '..';
+-    rmdir 'for_find';
++    cleanup();
+ }
+ 
+ sub Check($) {
+-  $case++;
+-  if ($_[0]) { print "ok $case\n"; }
+-  else       { print "not ok $case\n"; }
++    $case++;
++    if ($_[0]) { print "ok $case\n"; }
++    else       { print "not ok $case\n"; }
+ }
+ 
+ sub CheckDie($) {
+-  $case++;
+-  if ($_[0]) { print "ok $case\n"; }
+-  else { print "not ok $case\n $!\n"; exit 0; }
++    $case++;
++    if ($_[0]) { print "ok $case\n"; }
++    else { print "not ok $case\n $!\n"; exit 0; }
+ }
+ 
+ sub touch {
+-  CheckDie( open(my $T,'>',$_[0]) );
++    CheckDie( open(my $T,'>',$_[0]) );
+ }
+ 
+ sub MkDir($$) {
+-  CheckDie( mkdir($_[0],$_[1]) );
+-}
+-
+-sub wanted {
+-  print "# '$_' => 1\n";
+-  s#\.$## if ($^O eq 'VMS' && $_ ne '.');
+-  Check( $Expect{$_} );
+-  if ( $FastFileTests_OK ) {
+-    delete $Expect{$_} 
+-      unless ( $Expect_Dir{$_} && ! -d _ );
+-  } else {
+-    delete $Expect{$_} 
+-      unless ( $Expect_Dir{$_} && ! -d $_ );
+-  }
+-  $File::Find::prune=1 if  $_ eq 'faba';
+-  
+-}
+-
+-sub dn_wanted {
+-  my $n = $File::Find::name;
+-  $n =~ s#\.$## if ($^O eq 'VMS' && $n ne '.');
+-  print "# '$n' => 1\n";
+-  my $i = rindex($n,'/');
+-  my $OK = exists($Expect{$n});
+-  if ( $OK ) {
+-      $OK= exists($Expect{substr($n,0,$i)})  if $i >= 0;
+-  }
+-  Check($OK);
+-  delete $Expect{$n};
+-}
+-
+-sub d_wanted {
+-  print "# '$_' => 1\n";
+-  s#\.$## if ($^O eq 'VMS' && $_ ne '.');
+-  my $i = rindex($_,'/');
+-  my $OK = exists($Expect{$_});
+-  if ( $OK ) {
+-      $OK= exists($Expect{substr($_,0,$i)})  if $i >= 0;
+-  }
+-  Check($OK);
+-  delete $Expect{$_};
+-}
+-
+-MkDir( 'for_find',0770 );
+-CheckDie(chdir(for_find));
+-MkDir( 'fa',0770 );
+-MkDir( 'fb',0770  );
+-touch('fb/fb_ord');
+-MkDir( 'fb/fba',0770  );
+-touch('fb/fba/fba_ord');
+-CheckDie( symlink('../fb','fa/fsl') ) if $symlink_exists;
+-touch('fa/fa_ord');
+-
+-MkDir( 'fa/faa',0770  );
+-touch('fa/faa/faa_ord');
+-MkDir( 'fa/fab',0770  );
+-touch('fa/fab/fab_ord');
+-MkDir( 'fa/fab/faba',0770  );
+-touch('fa/fab/faba/faba_ord');
+-
+-%Expect = ('.' => 1, 'fsl' => 1, 'fa_ord' => 1, 'fab' => 1, 'fab_ord' => 1,
+-	   'faba' => 1, 'faa' => 1, 'faa_ord' => 1);
+-delete $Expect{'fsl'} unless $symlink_exists;
+-%Expect_Dir = ('fa' => 1, 'faa' => 1, 'fab' => 1, 'faba' => 1, 
+-               'fb' => 1, 'fba' => 1);
+-delete @Expect_Dir{'fb','fba'} unless $symlink_exists;
+-File::Find::find( {wanted => \&wanted, },'fa' );
+-Check( scalar(keys %Expect) == 0 );
+-
+-%Expect=('fa' => 1, 'fa/fsl' => 1, 'fa/fa_ord' => 1, 'fa/fab' => 1,
+-	 'fa/fab/fab_ord' => 1, 'fa/fab/faba' => 1,
+-	 'fa/fab/faba/faba_ord' => 1, 'fa/faa' => 1, 'fa/faa/faa_ord' => 1);
+-delete $Expect{'fa/fsl'} unless $symlink_exists;
+-%Expect_Dir = ('fa' => 1, 'fa/faa' => 1, '/fa/fab' => 1, 'fa/fab/faba' => 1, 
+-               'fb' => 1, 'fb/fba' => 1);
+-delete @Expect_Dir{'fb','fb/fba'} unless $symlink_exists;
+-File::Find::find( {wanted => \&wanted, no_chdir => 1},'fa' );
+-
+-Check( scalar(keys %Expect) == 0 );
+-
+-%Expect=('.' => 1, './fa' => 1, './fa/fsl' => 1, './fa/fa_ord' => 1, './fa/fab' => 1,
+-         './fa/fab/fab_ord' => 1, './fa/fab/faba' => 1,
+-         './fa/fab/faba/faba_ord' => 1, './fa/faa' => 1, './fa/faa/faa_ord' => 1,
+-         './fb' => 1, './fb/fba' => 1, './fb/fba/fba_ord' => 1, './fb/fb_ord' => 1);
+-delete $Expect{'./fa/fsl'} unless $symlink_exists;
+-%Expect_Dir = ('./fa' => 1, './fa/faa' => 1, '/fa/fab' => 1, './fa/fab/faba' => 1, 
+-               './fb' => 1, './fb/fba' => 1);
+-delete @Expect_Dir{'./fb','./fb/fba'} unless $symlink_exists;
+-File::Find::finddepth( {wanted => \&dn_wanted },'.' );
+-Check( scalar(keys %Expect) == 0 );
+-
+-%Expect=('.' => 1, './fa' => 1, './fa/fsl' => 1, './fa/fa_ord' => 1, './fa/fab' => 1,
+-         './fa/fab/fab_ord' => 1, './fa/fab/faba' => 1,
+-         './fa/fab/faba/faba_ord' => 1, './fa/faa' => 1, './fa/faa/faa_ord' => 1,
+-         './fb' => 1, './fb/fba' => 1, './fb/fba/fba_ord' => 1, './fb/fb_ord' => 1);
+-delete $Expect{'./fa/fsl'} unless $symlink_exists;
+-%Expect_Dir = ('./fa' => 1, './fa/faa' => 1, '/fa/fab' => 1, './fa/fab/faba' => 1, 
+-               './fb' => 1, './fb/fba' => 1);
+-delete @Expect_Dir{'./fb','./fb/fba'} unless $symlink_exists;
+-File::Find::finddepth( {wanted => \&d_wanted, no_chdir => 1 },'.' );
+-Check( scalar(keys %Expect) == 0 );
++    CheckDie( mkdir($_[0],$_[1]) );
++}
++
++sub wanted_File_Dir {
++    print "# \$File::Find::dir => '$File::Find::dir'\n";
++    print "# \$_ => '$_'\n";
++    s#\.$## if ($^O eq 'VMS' && $_ ne '.');
++    Check( $Expect_File{$_} );
++    if ( $FastFileTests_OK ) {
++        delete $Expect_File{ $_}
++          unless ( $Expect_Dir{$_} && ! -d _ );
++    } else {
++        delete $Expect_File{$_}
++          unless ( $Expect_Dir{$_} && ! -d $_ );
++    }
++}
++
++sub wanted_File_Dir_prune {
++    &wanted_File_Dir;
++    $File::Find::prune=1 if  $_ eq 'faba';
++}
++
++sub wanted_Name {
++    my $n = $File::Find::name;
++    $n =~ s#\.$## if ($^O eq 'VMS' && $n ne '.');
++    print "# \$File::Find::name => '$n'\n";
++    my $i = rindex($n,'/');
++    my $OK = exists($Expect_Name{$n});
++    unless ($^O eq 'MacOS') {
++        if ( $OK ) {
++            $OK= exists($Expect_Name{substr($n,0,$i)})  if $i >= 0;
++        }
++    }
++    Check($OK);
++    delete $Expect_Name{$n};
++}
++
++sub wanted_File {
++    print "# \$_ => '$_'\n";
++    s#\.$## if ($^O eq 'VMS' && $_ ne '.');
++    my $i = rindex($_,'/');
++    my $OK = exists($Expect_File{ $_});
++    unless ($^O eq 'MacOS') {
++        if ( $OK ) {
++            $OK= exists($Expect_File{ substr($_,0,$i)})  if $i >= 0;
++        }
++    }
++    Check($OK);
++    delete $Expect_File{ $_};
++}
++
++sub simple_wanted {
++    print "# \$File::Find::dir => '$File::Find::dir'\n";
++    print "# \$_ => '$_'\n";
++}
++
++sub noop_wanted {}
++
++sub my_preprocess {
++    @files = @_;
++    print "# --preprocess--\n";
++    print "#   \$File::Find::dir => '$File::Find::dir' \n";
++    foreach $file (@files) {
++        $file =~ s/\.(dir)?$// if $^O eq 'VMS';
++        print "#   $file \n";
++        delete $Expect_Dir{ $File::Find::dir }->{$file};
++    }
++    print "# --end preprocess--\n";
++    Check(scalar(keys %{$Expect_Dir{ $File::Find::dir }}) == 0);
++    if (scalar(keys %{$Expect_Dir{ $File::Find::dir }}) == 0) {
++        delete $Expect_Dir{ $File::Find::dir }
++    }
++    return @files;
++}
++
++sub my_postprocess {
++    print "# postprocess: \$File::Find::dir => '$File::Find::dir' \n";
++    delete $Expect_Dir{ $File::Find::dir};
++}
++
++
++# Use dir_path() to specify a directory path that's expected for
++# $File::Find::dir (%Expect_Dir). Also use it in file operations like
++# chdir, rmdir etc.
++#
++# dir_path() concatenates directory names to form a _relative_
++# directory path, independent from the platform it's run on, although
++# there are limitations.  Don't try to create an absolute path,
++# because that may fail on operating systems that have the concept of
++# volume names (e.g. Mac OS). Be careful when you want to create an
++# updir path like ../fa (Unix) or ::fa: (Mac OS). Plain directory
++# names will work best. As a special case, you can pass it a "." as
++# first argument, to create a directory path like "./fa/dir" on
++# operating systems other than Mac OS (actually, Mac OS will ignore
++# the ".", if it's the first argument). If there's no second argument,
++# this function will return the empty string on Mac OS and the string
++# "./" otherwise.
++
++sub dir_path {
++    my $first_item = shift @_;
++
++    if ($first_item eq '.') {
++        if ($^O eq 'MacOS') {
++            return '' unless @_;
++            # ignore first argument; return a relative path
++            # with leading ":" and with trailing ":"
++            return File::Spec->catdir("", @_);
++        } else { # other OS
++            return './' unless @_;
++            my $path = File::Spec->catdir(@_);
++            # add leading "./"
++            $path = "./$path";
++            return $path;
++        }
++
++    } else { # $first_item ne '.'
++        return $first_item unless @_; # return plain filename
++        if ($^O eq 'MacOS') {
++            # relative path with leading ":" and with trailing ":"
++            return File::Spec->catdir("", $first_item, @_);
++        } else { # other OS
++            return File::Spec->catdir($first_item, @_);
++        }
++    }
++}
++
++
++# Use topdir() to specify a directory path that you want to pass to
++#find/finddepth Basically, topdir() does the same as dir_path() (see
++#above), except that there's no trailing ":" on Mac OS.
++
++sub topdir {
++    my $path = dir_path(@_);
++    $path =~ s/:$// if ($^O eq 'MacOS');
++    return $path;
++}
++
++
++# Use file_path() to specify a file path that's expected for $_
++# (%Expect_File).  Also suitable for file operations like unlink etc.
++#
++# file_path() concatenates directory names (if any) and a filename to
++# form a _relative_ file path (the last argument is assumed to be a
++# file). It's independent from the platform it's run on, although
++# there are limitations (see the warnings for dir_path() above). As a
++# special case, you can pass it a "." as first argument, to create a
++# file path like "./fa/file" on operating systems other than Mac OS
++# (actually, Mac OS will ignore the ".", if it's the first
++# argument). If there's no second argument, this function will return
++# the empty string on Mac OS and the string "./" otherwise.
++
++sub file_path {
++    my $first_item = shift @_;
++
++    if ($first_item eq '.') {
++        if ($^O eq 'MacOS') {
++            return '' unless @_;
++            # ignore first argument; return a relative path
++            # with leading ":", but without trailing ":"
++            return File::Spec->catfile("", @_);
++        } else { # other OS
++            return './' unless @_;
++            my $path = File::Spec->catfile(@_);
++            # add leading "./"
++            $path = "./$path";
++            return $path;
++        }
++
++    } else { # $first_item ne '.'
++        return $first_item unless @_; # return plain filename
++        if ($^O eq 'MacOS') {
++            # relative path with leading ":", but without trailing ":"
++            return File::Spec->catfile("", $first_item, @_);
++        } else { # other OS
++            return File::Spec->catfile($first_item, @_);
++        }
++    }
++}
++
++
++# Use file_path_name() to specify a file path that's expected for
++# $File::Find::Name (%Expect_Name). Note: When the no_chdir => 1
++# option is in effect, $_ is the same as $File::Find::Name. In that
++# case, also use this function to specify a file path that's expected
++# for $_.
++#
++# Basically, file_path_name() does the same as file_path() (see
++# above), except that there's always a leading ":" on Mac OS, even for
++# plain file/directory names.
++
++sub file_path_name {
++    my $path = file_path(@_);
++    $path = ":$path" if (($^O eq 'MacOS') && ($path !~ /:/));
++    return $path;
++}
++
++
++
++MkDir( dir_path('for_find'), 0770 );
++CheckDie(chdir( dir_path('for_find')));
++MkDir( dir_path('fa'), 0770 );
++MkDir( dir_path('fb'), 0770  );
++touch( file_path('fb', 'fb_ord') );
++MkDir( dir_path('fb', 'fba'), 0770  );
++touch( file_path('fb', 'fba', 'fba_ord') );
++if ($^O eq 'MacOS') {
++      CheckDie( symlink(':fb',':fa:fsl') ) if $symlink_exists;
++} else {
++      CheckDie( symlink('../fb','fa/fsl') ) if $symlink_exists;
++}
++touch( file_path('fa', 'fa_ord') );
++
++MkDir( dir_path('fa', 'faa'), 0770  );
++touch( file_path('fa', 'faa', 'faa_ord') );
++MkDir( dir_path('fa', 'fab'), 0770  );
++touch( file_path('fa', 'fab', 'fab_ord') );
++MkDir( dir_path('fa', 'fab', 'faba'), 0770  );
++touch( file_path('fa', 'fab', 'faba', 'faba_ord') );
++
++
++%Expect_File = (File::Spec->curdir => 1, file_path('fsl') => 1,
++                file_path('fa_ord') => 1, file_path('fab') => 1,
++                file_path('fab_ord') => 1, file_path('faba') => 1,
++                file_path('faa') => 1, file_path('faa_ord') => 1);
++
++delete $Expect_File{ file_path('fsl') } unless $symlink_exists;
++%Expect_Name = ();
++
++%Expect_Dir = ( dir_path('fa') => 1, dir_path('faa') => 1,
++                dir_path('fab') => 1, dir_path('faba') => 1,
++                dir_path('fb') => 1, dir_path('fba') => 1);
++
++delete @Expect_Dir{ dir_path('fb'), dir_path('fba') } unless $symlink_exists;
++File::Find::find( {wanted => \&wanted_File_Dir_prune}, topdir('fa') );
++Check( scalar(keys %Expect_File) == 0 );
++
++
++print "# check re-entrancy\n";
++
++%Expect_File = (File::Spec->curdir => 1, file_path('fsl') => 1,
++                file_path('fa_ord') => 1, file_path('fab') => 1,
++                file_path('fab_ord') => 1, file_path('faba') => 1,
++                file_path('faa') => 1, file_path('faa_ord') => 1);
++
++delete $Expect_File{ file_path('fsl') } unless $symlink_exists;
++%Expect_Name = ();
++
++%Expect_Dir = ( dir_path('fa') => 1, dir_path('faa') => 1,
++                dir_path('fab') => 1, dir_path('faba') => 1,
++                dir_path('fb') => 1, dir_path('fba') => 1);
++
++delete @Expect_Dir{ dir_path('fb'), dir_path('fba') } unless $symlink_exists;
++
++File::Find::find( {wanted => sub { wanted_File_Dir_prune();
++                                    File::Find::find( {wanted => sub
++                                    {} }, File::Spec->curdir ); } },
++                                    topdir('fa') );
++
++Check( scalar(keys %Expect_File) == 0 );
++
++
++# no_chdir is in effect, hence we use file_path_name to specify the expected paths for %Expect_File
++
++%Expect_File = (file_path_name('fa') => 1,
++		file_path_name('fa', 'fsl') => 1,
++                file_path_name('fa', 'fa_ord') => 1,
++                file_path_name('fa', 'fab') => 1,
++		file_path_name('fa', 'fab', 'fab_ord') => 1,
++		file_path_name('fa', 'fab', 'faba') => 1,
++		file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++		file_path_name('fa', 'faa') => 1,
++                file_path_name('fa', 'faa', 'faa_ord') => 1,);
++
++delete $Expect_File{ file_path_name('fa', 'fsl') } unless $symlink_exists;
++%Expect_Name = ();
++
++%Expect_Dir = (dir_path('fa') => 1,
++	       dir_path('fa', 'faa') => 1,
++               dir_path('fa', 'fab') => 1,
++	       dir_path('fa', 'fab', 'faba') => 1,
++	       dir_path('fb') => 1,
++	       dir_path('fb', 'fba') => 1);
++
++delete @Expect_Dir{ dir_path('fb'), dir_path('fb', 'fba') }
++    unless $symlink_exists;
++
++File::Find::find( {wanted => \&wanted_File_Dir, no_chdir => 1},
++		  topdir('fa') ); Check( scalar(keys %Expect_File) == 0 );
++
++
++%Expect_File = ();
++
++%Expect_Name = (File::Spec->curdir => 1,
++		file_path_name('.', 'fa') => 1,
++                file_path_name('.', 'fa', 'fsl') => 1,
++                file_path_name('.', 'fa', 'fa_ord') => 1,
++                file_path_name('.', 'fa', 'fab') => 1,
++                file_path_name('.', 'fa', 'fab', 'fab_ord') => 1,
++                file_path_name('.', 'fa', 'fab', 'faba') => 1,
++                file_path_name('.', 'fa', 'fab', 'faba', 'faba_ord') => 1,
++                file_path_name('.', 'fa', 'faa') => 1,
++                file_path_name('.', 'fa', 'faa', 'faa_ord') => 1,
++                file_path_name('.', 'fb') => 1,
++		file_path_name('.', 'fb', 'fba') => 1,
++		file_path_name('.', 'fb', 'fba', 'fba_ord') => 1,
++		file_path_name('.', 'fb', 'fb_ord') => 1);
++
++delete $Expect_Name{ file_path('.', 'fa', 'fsl') } unless $symlink_exists;
++%Expect_Dir = ();
++File::Find::finddepth( {wanted => \&wanted_Name}, File::Spec->curdir );
++Check( scalar(keys %Expect_Name) == 0 );
++
++
++# no_chdir is in effect, hence we use file_path_name to specify the
++# expected paths for %Expect_File
++
++%Expect_File = (File::Spec->curdir => 1,
++		file_path_name('.', 'fa') => 1,
++                file_path_name('.', 'fa', 'fsl') => 1,
++                file_path_name('.', 'fa', 'fa_ord') => 1,
++                file_path_name('.', 'fa', 'fab') => 1,
++                file_path_name('.', 'fa', 'fab', 'fab_ord') => 1,
++                file_path_name('.', 'fa', 'fab', 'faba') => 1,
++                file_path_name('.', 'fa', 'fab', 'faba', 'faba_ord') => 1,
++                file_path_name('.', 'fa', 'faa') => 1,
++                file_path_name('.', 'fa', 'faa', 'faa_ord') => 1,
++                file_path_name('.', 'fb') => 1,
++		file_path_name('.', 'fb', 'fba') => 1,
++		file_path_name('.', 'fb', 'fba', 'fba_ord') => 1,
++		file_path_name('.', 'fb', 'fb_ord') => 1);
++
++delete $Expect_File{ file_path_name('.', 'fa', 'fsl') } unless $symlink_exists;
++%Expect_Name = ();
++%Expect_Dir = ();
++
++File::Find::finddepth( {wanted => \&wanted_File, no_chdir => 1},
++		     File::Spec->curdir );
++
++Check( scalar(keys %Expect_File) == 0 );
++
++
++print "# check preprocess\n";
++%Expect_File = ();
++%Expect_Name = ();
++%Expect_Dir = (
++          File::Spec->curdir                 => {fa => 1, fb => 1},
++          dir_path('.', 'fa')                => {faa => 1, fab => 1, fa_ord => 1},
++          dir_path('.', 'fa', 'faa')         => {faa_ord => 1},
++          dir_path('.', 'fa', 'fab')         => {faba => 1, fab_ord => 1},
++          dir_path('.', 'fa', 'fab', 'faba') => {faba_ord => 1},
++          dir_path('.', 'fb')                => {fba => 1, fb_ord => 1},
++          dir_path('.', 'fb', 'fba')         => {fba_ord => 1}
++          );
++
++File::Find::find( {wanted => \&noop_wanted,
++		   preprocess => \&my_preprocess}, File::Spec->curdir );
++
++Check( scalar(keys %Expect_Dir) == 0 );
++
++
++print "# check postprocess\n";
++%Expect_File = ();
++%Expect_Name = ();
++%Expect_Dir = (
++          File::Spec->curdir                 => 1,
++          dir_path('.', 'fa')                => 1,
++          dir_path('.', 'fa', 'faa')         => 1,
++          dir_path('.', 'fa', 'fab')         => 1,
++          dir_path('.', 'fa', 'fab', 'faba') => 1,
++          dir_path('.', 'fb')                => 1,
++          dir_path('.', 'fb', 'fba')         => 1
++          );
++
++File::Find::find( {wanted => \&noop_wanted,
++		   postprocess => \&my_postprocess}, File::Spec->curdir );
++
++Check( scalar(keys %Expect_Dir) == 0 );
++
+ 
+ if ( $symlink_exists ) {
+-  $FastFileTests_OK= 1;
+-  %Expect=('.' => 1, 'fa_ord' => 1, 'fsl' => 1, 'fb_ord' => 1, 'fba' => 1,
+-           'fba_ord' => 1, 'fab' => 1, 'fab_ord' => 1, 'faba' => 1, 'faa' => 1,
+-           'faa_ord' => 1);
+-  %Expect_Dir = ('fa' => 1, 'fa/faa' => 1, '/fa/fab' => 1, 'fa/fab/faba' => 1, 
+-                 'fb' => 1, 'fb/fba' => 1);
+-
+-  File::Find::find( {wanted => \&wanted, follow_fast => 1},'fa' );
+-  Check( scalar(keys %Expect) == 0 );
+-
+-  %Expect=('fa' => 1, 'fa/fa_ord' => 1, 'fa/fsl' => 1, 'fa/fsl/fb_ord' => 1,
+-           'fa/fsl/fba' => 1, 'fa/fsl/fba/fba_ord' => 1, 'fa/fab' => 1,
+-           'fa/fab/fab_ord' => 1, 'fa/fab/faba' => 1, 'fa/fab/faba/faba_ord' => 1,
+-           'fa/faa' => 1, 'fa/faa/faa_ord' => 1);
+-  %Expect_Dir = ('fa' => 1, 'fa/faa' => 1, '/fa/fab' => 1, 'fa/fab/faba' => 1, 
+-                 'fb' => 1, 'fb/fba' => 1);
+-  File::Find::find( {wanted => \&wanted, follow_fast => 1, no_chdir => 1},'fa' );
+-  Check( scalar(keys %Expect) == 0 );
+-
+-  %Expect=('fa' => 1, 'fa/fa_ord' => 1, 'fa/fsl' => 1, 'fa/fsl/fb_ord' => 1,
+-           'fa/fsl/fba' => 1, 'fa/fsl/fba/fba_ord' => 1, 'fa/fab' => 1,
+-           'fa/fab/fab_ord' => 1, 'fa/fab/faba' => 1, 'fa/fab/faba/faba_ord' => 1,
+-           'fa/faa' => 1, 'fa/faa/faa_ord' => 1);
+-  %Expect_Dir = ('fa' => 1, 'fa/faa' => 1, '/fa/fab' => 1, 'fa/fab/faba' => 1, 
+-                 'fb' => 1, 'fb/fba' => 1);
+-
+-  File::Find::finddepth( {wanted => \&dn_wanted, follow_fast => 1},'fa' );
+-  Check( scalar(keys %Expect) == 0 );
+-
+-  %Expect=('fa' => 1, 'fa/fa_ord' => 1, 'fa/fsl' => 1, 'fa/fsl/fb_ord' => 1,
+-           'fa/fsl/fba' => 1, 'fa/fsl/fba/fba_ord' => 1, 'fa/fab' => 1,
+-           'fa/fab/fab_ord' => 1, 'fa/fab/faba' => 1, 'fa/fab/faba/faba_ord' => 1,
+-           'fa/faa' => 1, 'fa/faa/faa_ord' => 1);
+-  %Expect_Dir = ('fa' => 1, 'fa/faa' => 1, '/fa/fab' => 1, 'fa/fab/faba' => 1, 
+-                 'fb' => 1, 'fb/fba' => 1);
+-
+-  File::Find::finddepth( {wanted => \&d_wanted, follow_fast => 1, no_chdir => 1},'fa' );
+-  Check( scalar(keys %Expect) == 0 );
+-}
+-
+-print "# of cases: $case\n";
++    print "# --- symbolic link tests --- \n";
++    $FastFileTests_OK= 1;
++
++
++    # Verify that File::Find::find will call wanted even if the topdir of
++    # is a symlink to a directory, and it shouldn't follow the link
++    # unless follow is set, which it isn't in this case
++    %Expect_File = ( file_path('fsl') => 1 );
++    %Expect_Name = ();
++    %Expect_Dir = ();
++    File::Find::find( {wanted => \&wanted_File_Dir}, topdir('fa', 'fsl') );
++    Check( scalar(keys %Expect_File) == 0 );
++
++
++    %Expect_File = (File::Spec->curdir => 1, file_path('fa_ord') => 1,
++                    file_path('fsl') => 1, file_path('fb_ord') => 1,
++                    file_path('fba') => 1, file_path('fba_ord') => 1,
++                    file_path('fab') => 1, file_path('fab_ord') => 1,
++                    file_path('faba') => 1, file_path('faa') => 1,
++                    file_path('faa_ord') => 1);
++
++    %Expect_Name = ();
++
++    %Expect_Dir = (File::Spec->curdir => 1, dir_path('fa') => 1,
++                   dir_path('faa') => 1, dir_path('fab') => 1,
++                   dir_path('faba') => 1, dir_path('fb') => 1,
++                   dir_path('fba') => 1);
++
++    File::Find::find( {wanted => \&wanted_File_Dir_prune,
++		       follow_fast => 1}, topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++
++
++    # no_chdir is in effect, hence we use file_path_name to specify
++    # the expected paths for %Expect_File
++
++    %Expect_File = (file_path_name('fa') => 1,
++		    file_path_name('fa', 'fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Name = ();
++
++    %Expect_Dir = (dir_path('fa') => 1,
++		   dir_path('fa', 'faa') => 1,
++                   dir_path('fa', 'fab') => 1,
++		   dir_path('fa', 'fab', 'faba') => 1,
++		   dir_path('fb') => 1,
++		   dir_path('fb', 'fba') => 1);
++
++    File::Find::find( {wanted => \&wanted_File_Dir, follow_fast => 1,
++		       no_chdir => 1}, topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++
++    %Expect_File = ();
++
++    %Expect_Name = (file_path_name('fa') => 1,
++		    file_path_name('fa', 'fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Dir = ();
++
++    File::Find::finddepth( {wanted => \&wanted_Name,
++			    follow_fast => 1}, topdir('fa') );
++
++    Check( scalar(keys %Expect_Name) == 0 );
++
++    # no_chdir is in effect, hence we use file_path_name to specify
++    # the expected paths for %Expect_File
++
++    %Expect_File = (file_path_name('fa') => 1,
++		    file_path_name('fa', 'fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Name = ();
++    %Expect_Dir = ();
++
++    File::Find::finddepth( {wanted => \&wanted_File, follow_fast => 1,
++			    no_chdir => 1}, topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++
++
++    print "# check dangling symbolic links\n";
++    MkDir( dir_path('dangling_dir'), 0770 );
++    CheckDie( symlink( dir_path('dangling_dir'),
++		       file_path('dangling_dir_sl') ) );
++    rmdir dir_path('dangling_dir');
++    touch(file_path('dangling_file'));
++    if ($^O eq 'MacOS') {
++        CheckDie( symlink('dangling_file', ':fa:dangling_file_sl') );
++    } else {
++        CheckDie( symlink('../dangling_file','fa/dangling_file_sl') );
++    }
++    unlink file_path('dangling_file');
++
++    {
++        # these tests should also emit a warning
++	use warnings;
++
++        %Expect_File = (File::Spec->curdir => 1,
++			file_path('fa_ord') => 1,
++                        file_path('fsl') => 1,
++                        file_path('fb_ord') => 1,
++			file_path('fba') => 1,
++                        file_path('fba_ord') => 1,
++			file_path('fab') => 1,
++                        file_path('fab_ord') => 1,
++                        file_path('faba') => 1,
++			file_path('faba_ord') => 1,
++                        file_path('faa') => 1,
++                        file_path('faa_ord') => 1);
++
++        %Expect_Name = ();
++        %Expect_Dir = ();
++        undef $warn_msg;
++
++        File::Find::find( {wanted => \&wanted_File, follow => 1,
++			   dangling_symlinks =>
++			       sub { $warn_msg = "$_[0] is a dangling symbolic link" }
++                           },
++                           topdir('dangling_dir_sl'), topdir('fa') );
++
++        Check( scalar(keys %Expect_File) == 0 );
++        Check( $warn_msg =~ m|dangling_dir_sl is a dangling symbolic link| );
++        unlink file_path('fa', 'dangling_file_sl'),
++                         file_path('dangling_dir_sl');
++
++    }
++
++
++    print "# check recursion\n";
++    if ($^O eq 'MacOS') {
++        CheckDie( symlink(':fa:faa',':fa:faa:faa_sl') );
++    } else {
++        CheckDie( symlink('../faa','fa/faa/faa_sl') );
++    }
++    undef $@;
++    eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
++                             no_chdir => 1}, topdir('fa') ); };
++    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]faa_sl is a recursive symbolic link| );
++    unlink file_path('fa', 'faa', 'faa_sl');
++
++
++    print "# check follow_skip (file)\n";
++    if ($^O eq 'MacOS') {
++        CheckDie( symlink(':fa:fa_ord',':fa:fa_ord_sl') ); # symlink to a file
++    } else {
++        CheckDie( symlink('./fa_ord','fa/fa_ord_sl') ); # symlink to a file
++    }
++    undef $@;
++
++    eval {File::Find::finddepth( {wanted => \&simple_wanted,
++                                  follow => 1,
++                                  follow_skip => 0, no_chdir => 1},
++                                  topdir('fa') );};
++
++    Check( $@ =~ m|for_find[:/]fa[:/]fa_ord encountered a second time| );
++
++
++    # no_chdir is in effect, hence we use file_path_name to specify
++    # the expected paths for %Expect_File
++
++    %Expect_File = (file_path_name('fa') => 1,
++		    file_path_name('fa', 'fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Name = ();
++
++    %Expect_Dir = (dir_path('fa') => 1,
++		   dir_path('fa', 'faa') => 1,
++                   dir_path('fa', 'fab') => 1,
++		   dir_path('fa', 'fab', 'faba') => 1,
++		   dir_path('fb') => 1,
++		   dir_path('fb','fba') => 1);
++
++    File::Find::finddepth( {wanted => \&wanted_File_Dir, follow => 1,
++                           follow_skip => 1, no_chdir => 1},
++                           topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++    unlink file_path('fa', 'fa_ord_sl');
++
++
++    print "# check follow_skip (directory)\n";
++    if ($^O eq 'MacOS') {
++        CheckDie( symlink(':fa:faa',':fa:faa_sl') ); # symlink to a directory
++    } else {
++        CheckDie( symlink('./faa','fa/faa_sl') ); # symlink to a directory
++    }
++    undef $@;
++
++    eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
++                            follow_skip => 0, no_chdir => 1},
++                            topdir('fa') );};
++
++    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time| );
++
++
++    undef $@;
++
++    eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
++                            follow_skip => 1, no_chdir => 1},
++                            topdir('fa') );};
++
++    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time| );
++
++    # no_chdir is in effect, hence we use file_path_name to specify
++    # the expected paths for %Expect_File
++
++    %Expect_File = (file_path_name('fa') => 1,
++		    file_path_name('fa', 'fa_ord') => 1,
++		    file_path_name('fa', 'fsl') => 1,
++                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
++                    file_path_name('fa', 'fsl', 'fba') => 1,
++                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
++                    file_path_name('fa', 'fab') => 1,
++                    file_path_name('fa', 'fab', 'fab_ord') => 1,
++                    file_path_name('fa', 'fab', 'faba') => 1,
++                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
++                    file_path_name('fa', 'faa') => 1,
++                    file_path_name('fa', 'faa', 'faa_ord') => 1);
++
++    %Expect_Name = ();
++
++    %Expect_Dir = (dir_path('fa') => 1,
++		   dir_path('fa', 'faa') => 1,
++                   dir_path('fa', 'fab') => 1,
++		   dir_path('fa', 'fab', 'faba') => 1,
++		   dir_path('fb') => 1,
++		   dir_path('fb', 'fba') => 1);
++
++    File::Find::find( {wanted => \&wanted_File_Dir, follow => 1,
++		       follow_skip => 2, no_chdir => 1}, topdir('fa') );
++
++    Check( scalar(keys %Expect_File) == 0 );
++    unlink file_path('fa', 'faa_sl');
++
++}
+diff --git a/t/lib/filepath.t b/t/lib/filepath.t
+index 42e0ae9..c2a29b6 100644
+--- a/t/lib/filepath.t
++++ b/t/lib/filepath.t
+@@ -5,6 +5,7 @@ BEGIN {
+     @INC = '../lib';
+ }
+ 
++use File::Spec::Functions;
+ use File::Path;
+ use strict;
+ 
+@@ -16,13 +17,16 @@ print "1..4\n";
+ # first check for stupid permissions second for full, so we clean up
+ # behind ourselves
+ for my $perm (0111,0777) {
+-    mkpath("foo/bar");
+-    chmod $perm, "foo", "foo/bar";
++    my $one = catdir(curdir(), "foo");
++    my $two = catdir(curdir(), "foo", "bar");
+ 
+-    print "not " unless -d "foo" && -d "foo/bar";
++    mkpath($two);
++    chmod $perm, $one, $two;
++
++    print "not " unless -d $one && -d $two;
+     print "ok ", ++$count, "\n";
+ 
+-    rmtree("foo");
+-    print "not " if -e "foo";
++    rmtree($one);
++    print "not " if -e $one;
+     print "ok ", ++$count, "\n";
+ }
+diff --git a/t/lib/findbin.t b/t/lib/findbin.t
+index 3e742f9..2cb42c3 100644
+--- a/t/lib/findbin.t
++++ b/t/lib/findbin.t
+@@ -9,5 +9,6 @@ print "1..1\n";
+ 
+ use FindBin qw($Bin);
+ 
+-print "not " unless $Bin =~ m,t[/.]lib\]?$,;
++my $match = $^O eq 'MacOS' ? qr/t:lib:$/ : qr,t[/.]lib\]?$,;
++print "not " unless $Bin =~ $match;
+ print "ok 1\n";
+diff --git a/t/lib/glob-basic.t b/t/lib/glob-basic.t
+index a014bfd..3a87cd7 100644
+--- a/t/lib/glob-basic.t
++++ b/t/lib/glob-basic.t
+@@ -79,7 +79,7 @@ print "ok 5\n";
+ # check bad protections
+ # should return an empty list, and set ERROR
+ if ($^O eq 'mpeix' or $^O eq 'MSWin32' or $^O eq 'os2' or $^O eq 'VMS'
+-    or $^O eq 'cygwin' or Cwd::cwd() =~ m#^/afs#s or not $>)
++    or $^O eq 'cygwin' or $^O eq 'msys' or Cwd::cwd() =~ m#^/afs#s or not $>)
+ {
+     print "ok 6 # skipped\n";
+ }
+diff --git a/t/lib/io_dir.t b/t/lib/io_dir.t
+index 3689871..6ec4e9f 100644
+--- a/t/lib/io_dir.t
++++ b/t/lib/io_dir.t
+@@ -19,7 +19,9 @@ use IO::Dir qw(DIR_UNLINK);
+ 
+ print "1..10\n";
+ 
+-$dot = new IO::Dir ".";
++my $DIR = $^O eq 'MacOS' ? ":" : ".";
++
++$dot = new IO::Dir $DIR;
+ print defined($dot) ? "ok" : "not ok", " 1\n";
+ 
+ @a = sort <*>;
+@@ -41,7 +43,7 @@ open(FH,'>X') || die "Can't create x";
+ print FH "X";
+ close(FH);
+ 
+-tie %dir, IO::Dir, ".";
++tie %dir, IO::Dir, $DIR;
+ my @files = keys %dir;
+ 
+ # I hope we do not have an empty dir :-)
+@@ -55,7 +57,7 @@ delete $dir{'X'};
+ 
+ print -f 'X' ? "ok" : "not ok", " 8\n";
+ 
+-tie %dirx, IO::Dir, ".", DIR_UNLINK;
++tie %dirx, IO::Dir, $DIR, DIR_UNLINK;
+ 
+ my $statx = $dirx{'X'};
+ print defined($statx) && UNIVERSAL::isa($statx,'File::stat') && $statx->size == 1
+diff --git a/t/lib/io_dup.t b/t/lib/io_dup.t
+index 0f17264..416c63f 100644
+--- a/t/lib/io_dup.t
++++ b/t/lib/io_dup.t
+@@ -43,6 +43,10 @@ if ($^O eq 'MSWin32') {
+     print `echo ok 4`;
+     print `echo ok 5 1>&2`; # does this *really* work?
+ }
++elsif ($^O eq 'MacOS') {
++    system 'echo ok 4';
++    system 'echo ok 5';  # no real way to do this, i think
++}
+ else {
+     system 'echo ok 4';
+     system 'echo ok 5 1>&2';
+@@ -54,8 +58,9 @@ $stdout->close;
+ $stdout->fdopen($dupout,"w");
+ $stderr->fdopen($duperr,"w");
+ 
+-if ($^O eq 'MSWin32') { print `type Io.dup` }
+-else                  { system 'cat Io.dup' }
++if ($^O eq 'MSWin32')  { print `type Io.dup`      }
++elsif ($^O eq 'MacOS') { system 'catenate Io.dup' }
++else                   { system 'cat Io.dup'      }
+ unlink 'Io.dup';
+ 
+ print STDOUT "ok 6\n";
+diff --git a/t/lib/ndbm.t b/t/lib/ndbm.t
+index e56fcd9..2a6419c 100644
+--- a/t/lib/ndbm.t
++++ b/t/lib/ndbm.t
+@@ -40,7 +40,7 @@ my $Dfile = "Op.dbmx.pag";
+ if (! -e $Dfile) {
+ 	($Dfile) = <Op.dbmx*>;
+ }
+-if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32') {
++if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'MacOS') {
+     print "ok 2 # Skipped: different file permission semantics\n";
+ }
+ else {
+@@ -137,7 +137,7 @@ print ($h{'foo'} eq '' ? "ok 11\n" : "not ok 11\n");
+ print ($h{''} eq 'bar' ? "ok 12\n" : "not ok 12\n");
+ 
+ untie %h;
+-unlink 'Op.dbmx.dir', $Dfile;
++unlink <Op.dbmx*>, $Dfile;
+ 
+ {
+    # sub-class test
+diff --git a/t/lib/posix.t b/t/lib/posix.t
+index 994704a..1c54965 100644
+--- a/t/lib/posix.t
++++ b/t/lib/posix.t
+@@ -16,8 +16,9 @@ use strict subs;
+ $| = 1;
+ print "1..27\n";
+ 
+-$Is_W32 = $^O eq 'MSWin32';
+-$Is_Dos = $^O eq 'dos';
++$Is_W32   = $^O eq 'MSWin32';
++$Is_Dos   = $^O eq 'dos';
++$Is_MacOS = $^O eq 'MacOS';
+ 
+ $testfd = open("TEST", O_RDONLY, 0) and print "ok 1\n";
+ read($testfd, $buffer, 9) if $testfd > 2;
+@@ -50,6 +51,13 @@ $sigset = new POSIX::SigSet 1,3;
+ delset $sigset 1;
+ if (!ismember $sigset 1) { print "ok 6\n" }
+ if (ismember $sigset 3) { print "ok 7\n" }
++
++if ($Is_MacOS) {
++    for (8..11) {
++	print "ok $_ # skipped, no kill() support on Mac OS\n";
++    }
++}
++else {
+ $mask = new POSIX::SigSet &SIGINT;
+ $action = new POSIX::SigAction 'main::SigHUP', $mask, 0;
+ sigaction(&SIGHUP, $action);
+@@ -68,11 +76,22 @@ sub SigHUP {
+ sub SigINT {
+     print "ok 10\n";
+ }
+-}
++}}
+ 
++if (&_POSIX_OPEN_MAX) {
+ print &_POSIX_OPEN_MAX > $fds[1] ? "ok 12\n" : "not ok 12\n";
++} else {
++print "ok 12 # _POSIX_OPEN_MAX undefined ($fds[1])\n";
++}
++
++my $pat;
++if ($Is_MacOS) {
++	$pat = qr/:t:$/;
++} else {
++	$pat = qr#/t$#;
++}
++print getcwd() =~ $pat ? "ok 13\n" : "not ok 13\n";
+ 
+-print getcwd() =~ m#/t$# ? "ok 13\n" : "not ok 13\n";
+ 
+ # Check string conversion functions.
+ 
+@@ -133,5 +152,5 @@ try_strftime(27, "Fri Mar 31 00:00:00 2000 091", 0,0,0, 31,2,100);
+ 
+ $| = 0;
+ # The following line assumes buffered output, which may be not true with EMX:
+-print '@#!*$@(!@#$' unless ($^O eq 'os2' || $^O eq 'uwin' || $^O eq 'os390');
++print '@#!*$@(!@#$' unless ($Is_MacOS || $^O eq 'os2' || $^O eq 'uwin' || $^O eq 'os390');
+ _exit(0);
+diff --git a/t/lib/selfloader.t b/t/lib/selfloader.t
+index 6b9c244..6987f65 100644
+--- a/t/lib/selfloader.t
++++ b/t/lib/selfloader.t
+@@ -3,6 +3,13 @@
+ BEGIN {
+     chdir 't' if -d 't';
+     $dir = "self-$$";
++    $sep = "/";
++
++    if ($^O eq 'MacOS') {
++	$dir = ":" . $dir;
++	$sep = ":";
++    }
++
+     @INC = $dir;
+     push @INC, '../lib';
+ 
+@@ -11,7 +18,7 @@ BEGIN {
+     # First we must set up some selfloader files
+     mkdir $dir, 0755            or die "Can't mkdir $dir: $!";
+ 
+-    open(FOO, ">$dir/Foo.pm") or die;
++    open(FOO, ">$dir${sep}Foo.pm") or die;
+     print FOO <<'EOT';
+ package Foo;
+ use SelfLoader;
+@@ -40,7 +47,7 @@ EOT
+ 
+     close(FOO);
+ 
+-    open(BAR, ">$dir/Bar.pm") or die;
++    open(BAR, ">$dir${sep}Bar.pm") or die;
+     print BAR <<'EOT';
+ package Bar;
+ use SelfLoader;
+@@ -196,6 +203,6 @@ if ($bardata ne "sub never { die \"D'oh\" }\n") {
+ # cleanup
+ END {
+ return unless $dir && -d $dir;
+-unlink "$dir/Foo.pm", "$dir/Bar.pm";
++unlink "$dir${sep}Foo.pm", "$dir${sep}Bar.pm";
+ rmdir "$dir";
+ }
+diff --git a/t/lib/socket.t b/t/lib/socket.t
+index 481fd8f..b9284dc 100644
+--- a/t/lib/socket.t
++++ b/t/lib/socket.t
+@@ -18,7 +18,9 @@ print "1..8\n";
+ if (socket(T,PF_INET,SOCK_STREAM,6)) {
+   print "ok 1\n";
+ 
+-  if (connect(T,pack_sockaddr_in(7,inet_aton("localhost")))){
++  # localhost won't always work on Mac OS
++  my $host = $^O eq 'MacOS' ? "127.0.0.1" : "localhost";
++  if (connect(T,pack_sockaddr_in(7,inet_aton($host)))){
+ 	print "ok 2\n";
+ 
+ 	print "# Connected to " .
+diff --git a/t/op/anonsub.t b/t/op/anonsub.t
+index 17889d9..5e7190b 100644
+--- a/t/op/anonsub.t
++++ b/t/op/anonsub.t
+@@ -4,6 +4,7 @@ chdir 't' if -d 't';
+ @INC = '../lib';
+ $Is_VMS = $^O eq 'VMS';
+ $Is_MSWin32 = $^O eq 'MSWin32';
++$Is_MacOS = $^O eq 'MacOS';
+ $ENV{PERL5LIB} = "../lib" unless $Is_VMS;
+ 
+ $|=1;
+@@ -26,10 +27,12 @@ for (@prgs){
+     print TEST "$prog\n";
+     close TEST;
+     my $results = $Is_VMS ?
+-                  `MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
+-		      $Is_MSWin32 ?  
+-			  `.\\perl -I../lib $switch $tmpfile 2>&1` :
+-			      `./perl $switch $tmpfile 2>&1`;
++		`MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
++		  $Is_MSWin32 ?
++		    `.\\perl -I../lib $switch $tmpfile 2>&1` :
++		      $Is_MacOS ?
++			`$^X -I::lib $switch $tmpfile` :
++			  `./perl $switch $tmpfile 2>&1`;
+     my $status = $?;
+     $results =~ s/\n+$//;
+     # allow expected output to be written as if $prog is on STDIN
+diff --git a/t/op/closure.t b/t/op/closure.t
+index 5f3245f..6334286 100644
+--- a/t/op/closure.t
++++ b/t/op/closure.t
+@@ -465,6 +465,7 @@ END
+ 	    open CMD, ">$cmdfile"; print CMD $code; close CMD;
+ 	    my $cmd = (($^O eq 'VMS') ? "MCR $^X"
+ 		       : ($^O eq 'MSWin32') ? '.\perl'
++		       : ($^O eq 'MacOS') ? $^X
+ 		       : './perl');
+ 	    $cmd .= " -w $cmdfile 2>$errfile";
+ 	    if ($^O eq 'VMS' or $^O eq 'MSWin32') {
+diff --git a/t/op/defins.t b/t/op/defins.t
+index 33c74ea..06d48b6 100644
+--- a/t/op/defins.t
++++ b/t/op/defins.t
+@@ -12,16 +12,17 @@ BEGIN {
+ }
+ 
+ $wanted_filename = $^O eq 'VMS' ? '0.' : '0';
++$saved_filename = $^O eq 'MacOS' ? ':0' : './0';
+     
+ print "not " if $warns;
+ print "ok 1\n";
+ 
+-open(FILE,">./0");
++open(FILE,">$saved_filename");
+ print FILE "1\n";
+ print FILE "0";
+ close(FILE);
+ 
+-open(FILE,"<./0");
++open(FILE,"<$saved_filename");
+ my $seen = 0;
+ my $dummy;
+ while (my $name = <FILE>)
+@@ -63,7 +64,7 @@ print "not " unless $seen;
+ print "ok 5\n";
+ close FILE;
+ 
+-opendir(DIR,'.');
++opendir(DIR,($^O eq 'MacOS' ? ':' : '.'));
+ $seen = 0;
+ while (my $name = readdir(DIR))
+  {
+@@ -116,7 +117,7 @@ while ($where{$seen} = glob('*'))
+ print "not " unless $seen;
+ print "ok 11\n";
+ 
+-unlink("./0");
++unlink($saved_filename);
+ 
+ my %hash = (0 => 1, 1 => 2);
+ 
+diff --git a/t/op/die_exit.t b/t/op/die_exit.t
+index a389946..fd0b9ab 100644
+--- a/t/op/die_exit.t
++++ b/t/op/die_exit.t
+@@ -15,7 +15,7 @@ if ($^O eq 'mpeix') {
+     exit 0;
+ }
+ 
+-my $perl = -e '../perl' ? '../perl' : -e './perl' ? './perl' : 'perl';
++my $perl = -e '../perl' ? '../perl' : -e './perl' ? './perl' : -e $^X ? $^X : 'perl';
+ 
+ use strict;
+ 
+diff --git a/t/op/eval.t b/t/op/eval.t
+index 1838923..68774df 100644
+--- a/t/op/eval.t
++++ b/t/op/eval.t
+@@ -99,7 +99,7 @@ do_eval1('print "ok $x\n"');
+ $x++;
+ do_eval1('eval q[print "ok $x\n"]');
+ $x++;
+-do_eval1('sub { eval q[print "ok $x\n"] }->()');
++do_eval1('sub { print "# $x\n"; eval q[print "ok $x\n"] }->()');
+ $x++;
+ 
+ # calls from within eval'' should clone outer lexicals
+@@ -112,7 +112,7 @@ do_eval2('print "ok $x\n"');
+ $x++;
+ do_eval2('eval q[print "ok $x\n"]');
+ $x++;
+-do_eval2('sub { eval q[print "ok $x\n"] }->()');
++do_eval2('sub { print "# $x\n"; eval q[print "ok $x\n"] }->()');
+ $x++;
+ EOT
+ 
+diff --git a/t/op/exec.t b/t/op/exec.t
+index 23e9ec1..57a114e 100644
+--- a/t/op/exec.t
++++ b/t/op/exec.t
+@@ -11,6 +11,12 @@ if ($^O eq 'MSWin32') {
+     exit(0);
+ }
+ 
++if ($^O eq 'MacOS') {
++    # XXX the system tests could be written to use ./perl and so work on Win32
++    print "1..0 # Mostly useless tests for Mac OS\n";
++    exit(0);
++}
++
+ print "1..8\n";
+ 
+ if ($^O ne 'os2') {
+diff --git a/t/op/goto.t b/t/op/goto.t
+index 96bb8dd..0f6633d 100644
+--- a/t/op/goto.t
++++ b/t/op/goto.t
+@@ -29,7 +29,7 @@ label4:
+ print "#2\t:$foo: == 4\n";
+ if ($foo == 4) {print "ok 2\n";} else {print "not ok 2\n";}
+ 
+-$PERL = ($^O eq 'MSWin32') ? '.\perl' : './perl';
++$PERL = ($^O eq 'MSWin32') ? '.\perl' : ($^O eq 'MacOS') ? $^X : './perl';
+ $CMD = qq[$PERL -e "goto foo;" 2>&1 ];
+ $x = `$CMD`;
+ 
+diff --git a/t/op/groups.t b/t/op/groups.t
+index 082d2d1..2c1a155 100644
+--- a/t/op/groups.t
++++ b/t/op/groups.t
+@@ -115,7 +115,7 @@ for (split(' ', $()) {
+     }
+ } 
+ 
+-if ($^O =~ /^(?:uwin|solaris)$/) {
++if ($^O =~ /^(?:uwin|solaris|cygwin|msys)$/) {
+ 	# Or anybody else who can have spaces in group names.
+ 	$gr1 = join(' ', grep(!$did{$_}++, sort split(' ', join(' ', @gr))));
+ } else {
+diff --git a/t/op/magic.t b/t/op/magic.t
+index c2a8211..3fa33b5 100644
+--- a/t/op/magic.t
++++ b/t/op/magic.t
+@@ -25,6 +25,7 @@ $Is_VMS     = $^O eq 'VMS';
+ $Is_Dos   = $^O eq 'dos';
+ $Is_os2   = $^O eq 'os2';
+ $Is_Cygwin   = $^O eq 'cygwin';
++$Is_Msys   = $^O eq 'msys';
+ $PERL = ($Is_MSWin32 ? '.\perl' : './perl');
+ 
+ print "1..35\n";
+@@ -114,7 +115,7 @@ ok 18, $$ > 0, $$;
+     if ($^O eq 'qnx') {
+ 	chomp($wd = `/usr/bin/fullpath -t`);
+     }
+-    elsif($Is_Cygwin) {
++    elsif($Is_Cygwin or $Is_Msys) {
+        # Cygwin turns the symlink into the real file
+        chomp($wd = `pwd`);
+        $wd =~ s#/t$##;
+@@ -166,7 +167,7 @@ EOF
+     ok 21, close(SCRIPT), $!;
+     ok 22, chmod(0755, $script), $!;
+     $_ = `$script`;
+-    s/\.exe//i if $Is_Dos or $Is_Cygwin or $Is_os2;
++    s/\.exe//i if $Is_Dos or $Is_Cygwin or $Is_Msys or $Is_os2;
+     s{\bminiperl\b}{perl}; # so that test doesn't fail with miniperl
+     s{is perl}{is $perl}; # for systems where $^X is only a basename
+     s{\\}{/}g;
+diff --git a/t/op/misc.t b/t/op/misc.t
+index 35437a4..bb97535 100644
+--- a/t/op/misc.t
++++ b/t/op/misc.t
+@@ -17,7 +17,7 @@ $tmpfile = "misctmp000";
+ 1 while -f ++$tmpfile;
+ END { while($tmpfile && unlink $tmpfile){} }
+ 
+-$CAT = (($^O eq 'MSWin32') ? '.\perl -e "print <>"' : 'cat');
++$CAT = (($^O eq 'MSWin32') ? '.\perl -e "print <>"' : ($^O eq 'MacOS') ? 'catenate' : 'cat');
+ 
+ for (@prgs){
+     my $switch;
+@@ -35,6 +35,9 @@ for (@prgs){
+     if ($^O eq 'MSWin32') {
+       $results = `.\\perl -I../lib $switch $tmpfile 2>&1`;
+     }
++    elsif ($^O eq 'MacOS') {
++      $results = `$^X -I::lib $switch $tmpfile`;
++    }
+     else {
+       $results = `./perl $switch $tmpfile 2>&1`;
+     }
+@@ -94,7 +97,7 @@ EXPECT
+ ########
+ eval {sub bar {print "In bar";}}
+ ########
+-system './perl -ne "print if eof" /dev/null'
++system './perl -ne "print if eof" /dev/null' unless $^O eq 'MacOS';
+ ########
+ chop($file = <DATA>);
+ ########
+@@ -272,7 +275,7 @@ print "ok\n" if ("\0" lt "\xFF");
+ EXPECT
+ ok
+ ########
+-open(H,'op/misc.t'); # must be in the 't' directory
++open(H,'op/misc.t') || open(H,':op:misc.t'); # must be in the 't' directory
+ stat(H);
+ print "ok\n" if (-e _ and -f _ and -r _);
+ EXPECT
+@@ -566,6 +569,40 @@ print qw(ab a\b a\\b);
+ EXPECT
+ aba\ba\b
+ ########
++# lexicals declared after the myeval() definition should not be visible
++# within it
++sub myeval { eval $_[0] }
++my $foo = "ok 2\n";
++myeval('sub foo { local $foo = "ok 1\n"; print $foo; }');
++die $@ if $@;
++foo();
++print $foo;
++EXPECT
++ok 1
++ok 2
++########
++# lexicals outside an eval"" should be visible inside subroutine definitions
++# within it
++eval <<'EOT'; die $@ if $@;
++{
++    my $X = "ok\n";
++    eval 'sub Y { print $X }'; die $@ if $@;
++    Y();
++}
++EOT
++EXPECT
++ok
++########
++# test that closures generated by eval"" hold on to the CV of the eval""
++# for their entire lifetime
++$code = eval q[
++  sub { eval '$x = "ok 1\n"'; }
++];
++&{$code}();
++print $x;
++EXPECT
++ok 1
++########
+ # This test is here instead of pragma/locale.t because
+ # the bug depends on in the internal state of the locale
+ # settings and pragma/locale messes up that state pretty badly.
+diff --git a/t/op/mkdir.t b/t/op/mkdir.t
+index c5a090c..37da9c3 100644
+--- a/t/op/mkdir.t
++++ b/t/op/mkdir.t
+@@ -20,6 +20,6 @@ print ($! =~ /cannot move|exist|denied/ ? "ok 3\n" : "# $!\nnot ok 3\n");
+ print (-d 'blurfl' ? "ok 4\n" : "not ok 4\n");
+ print (rmdir('blurfl') ? "ok 5\n" : "not ok 5\n");
+ print (rmdir('blurfl') ? "not ok 6\n" : "ok 6\n");
+-print ($! =~ /cannot find|such|exist|not found/i ? "ok 7\n" : "# $!\nnot ok 7\n");
++print ($! =~ /cannot find|such|exist|not found|not a directory/i ? "ok 7\n" : "# $!\nnot ok 7\n");
+ print (mkdir('blurfl') ? "ok 8\n" : "not ok 8\n");
+ print (rmdir('blurfl') ? "ok 9\n" : "not ok 9\n");
+diff --git a/t/op/pack.t b/t/op/pack.t
+index 67bd547..1f08189 100644
+--- a/t/op/pack.t
++++ b/t/op/pack.t
+@@ -43,7 +43,7 @@ $sum = 103 if ($Config{ebcdic} eq 'define');
+ print +($x = unpack("%32B*", "Now is the time for all good blurfl")) == $sum
+ 	? "ok 7\n" : "not ok 7 $x\n";
+ 
+-open(BIN, "./perl") || open(BIN, "./perl.exe") 
++open(BIN, "./perl") || open(BIN, "./perl.exe") || open(BIN, $^X)
+     || die "Can't open ../perl or ../perl.exe: $!\n";
+ sysread BIN, $foo, 8192;
+ close BIN;
+diff --git a/t/op/pat.t b/t/op/pat.t
+index ffbc945..369b094 100644
+--- a/t/op/pat.t
++++ b/t/op/pat.t
+@@ -4,7 +4,7 @@
+ # the format supported by op/regexp.t.  If you want to add a test
+ # that does fit that format, add it to op/re_tests, not here.
+ 
+-print "1..231\n";
++print "1..238\n";
+ 
+ BEGIN {
+     chdir 't' if -d 't';
+@@ -1128,3 +1128,48 @@ $test++;
+   print "ok $test\n";
+   $test++;
+ }
++
++{
++    # bugid 20010410.006
++    for my $rx (
++		'/(.*?)\{(.*?)\}/csg',
++		'/(.*?)\{(.*?)\}/cg',
++		'/(.*?)\{(.*?)\}/sg',
++		'/(.*?)\{(.*?)\}/g',
++		'/(.+?)\{(.+?)\}/csg',
++	       )
++    {
++	my($input, $i);
++
++	$i = 0;
++	$input = "a{b}c{d}";
++        eval <<EOT;
++	while (eval \$input =~ $rx) {
++	    print "# \\\$1 = '\$1' \\\$2 = '\$2'\n";
++	    ++\$i;
++	}
++EOT
++	print "not " unless $i == 2;
++	print "ok " . $test++ . "\n";
++    }
++}
++
++$_ = "foo";
++
++eval <<"EOT"; die if $@;
++  /f
++   o\r
++   o
++   \$
++  /x && print "ok $test\n";
++EOT
++$test++;
++
++eval <<"EOT"; die if $@;
++  /f
++   o
++   o
++   \$\r
++  /x && print "ok $test\n";
++EOT
++$test++;
+diff --git a/t/op/read.t b/t/op/read.t
+index 2746970..cfa0103 100644
+--- a/t/op/read.t
++++ b/t/op/read.t
+@@ -5,7 +5,7 @@
+ print "1..4\n";
+ 
+ 
+-open(FOO,'op/read.t') || open(FOO,'t/op/read.t') || die "Can't open op.read";
++open(FOO,'op/read.t') || open(FOO,'t/op/read.t') || open(FOO,':op:read.t') || die "Can't open op.read";
+ seek(FOO,4,0);
+ $got = read(FOO,$buf,4);
+ 
+diff --git a/t/op/readdir.t b/t/op/readdir.t
+index 00199b0..5654324 100644
+--- a/t/op/readdir.t
++++ b/t/op/readdir.t
+@@ -5,6 +5,8 @@ BEGIN {
+     @INC = '../lib';
+ }
+ 
++use File::Spec::Functions;
++
+ eval 'opendir(NOSUCH, "no/such/directory");';
+ if ($@) { print "1..0\n"; exit; }
+ 
+@@ -28,12 +30,13 @@ if (@D > 90 && @D < 110) { print "ok 2\n"; } else { print "not ok 2\n"; }
+ 
+ @R = sort @D;
+ @G = sort <op/*.t>;
++@G = sort <:op:*.t> if $^O eq 'MacOS';
+ if ($G[0] =~ m#.*\](\w+\.t)#i) {
+     # grep is to convert filespecs returned from glob under VMS to format
+     # identical to that returned by readdir
+     @G = grep(s#.*\](\w+\.t).*#op/$1#i,<op/*.t>);
+ }
+-while (@R && @G && "op/".$R[0] eq $G[0]) {
++while (@R && @G && $G[0] eq ($^O eq 'MacOS' ? ':op:' : 'op/').$R[0]) {
+ 	shift(@R);
+ 	shift(@G);
+ }
+diff --git a/t/op/regexp.t b/t/op/regexp.t
+index 4a4d42f..0bb0dab 100644
+--- a/t/op/regexp.t
++++ b/t/op/regexp.t
+@@ -38,7 +38,7 @@ BEGIN {
+ 
+ $iters = shift || 1;		# Poor man performance suite, 10000 is OK.
+ 
+-open(TESTS,'op/re_tests') || open(TESTS,'t/op/re_tests') ||
++open(TESTS,'op/re_tests') || open(TESTS,'t/op/re_tests') || open(TESTS,':op:re_tests') ||
+ 	die "Can't open re_tests";
+ 
+ while (<TESTS>) { }
+diff --git a/t/op/regexp_noamp.t b/t/op/regexp_noamp.t
+index 03c19e9..8a6dd28 100644
+--- a/t/op/regexp_noamp.t
++++ b/t/op/regexp_noamp.t
+@@ -1,10 +1,10 @@
+ #!./perl
+ 
+ $skip_amp = 1;
+-for $file ('op/regexp.t', 't/op/regexp.t') {
++for $file ('./op/regexp.t', './t/op/regexp.t', ':op:regexp.t') {
+   if (-r $file) {
+     do $file;
+     exit;
+   }
+ }
+-die "Cannot find op/regexp.t or t/op/regexp.t\n";
++die "Cannot find ./op/regexp.t or ./t/op/regexp.t\n";
+diff --git a/t/op/runlevel.t b/t/op/runlevel.t
+index b6c128b..e032f95 100644
+--- a/t/op/runlevel.t
++++ b/t/op/runlevel.t
+@@ -10,6 +10,7 @@ chdir 't' if -d 't';
+ @INC = '../lib';
+ $Is_VMS = $^O eq 'VMS';
+ $Is_MSWin32 = $^O eq 'MSWin32';
++$Is_MacOS = $^O eq 'MacOS';
+ $ENV{PERL5LIB} = "../lib" unless $Is_VMS;
+ 
+ $|=1;
+@@ -32,10 +33,12 @@ for (@prgs){
+     print TEST "$prog\n";
+     close TEST;
+     my $results = $Is_VMS ?
+-                  `MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
+-		      $Is_MSWin32 ?  
+-			  `.\\perl -I../lib $switch $tmpfile 2>&1` :
+-			      `./perl $switch $tmpfile 2>&1`;
++	`MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
++	    $Is_MSWin32 ?
++		`.\\perl -I../lib $switch $tmpfile 2>&1` :
++		    $Is_MacOS ?
++			`$^X -I::lib $switch $tmpfile` :
++			    `./perl $switch $tmpfile 2>&1`;
+     my $status = $?;
+     $results =~ s/\n+$//;
+     # allow expected output to be written as if $prog is on STDIN
+diff --git a/t/op/split.t b/t/op/split.t
+index 9a6586d..0a79b2d 100644
+--- a/t/op/split.t
++++ b/t/op/split.t
+@@ -47,6 +47,7 @@ print $_ eq '1:2:3:4:5:6:::' ? "ok 10\n" : "not ok 10 $_\n";
+ # Does assignment to a list imply split to one more field than that?
+ if ($^O eq 'MSWin32') { $foo = `.\\perl -D1024 -e "(\$a,\$b) = split;" 2>&1` }
+ elsif ($^O eq 'VMS')  { $foo = `./perl "-D1024" -e "(\$a,\$b) = split;" 2>&1` }
++elsif ($^O eq 'MacOS'){ $foo = `$^X "-D1024" -e "(\$a,\$b) = split;"` }
+ else                  { $foo = `./perl -D1024 -e '(\$a,\$b) = split;' 2>&1` }
+ print $foo =~ /DEBUGGING/ || $foo =~ /SV = (VOID|IV\(3\))/ ? "ok 11\n" : "not ok 11\n";
+ 
+diff --git a/t/op/stat.t b/t/op/stat.t
+index 1d8c7a3..19c7379 100644
+--- a/t/op/stat.t
++++ b/t/op/stat.t
+@@ -8,13 +8,16 @@ BEGIN {
+ }
+ 
+ use Config;
++use File::Spec::Functions;
+ 
+ print "1..58\n";
+ 
++$Is_MacOS = $^O eq 'MacOS';
+ $Is_MSWin32 = $^O eq 'MSWin32';
+ $Is_Dos = $^O eq 'dos';
+ $Is_Dosish = $Is_Dos || $^O eq 'os2' || $Is_MSWin32;
+ $Is_Cygwin = $^O eq 'cygwin';
++$Is_Msys = $^O eq 'msys';
+ chop($cwd = ($Is_MSWin32 ? `cd` : `pwd`));
+ 
+ $DEV = `ls -l /dev` unless $Is_Dosish or $Is_Cygwin;
+@@ -52,7 +55,7 @@ if (open(FOO, ">Op.stat.tmp")) {
+   print "# open failed: $!\nnot ok 1\nnot ok 2\n";
+ }
+ 
+-if ($Is_Dosish) { unlink "Op.stat.tmp2"}
++if ($Is_Dosish || $Is_MacOS) { unlink "Op.stat.tmp2"}
+ else {
+     `rm -f Op.stat.tmp2;ln Op.stat.tmp Op.stat.tmp2; chmod 644 Op.stat.tmp`;
+ }
+@@ -66,7 +69,7 @@ elsif ($nlink == 2)
+     {print "ok 3\n";} 
+ else {print "# \$nlink is |$nlink|\nnot ok 3\n";}
+ 
+-if (   $Is_Dosish
++if (   $Is_Dosish || $Is_MacOS
+         # Solaris tmpfs bug
+ 	|| ($cwd =~ m#^/tmp# and $mtime && $mtime==$ctime && $^O eq 'solaris')
+ 	|| $cwd =~ m#/afs/#
+@@ -85,7 +88,7 @@ else {
+ print "#4	:$mtime: should != :$ctime:\n";
+ 
+ unlink "Op.stat.tmp" or print "# unlink failed: $!\n";
+-if ($Is_MSWin32) {  open F, '>Op.stat.tmp' and close F }
++if ($Is_MSWin32 || $Is_MacOS) {  open F, '>Op.stat.tmp' and close F }
+ else             { `touch Op.stat.tmp` }
+ 
+ if (-z 'Op.stat.tmp') {print "ok 5\n";} else {print "not ok 5\n";}
+@@ -118,15 +121,16 @@ eval { chown $>,'Op.stat.tmp'; 1 } or print "# $@" ;
+ chmod 0700,'Op.stat.tmp';
+ if (-r 'Op.stat.tmp') {print "ok 18\n";} else {print "not ok 18\n";}
+ if (-w 'Op.stat.tmp') {print "ok 19\n";} else {print "not ok 19\n";}
+-if ($Is_Dosish) {print "ok 20 # skipped: -x by extension\n";} 
++if ($Is_Dosish || $Is_MacOS) {print "ok 20 # skipped: -x by extension\n";}
+ elsif (-x 'Op.stat.tmp') {print "ok 20\n";} 
+ else {print "not ok 20\n";}
+ 
+ if (-f 'Op.stat.tmp') {print "ok 21\n";} else {print "not ok 21\n";}
+ if (! -d 'Op.stat.tmp') {print "ok 22\n";} else {print "not ok 22\n";}
+ 
+-if (-d '.') {print "ok 23\n";} else {print "not ok 23\n";}
+-if (! -f '.') {print "ok 24\n";} else {print "not ok 24\n";}
++my $dir = curdir();
++if (-d $dir) {print "ok 23\n";} else {print "not ok 23\n";}
++if (! -f $dir) {print "ok 24\n";} else {print "not ok 24\n";}
+ 
+ if (!$Is_Dosish and `ls -l perl` =~ /^l.*->/) {
+     if (-l 'perl') {print "ok 25\n";} else {print "not ok 25\n";}
+@@ -171,7 +175,7 @@ else
+     {print "not ok 33\n";}
+ if (! -b '.') {print "ok 34\n";} else {print "not ok 34\n";}
+ 
+-if ($^O eq 'mpeix' or $^O eq 'amigaos' or $Is_Dosish or $Is_Cygwin) {
++if ($^O eq 'mpeix' or $^O eq 'amigaos' or $Is_Dosish or $Is_Cygwin or $Is_MacOS) {
+   print "ok 35 # skipped: no -u\n"; goto tty_test;
+ }
+ 
+@@ -205,7 +209,7 @@ tty_test:
+ # may not be available (at, cron  rsh etc), the PERL_SKIP_TTY_TEST env var
+ # can be set to skip the tests that need a tty.
+ unless($ENV{PERL_SKIP_TTY_TEST}) {
+-    if ($Is_MSWin32) {
++    if ($Is_MSWin32 || $Is_MacOS) {
+ 	print "ok 36\n";
+ 	print "ok 37\n";
+     }
+@@ -235,20 +239,21 @@ else {
+     print "ok 38\n";
+     print "ok 39\n";
+ }
+-open(null,"/dev/null");
++my $devnull = File::Spec->devnull;
++open(null, $devnull);
+ if (! -t null || -e '/xenix' || $^O eq 'machten' || $Is_MSWin32)
+ 	{print "ok 40\n";} else {print "not ok 40\n";}
+ close(null);
+ 
+ # These aren't strictly "stat" calls, but so what?
++my $file = catfile(curdir(), 'op', 'stat.t');
++if (-T $file) {print "ok 41\n";} else {print "not ok 41\n";}
++if (! -B $file) {print "ok 42\n";} else {print "not ok 42\n";}
+ 
+-if (-T 'op/stat.t') {print "ok 41\n";} else {print "not ok 41\n";}
+-if (! -B 'op/stat.t') {print "ok 42\n";} else {print "not ok 42\n";}
++if (-B './perl' || -B './perl.exe' || -B $^X) {print "ok 43\n";} else {print "not ok 43\n";}
++if (! -T './perl' && ! -T './perl.exe' || ! -T $^X) {print "ok 44\n";} else {print "not ok 44\n";}
+ 
+-if (-B './perl' || -B './perl.exe') {print "ok 43\n";} else {print "not ok 43\n";}
+-if (! -T './perl' && ! -T './perl.exe') {print "ok 44\n";} else {print "not ok 44\n";}
+-
+-open(FOO,'op/stat.t');
++open(FOO,$file);
+ eval { -T FOO; };
+ if ($@ =~ /not implemented/) {
+     print "# $@";
+@@ -265,7 +270,7 @@ else {
+     if (! -B FOO) {print "ok 49\n";} else {print "not ok 49\n";}
+     close(FOO);
+ 
+-    open(FOO,'op/stat.t');
++    open(FOO,$file);
+     $_ = <FOO>;
+     if (/perl/) {print "ok 50\n";} else {print "not ok 50\n";}
+     if (-T FOO) {print "ok 51\n";} else {print "not ok 51\n";}
+@@ -276,8 +281,8 @@ else {
+ }
+ close(FOO);
+ 
+-if (-T '/dev/null') {print "ok 55\n";} else {print "not ok 55\n";}
+-if (-B '/dev/null') {print "ok 56\n";} else {print "not ok 56\n";}
++if (-T $devnull) {print "ok 55\n";} else {print "not ok 55\n";}
++if (-B $devnull) {print "ok 56\n";} else {print "not ok 56\n";}
+ 
+ # and now, a few parsing tests:
+ $_ = 'Op.stat.tmp';
+diff --git a/t/op/subst_wamp.t b/t/op/subst_wamp.t
+index b716b30..46d665c 100644
+--- a/t/op/subst_wamp.t
++++ b/t/op/subst_wamp.t
+@@ -1,7 +1,7 @@
+ #!./perl
+ 
+ $dummy = defined $&;		# Now we have it...
+-for $file ('op/subst.t', 't/op/subst.t') {
++for $file ('op/subst.t', 't/op/subst.t', ':op:subst.t') {
+   if (-r $file) {
+     do $file;
+     exit;
+diff --git a/t/op/taint.t b/t/op/taint.t
+index 2958a37..e693750 100644
+--- a/t/op/taint.t
++++ b/t/op/taint.t
+@@ -14,6 +14,7 @@ BEGIN {
+ 
+ use strict;
+ use Config;
++use File::Spec::Functions;
+ 
+ # We do not want the whole taint.t to fail
+ # just because Errno possibly failing.
+@@ -36,11 +37,12 @@ BEGIN {
+   }
+ }
+ 
++my $Is_MacOS = $^O eq 'MacOS';
+ my $Is_VMS = $^O eq 'VMS';
+ my $Is_MSWin32 = $^O eq 'MSWin32';
+ my $Is_Dos = $^O eq 'dos';
+ my $Invoke_Perl = $Is_VMS ? 'MCR Sys$Disk:[]Perl.' :
+-                  $Is_MSWin32 ? '.\perl' : './perl';
++                  $Is_MSWin32 ? '.\perl' : $Is_MacOS ? '::macos:perl' : './perl';
+ my @MoreEnv = qw/IFS CDPATH ENV BASH_ENV/;
+ 
+ if ($Is_VMS) {
+@@ -97,7 +99,7 @@ sub test ($$;$) {
+ }
+ 
+ # We need an external program to call.
+-my $ECHO = ($Is_MSWin32 ? ".\\echo$$" : "./echo$$");
++my $ECHO = ($Is_MSWin32 ? ".\\echo$$" : $Is_MacOS ? ":echo$$" : "./echo$$");
+ END { unlink $ECHO }
+ open PROG, "> $ECHO" or die "Can't create $ECHO: $!";
+ print PROG 'print "@ARGV\n"', "\n";
+@@ -118,7 +120,7 @@ print "1..155\n";
+ 
+     test 1, eval { `$echo 1` } eq "1\n";
+ 
+-    if ($Is_MSWin32 || $Is_VMS || $Is_Dos) {
++    if ($Is_MSWin32 || $Is_VMS || $Is_Dos || $Is_MacOS) {
+ 	print "# Environment tainting tests skipped\n";
+ 	for (2..5) { print "ok $_\n" }
+     }
+@@ -235,7 +237,7 @@ print "1..155\n";
+ # How about command-line arguments? The problem is that we don't
+ # always get some, so we'll run another process with some.
+ {
+-    my $arg = "./arg$$";
++    my $arg = catfile(curdir(), "arg$$");
+     open PROG, "> $arg" or die "Can't create $arg: $!";
+     print PROG q{
+ 	eval { join('', @ARGV), kill 0 };
+@@ -251,7 +253,7 @@ print "1..155\n";
+ 
+ # Reading from a file should be tainted
+ {
+-    my $file = './TEST';
++    my $file = catfile(curdir(), 'TEST');
+     test 32, open(FILE, $file), "Couldn't open '$file': $!";
+ 
+     my $block;
+@@ -583,7 +585,10 @@ else {
+     if ($Config{d_readlink} && $Config{d_symlink}) {
+ 	my $symlink = "sl$$";
+ 	unlink($symlink);
+-	symlink("/something/naughty", $symlink) or die "symlink: $!\n";
++	my $sl = "/something/naughty";
++	# it has to be a real path on Mac OS
++	$sl = MacPerl::MakePath((MacPerl::Volumes())[0]) if $Is_MacOS;
++	symlink($sl, $symlink) or die "symlink: $!\n";
+ 	my $readlink = readlink($symlink);
+ 	test 144, tainted $readlink;
+ 	unlink($symlink);
+@@ -697,7 +702,7 @@ else {
+ {
+     # bug id 20001004.006
+ 
+-    open IN, "./TEST" or warn "$0: cannot read ./TEST: $!" ;
++    open IN, catfile(curdir(), 'TEST') or warn "$0: cannot read ./TEST: $!" ;
+     local $/;
+     my $a = <IN>;
+     my $b = <IN>;
+@@ -709,7 +714,7 @@ else {
+ {
+     # bug id 20001004.007
+ 
+-    open IN, "./TEST" or warn "$0: cannot read ./TEST: $!" ;
++    open IN, catfile(curdir(), 'TEST') or warn "$0: cannot read ./TEST: $!" ;
+     my $a = <IN>;
+ 
+     my $c = { a => 42,
+diff --git a/t/op/write.t b/t/op/write.t
+index 5b01eb7..7e97a39 100644
+--- a/t/op/write.t
++++ b/t/op/write.t
+@@ -2,7 +2,8 @@
+ 
+ print "1..9\n";
+ 
+-my $CAT = ($^O eq 'MSWin32') ? 'type' : 'cat';
++my $CAT = ($^O eq 'MSWin32') ? 'type'
++	: ($^O eq 'MacOS') ? 'catenate' : 'cat';
+ 
+ format OUT =
+ the quick brown @<<
+diff --git a/t/pod/find.t b/t/pod/find.t
+index db39508..9796ee7 100644
+--- a/t/pod/find.t
++++ b/t/pod/find.t
+@@ -21,7 +21,7 @@ ok(1);
+ require Cwd;
+ my $THISDIR = Cwd::cwd();
+ my $VERBOSE = 0;
+-my $lib_dir = File::Spec->catdir($THISDIR,'..','lib','Pod');
++my $lib_dir = File::Spec->catdir($THISDIR,File::Spec->updir,'lib','Pod');
+ if ($^O eq 'VMS') {
+     $lib_dir = VMS::Filespec::unixify(File::Spec->catdir($THISDIR,'-','lib','pod'));
+     $Qlib_dir = $lib_dir;
+@@ -30,7 +30,8 @@ if ($^O eq 'VMS') {
+ print "### searching $lib_dir\n";
+ my %pods = pod_find("$lib_dir");
+ my $result = join(",", sort values %pods);
+-print "### found $result\n";
++my $printresult = join("\n### ", sort values %pods);
++print "### found $printresult\n";
+ my $compare = join(',', qw(
+     Checker
+     Find
+@@ -82,25 +83,27 @@ if ($^O eq 'VMS') { # privlib is perl_root:[lib] OK but not under mms
+     ok($result,$compare);
+ }
+ else {
+-    $compare = File::Spec->catfile("..","lib","File","Find.pm");
++    $compare = File::Spec->catfile(File::Spec->updir,"lib","File","Find.pm");
+     ok(_canon($result),_canon($compare));
+ }
+ 
+ # Search for a documentation pod rather than a module
+ print "### searching for perlfunc.pod\n";
+-$result = pod_where({ -dirs => ['../pod'], -verbose => $VERBOSE }, 'perlfunc')
++$result = pod_where({
++     -dirs => [File::Spec->catdir(File::Spec->updir, "pod")],
++     -verbose => $VERBOSE }, 'perlfunc')
+   || 'undef - perlfunc.pod not found!';
+ print "### found $result\n";
+ 
+ if ($^O eq 'VMS') { # privlib is perl_root:[lib] unfortunately
+-    $compare = "/lib/pod/perlfunc.pod";
++    $compare = "/pod/perlfunc.pod";
+     $result = VMS::Filespec::unixify($result);
+     $result =~ s/perl_root\///i;
+     $result =~ s/^\.\.//;  # needed under `mms test`
+     ok($result,$compare);
+ }
+ else {
+-    $compare = File::Spec->catfile("..","pod","perlfunc.pod");
++    $compare = File::Spec->catfile(File::Spec->updir,"pod","perlfunc.pod");
+     ok(_canon($result),_canon($compare));
+ }
+ 
+diff --git a/t/pod/testp2pt.pl b/t/pod/testp2pt.pl
+index 8cfdbb9..45dce00 100644
+--- a/t/pod/testp2pt.pl
++++ b/t/pod/testp2pt.pl
+@@ -47,8 +47,9 @@ if ($^O eq 'VMS') { # clean up directory spec
+     $INSTDIR =~ s#/$##;
+     $INSTDIR =~ s#/000000/#/#;
+ }
+-$INSTDIR = (dirname $INSTDIR) if (basename($INSTDIR) eq 'pod');
+-$INSTDIR = (dirname $INSTDIR) if (basename($INSTDIR) eq 't');
++
++$INSTDIR =~ s{t[/\\:]pod$}{}i; # cut 't/pod' from path (cut 't:pod:' on Mac OS)
++
+ my @PODINCDIRS = ( catfile($INSTDIR, 'lib', 'Pod'),
+                    catfile($INSTDIR, 'scripts'),
+                    catfile($INSTDIR, 'pod'),
+diff --git a/t/pragma/diagnostics.t b/t/pragma/diagnostics.t
+index 14014f6..8db88d9 100644
+--- a/t/pragma/diagnostics.t
++++ b/t/pragma/diagnostics.t
+@@ -1,8 +1,15 @@
+ #!./perl
+ 
+ BEGIN {
+-    chdir '..' if -d '../pod' && -d '../t';
+-    @INC = 'lib';
++	# special-case Mac OS because of
++	# diagnostic-finding-date logistics
++	if ($^O eq 'MacOS') {
++	    chdir '::' if -d '::pod' && -d '::t';
++	    @INC = ":lib:";
++	} else {
++	    chdir '..' if -d '../pod' && -d '../t';
++	    @INC = 'lib';
++	}
+ }
+ 
+ 
+diff --git a/t/pragma/locale.t b/t/pragma/locale.t
+index 068fede..d2984d9 100644
+--- a/t/pragma/locale.t
++++ b/t/pragma/locale.t
+@@ -9,6 +9,7 @@ BEGIN {
+ 	print "1..0\n";
+ 	exit;
+     }
++    $| = 1;
+ }
+ 
+ use strict;
+@@ -643,7 +644,7 @@ foreach $Locale (@Locale) {
+ 	tryneoalpha($Locale, 107, $c == $d);
+ 
+ 	{
+-	    no locale;
++#	    no locale; # XXX did this ever work correctly?
+ 	
+ 	    my $e = "$x";
+ 
+diff --git a/t/pragma/strict.t b/t/pragma/strict.t
+index 5b245d0..bbfb8ab 100644
+--- a/t/pragma/strict.t
++++ b/t/pragma/strict.t
+@@ -17,7 +17,7 @@ END { if ($tmpfile) { 1 while unlink $tmpfile; } }
+ 
+ my @prgs = () ;
+ 
+-foreach (sort glob("pragma/strict-*")) {
++foreach (sort glob($^O eq 'MacOS' ? ":pragma:strict-*" : "pragma/strict-*")) {
+ 
+     next if /(~|\.orig|,v)$/;
+ 
+@@ -54,6 +54,7 @@ for (@prgs){
+ 	while (@files > 2) {
+ 	    my $filename = shift @files ;
+ 	    my $code = shift @files ;
++	    $code =~ s|\./abc|:abc|g if $^O eq 'MacOS';
+     	    push @temps, $filename ;
+ 	    open F, ">$filename" or die "Cannot open $filename: $!\n" ;
+ 	    print F $code ;
+@@ -61,12 +62,15 @@ for (@prgs){
+ 	}
+ 	shift @files ;
+ 	$prog = shift @files ;
++	$prog =~ s|\./abc|:abc|g if $^O eq 'MacOS';
+     }
+     open TEST, ">$tmpfile";
+     print TEST $prog,"\n";
+     close TEST;
+     my $results = $Is_MSWin32 ?
+                   `.\\perl -I../lib $switch $tmpfile 2>&1` :
++                  $^O eq 'MacOS' ?
++                  `$^X -I::lib $switch $tmpfile` :
+                   `./perl $switch $tmpfile 2>&1`;
+     my $status = $?;
+     $results =~ s/\n+$//;
+@@ -74,6 +78,8 @@ for (@prgs){
+     $results =~ s/tmp\d+/-/g;
+     $results =~ s/\n%[A-Z]+-[SIWEF]-.*$// if $Is_VMS;  # clip off DCL status msg
+     $expected =~ s/\n+$//;
++    $expected =~ s|(\./)?abc\.pm|:abc.pm|g if $^O eq 'MacOS';
++    $expected =~ s|./abc|:abc|g if $^O eq 'MacOS';
+     my $prefix = ($results =~ s/^PREFIX\n//) ;
+     if ( $results =~ s/^SKIPPED\n//) {
+ 	print "$results\n" ;
+diff --git a/t/pragma/sub_lval.t b/t/pragma/sub_lval.t
+index f19268b..8a3cc8b 100644
+--- a/t/pragma/sub_lval.t
++++ b/t/pragma/sub_lval.t
+@@ -430,18 +430,20 @@ foobar() = 12;
+ print "# '$newvar'.\nnot " unless $newvar eq "12";
+ print "ok 47\n";
+ 
+-# Testing DWIM of foo = bar;
+-sub foo : lvalue {
+-    $a;
+-}
+-$a = "not ok 48\n";
+-foo = "ok 48\n";
+-print $a;
+-
+-open bar, ">nothing" or die $!; 
+-bar = *STDOUT;
+-print bar "ok 49\n";
+-unlink "nothing";
++## Testing DWIM of foo = bar;
++#sub foo : lvalue {
++#    $a;
++#}
++#$a = "not ok 48\n";
++#foo = "ok 48\n";
++#print $a;
++#
++#open bar, ">nothing" or die $!;
++#bar = *STDOUT;
++#print bar "ok 49\n";
++#unlink "nothing";
++print "ok 48\n";
++print "ok 49\n";
+ 
+ {
+ my %hash; my @array;
+diff --git a/t/pragma/subs.t b/t/pragma/subs.t
+index 7e48e20..5d95f32 100644
+--- a/t/pragma/subs.t
++++ b/t/pragma/subs.t
+@@ -11,6 +11,7 @@ undef $/;
+ my @prgs = split "\n########\n", <DATA>;
+ print "1..", scalar @prgs, "\n";
+ 
++my $Is_MacOS = $^O eq 'MacOS';
+ my $Is_VMS = $^O eq 'VMS';
+ my $Is_MSWin32 = $^O eq 'MSWin32';
+ my $tmpfile = "tmp0000";
+@@ -46,10 +47,12 @@ for (@prgs){
+     print TEST $prog,"\n";
+     close TEST;
+     my $results = $Is_VMS ?
+-                  `./perl $switch $tmpfile 2>&1` :
+-		  $Is_MSWin32 ?
+-                  `.\\perl -I../lib $switch $tmpfile 2>&1` :
+-                  `./perl $switch $tmpfile 2>&1`;
++	`./perl $switch $tmpfile 2>&1` :
++	    $Is_MSWin32 ?
++		`.\\perl -I../lib $switch $tmpfile 2>&1` :
++		    $Is_MacOS ?
++			`$^X -I::lib $switch $tmpfile` :
++			    `./perl $switch $tmpfile 2>&1`;
+     my $status = $?;
+     $results =~ s/\n+$//;
+     # allow expected output to be written as if $prog is on STDIN
+@@ -143,7 +146,7 @@ Fred 1,2 ;
+ 1;
+ --FILE--
+ use subs qw( Fred ) ;
+-require "./abc" ;
++require ($^O eq "MacOS" ? ":abc" : "./abc");
+ sub Fred { print $_[0] + $_[1], "\n" }
+ EXPECT
+ 3
+diff --git a/t/pragma/warn/doio b/t/pragma/warn/doio
+index 2a357e2..d87c949 100644
+--- a/t/pragma/warn/doio
++++ b/t/pragma/warn/doio
+@@ -156,6 +156,12 @@ Unsuccessful stat on filename containing newline at - line 4.
+ ########
+ # doio.c [Perl_do_aexec5]
+ use warnings 'io' ;
++BEGIN {
++    if ($^O eq 'MacOS') {
++	print "SKIPPED\n# exec not present\n";
++	exit;
++    }
++}
+ exec "lskdjfalksdjfdjfkls","" ;
+ no warnings 'io' ;
+ exec "lskdjfalksdjfdjfkls","" ;
+@@ -165,6 +171,12 @@ Can't exec "lskdjfalksdjfdjfkls": .+
+ ########
+ # doio.c [Perl_do_exec3]
+ use warnings 'io' ;
++BEGIN {
++    if ($^O eq 'MacOS') {
++	print "SKIPPED\n# exec not present\n";
++	exit;
++    }
++}
+ exec "lskdjfalksdjfdjfkls", "abc" ;
+ no warnings 'io' ;
+ exec "lskdjfalksdjfdjfkls", "abc" ;
+diff --git a/t/pragma/warn/mg b/t/pragma/warn/mg
+index a8f9dbc..75e0869 100644
+--- a/t/pragma/warn/mg
++++ b/t/pragma/warn/mg
+@@ -25,7 +25,7 @@ EXPECT
+ ########
+ # mg.c
+ use warnings 'signal' ;
+-if ($^O eq 'MSWin32' || $^O eq 'VMS') {
++if ($^O eq 'MSWin32' || $^O eq 'VMS' || $^O eq 'MacOS') {
+     print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
+ }
+ $|=1;
+@@ -35,8 +35,8 @@ SIGINT handler "fred" not defined.
+ ########
+ # mg.c
+ no warnings 'signal' ;
+-if ($^O eq 'MSWin32' || $^O eq 'VMS') {
+-    print "SKIPPED\n# win32, can't kill() to raise()\n"; exit;
++if ($^O eq 'MSWin32' || $^O eq 'VMS' || $^O eq 'MacOS') {
++    print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
+ }
+ $|=1;
+ $SIG{"INT"} = "fred"; kill "INT",$$;
+diff --git a/t/pragma/warn/op b/t/pragma/warn/op
+index 1f41a98..b76b7b7 100644
+--- a/t/pragma/warn/op
++++ b/t/pragma/warn/op
+@@ -745,10 +745,16 @@ Hash %FRED missing the % in argument 1 of keys() at - line 3.
+ ########
+ # op.c
+ use warnings 'syntax' ;
++BEGIN {
++    if ($^O eq 'MacOS') {
++	print "SKIPPED\n# exec not present\n";
++	exit;
++    }
++}
+ exec "$^X -e 1" ; 
+ my $a
+ EXPECT
+-Statement unlikely to be reached at - line 4.
++Statement unlikely to be reached at - line 10.
+ 	(Maybe you meant system() when you said exec()?)
+ ########
+ # op.c
+@@ -774,6 +780,12 @@ defined(%hash) is deprecated at - line 3.
+ ########
+ # op.c
+ no warnings 'syntax' ;
++BEGIN {
++    if ($^O eq 'MacOS') {
++	print "SKIPPED\n# exec not present\n";
++	exit;
++    }
++}
+ exec "$^X -e 1" ; 
+ my $a
+ EXPECT
+diff --git a/t/pragma/warn/pp_sys b/t/pragma/warn/pp_sys
+index 68518e2..ea519f6 100644
+--- a/t/pragma/warn/pp_sys
++++ b/t/pragma/warn/pp_sys
+@@ -141,7 +141,7 @@ ghi
+ .
+ $= = 1 ;
+ $- =1 ;
+-open STDOUT, ">".($^O eq 'VMS'? 'NL:' : '/dev/null') ;
++open STDOUT, ">".($^O eq 'VMS' ? 'NL:' : $^O eq 'MacOS' ? 'Dev:Null' : '/dev/null') ;
+ write ;
+ no warnings 'io' ;
+ write ;
+diff --git a/t/pragma/warn/universal b/t/pragma/warn/universal
+index 6dbb1be..d9b1883 100644
+--- a/t/pragma/warn/universal
++++ b/t/pragma/warn/universal
+@@ -12,5 +12,3 @@ my $a = bless [] ;
+ UNIVERSAL::isa $a, Jim ;
+ EXPECT
+ Can't locate package Joe for @main::ISA at - line 5.
+-Can't locate package Joe for @main::ISA.
+-Can't locate package Joe for @main::ISA.
+diff --git a/t/pragma/warnings.t b/t/pragma/warnings.t
+index 66b4ff9..f49537d 100644
+--- a/t/pragma/warnings.t
++++ b/t/pragma/warnings.t
+@@ -7,8 +7,11 @@ BEGIN {
+     require Config; import Config;
+ }
+ 
++use File::Spec::Functions;
++
+ $| = 1;
+ 
++my $Is_MacOS   = $^O eq 'MacOS';
+ my $Is_VMS     = $^O eq 'VMS';
+ my $Is_MSWin32 = $^O eq 'MSWin32';
+ my $tmpfile = "tmp0000";
+@@ -20,9 +23,15 @@ my @prgs = () ;
+ my @w_files = () ;
+ 
+ if (@ARGV)
+-  { print "ARGV = [@ARGV]\n" ; @w_files = map { s#^#./pragma/warn/#; $_ } @ARGV }
++  { print "ARGV = [@ARGV]\n" ;
++    if ($^O eq 'MacOS') {
++      @w_files = map { s#^#:pragma:warn:#; $_ } @ARGV
++    } else {
++      @w_files = map { s#^#./pragma/warn/#; $_ } @ARGV
++    }
++  }
+ else
+-  { @w_files = sort glob("pragma/warn/*") }
++  { @w_files = sort glob(catfile(curdir(), "pragma", "warn", "*")) }
+ 
+ foreach (@w_files) {
+ 
+@@ -70,14 +79,24 @@ for (@prgs){
+ 	shift @files ;
+ 	$prog = shift @files ;
+     }
++
++    # fix up some paths
++    if ($^O eq 'MacOS') {
++	$prog =~ s|require "./abc";|require ":abc";|g;
++	$prog =~ s|require "./abcd";|require ":abcd";|g;
++	$prog =~ s|"\."|":"|g;
++    }
++
+     open TEST, ">$tmpfile";
+     print TEST $prog,"\n";
+     close TEST;
+     my $results = $Is_VMS ?
+-                  `./perl "-I../lib" $switch $tmpfile 2>&1` :
+-		  $Is_MSWin32 ?
+-                  `.\\perl -I../lib $switch $tmpfile 2>&1` :
+-                  `./perl -I../lib $switch $tmpfile 2>&1`;
++	`./perl "-I../lib" $switch $tmpfile 2>&1` :
++	    $Is_MSWin32 ?
++		`.\\perl -I../lib $switch $tmpfile 2>&1` :
++		    $Is_MacOS ?
++			`$^X -I::lib $switch $tmpfile` :
++			    `./perl -I../lib $switch $tmpfile 2>&1`;
+     my $status = $?;
+     $results =~ s/\n+$//;
+     # allow expected output to be written as if $prog is on STDIN
+@@ -88,6 +107,14 @@ for (@prgs){
+     $results =~ s/^(syntax|parse) error/syntax error/mig;
+     # allow all tests to run when there are leaks
+     $results =~ s/Scalars leaked: \d+\n//g;
++
++    # fix up some paths
++    if ($^O eq 'MacOS') {
++	$results =~ s|:abcd\b|./abcd|g;
++	$results =~ s|:abc\.pm\b|abc.pm|g;
++	$results =~ s|:abc\b|./abc|g;
++    }
++
+     $expected =~ s/\n+$//;
+     my $prefix = ($results =~ s#^PREFIX(\n|$)##) ;
+     # any special options? (OPTIONS foo bar zap)
+diff --git a/t/run/runenv.t b/t/run/runenv.t
+index a59ad26..a20101b 100644
+--- a/t/run/runenv.t
++++ b/t/run/runenv.t
+@@ -14,6 +14,8 @@ BEGIN {
+     }
+ }
+ 
++$| = 1 unless $Config{fflushNULL};   # some platforms can't autoflush on fork()
++
+ my $STDOUT = './results-0';
+ my $STDERR = './results-1';
+ my $PERL = './perl';
+diff --git a/t/tmp0001 b/t/tmp0001
+new file mode 100644
+index 0000000..51c13b5
+--- /dev/null
++++ b/t/tmp0001
+@@ -0,0 +1,5 @@
++# regcomp.c [S_regclass S_regclassutf8]
++use warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
++no warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
+diff --git a/t/tmp0002 b/t/tmp0002
+new file mode 100644
+index 0000000..51c13b5
+--- /dev/null
++++ b/t/tmp0002
+@@ -0,0 +1,5 @@
++# regcomp.c [S_regclass S_regclassutf8]
++use warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
++no warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
+diff --git a/t/tmp0003 b/t/tmp0003
+new file mode 100644
+index 0000000..51c13b5
+--- /dev/null
++++ b/t/tmp0003
+@@ -0,0 +1,5 @@
++# regcomp.c [S_regclass S_regclassutf8]
++use warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
++no warnings 'regexp' ;
++$a =~ /[a\zb]/ ;
+-- 
+1.5.3.729.gd231
+

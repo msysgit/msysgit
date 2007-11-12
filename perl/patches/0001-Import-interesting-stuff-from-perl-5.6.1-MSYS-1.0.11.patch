@@ -1,0 +1,6172 @@
+From 20cb532973323f4b3ca2a27fc86a30f8560dfcef Mon Sep 17 00:00:00 2001
+From: Simon Sasburg <Simon.Sasburg@gmail.com>
+Date: Sat, 10 Nov 2007 12:53:55 +0100
+Subject: [PATCH] Import interesting stuff from perl-5.6.1-MSYS-1.0.11-src.tar.bz2.
+
+---
+ Configure                   |   33 ++-
+ EXTERN.h                    |    2 +-
+ MSYS-STUFF/Policy.sh        |   41 +++
+ MSYS-STUFF/msys-build       |  178 ++++++++++
+ MSYS-STUFF/perl-man.pkglist |  112 ++++++
+ MSYS-STUFF/perl.pkglist     |   29 ++
+ Makefile.SH                 |    2 +-
+ Policy_sh.SH                |    2 +-
+ XSUB.h                      |    2 +-
+ cflags.SH                   |    4 +-
+ config_h.SH                 |    2 +-
+ configpm                    |    8 +-
+ configure.com               |    2 +-
+ cop.h                       |    2 +
+ doio.c                      |    2 +-
+ embed.h                     |    8 -
+ ext/File/Glob/Glob.pm       |   13 +-
+ ext/File/Glob/Glob.xs       |    6 +
+ ext/File/Glob/bsd_glob.c    |  323 ++++++++++-------
+ ext/File/Glob/bsd_glob.h    |    3 +
+ ext/IO/lib/IO/Dir.pm        |   14 +-
+ ext/NDBM_File/Makefile.PL   |    2 +-
+ ext/ODBM_File/Makefile.PL   |    2 +-
+ ext/POSIX/POSIX.pm          |    4 +-
+ ext/POSIX/POSIX.xs          |   10 +-
+ ext/SDBM_File/sdbm/pair.c   |    2 +-
+ ext/SDBM_File/sdbm/sdbm.c   |    2 +-
+ gv.c                        |    7 +-
+ hints/cygwin.sh             |    6 +-
+ hints/msys.sh               |   58 +++
+ hints/svr5.sh               |    8 +-
+ installman                  |    2 +-
+ installperl                 |   49 ++-
+ lib/AutoLoader.pm           |   13 +-
+ lib/Cwd.pm                  |   35 ++-
+ lib/Devel/SelfStubber.pm    |    3 +-
+ lib/DirHandle.pm            |   16 +
+ lib/ExtUtils/Install.pm     |    3 +-
+ lib/ExtUtils/Installed.pm   |   60 +++-
+ lib/ExtUtils/MM_Msys.pm     |  122 +++++++
+ lib/ExtUtils/MM_Unix.pm     |  139 +++++++-
+ lib/ExtUtils/MakeMaker.pm   |    4 +
+ lib/ExtUtils/Manifest.pm    |    2 +-
+ lib/File/Basename.pm        |   12 +-
+ lib/File/Copy.pm            |   46 ++-
+ lib/File/Find.pm            |  827 ++++++++++++++++++++++++++++++-------------
+ lib/File/Spec/Epoc.pm       |    2 +-
+ lib/File/Temp.pm            |    4 +-
+ lib/Pod/Find.pm             |   73 ++++-
+ lib/diagnostics.pm          |    9 +-
+ lib/locale.pm               |    2 +-
+ lib/perl5db.pl              |    4 +-
+ makeaperl.SH                |    2 +-
+ makedef.pl                  |    2 +-
+ makedepend.SH               |   14 +-
+ makedir.SH                  |    2 +-
+ mg.c                        |    2 +-
+ msys/Makefile.SHs           |  213 +++++++++++
+ msys/ld2.in                 |   20 +
+ msys/msys.c                 |  162 +++++++++
+ msys/perlld.in              |   88 +++++
+ myconfig.SH                 |    2 +-
+ op.c                        |  113 ++-----
+ op.h                        |    4 -
+ opcode.h                    |   20 +-
+ opcode.pl                   |   20 +-
+ perl.c                      |    5 +-
+ perl.h                      |   25 +-
+ perly.c                     |    4 +-
+ perly.y                     |    4 +-
+ pod/buildtoc.PL             |    2 +
+ pod/perlport.pod            |  105 +++---
+ pp.c                        |   38 ++-
+ pp.h                        |    2 +
+ pp.sym                      |    2 -
+ pp_ctl.c                    |   10 +-
+ pp_hot.c                    |   20 +-
+ pp_proto.h                  |    2 -
+ pp_sys.c                    |    8 +-
+ regexec.c                   |   18 +-
+ sv.c                        |   11 +-
+ toke.c                      |    2 +-
+ util.c                      |    6 +-
+ utils/h2ph.PL               |    4 +-
+ utils/perlcc.PL             |    3 +-
+ utils/perldoc.PL            |    2 +-
+ vms/perly_c.vms             |    4 +-
+ vos/build.cm                |    2 -
+ win32/config.bc             |    2 +-
+ win32/config.gc             |    2 +-
+ win32/config.vc             |    2 +-
+ win32/config_H.bc           |    2 +-
+ win32/config_H.gc           |    2 +-
+ win32/config_H.vc           |    2 +-
+ win32/perlhost.h            |   24 +-
+ win32/win32.c               |    4 +-
+ writemain.SH                |    2 +-
+ 97 files changed, 2553 insertions(+), 748 deletions(-)
+ create mode 100644 MSYS-STUFF/Policy.sh
+ create mode 100644 MSYS-STUFF/msys-build
+ create mode 100644 MSYS-STUFF/perl-man.pkglist
+ create mode 100644 MSYS-STUFF/perl.pkglist
+ create mode 100644 hints/msys.sh
+ create mode 100644 lib/ExtUtils/MM_Msys.pm
+ create mode 100644 msys/Makefile.SHs
+ create mode 100644 msys/ld2.in
+ create mode 100644 msys/msys.c
+ create mode 100644 msys/perlld.in
+
+diff --git a/Configure b/Configure
+index 05ce5ea..b99fc08 100644
+--- a/Configure
++++ b/Configure
+@@ -20,7 +20,7 @@
+ 
+ # $Id: Head.U,v 3.0.1.9 1997/02/28 15:02:09 ram Exp $
+ #
+-# Generated on Tue Mar 13 05:21:04 EET 2001 [metaconfig 3.0 PL70]
++# Generated on Tue May 15 16:44:30 EET DST 2001 [metaconfig 3.0 PL70]
+ # (with additional metaconfig patches by perlbug@perl.org)
+ 
+ cat >c1$$ <<EOF
+@@ -1482,7 +1482,7 @@ esac
+ 
+ : script used to extract .SH files with variable substitutions
+ cat >extract <<'EOS'
+-CONFIGDOTSH=true
++PERL_CONFIG_SH=true
+ echo "Doing variable substitutions on .SH files..."
+ if test -f $src/MANIFEST; then
+ 	set x `awk '{print $1}' <$src/MANIFEST | grep '\.SH$'`
+@@ -2487,6 +2487,9 @@ EOM
+ 		cygwin*) osname=cygwin
+ 			osvers="$3"
+ 			;;
++		msys*) osname=msys
++			osvers="$3"
++			;;
+ 		*dc.osx) osname=dcosx
+ 			osvers="$3"
+ 			;;
+@@ -6729,8 +6732,11 @@ true)
+ 		linux*)  # ld won't link with a bare -lperl otherwise.
+ 			dflt=libperl.$so
+ 			;;
+-		cygwin*) # include version
+-			dflt=`echo libperl$version | sed -e 's/\./_/g'`$lib_ext
++		cygwin*) # ld links against an importlib
++			dflt=libperl.dll$lib_ext
++			;;
++		msys*)  # ld links against an importlib
++			dflt=libperl.dll$lib_ext
+ 			;;
+ 		*)	# Try to guess based on whether libc has major.minor.
+ 			case "$libc" in
+@@ -8626,6 +8632,23 @@ int main()
+ }
+ EOM
+ 	: Call the object file tmp-dyna.o in case dlext=o.
++	if $cc $ccflags $cccdlflags -c dyna.c ; then
++	  if mv dyna${_o} tmp-dyna${_o} ; then
++	    if $ld -o dyna.$dlext $lddlflags tmp-dyna${_o} ; then
++	      if $cc -o fred $ccflags $ldflags $cccdlflags $ccdlflags fred.c $libs ; then
++	        ./fred
++	      else
++	        echo failed 4
++	      fi
++	    else
++	      echo failed 3
++	    fi
++	  else
++	    echo failed 2
++	  fi
++	else
++	  echo failed 1
++	fi
+ 	if $cc $ccflags $cccdlflags -c dyna.c > /dev/null 2>&1 && 
+ 		mv dyna${_o} tmp-dyna${_o} > /dev/null 2>&1 && 
+ 		$ld -o dyna.$dlext $lddlflags tmp-dyna${_o} > /dev/null 2>&1 && 
+@@ -16424,7 +16447,7 @@ $test -f UU/cmdline.opt && $cat UU/cmdline.opt >> config.sh
+ : add special variables
+ $test -f $src/patchlevel.h && \
+ awk '/^#define[ 	]+PERL_/ {printf "%s=%s\n",$2,$3}' $src/patchlevel.h >>config.sh
+-echo "CONFIGDOTSH=true" >>config.sh
++echo "PERL_CONFIG_SH=true" >>config.sh
+ 
+ : propagate old symbols
+ if $test -f UU/config.sh; then
+diff --git a/EXTERN.h b/EXTERN.h
+index 1480551..4bb10ba 100644
+--- a/EXTERN.h
++++ b/EXTERN.h
+@@ -40,7 +40,7 @@
+ #      define dEXTCONST const
+ #    endif
+ #  else
+-#    if defined(__CYGWIN__) && defined(USEIMPORTLIB)
++#    if (defined(__CYGWIN__) || defined(__MSYS__)) && defined(USEIMPORTLIB)
+ #      define EXT extern __declspec(dllimport)
+ #      define dEXT 
+ #      define EXTCONST extern __declspec(dllimport) const
+diff --git a/MSYS-STUFF/Policy.sh b/MSYS-STUFF/Policy.sh
+new file mode 100644
+index 0000000..006abcf
+--- /dev/null
++++ b/MSYS-STUFF/Policy.sh
+@@ -0,0 +1,41 @@
++#!/bin/sh
++
++# Policy file for perl-5.8.8-4
++
++# Where things will be.
++prefix='/usr'
++siteprefix='/usr'
++vendorprefix='/usr'
++
++man1dir='/usr/share/man/man1'
++man3dir='/usr/share/man/man3'
++siteman1dir='/usr/share/man/man1'
++siteman3dir='/usr/share/man/man3'
++vendorman1dir='/usr/share/man/man1'
++vendorman3dir='/usr/share/man/man3'
++
++privlib='/usr/lib/perl5/5.6'
++privlibexp='/usr/lib/perl5/5.6'
++archlib='/usr/lib/perl5/5.6/msys'
++archlibexp='/usr/lib/perl5/5.6/msys'
++
++sitelib='/usr/lib/perl5/site_perl/5.6'
++#sitelib_stem='/usr/lib/perl5/site_perl'
++sitelibexp='/usr/lib/perl5/site_perl/5.6'
++sitearch='/usr/lib/perl5/site_perl/5.6/msys'
++sitearchexp='/usr/lib/perl5/site_perl/5.6/msys'
++
++vendorlib='/usr/lib/perl5/vendor_perl/5.6'
++#vendorlib_stem='/usr/lib/perl5/vendor_perl'
++vendorlibexp='/usr/lib/perl5/vendor_perl/5.6'
++vendorarch='/usr/lib/perl5/vendor_perl/5.6/msys'
++vendorarchexp='/usr/lib/perl5/vendor_perl/5.6/msys'
++
++inc_version_list="5.6/msys 5.6 msys"
++
++# The maintainer.
++mydomain='.nowhere.com'
++myhostname='nothing'
++perladmin='nobody@nothing.nowhere.com'
++cf_by='nobody'
++cf_email='nobody@nothing.nowhere.com'
+diff --git a/MSYS-STUFF/msys-build b/MSYS-STUFF/msys-build
+new file mode 100644
+index 0000000..0f5ec70
+--- /dev/null
++++ b/MSYS-STUFF/msys-build
+@@ -0,0 +1,178 @@
++#!/bin/bash -e
++#
++# Assumptions: msysDVLPR is installed and:
++#   if using 1.0.0-alpha1, the following bugs have been fixed:
++#     (1) /usr/lib/libm.a and /usr/lib/libc.a have been replaced
++#         with copies of or links to libmsys-1.0.dll.a
++#     (2) the silly quote bug in
++#            gcc-lib/i686-pc-msys/2.95.3-1/include/sys/termios.h
++#         is fixed (line 48:  CTRL(c'h') --> CTRL(ch)
++
++
++cp -p Policy.sh ..
++cd ..
++chmod -R +w *
++
++# NO spaces!
++export PATH=`pwd`:/usr/local/bin:/bin:/mingw/bin:/c/WINDOWS/system32:/c/WINDOWS
++
++# clean up
++find . -name "*.o" | xargs rm -f
++find . -name "*.a" | xargs rm -f
++find . -name "*.dll" | xargs rm -f
++find . -name "*.exe" | xargs rm -f
++rm -f config.sh
++rm -f myconfig
++rm -f config.h
++
++./Configure -de 2>&1 | tee MSYS-STUFF/log-configure.txt
++
++echo "manually fixup config.sh, config.h, myconfig in aother window?"
++echo -n "hit return to continue: "
++read dummy
++
++make 2>&1 | tee MSYS-STUFF/log-make.txt
++
++
++#### TESTS
++# do NOT copy msys-1.0.dll into t/
++# this means that taint tests will fail, but
++# there's no way around that given the msys "figure
++# out where I am installed" logic.
++
++echo "you may need to manually keep some stuck processes during"
++echo "the following tests.  Specifically:"
++echo "    op/groups"
++echo "    op/magic"
++echo "    op/taint"
++echo -n "press enter to continue"
++read dummy
++
++export PERL5LIB=/usr/local/src/perl/perl-5.6.1-MSYS-1.0.11/lib
++make test 2>&1 | tee MSYS-STUFF/log-test.txt
++(cd t;./perl harness) 2>&1 | tee MSYS-STUFF/log-harness.txt
++
++#### INSTALL
++# NOTE: "make install" not working (REMIND)
++# To install perl type:          "make install.perl"
++# To install with manpages type: "make install.perl install.man"
++# To install with HTML-docs:     "make install.perl install.man install.html"
++
++echo "going to install into actual /usr directory; CTRL-C to stop"
++echo -n "press enter to continue"
++read dummy
++make install.perl install.man 2>&1 | tee MSYS-STUFF/log-install.txt
++unset PERL5LIB
++export PERL5LIB
++
++#### CPAN
++echo "now installing CPAN:Bundle. Some of these components"
++echo "have interactive tests.  Just hit enter at each step"
++echo -n "press enter to continue"
++read dummy
++
++pushd CYGWIN-PATCHES/Bundle.CPAN
++# NOTE: during make test, there is some interactivity
++# Note: libnet first
++for i in `ls -r`
++do
++    cd $i
++    perl Makefile.PL
++    make
++    make test
++    make install_vendor UNINST=1
++    cd ..
++done
++popd
++
++#### clean up install mistakes
++echo "now cleaning up: the CPAN "vendor" install copied"
++echo "all of the contents of /usr/lib/perl5/5.6 into"
++echo "/usr/lib/perl5/vendor_perl/5.6.  That's wrong..."
++echo -n "press enter to continue"
++read dummy
++
++# fixup vendor-perl duplication
++pushd /usr/lib/perl5/vendor_perl
++for fn in `find 5.6 -type f`
++do
++    if [ -e ../${fn} ]
++    then
++        rm -f ${fn}
++    fi
++done
++
++for fn in `find 5.6 -type d | sort -r`
++do
++    if [ -d ../${fn} ]
++    then
++        # errors here are ok
++        rmdir ${fn}
++    fi
++done
++popd
++
++# remove site configuration files
++perl -MConfig -e 'unlink("$Config{archlib}/CPAN/Config.pm")'
++
++
++#### create binary packages:
++echo "Creating binary packages..."
++echo -n "press enter to continue"
++read dummy
++
++if [ -e MSYS-STUFF/perl.pkglist ]; then
++  tar -C / -c -v -f MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar \
++    -T MSYS-STUFF/perl.pkglist
++fi
++if [ -e MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar ] ; then
++  if [ -e MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar.bz2 ] ; then
++    mv MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar.bz2  \
++       MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar.bz2-old
++    bzip2 MSYS-STUFF/perl-5.6.1-MSYS-1.0.11.tar
++  fi
++fi
++
++if [ -e MSYS-STUFF/perl-man.pkglist ]; then
++  tar -C / -c -v -f MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar \
++     -T MSYS-STUFF/perl-man.pkglist
++  find /usr/share/man/man3 -name "*.3pm" | sed -e 's,^/,,' > /tmp/perlmantemp
++  tar -C / -u -v -f MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar \
++     -T /tmp/perlmantemp
++  rm -f /tmp/perlmantemp
++fi
++if [ -e MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar ] ; then
++  if [ -e MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar.bz2 ] ; then
++    mv MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar.bz2  \
++       MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar.bz2-old
++    bzip2 MSYS-STUFF/perl-man-5.6.1-MSYS-1.0.11.tar
++  fi
++fi
++
++
++
++#### Clean up source dir
++echo "I'll leave this for you: make sure you've saved off a copy"
++echo "of Policy.sh, config.sh, myconfig, and config.h somewhere,"
++echo "and then do (in <topdir>):"
++echo " "
++echo "    make distclean"
++echo "    cd CYGWIN-PATCHES/Bundle.CPAN"
++echo "    for i in `ls -r`"
++echo "    do"
++echo "       cd $i"
++echo "       make distclean"
++echo "       cd .."
++echo "    done"
++echo "    cd ../.."
++echo " "
++echo "followed by:"
++echo " "
++echo "   find . -name "*.exe" | xargs rm -f"
++echo "   find . -name "*.a"   | xargs rm -f"
++echo "   find . -name "*.dll" | xargs rm -f"
++echo " "
++echo -n "press enter to continue"
++read dummy
++
++echo "Now go tar up the src dir, and you're done!"
+diff --git a/MSYS-STUFF/perl-man.pkglist b/MSYS-STUFF/perl-man.pkglist
+new file mode 100644
+index 0000000..68a79c4
+--- /dev/null
++++ b/MSYS-STUFF/perl-man.pkglist
+@@ -0,0 +1,112 @@
++usr/share/man/man1/a2p.1
++usr/share/man/man1/c2ph.1
++usr/share/man/man1/dprofpp.1
++usr/share/man/man1/find2perl.1
++usr/share/man/man1/h2ph.1
++usr/share/man/man1/h2xs.1
++usr/share/man/man1/perl.1
++usr/share/man/man1/perl5004delta.1
++usr/share/man/man1/perl5005delta.1
++usr/share/man/man1/perlaix.1
++usr/share/man/man1/perlamiga.1
++usr/share/man/man1/perlapi.1
++usr/share/man/man1/perlapio.1
++usr/share/man/man1/perlbook.1
++usr/share/man/man1/perlboot.1
++usr/share/man/man1/perlbot.1
++usr/share/man/man1/perlbs2000.1
++usr/share/man/man1/perlbug.1
++usr/share/man/man1/perlcall.1
++usr/share/man/man1/perlcc.1
++usr/share/man/man1/perlclib.1
++usr/share/man/man1/perlcompile.1
++usr/share/man/man1/perlcygwin.1
++usr/share/man/man1/perldata.1
++usr/share/man/man1/perldbmfilter.1
++usr/share/man/man1/perldebguts.1
++usr/share/man/man1/perldebtut.1
++usr/share/man/man1/perldebug.1
++usr/share/man/man1/perldelta.1
++usr/share/man/man1/perldiag.1
++usr/share/man/man1/perldoc.1
++usr/share/man/man1/perldos.1
++usr/share/man/man1/perldsc.1
++usr/share/man/man1/perlebcdic.1
++usr/share/man/man1/perlembed.1
++usr/share/man/man1/perlepoc.1
++usr/share/man/man1/perlfaq.1
++usr/share/man/man1/perlfaq1.1
++usr/share/man/man1/perlfaq2.1
++usr/share/man/man1/perlfaq3.1
++usr/share/man/man1/perlfaq4.1
++usr/share/man/man1/perlfaq5.1
++usr/share/man/man1/perlfaq6.1
++usr/share/man/man1/perlfaq7.1
++usr/share/man/man1/perlfaq8.1
++usr/share/man/man1/perlfaq9.1
++usr/share/man/man1/perlfilter.1
++usr/share/man/man1/perlfork.1
++usr/share/man/man1/perlform.1
++usr/share/man/man1/perlfunc.1
++usr/share/man/man1/perlguts.1
++usr/share/man/man1/perlhack.1
++usr/share/man/man1/perlhist.1
++usr/share/man/man1/perlhpux.1
++usr/share/man/man1/perlintern.1
++usr/share/man/man1/perlipc.1
++usr/share/man/man1/perllexwarn.1
++usr/share/man/man1/perllocale.1
++usr/share/man/man1/perllol.1
++usr/share/man/man1/perlmachten.1
++usr/share/man/man1/perlmacos.1
++usr/share/man/man1/perlmod.1
++usr/share/man/man1/perlmodinstall.1
++usr/share/man/man1/perlmodlib.1
++usr/share/man/man1/perlmpeix.1
++usr/share/man/man1/perlnewmod.1
++usr/share/man/man1/perlnumber.1
++usr/share/man/man1/perlobj.1
++usr/share/man/man1/perlop.1
++usr/share/man/man1/perlopentut.1
++usr/share/man/man1/perlos2.1
++usr/share/man/man1/perlos390.1
++usr/share/man/man1/perlpod.1
++usr/share/man/man1/perlport.1
++usr/share/man/man1/perlre.1
++usr/share/man/man1/perlref.1
++usr/share/man/man1/perlreftut.1
++usr/share/man/man1/perlrequick.1
++usr/share/man/man1/perlretut.1
++usr/share/man/man1/perlrun.1
++usr/share/man/man1/perlsec.1
++usr/share/man/man1/perlsolaris.1
++usr/share/man/man1/perlstyle.1
++usr/share/man/man1/perlsub.1
++usr/share/man/man1/perlsyn.1
++usr/share/man/man1/perlthrtut.1
++usr/share/man/man1/perltie.1
++usr/share/man/man1/perltoc.1
++usr/share/man/man1/perltodo.1
++usr/share/man/man1/perltoot.1
++usr/share/man/man1/perltootc.1
++usr/share/man/man1/perltrap.1
++usr/share/man/man1/perlunicode.1
++usr/share/man/man1/perlutil.1
++usr/share/man/man1/perlvar.1
++usr/share/man/man1/perlvmesa.1
++usr/share/man/man1/perlvms.1
++usr/share/man/man1/perlvos.1
++usr/share/man/man1/perlwin32.1
++usr/share/man/man1/perlxs.1
++usr/share/man/man1/perlxstut.1
++usr/share/man/man1/pl2pm.1
++usr/share/man/man1/pod2html.1
++usr/share/man/man1/pod2man.1
++usr/share/man/man1/pod2text.1
++usr/share/man/man1/pod2usage.1
++usr/share/man/man1/podchecker.1
++usr/share/man/man1/podselect.1
++usr/share/man/man1/pstruct.1
++usr/share/man/man1/s2p.1
++usr/share/man/man1/splain.1
++usr/share/man/man1/xsubpp.1
+diff --git a/MSYS-STUFF/perl.pkglist b/MSYS-STUFF/perl.pkglist
+new file mode 100644
+index 0000000..a603300
+--- /dev/null
++++ b/MSYS-STUFF/perl.pkglist
+@@ -0,0 +1,29 @@
++usr/bin/a2p.exe
++usr/bin/c2ph
++usr/bin/cpan
++usr/bin/dprofpp
++usr/bin/find2perl
++usr/bin/h2ph
++usr/bin/h2xs
++usr/bin/ld2
++usr/bin/msys-perl5_6.dll
++usr/bin/perl.exe
++usr/bin/perl5.6.1.exe
++usr/bin/perlbug
++usr/bin/perlcc
++usr/bin/perldoc
++usr/bin/perlld
++usr/bin/pl2pm
++usr/bin/pod2html
++usr/bin/pod2latex
++usr/bin/pod2man
++usr/bin/pod2text
++usr/bin/pod2usage
++usr/bin/podchecker
++usr/bin/podselect
++usr/bin/pstruct
++usr/bin/ptar
++usr/bin/s2p
++usr/bin/splain
++usr/lib/perl5/5.6/
++usr/lib/perl5/vendor_perl/5.6/
+diff --git a/Makefile.SH b/Makefile.SH
+index ac5ade4..9f02306 100644
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -1,5 +1,5 @@
+ #! /bin/sh
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+diff --git a/Policy_sh.SH b/Policy_sh.SH
+index fec18b9..aefa08f 100644
+--- a/Policy_sh.SH
++++ b/Policy_sh.SH
+@@ -1,4 +1,4 @@
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '') . ./config.sh ;;
+ esac
+ echo "Extracting Policy.sh (with variable substitutions)"
+diff --git a/XSUB.h b/XSUB.h
+index cfcad5d..d3c3cad 100644
+--- a/XSUB.h
++++ b/XSUB.h
+@@ -47,7 +47,7 @@ handled automatically by C<xsubpp>.
+ 
+ #define ST(off) PL_stack_base[ax + (off)]
+ 
+-#if defined(__CYGWIN__) && defined(USE_DYNAMIC_LOADING)
++#if (defined(__CYGWIN__) || defined(__MSYS__)) && defined(USE_DYNAMIC_LOADING)
+ #  define XS(name) __declspec(dllexport) void name(pTHXo_ CV* cv)
+ #else
+ #  define XS(name) void name(pTHXo_ CV* cv)
+diff --git a/cflags.SH b/cflags.SH
+index d215255..f76d7fb 100644
+--- a/cflags.SH
++++ b/cflags.SH
+@@ -1,4 +1,4 @@
+-case $CONFIG in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+@@ -28,7 +28,7 @@ $startsh
+ 
+ : In the following dollars and backticks do not need the extra backslash.
+ $spitshell >>cflags <<'!NO!SUBS!'
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+diff --git a/config_h.SH b/config_h.SH
+index ae7f337..6e7777e 100644
+--- a/config_h.SH
++++ b/config_h.SH
+@@ -1,4 +1,4 @@
+-case $CONFIG in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+diff --git a/configpm b/configpm
+index 31b416b..383ce72 100644
+--- a/configpm
++++ b/configpm
+@@ -60,7 +60,7 @@ $in_v = 0;
+ 
+ while (<>) {
+     next if m:^#!/bin/sh:;
+-    # Catch CONFIGDOTSH=true and PERL_VERSION=n line from Configure.
++    # Catch PERL_CONFIG_SH=true and PERL_VERSION=n line from Configure.
+     s/^(\w+)=(true|\d+)\s*$/$1='$2'\n/;
+     my ($k,$v) = ($1,$2);
+     # grandfather PATCHLEVEL and SUBVERSION and CONFIG
+@@ -71,7 +71,7 @@ while (<>) {
+ 	elsif ($k eq 'PERL_SUBVERSION') {
+ 	    push @v_others, "SUBVERSION='$v'\n";
+ 	}
+-	elsif ($k eq 'CONFIGDOTSH') {
++	elsif ($k eq 'PERL_CONFIG_SH') {
+ 	    push @v_others, "CONFIG='$v'\n";
+ 	}
+     }
+@@ -474,11 +474,11 @@ require $config_pm;
+ import Config;
+ 
+ die "$0: $config_pm not valid"
+-	unless $Config{'CONFIGDOTSH'} eq 'true';
++	unless $Config{'PERL_CONFIG_SH'} eq 'true';
+ 
+ die "$0: error processing $config_pm"
+ 	if defined($Config{'an impossible name'})
+-	or $Config{'CONFIGDOTSH'} ne 'true' # test cache
++	or $Config{'PERL_CONFIG_SH'} ne 'true' # test cache
+ 	;
+ 
+ die "$0: error processing $config_pm"
+diff --git a/configure.com b/configure.com
+index 62ebacc..59add91 100644
+--- a/configure.com
++++ b/configure.com
+@@ -5366,7 +5366,7 @@ $ WC "vms_prefix='" + vms_prefix + "'" ! VMS specific
+ $ WC "vms_ver='" + vms_ver + "'" ! VMS specific
+ $ WC "voidflags='15'"
+ $ WC "xs_apiversion='" + version + "'"
+-$ WC "CONFIGDOTSH='true'"
++$ WC "PERL_CONFIG_SH='true'"
+ $!
+ $! ##END WRITE NEW CONSTANTS HERE##
+ $!
+diff --git a/cop.h b/cop.h
+index ec32c35..1865e60 100644
+--- a/cop.h
++++ b/cop.h
+@@ -155,6 +155,7 @@ struct block_eval {
+     SV *	old_namesv;
+     OP *	old_eval_root;
+     SV *	cur_text;
++    CV *	cv;
+ };
+ 
+ #define PUSHEVAL(cx,n,fgv)						\
+@@ -164,6 +165,7 @@ struct block_eval {
+ 	cx->blk_eval.old_namesv = (n ? newSVpv(n,0) : Nullsv);		\
+ 	cx->blk_eval.old_eval_root = PL_eval_root;			\
+ 	cx->blk_eval.cur_text = PL_linestr;				\
++	cx->blk_eval.cv = Nullcv; /* set by doeval(), as applicable */	\
+     } STMT_END
+ 
+ #define POPEVAL(cx)							\
+diff --git a/doio.c b/doio.c
+index 95690f4..6c5bda6 100644
+--- a/doio.c
++++ b/doio.c
+@@ -627,7 +627,7 @@ Perl_nextargv(pTHX_ register GV *gv)
+ 		    }
+ #endif
+ #ifdef HAS_RENAME
+-#if !defined(DOSISH) && !defined(__CYGWIN__)
++#if !defined(DOSISH) && !(defined(__CYGWIN__) || defined(__MSYS__))
+ 		    if (PerlLIO_rename(PL_oldname,SvPVX(sv)) < 0) {
+ 		        if (ckWARN_d(WARN_INPLACE))	
+ 			    Perl_warner(aTHX_ WARN_INPLACE, 
+diff --git a/embed.h b/embed.h
+index 78fa089..806a866 100644
+--- a/embed.h
++++ b/embed.h
+@@ -1160,7 +1160,6 @@
+ #define ck_exit			Perl_ck_exit
+ #define ck_ftst			Perl_ck_ftst
+ #define ck_fun			Perl_ck_fun
+-#define ck_fun_locale		Perl_ck_fun_locale
+ #define ck_glob			Perl_ck_glob
+ #define ck_grep			Perl_ck_grep
+ #define ck_index		Perl_ck_index
+@@ -1178,7 +1177,6 @@
+ #define ck_rfun			Perl_ck_rfun
+ #define ck_rvconst		Perl_ck_rvconst
+ #define ck_sassign		Perl_ck_sassign
+-#define ck_scmp			Perl_ck_scmp
+ #define ck_select		Perl_ck_select
+ #define ck_shift		Perl_ck_shift
+ #define ck_sort			Perl_ck_sort
+@@ -2619,7 +2617,6 @@
+ #define ck_exit(a)		Perl_ck_exit(aTHX_ a)
+ #define ck_ftst(a)		Perl_ck_ftst(aTHX_ a)
+ #define ck_fun(a)		Perl_ck_fun(aTHX_ a)
+-#define ck_fun_locale(a)	Perl_ck_fun_locale(aTHX_ a)
+ #define ck_glob(a)		Perl_ck_glob(aTHX_ a)
+ #define ck_grep(a)		Perl_ck_grep(aTHX_ a)
+ #define ck_index(a)		Perl_ck_index(aTHX_ a)
+@@ -2637,7 +2634,6 @@
+ #define ck_rfun(a)		Perl_ck_rfun(aTHX_ a)
+ #define ck_rvconst(a)		Perl_ck_rvconst(aTHX_ a)
+ #define ck_sassign(a)		Perl_ck_sassign(aTHX_ a)
+-#define ck_scmp(a)		Perl_ck_scmp(aTHX_ a)
+ #define ck_select(a)		Perl_ck_select(aTHX_ a)
+ #define ck_shift(a)		Perl_ck_shift(aTHX_ a)
+ #define ck_sort(a)		Perl_ck_sort(aTHX_ a)
+@@ -5082,8 +5078,6 @@
+ #define ck_ftst			Perl_ck_ftst
+ #define Perl_ck_fun		CPerlObj::Perl_ck_fun
+ #define ck_fun			Perl_ck_fun
+-#define Perl_ck_fun_locale	CPerlObj::Perl_ck_fun_locale
+-#define ck_fun_locale		Perl_ck_fun_locale
+ #define Perl_ck_glob		CPerlObj::Perl_ck_glob
+ #define ck_glob			Perl_ck_glob
+ #define Perl_ck_grep		CPerlObj::Perl_ck_grep
+@@ -5118,8 +5112,6 @@
+ #define ck_rvconst		Perl_ck_rvconst
+ #define Perl_ck_sassign		CPerlObj::Perl_ck_sassign
+ #define ck_sassign		Perl_ck_sassign
+-#define Perl_ck_scmp		CPerlObj::Perl_ck_scmp
+-#define ck_scmp			Perl_ck_scmp
+ #define Perl_ck_select		CPerlObj::Perl_ck_select
+ #define ck_select		Perl_ck_select
+ #define Perl_ck_shift		CPerlObj::Perl_ck_shift
+diff --git a/ext/File/Glob/Glob.pm b/ext/File/Glob/Glob.pm
+index 20b26f9..8181bec 100644
+--- a/ext/File/Glob/Glob.pm
++++ b/ext/File/Glob/Glob.pm
+@@ -25,6 +25,7 @@ require AutoLoader;
+     GLOB_CSH
+     GLOB_ERR
+     GLOB_ERROR
++    GLOB_LIMIT
+     GLOB_MARK
+     GLOB_NOCASE
+     GLOB_NOCHECK
+@@ -44,6 +45,7 @@ require AutoLoader;
+         GLOB_CSH
+         GLOB_ERR
+         GLOB_ERROR
++        GLOB_LIMIT
+         GLOB_MARK
+         GLOB_NOCASE
+         GLOB_NOCHECK
+@@ -57,7 +59,7 @@ require AutoLoader;
+     ) ],
+ );
+ 
+-$VERSION = '0.991';
++$VERSION = '1.0';
+ 
+ sub import {
+     my $i = 1;
+@@ -242,6 +244,15 @@ The POSIX defined flags for bsd_glob() are:
+ Force bsd_glob() to return an error when it encounters a directory it
+ cannot open or read.  Ordinarily bsd_glob() continues to find matches.
+ 
++=item C<GLOB_LIMIT>
++
++Make bsd_glob() return an error (GLOB_NOSPACE) when the pattern expands
++to a size bigger than the system constant C<ARG_MAX> (usually found in
++limits.h).  If your system does not define this constant, bsd_glob() uses
++C<sysconf(_SC_ARG_MAX)> or C<_POSIX_ARG_MAX> where available (in that
++order).  You can inspect these values using the standard C<POSIX>
++extension.
++
+ =item C<GLOB_MARK>
+ 
+ Each pathname that is a directory that matches the pattern has a slash
+diff --git a/ext/File/Glob/Glob.xs b/ext/File/Glob/Glob.xs
+index ee8c0c9..ce03ef8 100644
+--- a/ext/File/Glob/Glob.xs
++++ b/ext/File/Glob/Glob.xs
+@@ -69,6 +69,12 @@ constant(char *name, int arg)
+     case 'K':
+ 	break;
+     case 'L':
++	if (strEQ(name, "GLOB_LIMIT"))
++#ifdef GLOB_LIMIT
++	    return GLOB_LIMIT;
++#else
++	    goto not_there;
++#endif
+ 	break;
+     case 'M':
+ 	if (strEQ(name, "GLOB_MARK"))
+diff --git a/ext/File/Glob/bsd_glob.c b/ext/File/Glob/bsd_glob.c
+index 15ee659..0ea502a 100644
+--- a/ext/File/Glob/bsd_glob.c
++++ b/ext/File/Glob/bsd_glob.c
+@@ -32,6 +32,9 @@
+ 
+ #if defined(LIBC_SCCS) && !defined(lint)
+ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
++/* most changes between the version above and the one below have been ported:
++static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
++ */
+ #endif /* LIBC_SCCS and not lint */
+ 
+ /*
+@@ -87,6 +90,30 @@ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
+ #  endif
+ #endif
+ 
++#ifdef I_LIMITS
++#include <limits.h>
++#endif
++
++#ifndef ARG_MAX
++#  ifdef MACOS_TRADITIONAL
++#    define		ARG_MAX		65536	/* Mac OS is actually unlimited */
++#  else
++#    ifdef _SC_ARG_MAX
++#      define		ARG_MAX		(sysconf(_SC_ARG_MAX))
++#    else
++#      ifdef _POSIX_ARG_MAX
++#        define		ARG_MAX		_POSIX_ARG_MAX
++#      else
++#        ifdef WIN32
++#          define	ARG_MAX		14500	/* from VC's limits.h */
++#        else
++#          define	ARG_MAX		4096	/* from POSIX, be conservative */
++#        endif
++#      endif
++#    endif
++#  endif
++#endif
++
+ #define	BG_DOLLAR	'$'
+ #define	BG_DOT		'.'
+ #define	BG_EOS		'\0'
+@@ -146,20 +173,20 @@ typedef U8 Char;
+ 
+ static int	 compare(const void *, const void *);
+ static int	 ci_compare(const void *, const void *);
+-static void	 g_Ctoc(const Char *, char *);
++static int	 g_Ctoc(const Char *, char *, STRLEN);
+ static int	 g_lstat(Char *, Stat_t *, glob_t *);
+ static DIR	*g_opendir(Char *, glob_t *);
+ static Char	*g_strchr(Char *, int);
+-#ifdef notdef
+-static Char	*g_strcat(Char *, const Char *);
+-#endif
+ static int	 g_stat(Char *, Stat_t *, glob_t *);
+ static int	 glob0(const Char *, glob_t *);
+-static int	 glob1(Char *, glob_t *);
+-static int	 glob2(Char *, Char *, Char *, glob_t *);
+-static int	 glob3(Char *, Char *, Char *, Char *, glob_t *);
+-static int	 globextend(const Char *, glob_t *);
+-static const Char *	 globtilde(const Char *, Char *, glob_t *);
++static int	 glob1(Char *, Char *, glob_t *, size_t *);
++static int	 glob2(Char *, Char *, Char *, Char *, Char *, Char *,
++		       glob_t *, size_t *);
++static int	 glob3(Char *, Char *, Char *, Char *, Char *, Char *,
++		       Char *, Char *, glob_t *, size_t *);
++static int	 globextend(const Char *, glob_t *, size_t *);
++static const Char *
++		 globtilde(const Char *, Char *, size_t, glob_t *);
+ static int	 globexp1(const Char *, glob_t *);
+ static int	 globexp2(const Char *, const Char *, glob_t *, int *);
+ static int	 match(Char *, Char *, Char *, int);
+@@ -185,7 +212,7 @@ bsd_glob(const char *pattern, int flags,
+ {
+ 	const U8 *patnext;
+ 	int c;
+-	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
++	Char *bufnext, *bufend, patbuf[MAXPATHLEN];
+ 
+ 	patnext = (U8 *) pattern;
+ 	if (!(flags & GLOB_APPEND)) {
+@@ -199,7 +226,7 @@ bsd_glob(const char *pattern, int flags,
+ 	pglob->gl_matchc = 0;
+ 
+ 	bufnext = patbuf;
+-	bufend = bufnext + MAXPATHLEN;
++	bufend = bufnext + MAXPATHLEN - 1;
+ #ifdef DOSISH
+ 	/* Nasty hack to treat patterns like "C:*" correctly. In this
+ 	 * case, the * should match any file in the current directory
+@@ -239,13 +266,11 @@ bsd_glob(const char *pattern, int flags,
+ 					--patnext;
+ 				}
+ 				*bufnext++ = c | M_PROTECT;
+-			}
+-			else
++			} else
+ 				*bufnext++ = c;
+-	}
+-	else
+-	    while (bufnext < bufend && (c = *patnext++) != BG_EOS)
+-		    *bufnext++ = c;
++	} else
++		while (bufnext < bufend && (c = *patnext++) != BG_EOS)
++			*bufnext++ = c;
+ 	*bufnext = BG_EOS;
+ 
+ 	if (flags & GLOB_BRACE)
+@@ -259,7 +284,8 @@ bsd_glob(const char *pattern, int flags,
+  * invoke the standard globbing routine to glob the rest of the magic
+  * characters
+  */
+-static int globexp1(const Char *pattern, glob_t *pglob)
++static int
++globexp1(const Char *pattern, glob_t *pglob)
+ {
+ 	const Char* ptr = pattern;
+ 	int rv;
+@@ -281,17 +307,19 @@ static int globexp1(const Char *pattern, glob_t *pglob)
+  * If it succeeds then it invokes globexp1 with the new pattern.
+  * If it fails then it tries to glob the rest of the pattern and returns.
+  */
+-static int globexp2(const Char *ptr, const Char *pattern,
+-		    glob_t *pglob, int *rv)
++static int
++globexp2(const Char *ptr, const Char *pattern,
++	 glob_t *pglob, int *rv)
+ {
+ 	int     i;
+ 	Char   *lm, *ls;
+ 	const Char *pe, *pm, *pl;
+-	Char    patbuf[MAXPATHLEN + 1];
++	Char    patbuf[MAXPATHLEN];
+ 
+ 	/* copy part up to the brace */
+ 	for (lm = patbuf, pm = pattern; pm != ptr; *lm++ = *pm++)
+-		continue;
++		;
++	*lm = BG_EOS;
+ 	ls = lm;
+ 
+ 	/* Find the balanced brace */
+@@ -299,7 +327,7 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 		if (*pe == BG_LBRACKET) {
+ 			/* Ignore everything between [] */
+ 			for (pm = pe++; *pe != BG_RBRACKET && *pe != BG_EOS; pe++)
+-				continue;
++				;
+ 			if (*pe == BG_EOS) {
+ 				/*
+ 				 * We could not find a matching BG_RBRACKET.
+@@ -307,8 +335,7 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 				 */
+ 				pe = pm;
+ 			}
+-		}
+-		else if (*pe == BG_LBRACE)
++		} else if (*pe == BG_LBRACE)
+ 			i++;
+ 		else if (*pe == BG_RBRACE) {
+ 			if (i == 0)
+@@ -322,12 +349,12 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 		return 0;
+ 	}
+ 
+-	for (i = 0, pl = pm = ptr; pm <= pe; pm++)
++	for (i = 0, pl = pm = ptr; pm <= pe; pm++) {
+ 		switch (*pm) {
+ 		case BG_LBRACKET:
+ 			/* Ignore everything between [] */
+ 			for (pl = pm++; *pm != BG_RBRACKET && *pm != BG_EOS; pm++)
+-				continue;
++				;
+ 			if (*pm == BG_EOS) {
+ 				/*
+ 				 * We could not find a matching BG_RBRACKET.
+@@ -343,8 +370,8 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 
+ 		case BG_RBRACE:
+ 			if (i) {
+-			    i--;
+-			    break;
++				i--;
++				break;
+ 			}
+ 			/* FALLTHROUGH */
+ 		case BG_COMMA:
+@@ -353,13 +380,14 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 			else {
+ 				/* Append the current string */
+ 				for (lm = ls; (pl < pm); *lm++ = *pl++)
+-					continue;
++					;
++
+ 				/*
+ 				 * Append the rest of the pattern after the
+ 				 * closing brace
+ 				 */
+-				for (pl = pe + 1; (*lm++ = *pl++) != BG_EOS;)
+-					continue;
++				for (pl = pe + 1; (*lm++ = *pl++) != BG_EOS; )
++					;
+ 
+ 				/* Expand the current pattern */
+ #ifdef GLOB_DEBUG
+@@ -375,6 +403,7 @@ static int globexp2(const Char *ptr, const Char *pattern,
+ 		default:
+ 			break;
+ 		}
++	}
+ 	*rv = 0;
+ 	return 0;
+ }
+@@ -385,23 +414,29 @@ static int globexp2(const Char *ptr, const Char *pattern,
+  * expand tilde from the passwd file.
+  */
+ static const Char *
+-globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
++globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
+ {
+ 	struct passwd *pwd;
+ 	char *h;
+ 	const Char *p;
+-	Char *b;
++	Char *b, *eb;
+ 
+ 	if (*pattern != BG_TILDE || !(pglob->gl_flags & GLOB_TILDE))
+ 		return pattern;
+ 
+ 	/* Copy up to the end of the string or / */
+-	for (p = pattern + 1, h = (char *) patbuf; *p && *p != BG_SLASH;
+-	     *h++ = *p++)
+-		continue;
++	eb = &patbuf[patbuf_len - 1];
++	for (p = pattern + 1, h = (char *) patbuf;
++	     h < (char*)eb && *p && *p != BG_SLASH; *h++ = *p++)
++		;
+ 
+ 	*h = BG_EOS;
+ 
++#if 0
++	if (h == (char *)eb)
++		return what;
++#endif
++
+ 	if (((char *) patbuf)[0] == BG_EOS) {
+ 		/*
+ 		 * handle a plain ~ or ~/ by expanding $HOME
+@@ -417,8 +452,7 @@ globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
+                         return pattern;
+ #endif
+ 		}
+-	}
+-	else {
++	} else {
+ 		/*
+ 		 * Expand a ~user
+ 		 */
+@@ -433,12 +467,13 @@ globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
+ 	}
+ 
+ 	/* Copy the home directory */
+-	for (b = patbuf; *h; *b++ = *h++)
+-		continue;
++	for (b = patbuf; b < eb && *h; *b++ = *h++)
++		;
+ 
+ 	/* Append the rest of the pattern */
+-	while ((*b++ = *p++) != BG_EOS)
+-		continue;
++	while (b < eb && (*b++ = *p++) != BG_EOS)
++		;
++	*b = BG_EOS;
+ 
+ 	return patbuf;
+ }
+@@ -456,15 +491,16 @@ glob0(const Char *pattern, glob_t *pglob)
+ {
+ 	const Char *qpat, *qpatnext;
+ 	int c, err, oldflags, oldpathc;
+-	Char *bufnext, patbuf[MAXPATHLEN+1];
++	Char *bufnext, patbuf[MAXPATHLEN];
++	size_t limit = 0;
+ 
+ #ifdef MACOS_TRADITIONAL
+ 	if ( (*pattern == BG_TILDE) && (pglob->gl_flags & GLOB_TILDE) ) {
+-		return(globextend(pattern, pglob));
++		return(globextend(pattern, pglob, &limit));
+ 	}
+ #endif
+ 
+-	qpat = globtilde(pattern, patbuf, pglob);
++	qpat = globtilde(pattern, patbuf, MAXPATHLEN, pglob);
+ 	qpatnext = qpat;
+ 	oldflags = pglob->gl_flags;
+ 	oldpathc = pglob->gl_pathc;
+@@ -510,7 +546,7 @@ glob0(const Char *pattern, glob_t *pglob)
+ 			 * to avoid exponential behavior
+ 			 */
+ 			if (bufnext == patbuf || bufnext[-1] != M_ALL)
+-			    *bufnext++ = M_ALL;
++				*bufnext++ = M_ALL;
+ 			break;
+ 		default:
+ 			*bufnext++ = CHAR(c);
+@@ -522,7 +558,7 @@ glob0(const Char *pattern, glob_t *pglob)
+ 	qprintf("glob0:", patbuf);
+ #endif /* GLOB_DEBUG */
+ 
+-	if ((err = glob1(patbuf, pglob)) != 0) {
++	if ((err = glob1(patbuf, patbuf+MAXPATHLEN-1, pglob, &limit)) != 0) {
+ 		pglob->gl_flags = oldflags;
+ 		return(err);
+ 	}
+@@ -542,7 +578,7 @@ glob0(const Char *pattern, glob_t *pglob)
+ 		printf("calling globextend from glob0\n");
+ #endif /* GLOB_DEBUG */
+ 		pglob->gl_flags = oldflags;
+-		return(globextend(qpat, pglob));
++		return(globextend(qpat, pglob, &limit));
+         }
+ 	else if (!(pglob->gl_flags & GLOB_NOSORT))
+ 		qsort(pglob->gl_pathv + pglob->gl_offs + oldpathc,
+@@ -556,19 +592,19 @@ glob0(const Char *pattern, glob_t *pglob)
+ static int
+ ci_compare(const void *p, const void *q)
+ {
+-    const char *pp = *(const char **)p;
+-    const char *qq = *(const char **)q;
+-    int ci;
+-    while (*pp && *qq) {
+-	if (tolower(*pp) != tolower(*qq))
+-	    break;
+-	++pp;
+-	++qq;
+-    }
+-    ci = tolower(*pp) - tolower(*qq);
+-    if (ci == 0)
+-	return compare(p, q);
+-    return ci;
++	const char *pp = *(const char **)p;
++	const char *qq = *(const char **)q;
++	int ci;
++	while (*pp && *qq) {
++		if (tolower(*pp) != tolower(*qq))
++			break;
++		++pp;
++		++qq;
++	}
++	ci = tolower(*pp) - tolower(*qq);
++	if (ci == 0)
++		return compare(p, q);
++	return ci;
+ }
+ 
+ static int
+@@ -578,14 +614,16 @@ compare(const void *p, const void *q)
+ }
+ 
+ static int
+-glob1(Char *pattern, glob_t *pglob)
++glob1(Char *pattern, Char *pattern_last, glob_t *pglob, size_t *limitp)
+ {
+-	Char pathbuf[MAXPATHLEN+1];
++	Char pathbuf[MAXPATHLEN];
+ 
+ 	/* A null pathname is invalid -- POSIX 1003.1 sect. 2.4. */
+ 	if (*pattern == BG_EOS)
+ 		return(0);
+-	return(glob2(pathbuf, pathbuf, pattern, pglob));
++	return(glob2(pathbuf, pathbuf+MAXPATHLEN-1,
++		     pathbuf, pathbuf+MAXPATHLEN-1,
++		     pattern, pattern_last, pglob, limitp));
+ }
+ 
+ /*
+@@ -594,7 +632,8 @@ glob1(Char *pattern, glob_t *pglob)
+  * meta characters.
+  */
+ static int
+-glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
++glob2(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
++      Char *pattern, Char *pattern_last, glob_t *pglob, size_t *limitp)
+ {
+ 	Stat_t sb;
+ 	Char *p, *q;
+@@ -607,7 +646,6 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
+ 	for (anymeta = 0;;) {
+ 		if (*pattern == BG_EOS) {		/* End of pattern? */
+ 			*pathend = BG_EOS;
+-
+ 			if (g_lstat(pathbuf, &sb, pglob))
+ 				return(0);
+ 
+@@ -616,10 +654,12 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
+ #ifdef DOSISH
+ 			    && pathend[-1] != BG_SEP2
+ #endif
+-			    ) && (S_ISDIR(sb.st_mode)
+-			    || (S_ISLNK(sb.st_mode) &&
++			    ) && (S_ISDIR(sb.st_mode) ||
++				  (S_ISLNK(sb.st_mode) &&
+ 			    (g_stat(pathbuf, &sb, pglob) == 0) &&
+ 			    S_ISDIR(sb.st_mode)))) {
++				if (pathend+1 > pathend_last)
++					return (1);
+ 				*pathend++ = BG_SEP;
+ 				*pathend = BG_EOS;
+ 			}
+@@ -627,7 +667,7 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
+ #ifdef GLOB_DEBUG
+                         printf("calling globextend from glob2\n");
+ #endif /* GLOB_DEBUG */
+-			return(globextend(pathbuf, pglob));
++			return(globextend(pathbuf, pglob, limitp));
+ 		}
+ 
+ 		/* Find end of next segment, copy tentatively to pathend. */
+@@ -640,6 +680,8 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
+ 		       ) {
+ 			if (ismeta(*p))
+ 				anymeta = 1;
++			if (q+1 > pathend_last)
++				return (1);
+ 			*q++ = *p++;
+ 		}
+ 
+@@ -650,17 +692,24 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob)
+ #ifdef DOSISH
+ 			       || *pattern == BG_SEP2
+ #endif
+-			       )
++			       ) {
++				if (pathend+1 > pathend_last)
++					return (1);
+ 				*pathend++ = *pattern++;
+-		} else			/* Need expansion, recurse. */
+-			return(glob3(pathbuf, pathend, pattern, p, pglob));
++			}
++		} else
++			/* Need expansion, recurse. */
++			return(glob3(pathbuf, pathbuf_last, pathend,
++				     pathend_last, pattern, pattern_last,
++				     p, pattern_last, pglob, limitp));
+ 	}
+ 	/* NOTREACHED */
+ }
+ 
+ static int
+-glob3(Char *pathbuf, Char *pathend, Char *pattern,
+-      Char *restpattern, glob_t *pglob)
++glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
++      Char *pattern, Char *pattern_last,
++      Char *restpattern, Char *restpattern_last, glob_t *pglob, size_t *limitp)
+ {
+ 	register Direntry_t *dp;
+ 	DIR *dirp;
+@@ -676,28 +725,32 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern,
+ 	 */
+ 	Direntry_t *(*readdirfunc)(DIR*);
+ 
++	if (pathend > pathend_last)
++		return (1);
+ 	*pathend = BG_EOS;
+ 	errno = 0;
+ 
+ #ifdef VMS
+         {
+-            Char *q = pathend;
+-            if (q - pathbuf > 5) {
+-                q -= 5;
+-                if (q[0] == '.' && tolower(q[1]) == 'd' && tolower(q[2]) == 'i'
+-		    && tolower(q[3]) == 'r' && q[4] == '/')
+-		{
+-                    q[0] = '/';
+-                    q[1] = BG_EOS;
+-                    pathend = q+1;
+-                }
+-            }
++		Char *q = pathend;
++		if (q - pathbuf > 5) {
++			q -= 5;
++			if (q[0] == '.' &&
++			    tolower(q[1]) == 'd' && tolower(q[2]) == 'i' &&
++			    tolower(q[3]) == 'r' && q[4] == '/')
++			{
++				q[0] = '/';
++				q[1] = BG_EOS;
++				pathend = q+1;
++			}
++		}
+         }
+ #endif
+ 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
+ 		/* TODO: don't call for ENOENT or ENOTDIR? */
+ 		if (pglob->gl_errfunc) {
+-			g_Ctoc(pathbuf, buf);
++			if (g_Ctoc(pathbuf, buf, sizeof(buf)))
++				return (GLOB_ABEND);
+ 			if (pglob->gl_errfunc(buf, errno) ||
+ 			    (pglob->gl_flags & GLOB_ERR))
+ 				return (GLOB_ABEND);
+@@ -710,7 +763,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern,
+ 
+ 	/* Search directory for matching names. */
+ 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
+-               readdirfunc = (Direntry_t *(*)(DIR *))pglob->gl_readdir;
++		readdirfunc = (Direntry_t *(*)(DIR *))pglob->gl_readdir;
+ 	else
+ 		readdirfunc = my_readdir;
+ 	while ((dp = (*readdirfunc)(dirp))) {
+@@ -720,14 +773,22 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern,
+ 		/* Initial BG_DOT must be matched literally. */
+ 		if (dp->d_name[0] == BG_DOT && *pattern != BG_DOT)
+ 			continue;
+-		for (sc = (U8 *) dp->d_name, dc = pathend;
+-		     (*dc++ = *sc++) != BG_EOS;)
+-			continue;
++		dc = pathend;
++		sc = (U8 *) dp->d_name;
++		while (dc < pathend_last && (*dc++ = *sc++) != BG_EOS)
++			;
++		if (dc >= pathend_last) {
++			*dc = BG_EOS;
++			err = 1;
++			break;
++		}
++
+ 		if (!match(pathend, pattern, restpattern, nocase)) {
+ 			*pathend = BG_EOS;
+ 			continue;
+ 		}
+-		err = glob2(pathbuf, --dc, restpattern, pglob);
++		err = glob2(pathbuf, pathbuf_last, --dc, pathend_last,
++			    restpattern, restpattern_last, pglob, limitp);
+ 		if (err)
+ 			break;
+ 	}
+@@ -755,10 +816,11 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern,
+  *	gl_pathv points to (gl_offs + gl_pathc + 1) items.
+  */
+ static int
+-globextend(const Char *path, glob_t *pglob)
++globextend(const Char *path, glob_t *pglob, size_t *limitp)
+ {
+ 	register char **pathv;
+ 	register int i;
++	STRLEN newsize, len;
+ 	char *copy;
+ 	const Char *p;
+ 
+@@ -769,13 +831,18 @@ globextend(const Char *path, glob_t *pglob)
+         printf("\n");
+ #endif /* GLOB_DEBUG */
+ 
++	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
+ 	if (pglob->gl_pathv)
+-		pathv = Renew(pglob->gl_pathv,
+-			      (2 + pglob->gl_pathc + pglob->gl_offs),char*);
++		pathv = Renew(pglob->gl_pathv,newsize,char*);
+ 	else
+-		New(0,pathv,(2 + pglob->gl_pathc + pglob->gl_offs),char*);
+-	if (pathv == NULL)
++		New(0,pathv,newsize,char*);
++	if (pathv == NULL) {
++		if (pglob->gl_pathv) {
++			Safefree(pglob->gl_pathv);
++			pglob->gl_pathv = NULL;
++		}
+ 		return(GLOB_NOSPACE);
++	}
+ 
+ 	if (pglob->gl_pathv == NULL && pglob->gl_offs > 0) {
+ 		/* first time around -- clear initial gl_offs items */
+@@ -786,13 +853,25 @@ globextend(const Char *path, glob_t *pglob)
+ 	pglob->gl_pathv = pathv;
+ 
+ 	for (p = path; *p++;)
+-		continue;
++		;
++	len = (STRLEN)(p - path);
++	*limitp += len;
+ 	New(0, copy, p-path, char);
+ 	if (copy != NULL) {
+-		g_Ctoc(path, copy);
++		if (g_Ctoc(path, copy, len)) {
++			Safefree(copy);
++			return(GLOB_NOSPACE);
++		}
+ 		pathv[pglob->gl_offs + pglob->gl_pathc++] = copy;
+ 	}
+ 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
++
++	if ((pglob->gl_flags & GLOB_LIMIT) &&
++	    newsize + *limitp >= ARG_MAX) {
++		errno = 0;
++		return(GLOB_NOSPACE);
++	}
++
+ 	return(copy == NULL ? GLOB_NOSPACE : 0);
+ }
+ 
+@@ -816,7 +895,8 @@ match(register Char *name, register Char *pat, register Char *patend, int nocase
+ 			do
+ 			    if (match(name, pat, patend, nocase))
+ 				    return(1);
+-			while (*name++ != BG_EOS);
++			while (*name++ != BG_EOS)
++				;
+ 			return(0);
+ 		case M_ONE:
+ 			if (*name++ == BG_EOS)
+@@ -866,6 +946,7 @@ bsd_globfree(glob_t *pglob)
+ 			if (*pp)
+ 				Safefree(*pp);
+ 		Safefree(pglob->gl_pathv);
++		pglob->gl_pathv = NULL;
+ 	}
+ }
+ 
+@@ -881,13 +962,14 @@ g_opendir(register Char *str, glob_t *pglob)
+ 		strcpy(buf, ".");
+ #endif
+ 	} else {
+-		g_Ctoc(str, buf);
++		if (g_Ctoc(str, buf, sizeof(buf)))
++			return(NULL);
+ 	}
+ 
+ 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
+ 		return((*pglob->gl_opendir)(buf));
+-	else
+-	    return(PerlDir_open(buf));
++
++	return(PerlDir_open(buf));
+ }
+ 
+ static int
+@@ -895,7 +977,8 @@ g_lstat(register Char *fn, Stat_t *sb, glob_t *pglob)
+ {
+ 	char buf[MAXPATHLEN];
+ 
+-	g_Ctoc(fn, buf);
++	if (g_Ctoc(fn, buf, sizeof(buf)))
++		return(-1);
+ 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
+ 		return((*pglob->gl_lstat)(buf, sb));
+ #ifdef HAS_LSTAT
+@@ -910,7 +993,8 @@ g_stat(register Char *fn, Stat_t *sb, glob_t *pglob)
+ {
+ 	char buf[MAXPATHLEN];
+ 
+-	g_Ctoc(fn, buf);
++	if (g_Ctoc(fn, buf, sizeof(buf)))
++		return(-1);
+ 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
+ 		return((*pglob->gl_stat)(buf, sb));
+ 	return(PerlLIO_stat(buf, sb));
+@@ -926,29 +1010,14 @@ g_strchr(Char *str, int ch)
+ 	return (NULL);
+ }
+ 
+-#ifdef notdef
+-static Char *
+-g_strcat(Char *dst, const Char *src)
+-{
+-	Char *sdst = dst;
+-
+-	while (*dst++)
+-		continue;
+-	--dst;
+-	while((*dst++ = *src++) != BG_EOS)
+-	    continue;
+-
+-	return (sdst);
+-}
+-#endif
+-
+-static void
+-g_Ctoc(register const Char *str, char *buf)
++static int
++g_Ctoc(register const Char *str, char *buf, STRLEN len)
+ {
+-	register char *dc;
+-
+-	for (dc = buf; (*dc++ = *str++) != BG_EOS;)
+-		continue;
++	while (len--) {
++		if ((*buf++ = *str++) == BG_EOS)
++			return (0);
++	}
++	return (1);
+ }
+ 
+ #ifdef GLOB_DEBUG
+diff --git a/ext/File/Glob/bsd_glob.h b/ext/File/Glob/bsd_glob.h
+index 5d04fff..af92c04 100644
+--- a/ext/File/Glob/bsd_glob.h
++++ b/ext/File/Glob/bsd_glob.h
+@@ -30,6 +30,7 @@
+  * SUCH DAMAGE.
+  *
+  *	@(#)glob.h	8.1 (Berkeley) 6/2/93
++ *	[lots of perl-specific changes since then--see bsd_glob.c]
+  */
+ 
+ #ifndef _BSD_GLOB_H_
+@@ -73,6 +74,8 @@ typedef struct {
+ #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
+ #define	GLOB_NOCASE	0x1000	/* Treat filenames without regard for case. */
+ #define	GLOB_ALPHASORT	0x2000	/* Alphabetic, not ASCII sort, like csh. */
++#define	GLOB_LIMIT	0x4000	/* Limit pattern match output to ARG_MAX
++				   (usually from limits.h). */
+ 
+ #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
+ #define	GLOB_ABEND	(-2)	/* Unignored error. */
+diff --git a/ext/IO/lib/IO/Dir.pm b/ext/IO/lib/IO/Dir.pm
+index 1fa07ed..a9e1f43 100644
+--- a/ext/IO/lib/IO/Dir.pm
++++ b/ext/IO/lib/IO/Dir.pm
+@@ -6,7 +6,7 @@
+ 
+ package IO::Dir;
+ 
+-use 5.003_26;
++use 5.6.0;
+ 
+ use strict;
+ use Carp;
+@@ -16,6 +16,7 @@ use IO::File;
+ our(@ISA, $VERSION, @EXPORT_OK);
+ use Tie::Hash;
+ use File::stat;
++use File::Spec;
+ 
+ @ISA = qw(Tie::Hash Exporter);
+ $VERSION = "1.03";
+@@ -44,6 +45,9 @@ sub open {
+     my ($dh, $dirname) = @_;
+     return undef
+ 	unless opendir($dh, $dirname);
++    # a dir name should always have a ":" in it; assume dirname is
++    # in current directory
++    $dirname = ':' .  $dirname if ( ($^O eq 'MacOS') && ($dirname =~ /^[^:]+$/) );
+     ${*$dh}{io_dir_path} = $dirname;
+     1;
+ }
+@@ -103,18 +107,18 @@ sub NEXTKEY {
+ 
+ sub EXISTS {
+     my($dh,$key) = @_;
+-    -e ${*$dh}{io_dir_path} . "/" . $key;
++    -e File::Spec->catfile(${*$dh}{io_dir_path}, $key);
+ }
+ 
+ sub FETCH {
+     my($dh,$key) = @_;
+-    &lstat(${*$dh}{io_dir_path} . "/" . $key);
++    &lstat(File::Spec->catfile(${*$dh}{io_dir_path}, $key));
+ }
+ 
+ sub STORE {
+     my($dh,$key,$data) = @_;
+     my($atime,$mtime) = ref($data) ? @$data : ($data,$data);
+-    my $file = ${*$dh}{io_dir_path} . "/" . $key;
++    my $file = File::Spec->catfile(${*$dh}{io_dir_path}, $key);
+     unless(-e $file) {
+ 	my $io = IO::File->new($file,O_CREAT | O_RDWR);
+ 	$io->close if $io;
+@@ -125,7 +129,7 @@ sub STORE {
+ sub DELETE {
+     my($dh,$key) = @_;
+     # Only unlink if unlink-ing is enabled
+-    my $file = ${*$dh}{io_dir_path} . "/" . $key;
++    my $file = File::Spec->catfile(${*$dh}{io_dir_path}, $key);
+ 
+     return 0
+ 	unless ${*$dh}{io_dir_unlink};
+diff --git a/ext/NDBM_File/Makefile.PL b/ext/NDBM_File/Makefile.PL
+index 7b58601..38a5a62 100644
+--- a/ext/NDBM_File/Makefile.PL
++++ b/ext/NDBM_File/Makefile.PL
+@@ -1,7 +1,7 @@
+ use ExtUtils::MakeMaker;
+ WriteMakefile(
+     NAME	=> 'NDBM_File',
+-    LIBS => ["-L/usr/local/lib -lndbm", "-ldbm -lucb"],
++    LIBS => ["-L/usr/local/lib -lgdbm_compat", "-lgdbm"],
+     MAN3PODS 	=> {}, 	# Pods will be built by installman.
+     XSPROTOARG => '-noprototypes', 		# XXX remove later?
+     VERSION_FROM => 'NDBM_File.pm',
+diff --git a/ext/ODBM_File/Makefile.PL b/ext/ODBM_File/Makefile.PL
+index 2732a32..36ec9c6 100644
+--- a/ext/ODBM_File/Makefile.PL
++++ b/ext/ODBM_File/Makefile.PL
+@@ -1,7 +1,7 @@
+ use ExtUtils::MakeMaker;
+ WriteMakefile(
+     NAME	=> 'ODBM_File',
+-    LIBS => ["-ldbm -lucb"],
++    LIBS => ["-lgdbm_compat -lgdbm"],
+     MAN3PODS 	=> {}, 	# Pods will be built by installman.
+     XSPROTOARG => '-noprototypes', 		# XXX remove later?
+     VERSION_FROM => 'ODBM_File.pm', 
+diff --git a/ext/POSIX/POSIX.pm b/ext/POSIX/POSIX.pm
+index 252e5bb..d22deba 100644
+--- a/ext/POSIX/POSIX.pm
++++ b/ext/POSIX/POSIX.pm
+@@ -821,8 +821,8 @@ sub load_imports {
+ 		_POSIX_PATH_MAX _POSIX_PIPE_BUF _POSIX_SSIZE_MAX
+ 		_POSIX_STREAM_MAX _POSIX_TZNAME_MAX)],
+ 
+-    locale_h =>	[qw(LC_ALL LC_COLLATE LC_CTYPE LC_MONETARY LC_NUMERIC
+-		LC_TIME NULL localeconv setlocale)],
++    locale_h =>	[qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY
++		LC_NUMERIC LC_TIME NULL localeconv setlocale)],
+ 
+     math_h =>	[qw(HUGE_VAL acos asin atan ceil cosh fabs floor fmod
+ 		frexp ldexp log10 modf pow sinh tan tanh)],
+diff --git a/ext/POSIX/POSIX.xs b/ext/POSIX/POSIX.xs
+index 7ffd494..41e58a9 100644
+--- a/ext/POSIX/POSIX.xs
++++ b/ext/POSIX/POSIX.xs
+@@ -109,7 +109,7 @@
+    }
+ #  define times(t) vms_times(t)
+ #else
+-#if defined (__CYGWIN__)
++#if defined (__CYGWIN__) || defined (__MSYS__)
+ #    define tzname _tzname
+ #endif
+ #if defined (WIN32)
+@@ -299,7 +299,7 @@ unsigned long strtoul (const char *, char **, int);
+ #endif
+ 
+ #ifdef HAS_TZNAME
+-#  if !defined(WIN32) && !defined(__CYGWIN__)
++#  if !defined(WIN32) && !(defined(__CYGWIN__) || defined(__MSYS__))
+ extern char *tzname[];
+ #  endif
+ #else
+@@ -1646,6 +1646,12 @@ constant(char *name, int arg)
+ #else
+ 		goto not_there;
+ #endif
++	    if (strEQ(name, "LC_MESSAGES"))
++#ifdef LC_MESSAGES
++		return LC_MESSAGES;
++#else
++		goto not_there;
++#endif
+ 	    if (strEQ(name, "LC_MONETARY"))
+ #ifdef LC_MONETARY
+ 		return LC_MONETARY;
+diff --git a/ext/SDBM_File/sdbm/pair.c b/ext/SDBM_File/sdbm/pair.c
+index 4f0fde2..5a6c5da 100644
+--- a/ext/SDBM_File/sdbm/pair.c
++++ b/ext/SDBM_File/sdbm/pair.c
+@@ -8,7 +8,7 @@
+  */
+ 
+ #include "config.h"
+-#ifdef __CYGWIN__
++#if defined (__CYGWIN__) || defined (__MSYS__)
+ # define EXTCONST extern const
+ #else
+ # include "EXTERN.h"
+diff --git a/ext/SDBM_File/sdbm/sdbm.c b/ext/SDBM_File/sdbm/sdbm.c
+index d41c770..17409c8 100644
+--- a/ext/SDBM_File/sdbm/sdbm.c
++++ b/ext/SDBM_File/sdbm/sdbm.c
+@@ -128,7 +128,7 @@ sdbm_prep(char *dirname, char *pagname, int flags, int mode)
+  * open the files in sequence, and stat the dirfile.
+  * If we fail anywhere, undo everything, return NULL.
+  */
+-#if defined(OS2) || defined(MSDOS) || defined(WIN32) || defined(__CYGWIN__)
++#if defined(OS2) || defined(MSDOS) || defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ 	flags |= O_BINARY;
+ #	endif
+ 	if ((db->pagf = open(pagname, flags, mode)) > -1) {
+diff --git a/gv.c b/gv.c
+index 984ce51..1e92212 100644
+--- a/gv.c
++++ b/gv.c
+@@ -1033,7 +1033,12 @@ Perl_gv_check(pTHX_ HV *stash)
+ 		 * module, don't bother warning */
+ 		if (file
+ 		    && PERL_FILE_IS_ABSOLUTE(file)
+-		    && (instr(file, "/lib/") || instr(file, ".pm")))
++#ifdef MACOS_TRADITIONAL
++		    && (instr(file, ":lib:")
++#else
++		    && (instr(file, "/lib/")
++#endif
++		    || instr(file, ".pm")))
+ 		{
+ 		    continue;
+ 		}
+diff --git a/hints/cygwin.sh b/hints/cygwin.sh
+index c57d3f6..e4bc634 100644
+--- a/hints/cygwin.sh
++++ b/hints/cygwin.sh
+@@ -42,6 +42,6 @@ bincompat5005='undef'
+ d_eofnblk='define'
+ 
+ # strip exe's and dll's
+-#ldflags="$ldflags -s"
+-#ccdlflags="$ccdlflags -s"
+-#lddlflags="$lddlflags -s"
++ldflags="$ldflags -s"
++ccdlflags="$ccdlflags -s"
++lddlflags="$lddlflags -s"
+diff --git a/hints/msys.sh b/hints/msys.sh
+new file mode 100644
+index 0000000..5415a58
+--- /dev/null
++++ b/hints/msys.sh
+@@ -0,0 +1,58 @@
++#! /bin/sh
++# msys.sh - hints for building perl using the MSYS environment for Win32
++#
++
++# not otherwise settable
++exe_ext='.exe'
++firstmakefile='GNUmakefile'
++case "$ldlibpthname" in
++'') ldlibpthname=PATH ;;
++esac
++archobjs='msys.o'
++
++# mandatory (overrides incorrect defaults)
++test -z "$cc" && cc='gcc'
++if test -z "$plibpth"
++then
++    plibpth=`gcc -print-file-name=libc.a`
++    plibpth=`dirname $plibpth`
++    plibpth=`cd $plibpth && pwd`
++fi
++so='dll'
++# - eliminate -lc, implied by gcc and a symlink to libmsys.a
++libswanted=`echo " $libswanted " | sed -e 's/ c / /g'`
++# - eliminate -lm, symlink to libmsys.a
++libswanted=`echo " $libswanted " | sed -e 's/ m / /g'`
++libswanted="$libswanted gdbm_compat"
++# - add libgdbm_compat $libswanted
++# - libcygipc is for cygwin, silly rabbit
++test -z "$optimize" && optimize='-O3 -s -mcpu=pentium'
++ccflags="$ccflags -DPERL_USE_SAFE_PUTENV -fnative-struct"
++# - otherwise i686-msys
++archname='msys'
++
++# dynamic loading
++# - otherwise -fpic
++cccdlflags=' '
++ld='ld2'
++
++# optional(ish)
++# - perl malloc needs to be unpolluted
++bincompat5005='undef'
++
++# Win9x problem with non-blocking read from a closed pipe
++d_eofnblk='define'
++
++ldflags="$ldflags -s"
++ccdlflags="$ccdlflags -s"
++lddlflags="$lddlflags -s"
++
++
++# stuff in /usr/local/ is probably mingw-, not msys- related
++locincpth=""
++libc='/usr/lib/libmsys-1.0.dll.a'
++libpth='/usr/lib /lib'
++libspath=' /usr/lib /lib'
++
++useshrplib=yes
++man3ext="3pm"
+diff --git a/hints/svr5.sh b/hints/svr5.sh
+index f736895..5f77259 100644
+--- a/hints/svr5.sh
++++ b/hints/svr5.sh
+@@ -83,7 +83,7 @@ libswanted=`echo " $libswanted " | sed -e 's/ malloc / /' -e 's/ c / /'`
+ 
+ # remove /shlib and /lib from library search path as both symlink to /usr/lib
+ # where runtime shared libc is 
+-glibpth=`echo " $glibpth " | sed -e 's/ \/shlib / /' -e 's/ \/lib / /`
++glibpth=`echo " $glibpth " | sed -e 's/ \/shlib / /' -e 's/ \/lib / /'`
+ 
+ # Don't use BSD emulation pieces (/usr/ucblib) regardless
+ # these would probably be autonondetected anyway but ...
+@@ -156,8 +156,10 @@ fi
+ # cccdlflags: must tell the compiler to generate relocatable code
+ # lddlflags : must tell the linker to output a shared library
+ 
+-# use shared perl lib    
+-useshrplib='true'
++# use shared perl lib if the user doesn't choose otherwise
++if test "x$useshrplib" = "x"; then
++    useshrplib='true'
++fi
+ 
+ case "$cc" in
+        *gcc*)
+diff --git a/installman b/installman
+index 06f68f5..fcf9712 100644
+--- a/installman
++++ b/installman
+@@ -147,7 +147,7 @@ sub runpod2man {
+ 	# Convert name from  File/Basename.pm to File::Basename.3 format,
+ 	# if necessary.
+ 	$manpage =~ s#\.p(m|od)$##;
+-	if ($^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'uwin' || $^O eq 'cygwin') {
++	if ($^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'uwin' || $^O eq 'cygwin' || $^O eq 'msys') {
+ 	  $manpage =~ s#/#.#g;
+ 	}
+ 	else {
+diff --git a/installperl b/installperl
+index d28027c..130ca95 100644
+--- a/installperl
++++ b/installperl
+@@ -2,13 +2,13 @@
+ 
+ BEGIN {
+     require 5.004;
+-    chdir '..' if !-d 'lib' and -d '..\lib';
++    chdir '..' if !-d 'lib' and -d '../lib';
+     @INC = 'lib';
+     $ENV{PERL5LIB} = 'lib';
+ }
+ 
+ use strict;
+-my ($Is_VMS, $Is_W32, $Is_OS2, $Is_Cygwin, $nonono, $dostrip,
++my ($Is_VMS, $Is_W32, $Is_OS2, $Is_Cygwin, $Is_Msys, $nonono, $dostrip,
+     $versiononly, $silent, $verbose, $otherperls);
+ use vars qw /$depth/;
+ 
+@@ -17,6 +17,7 @@ BEGIN {
+     $Is_W32 = $^O eq 'MSWin32';
+     $Is_OS2 = $^O eq 'os2';
+     $Is_Cygwin = $^O eq 'cygwin';
++    $Is_Msys = $^O eq 'msys';
+     if ($Is_VMS) { eval 'use VMS::Filespec;' }
+ }
+ 
+@@ -30,6 +31,10 @@ use ExtUtils::Packlist;
+ use Config;
+ use subs qw(unlink link chmod);
+ 
++if ($Config{d_umask}) {
++    umask(022); # umasks like 077 aren't that useful for installations
++}
++
+ # override the ones in the rest of the script
+ sub mkpath {
+     File::Path::mkpath(@_) unless $nonono;
+@@ -174,11 +179,14 @@ if ($d_dosuid && $>) { die "You must run as root to install suidperl\n"; }
+ 			|| warn "WARNING: You've never run 'make test'!!!",
+ 				"  (Installing anyway.)\n";
+ 
+-if ($Is_W32 or $Is_Cygwin) {
++if ($Is_W32 or $Is_Cygwin or $Is_Msys) {
+   my $perldll;
+ 
+-  if ($Is_Cygwin) {
++  if ($Is_Cygwin or $Is_Msys) {
+     $perldll = $libperl;
++    my $v_e_r_s = substr($ver,0,-2); $v_e_r_s =~ tr/./_/;
++    $perldll =~ s/(\..*)?$/$v_e_r_s.$dlext/;
++    $perldll =~ s/^lib/msys-/;
+     $perldll =~ s/(\..*)?$/.$dlext/;
+     if ($Config{useshrplib} eq 'true') {
+       # install ld2 and perlld as well
+@@ -187,6 +195,28 @@ if ($Is_W32 or $Is_Cygwin) {
+         copy("$_", "$installbin/$_");
+         chmod(0755, "$installbin/$_");
+       };
++      open (LD2, ">$installbin/ld2");
++      print LD2 <<SHELL;
++#!/bin/sh
++#
++# ld wrapper, passes all args to perlld;
++#
++for trythis in $installbin/perl
++do
++  if [ -x \$trythis ]
++  then
++    \$trythis $installbin/perlld "\$\@"
++    exit \$?
++  fi
++done
++# hard luck!
++echo I see no perl executable around there
++echo perl is required to build dynamic libraries
++echo look if the path to perl in /bin/ld2 is correct
++exit 1
++SHELL
++      close LD2;
++      chmod(0755, "$installbin/ld2");
+     };
+   } else {
+     $perldll = 'perl56.' . $dlext;
+@@ -201,7 +231,7 @@ if ($Is_W32 or $Is_Cygwin) {
+   copy("$perldll", "$installbin/$perldll");
+   chmod(0755, "$installbin/$perldll");
+    
+-} # if ($Is_W32 or $Is_Cygwin)
++} # if ($Is_W32 or $Is_Cygwin or $Is_Msys)
+ 
+ # This will be used to store the packlist
+ my $packlist = ExtUtils::Packlist->new("$installarchlib/.packlist");
+@@ -246,6 +276,7 @@ if ($d_dosuid) {
+ # Install library files.
+ 
+ my ($do_installarchlib, $do_installprivlib) = (0, 0);
++my $vershort = substr($ver,0,-2);
+     
+ mkpath($installprivlib, $verbose, 0777);
+ mkpath($installarchlib, $verbose, 0777);
+@@ -255,7 +286,7 @@ mkpath($installsitearch, $verbose, 0777) if ($installsitearch);
+ if (chdir "lib") {
+     $do_installarchlib = ! samepath($installarchlib, '.');
+     $do_installprivlib = ! samepath($installprivlib, '.');
+-    $do_installprivlib = 0 if $versiononly && !($installprivlib =~ m/\Q$ver/);
++    $do_installprivlib = 0 if $versiononly && !($installprivlib =~ m/\Q$vershort/);
+ 
+     if ($do_installarchlib || $do_installprivlib) {
+ 	find(\&installlib, '.');
+@@ -400,8 +431,8 @@ if (! $versiononly) {
+ # Install pod pages.  Where? I guess in $installprivlib/pod
+ # ($installprivlib/pods for cygwin).
+ 
+-my $pod = $Is_Cygwin ? 'pods' : 'pod';
+-if ( !$versiononly || ($installprivlib =~ m/\Q$ver/)) {
++my $pod = $Is_Cygwin ? 'pods' : $Is_Msys ? 'pods' : 'pod';
++if ( !$versiononly || ($installprivlib =~ m/\Q$vershort/)) {
+     mkpath("${installprivlib}/$pod", $verbose, 0777);
+ 
+     # If Perl 5.003's perldiag.pod is there, rename it.
+@@ -494,7 +525,7 @@ sub unlink {
+ 
+     foreach my $name (@names) {
+ 	next unless -e $name;
+-	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin);
++	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin || $Is_Msys);
+ 	print "  unlink $name\n" if $verbose;
+ 	( CORE::unlink($name) and ++$cnt 
+ 	  or warn "Couldn't unlink $name: $!\n" ) unless $nonono;
+diff --git a/lib/AutoLoader.pm b/lib/AutoLoader.pm
+index ad6bc40..404d5ac 100644
+--- a/lib/AutoLoader.pm
++++ b/lib/AutoLoader.pm
+@@ -1,6 +1,6 @@
+ package AutoLoader;
+ 
+-use 5.005_64;
++use 5.6.0;
+ our(@EXPORT, @EXPORT_OK, $VERSION);
+ 
+ my $is_dosish;
+@@ -64,7 +64,8 @@ AUTOLOAD {
+ 			unless ($filename =~ m{^([a-z?]:)?[\\/]}is) {
+ 			     $filename = "./$filename";
+ 			}
+-		    }elsif ($is_vms) {
++		    }
++		    elsif ($is_vms) {
+ 			# XXX todo by VMSmiths
+ 			$filename = "./$filename";
+ 		    }
+@@ -138,7 +139,13 @@ sub import {
+     my $path = $INC{$calldir . '.pm'};
+     if (defined($path)) {
+ 	# Try absolute path name.
+-	$path =~ s#^(.*)$calldir\.pm$#$1auto/$calldir/autosplit.ix#;
++	if ($is_macos) {
++	    (my $malldir = $calldir) =~ tr#/#:#;
++	    $path =~ s#^(.*)$malldir\.pm\z#$1auto:$malldir:autosplit.ix#s;
++	} else {
++	    $path =~ s#^(.*)$calldir\.pm\z#$1auto/$calldir/autosplit.ix#;
++	}
++
+ 	eval { require $path; };
+ 	# If that failed, try relative path with normal @INC searching.
+ 	if ($@) {
+diff --git a/lib/Cwd.pm b/lib/Cwd.pm
+index 9c7b33d..ea6fec1 100644
+--- a/lib/Cwd.pm
++++ b/lib/Cwd.pm
+@@ -1,5 +1,5 @@
+ package Cwd;
+-require 5.000;
++require 5.6.0;
+ 
+ =head1 NAME
+ 
+@@ -73,13 +73,35 @@ environment variable will be kept up to date.  (See
+ L<perlsub/Overriding Builtin Functions>.) Note that it will only be
+ kept up to date if all packages which use chdir import it from Cwd.
+ 
++=head1 NOTES
++
++=over 4
++
++=item *
++
++On Mac OS (Classic), the path separator is ':', not '/', and the
++current directory is denoted as ':', not '.'. To move up the directory
++tree, you will use '::' to move up one level, but ':::' and so on to
++move up the tree two or more levels (i.e. the equivalent to '../../..'
++is '::::'). Generally, you should be careful about specifying relative pathnames.
++While a full path always begins with a volume name, a relative pathname
++should always begin with a ':'.  If specifying a volume name only, a
++trailing ':' is required.
++
++Actually, on Mac OS, the C<getcwd()>, C<fastgetcwd()> and C<fastcwd()>
++functions  are all aliases for the C<cwd()> function, which, on Mac OS,
++calls `pwd`. Likewise, the C<abs_path()> function is an alias for
++C<fast_abs_path()>.
++
++=back
++
+ =cut
+ 
+ use strict;
+ 
+ use Carp;
+ 
+-our $VERSION = '2.04';
++our $VERSION = '2.05';
+ 
+ use base qw/ Exporter /;
+ our @EXPORT = qw(cwd getcwd fastcwd fastgetcwd);
+@@ -301,7 +323,8 @@ sub abs_path
+ 
+ sub fast_abs_path {
+     my $cwd = getcwd();
+-    my $path = @_ ? shift : '.';
++    require File::Spec;
++    my $path = @_ ? shift : File::Spec->curdir;
+     CORE::chdir($path) || croak "Cannot chdir to $path:$!";
+     my $realpath = getcwd();
+     CORE::chdir($cwd)  || croak "Cannot chdir back to $cwd:$!";
+@@ -423,6 +446,12 @@ sub _epoc_cwd {
+         *abs_path	= \&_qnx_abs_path;
+         *fast_abs_path	= \&_qnx_abs_path;
+     }
++    elsif ($^O eq 'msys') {
++        *getcwd	= \&cwd;
++        *fastgetcwd	= \&cwd;
++        *fastcwd	= \&cwd;
++        *abs_path	= \&fast_abs_path;
++    }
+     elsif ($^O eq 'cygwin') {
+         *getcwd	= \&cwd;
+         *fastgetcwd	= \&cwd;
+diff --git a/lib/Devel/SelfStubber.pm b/lib/Devel/SelfStubber.pm
+index 4c2d039..8a3a76e 100644
+--- a/lib/Devel/SelfStubber.pm
++++ b/lib/Devel/SelfStubber.pm
+@@ -3,7 +3,8 @@ require SelfLoader;
+ @ISA = qw(SelfLoader);
+ @EXPORT = 'AUTOLOAD';
+ $JUST_STUBS = 1;
+-$VERSION = 1.01; sub Version {$VERSION}
++$VERSION = '1.02';
++sub Version {$VERSION}
+ 
+ # Use as
+ # perl -e 'use Devel::SelfStubber;Devel::SelfStubber->stub(MODULE_NAME,LIB)'
+diff --git a/lib/DirHandle.pm b/lib/DirHandle.pm
+index 047755d..462aad3 100644
+--- a/lib/DirHandle.pm
++++ b/lib/DirHandle.pm
+@@ -1,5 +1,7 @@
+ package DirHandle;
+ 
++our $VERSION = '1.00';
++
+ =head1 NAME 
+ 
+ DirHandle - supply object methods for directory handles
+@@ -23,6 +25,20 @@ opendir(), closedir(), readdir(), and rewinddir() functions.
+ The only objective benefit to using C<DirHandle> is that it avoids
+ namespace pollution by creating globs to hold directory handles.
+ 
++=head1 NOTES
++
++=over 4
++
++=item *
++
++On Mac OS (Classic), the path separator is ':', not '/', and the
++current directory is denoted as ':', not '.'. You should be careful
++about specifying relative pathnames. While a full path always begins
++with a volume name, a relative pathname should always begin with a
++':'.  If specifying a volume name only, a trailing ':' is required.
++
++=back
++
+ =cut
+ 
+ require 5.000;
+diff --git a/lib/ExtUtils/Install.pm b/lib/ExtUtils/Install.pm
+index c496aa0..0a1b549 100644
+--- a/lib/ExtUtils/Install.pm
++++ b/lib/ExtUtils/Install.pm
+@@ -120,7 +120,6 @@ sub install {
+ 	    return unless -f _;
+ 	    return if $_ eq ".exists";
+ 	    my $targetdir  = MY->catdir($targetroot, $File::Find::dir);
+-	    my $origfile   = $_;
+ 	    my $targetfile = MY->catfile($targetdir, $_);
+ 
+ 	    my $diff = 0;
+@@ -156,7 +155,7 @@ sub install {
+ 	    } else {
+ 		inc_uninstall($_,$File::Find::dir,$verbose,0); # nonono set to 0
+ 	    }
+-	    $packlist->{$origfile}++;
++	    $packlist->{$targetfile}++;
+ 
+ 	}, ".");
+ 	chdir($cwd) or Carp::croak("Couldn't chdir to $cwd: $!");
+diff --git a/lib/ExtUtils/Installed.pm b/lib/ExtUtils/Installed.pm
+index 6961c6f..760f08f 100644
+--- a/lib/ExtUtils/Installed.pm
++++ b/lib/ExtUtils/Installed.pm
+@@ -8,7 +8,28 @@ use ExtUtils::MakeMaker;
+ use Config;
+ use File::Find;
+ use File::Basename;
+-our $VERSION = '0.02';
++our $VERSION = '0.03';
++
++my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
++
++sub _is_prefix
++{
++my ($self, $path, $prefix) = @_;
++if (substr($path, 0, length($prefix)) eq $prefix)
++   {
++   return(1);
++   }
++if ($DOSISH)
++   {
++   $path =~ s|\\|/|g;
++   $prefix =~ s|\\|/|g;
++   if ($path =~ m{^\Q$prefix\E}i)
++      {
++      return(1);
++      }
++   }
++return(0);
++}
+ 
+ sub _is_type($$$)
+ {
+@@ -16,22 +37,18 @@ my ($self, $path, $type) = @_;
+ return(1) if ($type eq "all");
+ if ($type eq "doc")
+    {
+-   return(substr($path, 0, length($Config{installman1dir}))
+-              eq $Config{installman1dir}
++   return($self->_is_prefix($path, $Config{installman1dir})
+           ||
+-          substr($path, 0, length($Config{installman3dir}))
+-              eq $Config{installman3dir}
++          $self->_is_prefix($path, $Config{installman3dir})
+           ? 1 : 0)
+    }
+ if ($type eq "prog")
+    {
+-   return(substr($path, 0, length($Config{prefix})) eq $Config{prefix}
++   return($self->_is_prefix($path, $Config{prefix})
+           &&
+-          substr($path, 0, length($Config{installman1dir}))
+-             ne $Config{installman1dir}
++          !$self->_is_prefix($path, $Config{installman1dir})
+           &&
+-          substr($path, 0, length($Config{installman3dir}))
+-              ne $Config{installman3dir}
++          !$self->_is_prefix($path, $Config{installman3dir})
+           ? 1 : 0);
+    }
+ return(0);
+@@ -43,7 +60,7 @@ my ($self, $path, @under) = @_;
+ $under[0] = "" if (! @under);
+ foreach my $dir (@under)
+    {
+-   return(1) if (substr($path, 0, length($dir)) eq $dir);
++   return(1) if ($self->_is_prefix($path, $dir));
+    }
+ return(0);
+ }
+@@ -54,21 +71,32 @@ my ($class) = @_;
+ $class = ref($class) || $class;
+ my $self = {};
+ 
++my $installarchlib = $Config{installarchlib};
++my $archlib = $Config{archlib};
++my $sitearch = $Config{sitearch};
++
++if ($DOSISH)
++   {
++   $installarchlib =~ s|\\|/|g;
++   $archlib =~ s|\\|/|g;
++   $sitearch =~ s|\\|/|g;
++   }
++
+ # Read the core packlist
+ $self->{Perl}{packlist} =
+-   ExtUtils::Packlist->new("$Config{installarchlib}/.packlist");
++   ExtUtils::Packlist->new("$installarchlib/.packlist");
+ $self->{Perl}{version} = $Config{version};
+ 
+ # Read the module packlists
+ my $sub = sub
+    {
+    # Only process module .packlists
+-   return if ($_) ne ".packlist" || $File::Find::dir eq $Config{installarchlib};
++   return if ($_) ne ".packlist" || $File::Find::dir eq $installarchlib;
+ 
+    # Hack of the leading bits of the paths & convert to a module name
+    my $module = $File::Find::name;
+-   $module =~ s!$Config{archlib}/auto/(.*)/.packlist!$1!s;
+-   $module =~ s!$Config{sitearch}/auto/(.*)/.packlist!$1!s;
++   $module =~ s!\Q$archlib\E/auto/(.*)/.packlist!$1!s;
++   $module =~ s!\Q$sitearch\E/auto/(.*)/.packlist!$1!s;
+    my $modfile = "$module.pm";
+    $module =~ s!/!::!g;
+ 
+@@ -87,7 +115,7 @@ my $sub = sub
+    # Read the .packlist
+    $self->{$module}{packlist} = ExtUtils::Packlist->new($File::Find::name);
+    };
+-find($sub, $Config{archlib}, $Config{sitearch});
++find($sub, $archlib, $sitearch);
+ 
+ return(bless($self, $class));
+ }
+diff --git a/lib/ExtUtils/MM_Msys.pm b/lib/ExtUtils/MM_Msys.pm
+new file mode 100644
+index 0000000..c202276
+--- /dev/null
++++ b/lib/ExtUtils/MM_Msys.pm
+@@ -0,0 +1,122 @@
++package ExtUtils::MM_Msys;
++
++use Config;
++#use Cwd;
++#use File::Basename;
++require Exporter;
++
++Exporter::import('ExtUtils::MakeMaker',
++       qw( $Verbose &neatvalue));
++
++unshift @MM::ISA, 'ExtUtils::MM_Msys';
++
++sub canonpath {
++    my($self,$path) = @_;
++    $path =~ s|\\|/|g;
++    return $self->ExtUtils::MM_Unix::canonpath($path);
++}
++
++sub cflags {
++    my($self,$libperl)=@_;
++    return $self->{CFLAGS} if $self->{CFLAGS};
++    my $base =$self->ExtUtils::MM_Unix::cflags($libperl);
++    foreach (split /\n/, $base) {
++      / *= */ and $self->{$`} = $';
++    };
++    $self->{CCFLAGS} .= " -DUSEIMPORTLIB" if ($Config{useshrplib} eq 'true');
++
++    return $self->{CFLAGS} = qq{
++CCFLAGS = $self->{CCFLAGS}
++OPTIMIZE = $self->{OPTIMIZE}
++PERLTYPE = $self->{PERLTYPE}
++LARGE = $self->{LARGE}
++SPLIT = $self->{SPLIT}
++};
++
++}
++
++sub manifypods {
++    my($self, %attribs) = @_;
++    return "\nmanifypods : pure_all\n\t$self->{NOECHO}\$(NOOP)\n" unless
++        %{$self->{MAN3PODS}} or %{$self->{MAN1PODS}};
++    my($dist);
++    my($pod2man_exe);
++    if (defined $self->{PERL_SRC}) {
++        $pod2man_exe = $self->catfile($self->{PERL_SRC},'pod','pod2man');
++    } else {
++        $pod2man_exe = $self->catfile($Config{scriptdirexp},'pod2man');
++    }
++    unless ($self->perl_script($pod2man_exe)) {
++        # No pod2man but some MAN3PODS to be installed
++        print <<END;
++
++Warning: I could not locate your pod2man program. Please make sure,
++         your pod2man program is in your PATH before you execute 'make'
++
++END
++        $pod2man_exe = "-S pod2man";
++    }
++    my(@m);
++    push @m,
++qq[POD2MAN_EXE = $pod2man_exe\n],
++qq[POD2MAN = \$(PERL) -we '%m=\@ARGV;for (keys %m){' \\\n],
++q[-e 'next if -e $$m{$$_} && -M $$m{$$_} < -M $$_ && -M $$m{$$_} < -M "],
++ $self->{MAKEFILE}, q[";' \\
++-e 'print "Manifying $$m{$$_}\n"; $$m{$$_} =~ s/::/./g;' \\
++-e 'system(qq[$$^X ].q["-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" $(POD2MAN_EXE) ].qq[$$_>$$m{$$_}])==0 or warn "Couldn\\047t install $$m{$$_}\n";' \\
++-e 'chmod(oct($(PERM_RW))), $$m{$$_} or warn "chmod $(PERM_RW) $$m{$$_}: $$!\n";}'
++];
++    push @m, "\nmanifypods : pure_all ";
++    push @m, join " \\\n\t", keys %{$self->{MAN1PODS}}, keys %{$self->{MAN3PODS}};
++
++    push(@m,"\n");
++    if (%{$self->{MAN1PODS}} || %{$self->{MAN3PODS}}) {
++        grep { $self->{MAN1PODS}{$_} =~ s/::/./g } keys %{$self->{MAN1PODS}};
++        grep { $self->{MAN3PODS}{$_} =~ s/::/./g } keys %{$self->{MAN3PODS}};
++        push @m, "\t$self->{NOECHO}\$(POD2MAN) \\\n\t";
++        push @m, join " \\\n\t", %{$self->{MAN1PODS}}, %{$self->{MAN3PODS}};
++    }
++    join('', @m);
++}
++
++sub perl_archive
++{
++ return '$(PERL_INC)' .'/'. ("$Config{libperl}" or "libperl.a");
++}
++
++1;
++__END__
++
++=head1 NAME
++
++ExtUtils::MM_Msys - methods to override UN*X behaviour in ExtUtils::MakeMaker
++
++=head1 SYNOPSIS
++
++ use ExtUtils::MM_Msys; # Done internally by ExtUtils::MakeMaker if needed
++
++=head1 DESCRIPTION
++
++See ExtUtils::MM_Unix for a documentation of the methods provided there.
++
++=over
++
++=item canonpath
++
++replaces backslashes with forward ones.  then acts as *nixish.
++
++=item cflags
++
++if configured for dynamic loading, triggers #define EXT in EXTERN.h
++
++=item manifypods
++
++replaces strings '::' with '.' in man page names
++
++=item perl_archive
++
++points to libperl.a
++
++=back
++
++=cut
+diff --git a/lib/ExtUtils/MM_Unix.pm b/lib/ExtUtils/MM_Unix.pm
+index c11333d..0687a01 100644
+--- a/lib/ExtUtils/MM_Unix.pm
++++ b/lib/ExtUtils/MM_Unix.pm
+@@ -546,9 +546,10 @@ sub constants {
+ 
+ 	      AR_STATIC_ARGS NAME DISTNAME NAME_SYM VERSION
+ 	      VERSION_SYM XS_VERSION INST_BIN INST_EXE INST_LIB
+-	      INST_ARCHLIB INST_SCRIPT PREFIX  INSTALLDIRS
++	      INST_ARCHLIB INST_SCRIPT PREFIX SITEPREFIX VENDORPREFIX INSTALLDIRS
+ 	      INSTALLPRIVLIB INSTALLARCHLIB INSTALLSITELIB
+-	      INSTALLSITEARCH INSTALLBIN INSTALLSCRIPT PERL_LIB
++	      INSTALLSITEARCH INSTALLVENDORLIB INSTALLVENDORARCH
++              INSTALLBIN INSTALLSCRIPT INSTALLSITEBIN PERL_LIB
+ 	      PERL_ARCHLIB SITELIBEXP SITEARCHEXP LIBPERL_A MYEXTLIB
+ 	      FIRST_MAKEFILE MAKE_APERL_FILE PERLMAINCC PERL_SRC
+ 	      PERL_INC PERL FULLPERL FULL_AR
+@@ -604,8 +605,8 @@ MAN3PODS = ".join(" \\\n\t", sort keys %{$self->{MAN3PODS}})."
+ 	      INST_HTMLSITELIBDIR INSTALLHTMLSITELIBDIR
+ 	      INST_HTMLSCRIPTDIR  INSTALLHTMLSCRIPTDIR
+ 	      INST_HTMLLIBDIR                    HTMLEXT
+-	      INST_MAN1DIR        INSTALLMAN1DIR MAN1EXT
+-	      INST_MAN3DIR        INSTALLMAN3DIR MAN3EXT
++	      INST_MAN1DIR        INSTALLMAN1DIR INSTALLSITEMAN1DIR INSTALLVENDORMAN1DIR MAN1EXT
++	      INST_MAN3DIR        INSTALLMAN3DIR INSTALLSITEMAN3DIR INSTALLVENDORMAN3DIR MAN3EXT
+ 	      /) {
+ 	next unless defined $self->{$tmp};
+ 	push @m, "$tmp = $self->{$tmp}\n";
+@@ -1845,10 +1846,46 @@ usually solves this kind of problem.
+     # or prefix/lib/perl5/man exist, we'll replace those instead
+     # of /prefix/{lib,man}
+ 
++    # Config doesn't have defaults for these, dammit
++    $self->{INSTALLSITEMAN1DIR} ||= "$Config{siteprefix}/share/man/man1";
++    $self->{INSTALLSITEMAN3DIR} ||= "$Config{siteprefix}/share/man/man3";
++
++    # replace siteprefix first, as it may contain prefix
++    for $install_variable (qw/
++                          INSTALLSITEBIN
++                          INSTALLSITELIB
++                          INSTALLSITEARCH
++                          INSTALLSITEMAN1DIR
++                          INSTALLSITEMAN3DIR
++                          /) {
++       $self->prefixify($install_variable,$Config{siteprefix},'$(SITEPREFIX)');
++    }
++
++    # Config doesn't have defaults for these, dammit
++    $self->{INSTALLVENDORMAN1DIR} ||= "$Config{vendorprefix}/share/man/man1";
++    $self->{INSTALLVENDORMAN3DIR} ||= "$Config{vendorprefix}/share/man/man3";
++
++    # replace vendorprefix first, as it may contain prefix
++    for $install_variable (qw/
++                          INSTALLVENDORBIN
++                          INSTALLVENDORLIB
++                          INSTALLVENDORARCH
++                          INSTALLVENDORMAN1DIR
++                          INSTALLVENDORMAN3DIR
++                          /) {
++       $self->prefixify($install_variable,$Config{vendorprefix},'$(VENDORPREFIX)');
++    }
++
+     $replace_prefix = qq[\$\(PREFIX\)];
+     for $install_variable (qw/
++                           SITEPREFIX
++                           VENDORPREFIX
+ 			   INSTALLBIN
+ 			   INSTALLSCRIPT
++                           INSTALLSITEBIN
++                           INSTALLSITESCRIPT
++                           INSTALLVENDORBIN
++                           INSTALLVENDORSCRIPT
+ 			   /) {
+ 	$self->prefixify($install_variable,$configure_prefix,$replace_prefix);
+     }
+@@ -1872,6 +1909,8 @@ usually solves this kind of problem.
+ 			       INSTALLARCHLIB
+ 			       INSTALLSITELIB
+ 			       INSTALLSITEARCH
++                               INSTALLVENDORLIB
++                               INSTALLVENDORARCH
+ 			       /)
+ 	{
+ 	    $self->prefixify($install_variable,$search_prefix,$replace_prefix);
+@@ -1889,6 +1928,10 @@ usually solves this kind of problem.
+     for $install_variable (qw/
+ 			   INSTALLMAN1DIR
+ 			   INSTALLMAN3DIR
++                           INSTALLSITEMAN1DIR
++                           INSTALLSITEMAN3DIR
++                           INSTALLVENDORMAN1DIR
++                           INSTALLVENDORMAN3DIR
+ 			   /)
+     {
+ 	$self->prefixify($install_variable,$search_prefix,$replace_prefix);
+@@ -1916,6 +1959,59 @@ usually solves this kind of problem.
+ 	    $self->{INST_MAN3DIR} = $self->catdir($self->curdir,'blib','man3');
+ 	}
+     }
++
++    $self->{INSTALLSITEMAN1DIR} = $Config::Config{installman1dir}
++	unless defined $self->{INSTALLSITEMAN1DIR};
++    unless (defined $self->{INST_MAN1DIR}){
++	if ($self->{INSTALLSITEMAN1DIR} =~ /^(none|\s*)$/){
++	    $self->{INST_MAN1DIR} = $self->{INSTALLSITEMAN1DIR};
++	} else {
++	    $self->{INST_MAN1DIR} = $self->catdir($self->curdir,'blib','man1');
++	}
++    }
++
++    $self->{INSTALLVENDORMAN1DIR} = $Config::Config{installman1dir}
++	unless defined $self->{INSTALLVENDORMAN1DIR};
++    unless (defined $self->{INST_MAN1DIR}){
++	if ($self->{INSTALLVENDORMAN1DIR} =~ /^(none|\s*)$/){
++	    $self->{INST_MAN1DIR} = $self->{INSTALLVENDORMAN1DIR};
++	} else {
++	    $self->{INST_MAN1DIR} = $self->catdir($self->curdir,'blib','man1');
++	}
++    }
++
++    $self->{MAN1EXT} ||= $Config::Config{man1ext};
++
++    $self->{INSTALLMAN3DIR} = $Config::Config{installman3dir}
++	unless defined $self->{INSTALLMAN3DIR};
++    unless (defined $self->{INST_MAN3DIR}){
++	if ($self->{INSTALLMAN3DIR} =~ /^(none|\s*)$/){
++	    $self->{INST_MAN3DIR} = $self->{INSTALLMAN3DIR};
++	} else {
++	    $self->{INST_MAN3DIR} = $self->catdir($self->curdir,'blib','man3');
++	}
++    }
++
++    $self->{INSTALLSITEMAN3DIR} = $Config::Config{installman3dir}
++	unless defined $self->{INSTALLSITEMAN3DIR};
++    unless (defined $self->{INST_MAN3DIR}){
++	if ($self->{INSTALLSITEMAN3DIR} =~ /^(none|\s*)$/){
++	    $self->{INST_MAN3DIR} = $self->{INSTALLSITEMAN3DIR};
++	} else {
++	    $self->{INST_MAN3DIR} = $self->catdir($self->curdir,'blib','man3');
++	}
++    }
++
++    $self->{INSTALLVENDORMAN3DIR} = $Config::Config{installman3dir}
++	unless defined $self->{INSTALLVENDORMAN3DIR};
++    unless (defined $self->{INST_MAN3DIR}){
++	if ($self->{INSTALLVENDORMAN3DIR} =~ /^(none|\s*)$/){
++	    $self->{INST_MAN3DIR} = $self->{INSTALLVENDORMAN3DIR};
++	} else {
++	    $self->{INST_MAN3DIR} = $self->catdir($self->curdir,'blib','man3');
++	}
++    }
++
+     $self->{MAN3EXT} ||= $Config::Config{man3ext};
+ 
+     $self->{INSTALLHTMLPRIVLIBDIR} = $Config::Config{installhtmlprivlibdir}
+@@ -2113,6 +2209,8 @@ install_perl :: all pure_perl_install doc_perl_install
+ 
+ install_site :: all pure_site_install doc_site_install
+ 
++install_vendor :: all pure_vendor_install doc_vendor_install
++
+ install_ :: install_site
+ 	@echo INSTALLDIRS not defined, defaulting to INSTALLDIRS=site
+ 
+@@ -2153,8 +2251,23 @@ pure_site_install ::
+ 		$(INST_SCRIPT) $(INSTALLSCRIPT) \
+ 		$(INST_HTMLLIBDIR) $(INSTALLHTMLSITELIBDIR) \
+ 		$(INST_HTMLSCRIPTDIR) $(INSTALLHTMLSCRIPTDIR) \
+-		$(INST_MAN1DIR) $(INSTALLMAN1DIR) \
+-		$(INST_MAN3DIR) $(INSTALLMAN3DIR)
++		$(INST_MAN1DIR) $(INSTALLSITEMAN1DIR) \
++		$(INST_MAN3DIR) $(INSTALLSITEMAN3DIR)
++	}.$self->{NOECHO}.q{$(WARN_IF_OLD_PACKLIST) \
++		}.$self->catdir('$(PERL_ARCHLIB)','auto','$(FULLEXT)').q{
++
++pure_vendor_install ::
++	}.$self->{NOECHO}.q{$(MOD_INSTALL) \
++		read }.$self->catfile('$(VENDORARCHEXP)','auto','$(FULLEXT)','.packlist').q{ \
++		write }.$self->catfile('$(INSTALLVENDORARCH)','auto','$(FULLEXT)','.packlist').q{ \
++		$(INST_LIB) $(INSTALLVENDORLIB) \
++		$(INST_ARCHLIB) $(INSTALLVENDORARCH) \
++		$(INST_BIN) $(INSTALLBIN) \
++		$(INST_SCRIPT) $(INSTALLSCRIPT) \
++		$(INST_HTMLLIBDIR) $(INSTALLHTMLVENDORLIBDIR) \
++		$(INST_HTMLSCRIPTDIR) $(INSTALLHTMLSCRIPTDIR) \
++		$(INST_MAN1DIR) $(INSTALLVENDORMAN1DIR) \
++		$(INST_MAN3DIR) $(INSTALLVENDORMAN3DIR)
+ 	}.$self->{NOECHO}.q{$(WARN_IF_OLD_PACKLIST) \
+ 		}.$self->catdir('$(PERL_ARCHLIB)','auto','$(FULLEXT)').q{
+ 
+@@ -2169,14 +2282,24 @@ doc_perl_install ::
+ 		>> }.$self->catfile('$(INSTALLARCHLIB)','perllocal.pod').q{
+ 
+ doc_site_install ::
+-	-}.$self->{NOECHO}.q{$(MKPATH) $(INSTALLARCHLIB)
++	-}.$self->{NOECHO}.q{$(MKPATH) $(INSTALLSITEARCHLIB)
+ 	-}.$self->{NOECHO}.q{$(DOC_INSTALL) \
+ 		"Module" "$(NAME)" \
+ 		"installed into" "$(INSTALLSITELIB)" \
+ 		LINKTYPE "$(LINKTYPE)" \
+ 		VERSION "$(VERSION)" \
+ 		EXE_FILES "$(EXE_FILES)" \
+-		>> }.$self->catfile('$(INSTALLARCHLIB)','perllocal.pod').q{
++		>> }.$self->catfile('$(INSTALLSITEARCHLIB)','perllocal.pod').q{
++
++doc_vendor_install ::
++	-}.$self->{NOECHO}.q{$(MKPATH) $(INSTALLVENDORARCHLIB)
++	-}.$self->{NOECHO}.q{$(DOC_INSTALL) \
++		"Module" "$(NAME)" \
++		"installed into" "$(INSTALLVENDORLIB)" \
++		LINKTYPE "$(LINKTYPE)" \
++		VERSION "$(VERSION)" \
++		EXE_FILES "$(EXE_FILES)" \
++		>> }.$self->catfile('$(INSTALLVENDORARCHLIB)','perllocal.pod').q{
+ 
+ };
+ 
+diff --git a/lib/ExtUtils/MakeMaker.pm b/lib/ExtUtils/MakeMaker.pm
+index 8bf76c7..50a9a2c 100644
+--- a/lib/ExtUtils/MakeMaker.pm
++++ b/lib/ExtUtils/MakeMaker.pm
+@@ -71,6 +71,7 @@ $Is_OS2   = $^O eq 'os2';
+ $Is_Mac   = $^O eq 'MacOS';
+ $Is_Win32 = $^O eq 'MSWin32';
+ $Is_Cygwin= $^O eq 'cygwin';
++$Is_Msys  = $^O eq 'msys';
+ 
+ require ExtUtils::MM_Unix;
+ 
+@@ -90,6 +91,9 @@ if ($Is_Win32) {
+ if ($Is_Cygwin) {
+     require ExtUtils::MM_Cygwin;
+ }
++if ($Is_Msys) {
++    require ExtUtils::MM_Msys;
++}
+ 
+ full_setup();
+ 
+diff --git a/lib/ExtUtils/Manifest.pm b/lib/ExtUtils/Manifest.pm
+index 50a4263..26b4eb7 100644
+--- a/lib/ExtUtils/Manifest.pm
++++ b/lib/ExtUtils/Manifest.pm
+@@ -10,7 +10,7 @@ use strict;
+ use vars qw($VERSION @ISA @EXPORT_OK
+ 	    $Is_MacOS $Is_VMS $Debug $Verbose $Quiet $MANIFEST $found);
+ 
+-$VERSION = substr(q$Revision: 1.33 $, 10);
++$VERSION = substr(q$Revision: 1.34 $, 10);
+ @ISA=('Exporter');
+ @EXPORT_OK = ('mkmanifest', 'manicheck', 'fullcheck', 'filecheck', 
+ 	      'skipcheck', 'maniread', 'manicopy');
+diff --git a/lib/File/Basename.pm b/lib/File/Basename.pm
+index 94aac2d..c04f9c4 100644
+--- a/lib/File/Basename.pm
++++ b/lib/File/Basename.pm
+@@ -95,7 +95,7 @@ would yield
+     $dir  eq 'Doc_Root:[Help]'
+     $type eq '.Rnh'
+ 
+-=over
++=over 4
+ 
+ =item C<basename>
+ 
+@@ -135,12 +135,13 @@ BEGIN {
+ 
+ 
+ 
+-use 5.005_64;
++use 5.6.0;
++use warnings;
+ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
+ require Exporter;
+ @ISA = qw(Exporter);
+ @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
+-$VERSION = "2.6";
++$VERSION = "2.7";
+ 
+ 
+ #   fileparse_set_fstype() - specify OS-based rules used in future
+@@ -182,6 +183,7 @@ sub fileparse {
+   }
+   elsif ($fstype =~ /^MacOS/si) {
+     ($dirpath,$basename) = ($fullname =~ /^(.*:)?(.*)/s);
++    $dirpath = ':' unless $dirpath;
+   }
+   elsif ($fstype =~ /^AmigaOS/i) {
+     ($dirpath,$basename) = ($fullname =~ /(.*[:\/])?(.*)/s);
+@@ -212,8 +214,8 @@ sub fileparse {
+   }
+ 
+   $tail .= $taint if defined $tail; # avoid warning if $tail == undef
+-  wantarray ? ($basename . $taint, $dirpath . $taint, $tail)
+-            : $basename . $taint;
++  wantarray ? ($basename .= $taint, $dirpath .= $taint, $tail)
++            : $basename .= $taint;
+ }
+ 
+ 
+diff --git a/lib/File/Copy.pm b/lib/File/Copy.pm
+index 24d1ffd..fe365e3 100644
+--- a/lib/File/Copy.pm
++++ b/lib/File/Copy.pm
+@@ -7,9 +7,10 @@
+ 
+ package File::Copy;
+ 
+-use 5.005_64;
++use 5.6.0;
+ use strict;
+ use Carp;
++use File::Spec;
+ our(@ISA, @EXPORT, @EXPORT_OK, $VERSION, $Too_Big, $Syscopy_is_copy);
+ sub copy;
+ sub syscopy;
+@@ -21,7 +22,7 @@ sub mv;
+ # package has not yet been updated to work with Perl 5.004, and so it
+ # would be a Bad Thing for the CPAN module to grab it and replace this
+ # module.  Therefore, we set this module's version higher than 2.0.
+-$VERSION = '2.03';
++$VERSION = '2.04';
+ 
+ require Exporter;
+ @ISA = qw(Exporter);
+@@ -30,16 +31,19 @@ require Exporter;
+ 
+ $Too_Big = 1024 * 1024 * 2;
+ 
+-sub _catname { #  Will be replaced by File::Spec when it arrives
++sub _catname {
+     my($from, $to) = @_;
+     if (not defined &basename) {
+ 	require File::Basename;
+ 	import  File::Basename 'basename';
+     }
+-    if ($^O eq 'VMS')  { $to = VMS::Filespec::vmspath($to) . basename($from); }
+-    elsif ($^O eq 'MacOS') { $to =~ s/^([^:]+)$/:$1/; $to .= ':' . basename($from); }
+-    elsif ($to =~ m|\\|)   { $to .= '\\' . basename($from); }
+-    else                   { $to .= '/' . basename($from); }
++
++    if ($^O eq 'MacOS') {
++	# a partial dir name that's valid only in the cwd (e.g. 'tmp')
++	$to = ':' . $to if $to =~ /^[^:]+$/;
++    }
++
++    return File::Spec->catfile($to, basename($from));
+ }
+ 
+ sub copy {
+@@ -369,6 +373,34 @@ it sets C<$!>, deletes the output file, and returns 0.
+ All functions return 1 on success, 0 on failure.
+ $! will be set if an error was encountered.
+ 
++=head1 NOTES
++
++=over 4
++
++=item *
++
++On Mac OS (Classic), the path separator is ':', not '/', and the
++current directory is denoted as ':', not '.'. You should be careful
++about specifying relative pathnames. While a full path always begins
++with a volume name, a relative pathname should always begin with a
++':'.  If specifying a volume name only, a trailing ':' is required.
++
++E.g.
++
++  copy("file1", "tmp");        # creates the file 'tmp' in the current directory
++  copy("file1", ":tmp:");      # creates :tmp:file1
++  copy("file1", ":tmp");       # same as above
++  copy("file1", "tmp");        # same as above, if 'tmp' is a directory (but don't do
++                               # that, since it may cause confusion, see example #1)
++  copy("file1", "tmp:file1");  # error, since 'tmp:' is not a volume
++  copy("file1", ":tmp:file1"); # ok, partial path
++  copy("file1", "DataHD:");    # creates DataHD:file1
++
++  move("MacintoshHD:fileA", "DataHD:fileB"); # moves (don't copies) files from one
++                                             # volume to another
++
++=back
++
+ =head1 AUTHOR
+ 
+ File::Copy was written by Aaron Sherman I<E<lt>ajs@ajs.comE<gt>> in 1995,
+diff --git a/lib/File/Find.pm b/lib/File/Find.pm
+index 3a621c0..f04dae8 100644
+--- a/lib/File/Find.pm
++++ b/lib/File/Find.pm
+@@ -1,5 +1,8 @@
+ package File::Find;
+-use 5.005_64;
++use strict;
++use warnings;
++use 5.6.0;
++our $VERSION = '1.01';
+ require Exporter;
+ require Cwd;
+ 
+@@ -44,19 +47,24 @@ specifying C<{ bydepth => 1 }> in the first argument of find().
+ 
+ =item C<preprocess>
+ 
+-The value should be a code reference.  This code reference is used to
+-preprocess a directory; it is called after readdir() but before the loop that
+-calls the wanted() function.  It is called with a list of strings and is
+-expected to return a list of strings.  The code can be used to sort the
+-strings alphabetically, numerically, or to filter out directory entries based
+-on their name alone.
++The value should be a code reference. This code reference is used to
++preprocess the current directory. The name of currently processed
++directory is in $File::Find::dir. Your preprocessing function is
++called after readdir() but before the loop that calls the wanted()
++function. It is called with a list of strings (actually file/directory
++names) and is expected to return a list of strings. The code can be
++used to sort the file/directory names alphabetically, numerically,
++or to filter out directory entries based on their name alone. When
++I<follow> or I<follow_fast> are in effect, C<preprocess> is a no-op.
+ 
+ =item C<postprocess>
+ 
+-The value should be a code reference.  It is invoked just before leaving the
+-current directory.  It is called in void context with no arguments.  The name
+-of the current directory is in $File::Find::dir.  This hook is handy for
+-summarizing a directory, such as calculating its disk usage.
++The value should be a code reference. It is invoked just before leaving
++the currently processed directory. It is called in void context with no
++arguments. The name of the current directory is in $File::Find::dir. This
++hook is handy for summarizing a directory, such as calculating its disk
++usage. When I<follow> or I<follow_fast> are in effect, C<postprocess> is a
++no-op.
+ 
+ =item C<follow>
+ 
+@@ -98,8 +106,15 @@ are about to be processed a second time, File::Find dies.
+ C<follow_skip==0> causes File::Find to die if any file is about to be
+ processed a second time.
+ C<follow_skip==2> causes File::Find to ignore any duplicate files and
+-dirctories but to proceed normally otherwise.
++directories but to proceed normally otherwise.
++
++=item C<dangling_symlinks>
+ 
++If true and a code reference, will be called with the symbolic link
++name and the directory it lives in as arguments.  Otherwise, if true
++and warnings are on, warning "symbolic_link_name is a dangling
++symbolic link\n" will be issued.  If false, the dangling symbolic link
++will be silently ignored.
+ 
+ =item C<no_chdir>
+ 
+@@ -111,9 +126,10 @@ C<$_> will be the same as C<$File::Find::name>.
+ 
+ If find is used in taint-mode (-T command line switch or if EUID != UID
+ or if EGID != GID) then internally directory names have to be untainted
+-before they can be cd'ed to. Therefore they are checked against a regular
+-expression I<untaint_pattern>.  Note that all names passed to the
+-user's I<wanted()> function are still tainted. 
++before they can be chdir'ed to. Therefore they are checked against a regular
++expression I<untaint_pattern>.  Note that all names passed to the user's
++I<wanted()> function are still tainted. If this option is used while
++not in taint-mode, C<untaint> is a no-op.
+ 
+ =item C<untaint_pattern>
+ 
+@@ -123,8 +139,8 @@ Note that the parantheses are vital.
+ 
+ =item C<untaint_skip>
+ 
+-If set, directories (subtrees) which fail the I<untaint_pattern>
+-are skipped. The default is to 'die' in such a case.
++If set, a directory which fails the I<untaint_pattern> is skipped,
++including all its sub-directories. The default is to 'die' in such a case.
+ 
+ =back
+ 
+@@ -133,7 +149,7 @@ C<$File::Find::dir> contains the current directory name, and C<$_> the
+ current filename within that directory.  C<$File::Find::name> contains
+ the complete pathname to the file. You are chdir()'d to
+ C<$File::Find::dir> when the function is called, unless C<no_chdir>
+-was specified.  When <follow> or <follow_fast> are in effect, there is
++was specified.  When C<follow> or C<follow_fast> are in effect, there is
+ also a C<$File::Find::fullname>.  The function may set
+ C<$File::Find::prune> to prune the tree unless C<bydepth> was
+ specified.  Unless C<follow> or C<follow_fast> is specified, for
+@@ -184,27 +200,112 @@ Furthermore, deleting or changing files in a symbolically linked directory
+ might cause very unpleasant surprises, since you delete or change files
+ in an unknown directory.
+ 
++=head1 NOTES
++
++=over 4
++
++=item *
++
++Mac OS (Classic) users should note a few differences:
++
++=over 4
++
++=item *
++
++The path separator is ':', not '/', and the current directory is denoted
++as ':', not '.'. You should be careful about specifying relative pathnames.
++While a full path always begins with a volume name, a relative pathname
++should always begin with a ':'.  If specifying a volume name only, a
++trailing ':' is required.
++
++=item *
++
++C<$File::Find::dir> is guaranteed to end with a ':'. If C<$_>
++contains the name of a directory, that name may or may not end with a
++':'. Likewise, C<$File::Find::name>, which contains the complete
++pathname to that directory, and C<$File::Find::fullname>, which holds
++the absolute pathname of that directory with all symbolic links resolved,
++may or may not end with a ':'.
++
++=item *
++
++The default C<untaint_pattern> (see above) on Mac OS is set to
++C<qr|^(.+)$|>. Note that the parentheses are vital.
++
++=item *
++
++The invisible system file "Icon\015" is ignored. While this file may
++appear in every directory, there are some more invisible system files
++on every volume, which are all located at the volume root level (i.e.
++"MacintoshHD:"). These system files are B<not> excluded automatically.
++Your filter may use the following code to recognize invisible files or
++directories (requires Mac::Files):
++
++ use Mac::Files;
++
++ # invisible() --  returns 1 if file/directory is invisible,
++ # 0 if it's visible or undef if an error occured
++
++ sub invisible($) {
++   my $file = shift;
++   my ($fileCat, $fileInfo);
++   my $invisible_flag =  1 << 14;
++
++   if ( $fileCat = FSpGetCatInfo($file) ) {
++     if ($fileInfo = $fileCat->ioFlFndrInfo() ) {
++       return (($fileInfo->fdFlags & $invisible_flag) && 1);
++     }
++   }
++   return undef;
++ }
++
++Generally, invisible files are system files, unless an odd application
++decides to use invisible files for its own purposes. To distinguish
++such files from system files, you have to look at the B<type> and B<creator>
++file attributes. The MacPerl built-in functions C<GetFileInfo(FILE)> and
++C<SetFileInfo(CREATOR, TYPE, FILES)> offer access to these attributes
++(see MacPerl.pm for details).
++
++Files that appear on the desktop actually reside in an (hidden) directory
++named "Desktop Folder" on the particular disk volume. Note that, although
++all desktop files appear to be on the same "virtual" desktop, each disk
++volume actually maintains its own "Desktop Folder" directory.
++
++=back
++
++=back
++
++=head1 HISTORY
++
++File::Find used to produce incorrect results if called recursively.
++During the development of perl 5.8 this bug was fixed.
++The first fixed version of File::Find was 1.01.
+ 
+ =cut
+ 
+-@ISA = qw(Exporter);
+-@EXPORT = qw(find finddepth);
++our @ISA = qw(Exporter);
++our @EXPORT = qw(find finddepth);
+ 
+ 
+ use strict;
+ my $Is_VMS;
++my $Is_MacOS;
+ 
+ require File::Basename;
++require File::Spec;
+ 
+-my %SLnkSeen;
+-my ($wanted_callback, $avoid_nlink, $bydepth, $no_chdir, $follow,
++# Should ideally be my() not our() but local() currently
++# refuses to operate on lexicals
++
++our %SLnkSeen;
++our ($wanted_callback, $avoid_nlink, $bydepth, $no_chdir, $follow,
+     $follow_skip, $full_check, $untaint, $untaint_skip, $untaint_pat,
+-    $pre_process, $post_process);
++    $pre_process, $post_process, $dangling_symlinks);
+ 
+ sub contract_name {
+     my ($cdir,$fn) = @_;
+ 
+-    return substr($cdir,0,rindex($cdir,'/')) if $fn eq '.';
++    return substr($cdir,0,rindex($cdir,'/')) if $fn eq $File::Find::current_dir;
+ 
+     $cdir = substr($cdir,0,rindex($cdir,'/')+1);
+ 
+@@ -213,31 +314,89 @@ sub contract_name {
+     my $abs_name= $cdir . $fn;
+ 
+     if (substr($fn,0,3) eq '../') {
+-	do 1 while ($abs_name=~ s|/(?>[^/]+)/\.\./|/|);
++       1 while $abs_name =~ s!/[^/]*/\.\./!/!;
+     }
+ 
+     return $abs_name;
+ }
+ 
++# return the absolute name of a directory or file
++sub contract_name_Mac {
++    my ($cdir,$fn) = @_;
++    my $abs_name;
++
++    if ($fn =~ /^(:+)(.*)$/) { # valid pathname starting with a ':'
++
++	my $colon_count = length ($1);
++	if ($colon_count == 1) {
++	    $abs_name = $cdir . $2;
++	    return $abs_name;
++	}
++	else {
++	    # need to move up the tree, but
++	    # only if it's not a volume name
++	    for (my $i=1; $i<$colon_count; $i++) {
++		unless ($cdir =~ /^[^:]+:$/) { # volume name
++		    $cdir =~ s/[^:]+:$//;
++		}
++		else {
++		    return undef;
++		}
++	    }
++	    $abs_name = $cdir . $2;
++	    return $abs_name;
++	}
++
++    }
++    else {
++
++	# $fn may be a valid path to a directory or file or (dangling)
++	# symlink, without a leading ':'
++	if ( (-e $fn) || (-l $fn) ) {
++	    if ($fn =~ /^[^:]+:/) { # a volume name like DataHD:*
++		return $fn; # $fn is already an absolute path
++	    }
++	    else {
++		$abs_name = $cdir . $fn;
++		return $abs_name;
++	    }
++	}
++	else { # argh!, $fn is not a valid directory/file
++	     return undef;
++	}
++    }
++}
+ 
+ sub PathCombine($$) {
+     my ($Base,$Name) = @_;
+     my $AbsName;
+ 
+-    if (substr($Name,0,1) eq '/') {
+-	$AbsName= $Name;
++    if ($Is_MacOS) {
++	# $Name is the resolved symlink (always a full path on MacOS),
++	# i.e. there's no need to call contract_name_Mac()
++	$AbsName = $Name;
++
++	# (simple) check for recursion
++	if ( ( $Base =~ /^$AbsName/) && (-d $AbsName) ) { # recursion
++	    return undef;
++	}
+     }
+     else {
+-	$AbsName= contract_name($Base,$Name);
+-    }
++	if (substr($Name,0,1) eq '/') {
++	    $AbsName= $Name;
++	}
++	else {
++	    $AbsName= contract_name($Base,$Name);
++	}
+ 
+-    # (simple) check for recursion
+-    my $newlen= length($AbsName);
+-    if ($newlen <= length($Base)) {
+-	if (($newlen == length($Base) || substr($Base,$newlen,1) eq '/')
+-	    && $AbsName eq substr($Base,0,$newlen))
+-	{
+-	    return undef;
++	# (simple) check for recursion
++	my $newlen= length($AbsName);
++	if ($newlen <= length($Base)) {
++	    if (($newlen == length($Base) || substr($Base,$newlen,1) eq '/')
++		&& $AbsName eq substr($Base,0,$newlen))
++	    {
++		return undef;
++	    }
+ 	}
+     }
+     return $AbsName;
+@@ -275,7 +434,7 @@ sub Follow_SymLink($) {
+     }
+ 
+     if ($full_check && $SLnkSeen{$DEV, $INO}++) {
+-	if ($follow_skip < 1) {
++	if ( ($follow_skip < 1) || ((-d _) && ($follow_skip < 2)) ) {
+ 	    die "$AbsName encountered a second time";
+ 	}
+ 	else {
+@@ -290,112 +449,176 @@ our($dir, $name, $fullname, $prune);
+ sub _find_dir_symlnk($$$);
+ sub _find_dir($$$);
+ 
++# check whether or not a scalar variable is tainted
++# (code straight from the Camel, 3rd ed., page 561)
++sub is_tainted_pp {
++    my $arg = shift;
++    my $nada = substr($arg, 0, 0); # zero-length
++    local $@;
++    eval { eval "# $nada" };
++    return length($@) != 0;
++}
++
+ sub _find_opt {
+     my $wanted = shift;
+     die "invalid top directory" unless defined $_[0];
+ 
+-    my $cwd           = $wanted->{bydepth} ? Cwd::fastcwd() : Cwd::cwd();
+-    my $cwd_untainted = $cwd;
+-    $wanted_callback  = $wanted->{wanted};
+-    $bydepth          = $wanted->{bydepth};
+-    $pre_process      = $wanted->{preprocess};
+-    $post_process     = $wanted->{postprocess};
+-    $no_chdir         = $wanted->{no_chdir};
+-    $full_check       = $wanted->{follow};
+-    $follow           = $full_check || $wanted->{follow_fast};
+-    $follow_skip      = $wanted->{follow_skip};
+-    $untaint          = $wanted->{untaint};
+-    $untaint_pat      = $wanted->{untaint_pattern};
+-    $untaint_skip     = $wanted->{untaint_skip};
++    # This function must local()ize everything because callbacks may
++    # call find() or finddepth()
++
++    local %SLnkSeen;
++    local ($wanted_callback, $avoid_nlink, $bydepth, $no_chdir, $follow,
++	$follow_skip, $full_check, $untaint, $untaint_skip, $untaint_pat,
++	$pre_process, $post_process, $dangling_symlinks);
++    local($dir, $name, $fullname, $prune);
++
++    my $cwd            = $wanted->{bydepth} ? Cwd::fastcwd() : Cwd::cwd();
++    my $cwd_untainted  = $cwd;
++    my $check_t_cwd    = 1;
++    $wanted_callback   = $wanted->{wanted};
++    $bydepth           = $wanted->{bydepth};
++    $pre_process       = $wanted->{preprocess};
++    $post_process      = $wanted->{postprocess};
++    $no_chdir          = $wanted->{no_chdir};
++    $full_check        = $wanted->{follow};
++    $follow            = $full_check || $wanted->{follow_fast};
++    $follow_skip       = $wanted->{follow_skip};
++    $untaint           = $wanted->{untaint};
++    $untaint_pat       = $wanted->{untaint_pattern};
++    $untaint_skip      = $wanted->{untaint_skip};
++    $dangling_symlinks = $wanted->{dangling_symlinks};
+ 
+     # for compatability reasons (find.pl, find2perl)
+-    our ($topdir, $topdev, $topino, $topmode, $topnlink);
++    local our ($topdir, $topdev, $topino, $topmode, $topnlink);
+ 
+     # a symbolic link to a directory doesn't increase the link count
+     $avoid_nlink      = $follow || $File::Find::dont_use_nlink;
+     
+-    if ( $untaint ) {
+-	$cwd_untainted= $1 if $cwd_untainted =~ m|$untaint_pat|;
+-	die "insecure cwd in find(depth)"  unless defined($cwd_untainted);
+-    }
+-    
+     my ($abs_dir, $Is_Dir);
+ 
+     Proc_Top_Item:
+     foreach my $TOP (@_) {
+-        my $top_item = $TOP;
+-        $top_item =~ s|/\z|| unless $top_item eq '/';
+-        $Is_Dir= 0;
+-        
+-        ($topdev,$topino,$topmode,$topnlink) = stat $top_item;
+-
+-        if ($follow) {
+-            if (substr($top_item,0,1) eq '/') {
+-                $abs_dir = $top_item;
+-            }
+-	    elsif ($top_item eq '.') {
+-		$abs_dir = $cwd;
+-	    }
+-            else {  # care about any  ../
+-		$abs_dir = contract_name("$cwd/",$top_item); 
+-            }
+-            $abs_dir= Follow_SymLink($abs_dir);
+-            unless (defined $abs_dir) {
+-		warn "$top_item is a dangling symbolic link\n";
++	my $top_item = $TOP;
++
++	if ($Is_MacOS) {
++	    ($topdev,$topino,$topmode,$topnlink) = $follow ? stat $top_item : lstat $top_item;
++	    $top_item = ":$top_item"
++		if ( (-d _) && ( $top_item !~ /:/ ) );
++	}
++	else {
++	    $top_item =~ s|/\z|| unless $top_item eq '/';
++	    ($topdev,$topino,$topmode,$topnlink) = $follow ? stat $top_item : lstat $top_item;
++	}
++
++	$Is_Dir= 0;
++
++	if ($follow) {
++
++	    if ($Is_MacOS) {
++		$cwd = "$cwd:" unless ($cwd =~ /:$/); # for safety
++
++		if ($top_item eq $File::Find::current_dir) {
++		    $abs_dir = $cwd;
++		}
++		else {
++		    $abs_dir = contract_name_Mac($cwd, $top_item);
++		    unless (defined $abs_dir) {
++			warn "Can't determine absolute path for $top_item (No such file or directory)\n" if $^W;
++			next Proc_Top_Item;
++		    }
++		}
++
++	    }
++	    else {
++		if (substr($top_item,0,1) eq '/') {
++		    $abs_dir = $top_item;
++		}
++		elsif ($top_item eq $File::Find::current_dir) {
++		    $abs_dir = $cwd;
++		}
++		else {  # care about any  ../
++		    $abs_dir = contract_name("$cwd/",$top_item);
++		}
++	    }
++	    $abs_dir= Follow_SymLink($abs_dir);
++	    unless (defined $abs_dir) {
++		if ($dangling_symlinks) {
++		    if (ref $dangling_symlinks eq 'CODE') {
++			$dangling_symlinks->($top_item, $cwd);
++		    } else {
++			warn "$top_item is a dangling symbolic link\n" if $^W;
++		    }
++		}
+ 		next Proc_Top_Item;
+-            }
+-            if (-d _) {
++	    }
++
++	    if (-d _) {
+ 		_find_dir_symlnk($wanted, $abs_dir, $top_item);
+ 		$Is_Dir= 1;
+-            }
+-        }
++	    }
++	}
+ 	else { # no follow
+-            $topdir = $top_item;
+-            unless (defined $topnlink) {
+-                warn "Can't stat $top_item: $!\n";
+-                next Proc_Top_Item;
+-            }
+-            if (-d _) {
++	    $topdir = $top_item;
++	    unless (defined $topnlink) {
++		warn "Can't stat $top_item: $!\n" if $^W;
++		next Proc_Top_Item;
++	    }
++	    if (-d _) {
+ 		$top_item =~ s/\.dir\z// if $Is_VMS;
+ 		_find_dir($wanted, $top_item, $topnlink);
+ 		$Is_Dir= 1;
+-            }
++	    }
+ 	    else {
+ 		$abs_dir= $top_item;
+-            }
+-        }
++	    }
++	}
+ 
+-        unless ($Is_Dir) {
++	unless ($Is_Dir) {
+ 	    unless (($_,$dir) = File::Basename::fileparse($abs_dir)) {
+-		($dir,$_) = ('./', $top_item);
++		if ($Is_MacOS) {
++		    ($dir,$_) = (':', $top_item); # $File::Find::dir, $_
++		}
++		else {
++		    ($dir,$_) = ('./', $top_item);
++		}
+ 	    }
+ 
+-            $abs_dir = $dir;
+-            if ($untaint) {
+-		my $abs_dir_save = $abs_dir;
+-		$abs_dir = $1 if $abs_dir =~ m|$untaint_pat|;
++	    $abs_dir = $dir;
++	    if (( $untaint ) && (is_tainted($dir) )) {
++		( $abs_dir ) = $dir =~ m|$untaint_pat|;
+ 		unless (defined $abs_dir) {
+ 		    if ($untaint_skip == 0) {
+-			die "directory $abs_dir_save is still tainted";
++			die "directory $dir is still tainted";
+ 		    }
+ 		    else {
+ 			next Proc_Top_Item;
+ 		    }
+ 		}
+-            }
++	    }
+ 
+-            unless ($no_chdir or chdir $abs_dir) {
+-                warn "Couldn't chdir $abs_dir: $!\n";
+-                next Proc_Top_Item;
+-            }
++	    unless ($no_chdir || chdir $abs_dir) {
++		warn "Couldn't chdir $abs_dir: $!\n" if $^W;
++		next Proc_Top_Item;
++	    }
+ 
+-            $name = $abs_dir . $_;
++	    $name = $abs_dir . $_; # $File::Find::name
+ 
+-            { &$wanted_callback }; # protect against wild "next"
++	    { &$wanted_callback }; # protect against wild "next"
+ 
+-        }
++	}
+ 
+-        $no_chdir or chdir $cwd_untainted;
++	unless ( $no_chdir ) {
++	    if ( ($check_t_cwd) && (($untaint) && (is_tainted($cwd) )) ) {
++		( $cwd_untainted ) = $cwd =~ m|$untaint_pat|;
++		unless (defined $cwd_untainted) {
++		    die "insecure cwd in find(depth)";
++		}
++		$check_t_cwd = 0;
++	    }
++	    unless (chdir $cwd_untainted) {
++		die "Can't cd to $cwd: $!\n";
++	    }
++	}
+     }
+ }
+ 
+@@ -414,15 +637,25 @@ sub _find_dir($$$) {
+     my ($subcount,$sub_nlink);
+     my $SE= [];
+     my $dir_name= $p_dir;
+-    my $dir_pref= ( $p_dir eq '/' ? '/' : "$p_dir/" );
+-    my $dir_rel= '.';      # directory name relative to current directory
++    my $dir_pref;
++    my $dir_rel;
++    my $tainted = 0;
++
++    if ($Is_MacOS) {
++	$dir_pref= ($p_dir =~ /:$/) ? $p_dir : "$p_dir:"; # preface
++	$dir_rel= ':'; # directory name relative to current directory
++    }
++    else {
++	$dir_pref= ( $p_dir eq '/' ? '/' : "$p_dir/" );
++	$dir_rel= '.'; # directory name relative to current directory
++    }
+ 
+     local ($dir, $name, $prune, *DIR);
+-     
+-    unless ($no_chdir or $p_dir eq '.') {
++
++    unless ( $no_chdir || ($p_dir eq $File::Find::current_dir)) {
+ 	my $udir = $p_dir;
+-	if ($untaint) {
+-	    $udir = $1 if $p_dir =~ m|$untaint_pat|;
++	if (( $untaint ) && (is_tainted($p_dir) )) {
++	    ( $udir ) = $p_dir =~ m|$untaint_pat|;
+ 	    unless (defined $udir) {
+ 		if ($untaint_skip == 0) {
+ 		    die "directory $p_dir is still tainted";
+@@ -433,51 +666,68 @@ sub _find_dir($$$) {
+ 	    }
+ 	}
+ 	unless (chdir $udir) {
+-	    warn "Can't cd to $udir: $!\n";
++	    warn "Can't cd to $udir: $!\n" if $^W;
+ 	    return;
+ 	}
+     }
+-    
++
++    # push the starting directory
+     push @Stack,[$CdLvl,$p_dir,$dir_rel,-1]  if  $bydepth;
+ 
++    if ($Is_MacOS) {
++	$p_dir = $dir_pref;  # ensure trailing ':'
++    }
++
+     while (defined $SE) {
+ 	unless ($bydepth) {
+-            $dir= $p_dir;
+-            $name= $dir_name;
+-            $_= ($no_chdir ? $dir_name : $dir_rel );
++	    $dir= $p_dir; # $File::Find::dir
++	    $name= $dir_name; # $File::Find::name
++	    $_= ($no_chdir ? $dir_name : $dir_rel ); # $_
+ 	    # prune may happen here
+-            $prune= 0;
+-            { &$wanted_callback }; 	# protect against wild "next"
+-            next if $prune;
++	    $prune= 0;
++	    { &$wanted_callback };	# protect against wild "next"
++	    next if $prune;
+ 	}
+-      
++
+ 	# change to that directory
+-	unless ($no_chdir or $dir_rel eq '.') {
++	unless ($no_chdir || ($dir_rel eq $File::Find::current_dir)) {
+ 	    my $udir= $dir_rel;
+-	    if ($untaint) {
+-		$udir = $1 if $dir_rel =~ m|$untaint_pat|;
++	    if ( ($untaint) && (($tainted) || ($tainted = is_tainted($dir_rel) )) ) {
++		( $udir ) = $dir_rel =~ m|$untaint_pat|;
+ 		unless (defined $udir) {
+ 		    if ($untaint_skip == 0) {
+-			die "directory ("
+-			    . ($p_dir ne '/' ? $p_dir : '')
+-			    . "/) $dir_rel is still tainted";
++			if ($Is_MacOS) {
++			    die "directory ($p_dir) $dir_rel is still tainted";
++			}
++			else {
++			    die "directory (" . ($p_dir ne '/' ? $p_dir : '') . "/) $dir_rel is still tainted";
++			}
++		    } else { # $untaint_skip == 1
++			next;
+ 		    }
+ 		}
+ 	    }
+ 	    unless (chdir $udir) {
+-		warn "Can't cd to ("
+-		    . ($p_dir ne '/' ? $p_dir : '')
+-		    . "/) $udir : $!\n";
++		if ($Is_MacOS) {
++		    warn "Can't cd to ($p_dir) $udir: $!\n" if $^W;
++		}
++		else {
++		    warn "Can't cd to (" . ($p_dir ne '/' ? $p_dir : '') . "/) $udir: $!\n" if $^W;
++		}
+ 		next;
+ 	    }
+ 	    $CdLvl++;
+ 	}
+ 
+-	$dir= $dir_name;
++	if ($Is_MacOS) {
++	    $dir_name = "$dir_name:" unless ($dir_name =~ /:$/);
++	}
++
++	$dir= $dir_name; # $File::Find::dir
+ 
+ 	# Get the list of files in the current directory.
+-	unless (opendir DIR, ($no_chdir ? $dir_name : '.')) {
+-	    warn "Can't opendir($dir_name): $!\n";
++	unless (opendir DIR, ($no_chdir ? $dir_name : $File::Find::current_dir)) {
++	    warn "Can't opendir($dir_name): $!\n" if $^W;
+ 	    next;
+ 	}
+ 	@filenames = readdir DIR;
+@@ -488,10 +738,10 @@ sub _find_dir($$$) {
+ 	if ($nlink == 2 && !$avoid_nlink) {
+ 	    # This dir has no subdirectories.
+ 	    for my $FN (@filenames) {
+-		next if $FN =~ /^\.{1,2}\z/;
++		next if $FN =~ $File::Find::skip_pattern;
+ 		
+-		$name = $dir_pref . $FN;
+-		$_ = ($no_chdir ? $name : $FN);
++		$name = $dir_pref . $FN; # $File::Find::name
++		$_ = ($no_chdir ? $name : $FN); # $_
+ 		{ &$wanted_callback }; # protect against wild "next"
+ 	    }
+ 
+@@ -501,7 +751,7 @@ sub _find_dir($$$) {
+ 	    $subcount = $nlink - 2;
+ 
+ 	    for my $FN (@filenames) {
+-		next if $FN =~ /^\.{1,2}\z/;
++		next if $FN =~ $File::Find::skip_pattern;
+ 		if ($subcount > 0 || $avoid_nlink) {
+ 		    # Seen all the subdirs?
+ 		    # check for directoriness.
+@@ -514,14 +764,14 @@ sub _find_dir($$$) {
+ 			push @Stack,[$CdLvl,$dir_name,$FN,$sub_nlink];
+ 		    }
+ 		    else {
+-			$name = $dir_pref . $FN;
+-			$_= ($no_chdir ? $name : $FN);
++			$name = $dir_pref . $FN; # $File::Find::name
++			$_= ($no_chdir ? $name : $FN); # $_
+ 			{ &$wanted_callback }; # protect against wild "next"
+ 		    }
+ 		}
+ 		else {
+-		    $name = $dir_pref . $FN;
+-		    $_= ($no_chdir ? $name : $FN);
++		    $name = $dir_pref . $FN; # $File::Find::name
++		    $_= ($no_chdir ? $name : $FN); # $_
+ 		    { &$wanted_callback }; # protect against wild "next"
+ 		}
+ 	    }
+@@ -531,32 +781,65 @@ sub _find_dir($$$) {
+ 	while ( defined ($SE = pop @Stack) ) {
+ 	    ($Level, $p_dir, $dir_rel, $nlink) = @$SE;
+ 	    if ($CdLvl > $Level && !$no_chdir) {
+-                my $tmp = join('/',('..') x ($CdLvl-$Level));
+-                die "Can't cd to $dir_name" . $tmp
+-                    unless chdir ($tmp);
++		my $tmp;
++		if ($Is_MacOS) {
++		    $tmp = (':' x ($CdLvl-$Level)) . ':';
++		}
++		else {
++		    $tmp = join('/',('..') x ($CdLvl-$Level));
++		}
++		die "Can't cd to $dir_name" . $tmp
++		    unless chdir ($tmp);
+ 		$CdLvl = $Level;
+ 	    }
+-	    $dir_name = ($p_dir eq '/' ? "/$dir_rel" : "$p_dir/$dir_rel");
+-	    $dir_pref = "$dir_name/";
++
++	    if ($Is_MacOS) {
++		# $pdir always has a trailing ':', except for the starting dir,
++		# where $dir_rel eq ':'
++		$dir_name = "$p_dir$dir_rel";
++		$dir_pref = "$dir_name:";
++	    }
++	    else {
++		$dir_name = ($p_dir eq '/' ? "/$dir_rel" : "$p_dir/$dir_rel");
++		$dir_pref = "$dir_name/";
++	    }
++
+ 	    if ( $nlink == -2 ) {
+-		$name = $dir = $p_dir;
+-		$_ = ".";
++		$name = $dir = $p_dir; # $File::Find::name / dir
++		if ($Is_MacOS) {
++		    $_ = ':'; # $_
++		}
++		else {
++		    $_ = '.';
++		}
+ 		&$post_process;		# End-of-directory processing
+-            } elsif ( $nlink < 0 ) {  # must be finddepth, report dirname now
+-                $name = $dir_name;
+-                if ( substr($name,-2) eq '/.' ) {
+-                  $name =~ s|/\.$||;
+-                }
+-                $dir = $p_dir;
+-                $_ = ($no_chdir ? $dir_name : $dir_rel );
+-                if ( substr($_,-2) eq '/.' ) {
+-                  s|/\.$||;
+-                }
+-                { &$wanted_callback }; # protect against wild "next"
+-            } else {
+-                push @Stack,[$CdLvl,$p_dir,$dir_rel,-1]  if  $bydepth;
+-                last;
+-            }
++	    }
++	    elsif ( $nlink < 0 ) {  # must be finddepth, report dirname now
++		$name = $dir_name;
++		if ($Is_MacOS) {
++		    if ($dir_rel eq ':') { # must be the top dir, where we started
++			$name =~ s|:$||; # $File::Find::name
++			$p_dir = "$p_dir:" unless ($p_dir =~ /:$/);
++		    }
++		    $dir = $p_dir; # $File::Find::dir
++		    $_ = ($no_chdir ? $name : $dir_rel); # $_
++		}
++		else {
++		    if ( substr($name,-2) eq '/.' ) {
++			$name =~ s|/\.$||;
++		    }
++		    $dir = $p_dir;
++		    $_ = ($no_chdir ? $dir_name : $dir_rel );
++		    if ( substr($_,-2) eq '/.' ) {
++			s|/\.$||;
++		    }
++		}
++		{ &$wanted_callback }; # protect against wild "next"
++	     }
++	     else {
++		push @Stack,[$CdLvl,$p_dir,$dir_rel,-1]  if  $bydepth;
++		last;
++	    }
+ 	}
+     }
+ }
+@@ -570,25 +853,40 @@ sub _find_dir($$$) {
+ #  chdir (if not no_chdir) to dir
+ 
+ sub _find_dir_symlnk($$$) {
+-    my ($wanted, $dir_loc, $p_dir) = @_;
++    my ($wanted, $dir_loc, $p_dir) = @_; # $dir_loc is the absolute directory
+     my @Stack;
+     my @filenames;
+     my $new_loc;
+-    my $pdir_loc = $dir_loc;
++    my $updir_loc = $dir_loc; # untainted parent directory
+     my $SE = [];
+     my $dir_name = $p_dir;
+-    my $dir_pref = ( $p_dir   eq '/' ? '/' : "$p_dir/" );
+-    my $loc_pref = ( $dir_loc eq '/' ? '/' : "$dir_loc/" );
+-    my $dir_rel = '.';		# directory name relative to current directory
+-    my $byd_flag;               # flag for pending stack entry if $bydepth
++    my $dir_pref;
++    my $loc_pref;
++    my $dir_rel;
++    my $byd_flag; # flag for pending stack entry if $bydepth
++    my $tainted = 0;
++    my $ok = 1;
++
++    if ($Is_MacOS) {
++	$dir_pref = ($p_dir =~ /:$/) ? "$p_dir" : "$p_dir:";
++	$loc_pref = ($dir_loc =~ /:$/) ? "$dir_loc" : "$dir_loc:";
++	$dir_rel  = ':'; # directory name relative to current directory
++    } else {
++	$dir_pref = ( $p_dir   eq '/' ? '/' : "$p_dir/" );
++	$loc_pref = ( $dir_loc eq '/' ? '/' : "$dir_loc/" );
++	$dir_rel  = '.'; # directory name relative to current directory
++    }
+ 
+     local ($dir, $name, $fullname, $prune, *DIR);
+-    
+-    unless ($no_chdir or $p_dir eq '.') {
+-	my $udir = $dir_loc;
+-	if ($untaint) {
+-	    $udir = $1 if $dir_loc =~ m|$untaint_pat|;
+-	    unless (defined $udir) {
++
++    unless ($no_chdir) {
++	# untaint the topdir
++	if (( $untaint ) && (is_tainted($dir_loc) )) {
++	    ( $updir_loc ) = $dir_loc =~ m|$untaint_pat|; # parent dir, now untainted
++	     # once untainted, $updir_loc is pushed on the stack (as parent directory);
++	    # hence, we don't need to untaint the parent directory every time we chdir
++	    # to it later
++	    unless (defined $updir_loc) {
+ 		if ($untaint_skip == 0) {
+ 		    die "directory $dir_loc is still tainted";
+ 		}
+@@ -597,45 +895,47 @@ sub _find_dir_symlnk($$$) {
+ 		}
+ 	    }
+ 	}
+-	unless (chdir $udir) {
+-	    warn "Can't cd to $udir: $!\n";
++	$ok = chdir($updir_loc) unless ($p_dir eq $File::Find::current_dir);
++	unless ($ok) {
++	    warn "Can't cd to $updir_loc: $!\n" if $^W;
+ 	    return;
+ 	}
+     }
+ 
+-    push @Stack,[$dir_loc,$pdir_loc,$p_dir,$dir_rel,-1]  if  $bydepth;
++    push @Stack,[$dir_loc,$updir_loc,$p_dir,$dir_rel,-1]  if  $bydepth;
++
++    if ($Is_MacOS) {
++	$p_dir = $dir_pref; # ensure trailing ':'
++    }
+ 
+     while (defined $SE) {
+ 
+ 	unless ($bydepth) {
+-	    # change to parent directory
++	    # change (back) to parent directory (always untainted)
+ 	    unless ($no_chdir) {
+-		my $udir = $pdir_loc;
+-		if ($untaint) {
+-		    $udir = $1 if $pdir_loc =~ m|$untaint_pat|;
+-		}
+-		unless (chdir $udir) {
+-		    warn "Can't cd to $udir: $!\n";
++		unless (chdir $updir_loc) {
++		    warn "Can't cd to $updir_loc: $!\n" if $^W;
+ 		    next;
+ 		}
+ 	    }
+-	    $dir= $p_dir;
+-            $name= $dir_name;
+-            $_= ($no_chdir ? $dir_name : $dir_rel );
+-            $fullname= $dir_loc;
++	    $dir= $p_dir; # $File::Find::dir
++	    $name= $dir_name; # $File::Find::name
++	    $_= ($no_chdir ? $dir_name : $dir_rel ); # $_
++	    $fullname= $dir_loc; # $File::Find::fullname
+ 	    # prune may happen here
+-            $prune= 0;
++	    $prune= 0;
+ 	    lstat($_); # make sure  file tests with '_' work
+-            { &$wanted_callback }; # protect against wild "next"
+-            next if  $prune;
++	    { &$wanted_callback }; # protect against wild "next"
++	    next if $prune;
+ 	}
+ 
+ 	# change to that directory
+-	unless ($no_chdir or $dir_rel eq '.') {
+-	    my $udir = $dir_loc;
+-	    if ($untaint) {
+-		$udir = $1 if $dir_loc =~ m|$untaint_pat|;
+-		unless (defined $udir ) {
++	unless ($no_chdir || ($dir_rel eq $File::Find::current_dir)) {
++	    $updir_loc = $dir_loc;
++	    if ( ($untaint) && (($tainted) || ($tainted = is_tainted($dir_loc) )) ) {
++		# untaint $dir_loc, what will be pushed on the stack as (untainted) parent dir
++		( $updir_loc ) = $dir_loc =~ m|$untaint_pat|;
++		unless (defined $updir_loc) {
+ 		    if ($untaint_skip == 0) {
+ 			die "directory $dir_loc is still tainted";
+ 		    }
+@@ -644,38 +944,42 @@ sub _find_dir_symlnk($$$) {
+ 		    }
+ 		}
+ 	    }
+-	    unless (chdir $udir) {
+-		warn "Can't cd to $udir: $!\n";
++	    unless (chdir $updir_loc) {
++		warn "Can't cd to $updir_loc: $!\n" if $^W;
+ 		next;
+ 	    }
+ 	}
+ 
+-	$dir = $dir_name;
++	if ($Is_MacOS) {
++	    $dir_name = "$dir_name:" unless ($dir_name =~ /:$/);
++	}
++
++	$dir = $dir_name; # $File::Find::dir
+ 
+ 	# Get the list of files in the current directory.
+-	unless (opendir DIR, ($no_chdir ? $dir_loc : '.')) {
+-	    warn "Can't opendir($dir_loc): $!\n";
++	unless (opendir DIR, ($no_chdir ? $dir_loc : $File::Find::current_dir)) {
++	    warn "Can't opendir($dir_loc): $!\n" if $^W;
+ 	    next;
+ 	}
+ 	@filenames = readdir DIR;
+ 	closedir(DIR);
+ 
+ 	for my $FN (@filenames) {
+-	    next if $FN =~ /^\.{1,2}\z/;
++	    next if $FN =~ $File::Find::skip_pattern;
+ 
+ 	    # follow symbolic links / do an lstat
+ 	    $new_loc = Follow_SymLink($loc_pref.$FN);
+ 
+ 	    # ignore if invalid symlink
+ 	    next unless defined $new_loc;
+-     
++
+ 	    if (-d _) {
+-		push @Stack,[$new_loc,$dir_loc,$dir_name,$FN,1];
++		push @Stack,[$new_loc,$updir_loc,$dir_name,$FN,1];
+ 	    }
+ 	    else {
+-		$fullname = $new_loc;
+-		$name = $dir_pref . $FN;
+-		$_ = ($no_chdir ? $name : $FN);
++		$fullname = $new_loc; # $File::Find::fullname
++		$name = $dir_pref . $FN; # $File::Find::name
++		$_ = ($no_chdir ? $name : $FN); # $_
+ 		{ &$wanted_callback }; # protect against wild "next"
+ 	    }
+ 	}
+@@ -683,38 +987,54 @@ sub _find_dir_symlnk($$$) {
+     }
+     continue {
+ 	while (defined($SE = pop @Stack)) {
+-	    ($dir_loc, $pdir_loc, $p_dir, $dir_rel, $byd_flag) = @$SE;
+-	    $dir_name = ($p_dir eq '/' ? "/$dir_rel" : "$p_dir/$dir_rel");
+-	    $dir_pref = "$dir_name/";
+-	    $loc_pref = "$dir_loc/";
+-            if ( $byd_flag < 0 ) {  # must be finddepth, report dirname now
+-	        unless ($no_chdir or $dir_rel eq '.') {
+-	            my $udir = $pdir_loc;
+-	            if ($untaint) {
+-		        $udir = $1 if $dir_loc =~ m|$untaint_pat|;
+-	            }
+-	            unless (chdir $udir) {
+-		        warn "Can't cd to $udir: $!\n";
+-		        next;
+-	            }
+-	        }
+-	        $fullname = $dir_loc;
+-	        $name = $dir_name;
+-                if ( substr($name,-2) eq '/.' ) {
+-                  $name =~ s|/\.$||;
+-                }
+-                $dir = $p_dir;
+-	        $_ = ($no_chdir ? $dir_name : $dir_rel);
+-                if ( substr($_,-2) eq '/.' ) {
+-                  s|/\.$||;
+-                }
+-
+-		lstat($_); # make sure  file tests with '_' work
+-	        { &$wanted_callback }; # protect against wild "next"
+-            } else {
+-                push @Stack,[$dir_loc, $pdir_loc, $p_dir, $dir_rel,-1]  if  $bydepth;
+-                last;
+-            }
++	    ($dir_loc, $updir_loc, $p_dir, $dir_rel, $byd_flag) = @$SE;
++	    if ($Is_MacOS) {
++		# $p_dir always has a trailing ':', except for the starting dir,
++		# where $dir_rel eq ':'
++		$dir_name = "$p_dir$dir_rel";
++		$dir_pref = "$dir_name:";
++		$loc_pref = ($dir_loc =~ /:$/) ? $dir_loc : "$dir_loc:";
++	    }
++	    else {
++		$dir_name = ($p_dir eq '/' ? "/$dir_rel" : "$p_dir/$dir_rel");
++		$dir_pref = "$dir_name/";
++		$loc_pref = "$dir_loc/";
++	    }
++	    if ( $byd_flag < 0 ) {  # must be finddepth, report dirname now
++		unless ($no_chdir || ($dir_rel eq $File::Find::current_dir)) {
++		    unless (chdir $updir_loc) { # $updir_loc (parent dir) is always untainted
++			warn "Can't cd to $updir_loc: $!\n" if $^W;
++			next;
++		    }
++		}
++		$fullname = $dir_loc; # $File::Find::fullname
++		$name = $dir_name; # $File::Find::name
++		if ($Is_MacOS) {
++		    if ($dir_rel eq ':') { # must be the top dir, where we started
++			$name =~ s|:$||; # $File::Find::name
++			$p_dir = "$p_dir:" unless ($p_dir =~ /:$/);
++		    }
++		    $dir = $p_dir; # $File::Find::dir
++		     $_ = ($no_chdir ? $name : $dir_rel); # $_
++		}
++		else {
++		    if ( substr($name,-2) eq '/.' ) {
++			$name =~ s|/\.$||; # $File::Find::name
++		    }
++		    $dir = $p_dir; # $File::Find::dir
++		    $_ = ($no_chdir ? $dir_name : $dir_rel); # $_
++		    if ( substr($_,-2) eq '/.' ) {
++			s|/\.$||;
++		    }
++		}
++
++		lstat($_); # make sure file tests with '_' work
++		{ &$wanted_callback }; # protect against wild "next"
++	    }
++	    else {
++		push @Stack,[$dir_loc, $updir_loc, $p_dir, $dir_rel,-1]  if  $bydepth;
++		last;
++	    }
+ 	}
+     }
+ }
+@@ -727,7 +1047,7 @@ sub wrap_wanted {
+ 	    $wanted->{follow_skip} = 1 unless defined $wanted->{follow_skip};
+ 	}
+ 	if ( $wanted->{untaint} ) {
+-	    $wanted->{untaint_pattern} = qr|^([-+@\w./]+)$|  
++	    $wanted->{untaint_pattern} = $File::Find::untaint_pattern
+ 		unless defined $wanted->{untaint_pattern};
+ 	    $wanted->{untaint_skip} = 0 unless defined $wanted->{untaint_skip};
+ 	}
+@@ -741,25 +1061,37 @@ sub wrap_wanted {
+ sub find {
+     my $wanted = shift;
+     _find_opt(wrap_wanted($wanted), @_);
+-    %SLnkSeen= ();  # free memory
+ }
+ 
+ sub finddepth {
+     my $wanted = wrap_wanted(shift);
+     $wanted->{bydepth} = 1;
+     _find_opt($wanted, @_);
+-    %SLnkSeen= ();  # free memory
+ }
+ 
++# default
++$File::Find::skip_pattern    = qr/^\.{1,2}\z/;
++$File::Find::untaint_pattern = qr|^([-+@\w./]+)$|;
++
+ # These are hard-coded for now, but may move to hint files.
+ if ($^O eq 'VMS') {
+     $Is_VMS = 1;
+-    $File::Find::dont_use_nlink = 1;
++    $File::Find::dont_use_nlink  = 1;
++}
++elsif ($^O eq 'MacOS') {
++    $Is_MacOS = 1;
++    $File::Find::dont_use_nlink  = 1;
++    $File::Find::skip_pattern    = qr/^Icon\015\z/;
++    $File::Find::untaint_pattern = qr|^(.+)$|;
+ }
+ 
++# this _should_ work properly on all platforms
++# where File::Find can be expected to work
++$File::Find::current_dir = File::Spec->curdir || '.';
++
+ $File::Find::dont_use_nlink = 1
+     if $^O eq 'os2' || $^O eq 'dos' || $^O eq 'amigaos' || $^O eq 'MSWin32' ||
+-       $^O eq 'cygwin' || $^O eq 'epoc';
++       $^O eq 'cygwin' || $^O eq 'epoc' || $^O eq 'NetWare' || $^O eq 'msys';
+ 
+ # Set dont_use_nlink in your hint file if your system's stat doesn't
+ # report the number of links in a directory as an indication
+@@ -770,4 +1102,13 @@ unless ($File::Find::dont_use_nlink) {
+     $File::Find::dont_use_nlink = 1 if ($Config::Config{'dont_use_nlink'});
+ }
+ 
++# We need a function that checks if a scalar is tainted. Either use the
++# Scalar::Util module's tainted() function or our (slower) pure Perl
++# fallback is_tainted_pp()
++{
++    local $@;
++    eval { require Scalar::Util };
++    *is_tainted = $@ ? \&is_tainted_pp : \&Scalar::Util::tainted;
++}
++
+ 1;
+diff --git a/lib/File/Spec/Epoc.pm b/lib/File/Spec/Epoc.pm
+index 65d5e1f..36dc3b2 100644
+--- a/lib/File/Spec/Epoc.pm
++++ b/lib/File/Spec/Epoc.pm
+@@ -77,7 +77,7 @@ sub canonpath {
+     my ($self,$path) = @_;
+     $path =~ s/^([a-z]:)/\u$1/s;
+ 
+-    $path =~ s|/+|/|g unless($^O eq 'cygwin');     # xx////xx  -> xx/xx
++    $path =~ s|/+|/|g unless($^O eq 'cygwin' or $^O eq 'msys');     # xx////xx  -> xx/xx
+     $path =~ s|(/\.)+/|/|g;                        # xx/././xx -> xx/xx
+     $path =~ s|^(\./)+||s unless $path eq "./";    # ./xx      -> xx
+     $path =~ s|^/(\.\./)+|/|s;                     # /../../xx -> xx
+diff --git a/lib/File/Temp.pm b/lib/File/Temp.pm
+index b686682..acbc1b4 100644
+--- a/lib/File/Temp.pm
++++ b/lib/File/Temp.pm
+@@ -793,7 +793,7 @@ sub _can_do_level {
+   return 1 if $level == STANDARD;
+ 
+   # Currently, the systems that can do HIGH or MEDIUM are identical
+-  if ( $^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'cygwin' || $^O eq 'dos') {
++  if ( $^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'cygwin' || $^O eq 'dos' || $^O eq 'msys') {
+     return 0;
+   } else {
+     return 1;
+@@ -1652,7 +1652,7 @@ sub unlink0 {
+     #   on Win9x the link count remains 1
+     # On NFS the link count may still be 1 but we cant know that
+     # we are on NFS
+-    return ( $fh[3] == 0 or $^O eq 'cygwin' ? 1 : 0);
++    return ( $fh[3] == 0 or $^O eq 'cygwin' or $^O eq 'msys' ? 1 : 0);
+ 
+   } else {
+     _deferred_unlink($fh, $path, 0);
+diff --git a/lib/Pod/Find.pm b/lib/Pod/Find.pm
+index 4a0ecb9..18913ee 100644
+--- a/lib/Pod/Find.pm
++++ b/lib/Pod/Find.pm
+@@ -128,12 +128,29 @@ sub pod_find
+ 
+     if($opts{-script}) {
+         require Config;
+-        push(@search, $Config::Config{scriptdir});
++        push(@search, $Config::Config{scriptdir})
++            if -d $Config::Config{scriptdir};
+         $opts{-perl} = 1;
+     }
+ 
+     if($opts{-inc}) {
+-        push(@search, grep($_ ne '.',@INC));
++        if ($^O eq 'MacOS') {
++            # tolerate '.', './some_dir' and '(../)+some_dir' on Mac OS
++            my @new_INC = @INC;
++            for (@new_INC) {
++                if ( $_ eq '.' ) {
++                    $_ = ':';
++                } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
++                    $_ = ':'. $_;
++                } else {
++                    $_ =~ s|^\./|:|;
++                }
++            }
++            push(@search, grep($_ ne File::Spec->curdir, @new_INC));
++        } else {
++            push(@search, grep($_ ne File::Spec->curdir, @INC));
++        }
++
+         $opts{-perl} = 1;
+     }
+ 
+@@ -144,9 +161,18 @@ sub pod_find
+         # * remove e.g. "i586-linux" (from 'archname')
+         # * remove e.g. 5.00503
+         # * remove pod/ if followed by *.pod (e.g. in pod/perlfunc.pod)
+-        $SIMPLIFY_RX =
+-          qq!^(?i:site(_perl)?/|\Q$Config::Config{archname}\E/|\\d+\\.\\d+([_.]?\\d+)?/|pod/(?=.*?\\.pod\\z))*!;
+ 
++        # Mac OS:
++        # * remove ":?site_perl:"
++        # * remove :?pod: if followed by *.pod (e.g. in :pod:perlfunc.pod)
++
++        if ($^O eq 'MacOS') {
++            $SIMPLIFY_RX =
++              qq!^(?i:\:?site_perl\:|\:?pod\:(?=.*?\\.pod\\z))*!;
++        } else {
++            $SIMPLIFY_RX =
++              qq!^(?i:site(_perl)?/|\Q$Config::Config{archname}\E/|\\d+\\.\\d+([_.]?\\d+)?/|pod/(?=.*?\\.pod\\z))*!;
++        }
+     }
+ 
+     my %dirs_visited;
+@@ -170,7 +196,7 @@ sub pod_find
+             }
+             next;
+         }
+-        my $root_rx = qq!^\Q$try\E/!;
++        my $root_rx = $^O eq 'MacOS' ? qq!^\Q$try\E! : qq!^\Q$try\E/!;
+         File::Find::find( sub {
+             my $item = $File::Find::name;
+             if(-d) {
+@@ -231,10 +257,19 @@ sub _check_and_extract_name {
+         $name =~ s!$SIMPLIFY_RX!!os if(defined $SIMPLIFY_RX);
+     }
+     else {
+-        $name =~ s:^.*/::s;
++        if ($^O eq 'MacOS') {
++            $name =~ s/^.*://s;
++        } else {
++            $name =~ s:^.*/::s;
++        }
+     }
+     _simplify($name);
+     $name =~ s!/+!::!g; #/
++    if ($^O eq 'MacOS') {
++        $name =~ s!:+!::!g; # : -> ::
++    } else {
++        $name =~ s!/+!::!g; # / -> ::
++    }
+     $name;
+ }
+ 
+@@ -251,7 +286,11 @@ F<.bat>, F<.cmd> on Win32 and OS/2, or F<.com> on VMS, respectively.
+ sub simplify_name {
+     my ($str) = @_;
+     # remove all path components
+-    $str =~ s:^.*/::s;
++    if ($^O eq 'MacOS') {
++        $str =~ s/^.*://s;
++    } else {
++        $str =~ s:^.*/::s;
++    }
+     _simplify($str);
+     $str;
+ }
+@@ -319,7 +358,7 @@ sub pod_where {
+   my %options = (
+          '-inc' => 0,
+          '-verbose' => 0,
+-         '-dirs' => [ '.' ],
++         '-dirs' => [ File::Spec->curdir ],
+         );
+ 
+   # Check for an options hash as first argument
+@@ -347,6 +386,22 @@ sub pod_where {
+     require Config;
+ 
+     # Add @INC
++    if ($^O eq 'MacOS' && $options{'-inc'}) {
++        # tolerate '.', './some_dir' and '(../)+some_dir' on Mac OS
++        my @new_INC = @INC;
++        for (@new_INC) {
++            if ( $_ eq '.' ) {
++                $_ = ':';
++            } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
++                $_ = ':'. $_;
++            } else {
++                $_ =~ s|^\./|:|;
++            }
++        }
++        push (@search_dirs, @new_INC);
++    } elsif ($options{'-inc'}) {
++        push (@search_dirs, @INC);
++    }
+     push (@search_dirs, @INC) if $options{'-inc'};
+ 
+     # Add location of pod documentation for perl man pages (eg perlfunc)
+@@ -364,7 +419,7 @@ sub pod_where {
+   # Loop over directories
+   Dir: foreach my $dir ( @search_dirs ) {
+ 
+-    # Don't bother if cant find the directory
++    # Don't bother if can't find the directory
+     if (-d $dir) {
+       warn "Looking in directory $dir\n" 
+         if $options{'-verbose'};
+diff --git a/lib/diagnostics.pm b/lib/diagnostics.pm
+index 884ea3c..48bb044 100644
+--- a/lib/diagnostics.pm
++++ b/lib/diagnostics.pm
+@@ -168,10 +168,10 @@ Tom Christiansen <F<tchrist@mox.perl.com>>, 25 June 1995.
+ =cut
+ 
+ use strict;
+-use 5.005_64;
++use 5.6.0;
+ use Carp;
+ 
+-our $VERSION = v1.0;
++our $VERSION = 1.0;
+ our $DEBUG;
+ our $VERBOSE;
+ our $PRETTY;
+@@ -195,6 +195,11 @@ my @trypod = (
+ unshift @trypod, "./pod/perldiag.pod" if -e "pod/perldiag.pod";
+ (my $PODFILE) = ((grep { -e } @trypod), $trypod[$#trypod])[0];
+ 
++if ($^O eq 'MacOS') {
++    # just updir one from each lib dir, we'll find it ...
++    ($PODFILE) = grep { -e } map { "$_:pod:perldiag.pod" } @INC;
++}
++
+ $DEBUG ||= 0;
+ my $WHOAMI = ref bless [];  # nobody's business, prolly not even mine
+ 
+diff --git a/lib/locale.pm b/lib/locale.pm
+index 6314aca..ed87687 100644
+--- a/lib/locale.pm
++++ b/lib/locale.pm
+@@ -25,7 +25,7 @@ locales.
+ 
+ =cut
+ 
+-$locale::hint_bits = 0x800;
++$locale::hint_bits = 0x4;
+ 
+ sub import {
+     $^H |= $locale::hint_bits;
+diff --git a/lib/perl5db.pl b/lib/perl5db.pl
+index 63b4381..6f10010 100644
+--- a/lib/perl5db.pl
++++ b/lib/perl5db.pl
+@@ -394,7 +394,7 @@ if ($notty) {
+ 
+   #require Term::ReadLine;
+ 
+-  if ($^O eq 'cygwin') {
++  if ($^O eq 'cygwin' || $^O eq 'msys') {
+     # /dev/tty is binary. use stdin for textmode
+     undef $console;
+   } elsif (-e "/dev/tty") {
+@@ -2553,7 +2553,7 @@ sub runman {
+ 		cygwin data dbmfilter debug debguts delta diag doc dos dsc embed
+ 		faq faq1 faq2 faq3 faq4 faq5 faq6 faq7 faq8 faq9 filter fork
+ 		form func guts hack hist hpux intern ipc lexwarn locale lol mod
+-		modinstall modlib number obj op opentut os2 os390 pod port 
++		modinstall modlib msys number obj op opentut os2 os390 pod port
+ 		ref reftut run sec style sub syn thrtut tie toc todo toot tootc
+ 		trap unicode var vms win32 xs xstut
+ 	      }) 
+diff --git a/makeaperl.SH b/makeaperl.SH
+index 45812ba..80c0f21 100644
+--- a/makeaperl.SH
++++ b/makeaperl.SH
+@@ -1,4 +1,4 @@
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+diff --git a/makedef.pl b/makedef.pl
+index e983967..c08a4bc 100644
+--- a/makedef.pl
++++ b/makedef.pl
+@@ -645,7 +645,7 @@ else {
+ sub try_symbol {
+     my $symbol = shift;
+ 
+-    return if $symbol !~ /^[A-Za-z]/;
++    return if $symbol !~ /^[A-Za-z_]/;
+     return if $symbol =~ /^\#/;
+     $symbol =~s/\r//g;
+     chomp($symbol);
+diff --git a/makedepend.SH b/makedepend.SH
+index 7f8a108..4ba6e85 100644
+--- a/makedepend.SH
++++ b/makedepend.SH
+@@ -1,5 +1,5 @@
+ #! /bin/sh
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+@@ -37,7 +37,7 @@ esac
+ 
+ export PATH || (echo "OOPS, this isn't sh.  Desperation time.  I will feed myself to sh."; sh \$0; kill \$\$)
+ 
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+@@ -108,10 +108,14 @@ for file in `$cat .clist`; do
+ 			if [ "$archname" = cygwin ]; then
+ 				uwinfix="-e s,\\\\\\\\,/,g"
+ 			else
+-				if [ "$osname" = posix-bc ]; then
+-					uwinfix="-e s/\\*POSIX(\\(.*\\))/\\1/"
++				if [ "$archname" = msys ]; then
++					uwinfix="-e s,\\\\\\\\,/,g"
+ 				else
+-					uwinfix=
++				  if [ "$osname" = posix-bc ]; then
++					  uwinfix="-e s/\\*POSIX(\\(.*\\))/\\1/"
++				  else
++					  uwinfix=
++				  fi
+ 				fi
+ 			fi
+ 		fi
+diff --git a/makedir.SH b/makedir.SH
+index d1650e7..19a6ad6 100644
+--- a/makedir.SH
++++ b/makedir.SH
+@@ -1,4 +1,4 @@
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+     if test ! -f config.sh; then
+ 	ln ../config.sh . || \
+diff --git a/mg.c b/mg.c
+index e1b727a..0b64dae 100644
+--- a/mg.c
++++ b/mg.c
+@@ -661,7 +661,7 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
+     case '.':
+ #ifndef lint
+ 	if (GvIO(PL_last_in_gv)) {
+-	    sv_setiv(sv, (IV)IoLINES(GvIO(PL_last_in_gv)));
++	    sv_setiv(sv, (IV)IoLINES(GvIOp(PL_last_in_gv)));
+ 	}
+ #endif
+ 	break;
+diff --git a/msys/Makefile.SHs b/msys/Makefile.SHs
+new file mode 100644
+index 0000000..a2932d6
+--- /dev/null
++++ b/msys/Makefile.SHs
+@@ -0,0 +1,213 @@
++# This file is read by Makefile.SH to produce rules for $(LIBPERL) (and
++# some additional rules as well).
++
++# Rerun `sh Makefile.SH; make depend' after making any change.
++
++# Additional rules supported: libperls.a (for static linking),
++# ld2, perlld (dynamic linking tools)
++#
++
++#! /bin/sh
++case $CONFIG in
++'')
++	if test -f config.sh; then TOP=.;
++	elif test -f ../config.sh; then TOP=..;
++	elif test -f ../../config.sh; then TOP=../..;
++	elif test -f ../../../config.sh; then TOP=../../..;
++	elif test -f ../../../../config.sh; then TOP=../../../..;
++	else
++		echo "Can't find config.sh."; exit 1
++	fi
++	. $TOP/config.sh
++	;;
++esac
++
++addtopath=`pwd`
++$spitshell >>Makefile <<!GROK!THIS!
++
++msys.c: msys/msys.c
++	\$(LNS) msys/msys.c
++
++# shell script feeding perlld to decent perl
++ld2: $& Makefile perlld ${src}/msys/ld2.in
++	@echo "extracting ld2 (with variable substitutions)"
++	@$sed s,@buildpath@,$addtopath,g <${src}/msys/ld2.in >ld2
++	@echo "installing ld2 into $installbin"
++# install is included in MSYS distributions, and we make a note of th
++# requirement in the README.msys file. However, let's give them
++# a warning.
++	@/usr/bin/install -c -m 755 ld2 ${installbin}/ld2
++	@if test ! -f  ${installbin}/ld2; then \
++		echo "*************************************************" ; \
++		echo "Make will probably fail in a few more steps." ; \
++		echo "When it does, copy \"ld2\" to a directory in" ; \
++		echo "your path, other than \".\"." ; \
++		echo "\"/usr/local/bin\" or something similar will do." ; \
++		echo "Then restart make." ; \
++		echo "*************************************************" ; \
++	fi
++
++!GROK!THIS!
++
++$spitshell >>Makefile <<!GROK!THIS!
++
++# perlld parameters
++#
++# these are mandatory
++DLLWRAP = 'dllwrap'
++VERSION = '$version'
++
++# following are optional.
++WRAPDRIVER = gcc
++DLLTOOL = dlltool
++EXPORT_ALL = 1
++
++# if some of extensions are empty,
++# no corresponding output will be done.
++# most probably, you'd like to have an export library
++DEF_EXT = .def
++EXP_EXT = .exp
++
++perlld: $& Makefile ${src}/msys/perlld.in
++	@echo "extracting perlld (with variable substitutions)"
++	@$sed -e s,@CC@,\${CC}, -e s,@DLLWRAP@,\${DLLWRAP},g \\
++	-e s,@WRAPDRIVER@,\${WRAPDRIVER},g -e s,@DLLTOOL@,\${DLLTOOL},g \\
++	-e s,@AS@,\${AS},g -e s,@EXPORT_ALL@,\${EXPORT_ALL},g \\
++	-e s,@DEF_EXT@,\${DEF_EXT},g -e s,@EXP_EXT@,\${EXP_EXT},g \\
++	-e s,@LIB_EXT@,\${LIB_EXT},g -e s,@VERSION@,\${VERSION},g \\
++	${src}/msys/perlld.in >perlld
++
++!GROK!THIS!
++
++# make sure that all library names are not malformed
++libperl=`echo $libperl|sed -e s,\\\..*,,`
++
++# it would be nice to allow dll to have any name,
++# but for now i insist on 'lib<whatever>.dll'
++if ( ! echo $libperl | grep '^lib' >/dev/null )
++then
++  libperl=lib$libperl
++fi
++linklibperl=-l`echo $libperl|sed -e s,^lib,,`
++
++$spitshell >>Makefile <<!GROK!THIS!
++LIBPERL = $libperl
++LLIBPERL= $linklibperl
++CLDFLAGS= -L$addtopath $ldflags
++CAT = $cat
++AWK = $awk
++!GROK!THIS!
++
++case "$useshrplib" in
++true)
++	$spitshell >>Makefile <<'!NO!SUBS!'
++cwobj = $(obj)
++
++# override default rule (NB: make croaks!) to force dll usage
++perlmain$(OBJ_EXT): perlmain.c
++	$(CCCMD) $(PLDLFLAGS) -DUSEIMPORTLIB $*.c
++
++# library used to make statically linked executables
++# miniperl is linked against it to avoid libperl.dll locking
++$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
++	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
++
++# dll and import library
++$(LIBPERL).dll$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
++	$(LDLIBPTH) ld2 $(SHRPLDFLAGS) -o $(LIBPERL)$(DLSUFFIX) \
++	perl$(OBJ_EXT) $(cwobj) $(libs)
++
++# How to build executables.
++
++# The miniperl -w -MExporter line is a basic cheap test to catch errors
++# before make goes on to run preplibrary and then MakeMaker on extensions.
++# This is very handy because later errors are often caused by miniperl
++# build problems but that's not obvious to the novice.
++# The Module used here must not depend on Config or any extensions.
++
++miniperl.exe \
++miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
++	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic $(libs)
++	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
++
++perl.exe \
++perl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++!NO!SUBS!
++	;;
++*)
++$spitshell >>Makefile <<'!NO!SUBS!'
++cwobj = $(obj)
++
++# perl library
++$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
++	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
++
++# How to build executables.
++
++# The miniperl -w -MExporter line is a basic cheap test to catch errors
++# before make goes on to run preplibrary and then MakeMaker on extensions.
++# This is very handy because later errors are often caused by miniperl
++# build problems but that's not obvious to the novice.
++# The Module used here must not depend on Config or any extensions.
++
++miniperl.exe \
++miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
++	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic  $(libs)
++	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
++
++perl.exe \
++perl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic `cat ext.libs` $(libs)
++
++pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
++	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
++
++!NO!SUBS!
++	;;
++esac
++
++# libperl.a is _the_ library both in dll and static cases
++# $(LIBPERL)$(LIB_EXT) expands to this name dependless of build model
++#
++# NOTE: The "-Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic" is required to give
++# the import library linking priority over the dynamic library, since both
++# the .dll and .a are in the same directory.  When the new standard for
++# naming import/dynamic/static libraries emerges this should be updated.
++#
++$spitshell >>Makefile <<'!NO!SUBS!'
++
++
++!NO!SUBS!
++
++# suid perl is removed - i've never seen suid scripts for win32
++
++##############################################
++# additional targets
++
++$spitshell >>Makefile <<'!NO!SUBS!'
++
++DIST_DIRECTORY = .dist
++
++distdir: miniperl
++	-mkdir $(DIST_DIRECTORY)
++	./miniperl '-MExtUtils::Manifest' \
++	-e "ExtUtils::Manifest::manicopy(ExtUtils::Manifest::maniread(),'$(DIST_DIRECTORY)')"
++
++!NO!SUBS!
+diff --git a/msys/ld2.in b/msys/ld2.in
+new file mode 100644
+index 0000000..3776c71
+--- /dev/null
++++ b/msys/ld2.in
+@@ -0,0 +1,20 @@
++#!/bin/sh
++#
++# ld wrapper for building dynamic lib version of perl;
++#  passes all args to perlld
++#
++
++# own miniperl is first candidate 'cause it doesn not lock libperl.dll
++for trythis in @buildpath@/miniperl @buildpath@/perl perl
++do
++  if [ -x $trythis ]
++  then
++    $trythis @buildpath@/perlld "$@"
++    exit $?
++  fi
++done
++# hard luck!
++echo i see no perl executable around there
++echo perl is required to build dynamic libraries
++echo go fetch one or build this one static
++exit 1
+diff --git a/msys/msys.c b/msys/msys.c
+new file mode 100644
+index 0000000..be2305c
+--- /dev/null
++++ b/msys/msys.c
+@@ -0,0 +1,162 @@
++/*
++ * MSYS extras
++ */
++
++#include "EXTERN.h"
++#include "perl.h"
++#undef USE_DYNAMIC_LOADING
++#include "XSUB.h"
++
++#include <unistd.h>
++#include <process.h>
++
++/*
++ * pp_system() implemented via spawn()
++ * - more efficient and useful when embedding Perl in non-MSYS apps
++ * - code mostly borrowed from djgpp.c
++ */
++static int
++do_spawnvp (const char *path, const char * const *argv)
++{
++    dTHXo;
++    Sigsave_t ihand,qhand;
++    int childpid, result, status;
++
++    rsignal_save(SIGINT, SIG_IGN, &ihand);
++    rsignal_save(SIGQUIT, SIG_IGN, &qhand);
++    childpid = spawnvp(_P_NOWAIT,path,argv);
++    if (childpid < 0) {
++	status = -1;
++	if(ckWARN(WARN_EXEC))
++	    Perl_warner(aTHX_ WARN_EXEC,"Can't spawn \"%s\": %s",
++		    path,Strerror (errno));
++    } else {
++	do {
++	    result = wait4pid(childpid, &status, 0);
++	} while (result == -1 && errno == EINTR);
++	if(result < 0)
++	    status = -1;
++    }
++    (void)rsignal_restore(SIGINT, &ihand);
++    (void)rsignal_restore(SIGQUIT, &qhand);
++    return status;
++}
++
++int
++do_aspawn (SV *really, void **mark, void **sp)
++{
++    dTHXo;
++    int  rc;
++    char **a,*tmps,**argv;
++    STRLEN n_a;
++
++    if (sp<=mark)
++        return -1;
++    a=argv=(char**) alloca ((sp-mark+3)*sizeof (char*));
++
++    while (++mark <= sp)
++        if (*mark)
++            *a++ = SvPVx(*mark, n_a);
++        else
++            *a++ = "";
++    *a = Nullch;
++
++    if (argv[0][0] != '/' && argv[0][0] != '\\'
++        && !(argv[0][0] && argv[0][1] == ':'
++        && (argv[0][2] == '/' || argv[0][2] != '\\'))
++     ) /* will swawnvp use PATH? */
++         TAINT_ENV();	/* testing IFS here is overkill, probably */
++
++    if (really && *(tmps = SvPV(really, n_a)))
++        rc=do_spawnvp (tmps,(const char * const *)argv);
++    else
++        rc=do_spawnvp (argv[0],(const char *const *)argv);
++
++    return rc;
++}
++
++int
++do_spawn (char *cmd)
++{
++    dTHXo;
++    char **a,*s,*metachars = "$&*(){}[]'\";\\?>|<~`\n";
++    const char *command[4];
++
++    while (*cmd && isSPACE(*cmd))
++	cmd++;
++
++    if (strnEQ (cmd,"/bin/sh",7) && isSPACE (cmd[7]))
++        cmd+=5;
++
++    /* save an extra exec if possible */
++    /* see if there are shell metacharacters in it */
++    if (strstr (cmd,"..."))
++	goto doshell;
++    if (*cmd=='.' && isSPACE (cmd[1]))
++	goto doshell;
++    if (strnEQ (cmd,"exec",4) && isSPACE (cmd[4]))
++	goto doshell;
++    for (s=cmd; *s && isALPHA (*s); s++) ;	/* catch VAR=val gizmo */
++	if (*s=='=')
++	    goto doshell;
++
++    for (s=cmd; *s; s++)
++	if (strchr (metachars,*s))
++	{
++	    if (*s=='\n' && s[1]=='\0')
++	    {
++		*s='\0';
++		break;
++	    }
++	doshell:
++	    command[0] = "sh";
++	    command[1] = "-c";
++	    command[2] = cmd;
++	    command[3] = NULL;
++
++	    return do_spawnvp("sh",command);
++	}
++
++    New (1303,PL_Argv,(s-cmd)/2+2,char*);
++    PL_Cmd=savepvn (cmd,s-cmd);
++    a=PL_Argv;
++    for (s=PL_Cmd; *s;) {
++	while (*s && isSPACE (*s)) s++;
++	if (*s)
++	    *(a++)=s;
++	while (*s && !isSPACE (*s)) s++;
++	if (*s)
++	    *s++='\0';
++    }
++    *a=Nullch;
++    if (!PL_Argv[0])
++        return -1;
++
++    return do_spawnvp(PL_Argv[0],(const char * const *)PL_Argv);
++}
++
++/* see also Cwd.pm */
++static
++XS(Msys_cwd)
++{
++    dXSARGS;
++    char *cwd;
++
++    if(items != 0)
++	Perl_croak(aTHX_ "Usage: Cwd::cwd()");
++    if((cwd = getcwd(NULL, -1))) {
++	ST(0) = sv_2mortal(newSVpv(cwd, 0));
++	safesysfree(cwd);
++	XSRETURN(1);
++    }
++    XSRETURN_UNDEF;
++}
++
++void
++init_os_extras(void)
++{
++    char *file = __FILE__;
++    dTHX;
++
++    newXS("Cwd::cwd", Msys_cwd, file);
++}
+diff --git a/msys/perlld.in b/msys/perlld.in
+new file mode 100644
+index 0000000..098095c
+--- /dev/null
++++ b/msys/perlld.in
+@@ -0,0 +1,88 @@
++#
++# Perl script being a wrapper around the gnu ld. When a dll is specified to
++#   to be built, special processing is done, else the standard ld is called.
++#
++
++# these are pretty mandatory
++my $CC = '@CC@';
++my $EXPORT_ALL = @EXPORT_ALL@;
++
++# if some of extensions are undefined,
++# no corresponding output will be done.
++# most probably, you'd like to have an export library
++# my $DEF_EXT = '@DEF_EXT@';
++# my $EXP_EXT = '@EXP_EXT@';
++my $LIB_EXT = '@LIB_EXT@';
++
++#my $DEBUG ="perlld.out";
++my $DEBUG =undef;
++
++my $args = join(" ",@ARGV); # get args
++my $verbose =grep(/^\-(v|\-verbose)$/, @ARGV);
++
++sub shellexec;
++
++if ($DEBUG) {
++  open DEBUGFILE, ">>$DEBUG";
++  print DEBUGFILE "\n--- " .localtime() ."\nargs:\n$args\n\nenvironment:\n";
++  foreach (keys(%ENV)) { print DEBUGFILE $_, "=", $ENV{$_}, "\n"; };
++}
++
++if ($args !~ /\-o (\S+)/) {
++  print DEBUGFILE "+ no dll output -- passing to gcc\n\n" if $DEBUG;
++  shellexec("$CC $args\n");
++} else {
++  my ($path, $command, $dllname, $libname) ='';
++
++  $dllname =$1;
++  print DEBUGFILE "output file: $dllname\n" if $DEBUG;
++  # remove -o from args
++  $args =~ s/(^| )\-o \S+/$1/;
++
++  # Check for path:
++  if( $dllname =~ /.*[\/\\]/){
++    $dllname = $';
++    $path = $&;
++    $path =~ s,[/\\](\.[/\\])*,/,g;
++  }
++  if ($dllname =~ /\./) { $libname =$`; } else { $libname =$dllname; };
++  my $v_e_r_s = substr("@VERSION@",0,-2);
++  $v_e_r_s =~ tr/./_/;
++  if ( $dllname =~ /libperl.*/) {
++    $dllname ="msys-perl$v_e_r_s.dll";
++  } else {
++    $dllname ="$libname.dll";
++  }
++  $libname ="lib$libname" unless ($libname =~ /^lib/);
++  print DEBUGFILE "dll name: $dllname\nimport library: $libname\npath: $path\n" if $DEBUG;
++
++  $command ="$CC -shared -o $dllname";
++#  $command .=" --verbose" if $verbose;
++  $command .=" -Wl,--output-def=$libname$DEF_EXT" if $DEF_EXT;
++  $command .=" -Wl,--output-exp=$libname$EXP_EXT" if $EXP_EXT;
++  $command .=" -Wl,--out-implib=$libname.dll$LIB_EXT" if $LIB_EXT;
++  $command .=" -Wl,--export-all-symbols" if $EXPORT_ALL;
++  $command .=" -Wl,--enable-auto-import -Wl,--stack,8388608"; # always
++  $command .=" -Wl,--enable-auto-image-base"; # always
++
++  # other args are passed through
++  shellexec("$command \\\n$args\n");
++
++  if ($path) {
++    $command ="mv $dllname";
++    $command .=" $libname.dll$LIB_EXT" if $LIB_EXT;
++    shellexec("$command $path\n");
++  };
++};
++close DEBUGFILE if $DEBUG;
++
++#---------------------------------------------------------------------------
++sub shellexec {
++  my $command = shift;
++  print STDERR $command;
++  print DEBUGFILE $command if $DEBUG;
++  system($command) == 0
++    or die "perlld: *** system() failed to execute\n$command\n";
++};
++
++1;
+diff --git a/myconfig.SH b/myconfig.SH
+index e80dfb5..59a173d 100644
+--- a/myconfig.SH
++++ b/myconfig.SH
+@@ -1,4 +1,4 @@
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+diff --git a/op.c b/op.c
+index 5fe0a03..97e2730 100644
+--- a/op.c
++++ b/op.c
+@@ -372,15 +372,24 @@ S_pad_findlex(pTHX_ char *name, PADOFFSET newoff, U32 seq, CV* startcv,
+ 	switch (CxTYPE(cx)) {
+ 	default:
+ 	    if (i == 0 && saweval) {
+-		seq = cxstack[saweval].blk_oldcop->cop_seq;
+ 		return pad_findlex(name, newoff, seq, PL_main_cv, -1, saweval, 0);
+ 	    }
+ 	    break;
+ 	case CXt_EVAL:
+ 	    switch (cx->blk_eval.old_op_type) {
+ 	    case OP_ENTEREVAL:
+-		if (CxREALEVAL(cx))
++		if (CxREALEVAL(cx)) {
++		    PADOFFSET off;
+ 		    saweval = i;
++		    seq = cxstack[i].blk_oldcop->cop_seq;
++		    startcv = cxstack[i].blk_eval.cv;
++		    if (startcv && CvOUTSIDE(startcv)) {
++			off = pad_findlex(name, newoff, seq, CvOUTSIDE(startcv),
++					  i-1, saweval, 0);
++			if (off)	/* continue looking if not found here */
++			    return off;
++		    }
++		}
+ 		break;
+ 	    case OP_DOFILE:
+ 	    case OP_REQUIRE:
+@@ -395,9 +404,9 @@ S_pad_findlex(pTHX_ char *name, PADOFFSET newoff, U32 seq, CV* startcv,
+ 	    cv = cx->blk_sub.cv;
+ 	    if (PL_debstash && CvSTASH(cv) == PL_debstash) {	/* ignore DB'* scope */
+ 		saweval = i;	/* so we know where we were called from */
++		seq = cxstack[i].blk_oldcop->cop_seq;
+ 		continue;
+ 	    }
+-	    seq = cxstack[saweval].blk_oldcop->cop_seq;
+ 	    return pad_findlex(name, newoff, seq, cv, i-1, saweval,FINDLEX_NOSEARCH);
+ 	}
+     }
+@@ -1352,31 +1361,6 @@ Perl_mod(pTHX_ OP *o, I32 type)
+ 	PL_modcount++;
+ 	return o;
+     case OP_CONST:
+-        if (o->op_private & (OPpCONST_BARE) && 
+-                !(type == OP_GREPSTART || type == OP_ENTERSUB || type == OP_REFGEN)) {
+-            SV *sv = ((SVOP*)o)->op_sv;
+-            GV *gv;
+-
+-            /* Could be a filehandle */
+-            if (gv = gv_fetchpv(SvPV_nolen(sv), FALSE, SVt_PVIO)) {
+-                OP* gvio = newUNOP(OP_RV2GV, 0, newGVOP(OP_GV, 0, gv));
+-                op_free(o);
+-                o = gvio;
+-            } else {
+-                /* OK, it's a sub */
+-                OP* enter;
+-                gv = gv_fetchpv(SvPV_nolen(sv), TRUE, SVt_PVCV);
+-
+-                enter = newUNOP(OP_ENTERSUB,0, 
+-                        newUNOP(OP_RV2CV, 0, 
+-                            newGVOP(OP_GV, 0, gv)
+-                        ));
+-                enter->op_private |= OPpLVAL_INTRO;
+-                op_free(o);
+-                o = enter;
+-            }
+-            break;
+-        }
+ 	if (!(o->op_private & (OPpCONST_ARYBASE)))
+ 	    goto nomod;
+ 	if (PL_eval_start && PL_eval_start->op_type == OP_CONST) {
+@@ -2269,8 +2253,8 @@ Perl_fold_constants(pTHX_ register OP *o)
+     case OP_SLE:
+     case OP_SGE:
+     case OP_SCMP:
+-
+-	if (o->op_private & OPpLOCALE)
++	/* XXX what about the numeric ops? */
++	if (PL_hints & HINT_LOCALE)
+ 	    goto nope;
+     }
+ 
+@@ -3546,7 +3530,7 @@ Perl_newSTATEOP(pTHX_ I32 flags, char *label, OP *o)
+ 	cop->op_ppaddr = PL_ppaddr[ OP_NEXTSTATE ];
+     }
+     cop->op_flags = flags;
+-    cop->op_private = (PL_hints & HINT_BYTE);
++    cop->op_private = (PL_hints & (HINT_BYTE|HINT_LOCALE));
+ #ifdef NATIVE_HINTS
+     cop->op_private |= NATIVE_HINTS;
+ #endif
+@@ -4135,9 +4119,15 @@ Perl_cv_undef(pTHX_ CV *cv)
+      * CV, they don't hold a refcount on the outside CV.  This avoids
+      * the refcount loop between the outer CV (which keeps a refcount to
+      * the closure prototype in the pad entry for pp_anoncode()) and the
+-     * closure prototype, and the ensuing memory leak.  --GSAR */
+-    if (!CvANON(cv) || CvCLONED(cv))
++     * closure prototype, and the ensuing memory leak.  This does not
++     * apply to closures generated within eval"", since eval"" CVs are
++     * ephemeral. --GSAR */
++    if (!CvANON(cv) || CvCLONED(cv)
++	|| (CvOUTSIDE(cv) && SvTYPE(CvOUTSIDE(cv)) == SVt_PVCV
++	    && CvEVAL(CvOUTSIDE(cv)) && !CvGV(CvOUTSIDE(cv))))
++    {
+ 	SvREFCNT_dec(CvOUTSIDE(cv));
++    }
+     CvOUTSIDE(cv) = Nullcv;
+     if (CvPADLIST(cv)) {
+ 	/* may be during global destruction */
+@@ -4694,12 +4684,17 @@ Perl_newATTRSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
+ 	}
+     }
+ 
+-    /* If a potential closure prototype, don't keep a refcount on outer CV.
++    /* If a potential closure prototype, don't keep a refcount on
++     * outer CV, unless the latter happens to be a passing eval"".
+      * This is okay as the lifetime of the prototype is tied to the
+      * lifetime of the outer CV.  Avoids memory leak due to reference
+      * loop. --GSAR */
+-    if (!name)
++    if (!name && CvOUTSIDE(cv)
++	&& !(SvTYPE(CvOUTSIDE(cv)) == SVt_PVCV
++	     && CvEVAL(CvOUTSIDE(cv)) && !CvGV(CvOUTSIDE(cv))))
++    {
+ 	SvREFCNT_dec(CvOUTSIDE(cv));
++    }
+ 
+     if (name || aname) {
+ 	char *s;
+@@ -5471,13 +5466,6 @@ Perl_ck_ftst(pTHX_ OP *o)
+ 	else
+ 	    o = newUNOP(type, 0, newDEFSVOP());
+     }
+-#ifdef USE_LOCALE
+-    if (type == OP_FTTEXT || type == OP_FTBINARY) {
+-	o->op_private = 0;
+-	if (PL_hints & HINT_LOCALE)
+-	    o->op_private |= OPpLOCALE;
+-    }
+-#endif
+     return o;
+ }
+ 
+@@ -5878,29 +5866,7 @@ Perl_ck_listiob(pTHX_ OP *o)
+     if (!kid)
+ 	append_elem(o->op_type, o, newDEFSVOP());
+ 
+-    o = listkids(o);
+-
+-    o->op_private = 0;
+-#ifdef USE_LOCALE
+-    if (PL_hints & HINT_LOCALE)
+-	o->op_private |= OPpLOCALE;
+-#endif
+-
+-    return o;
+-}
+-
+-OP *
+-Perl_ck_fun_locale(pTHX_ OP *o)
+-{
+-    o = ck_fun(o);
+-
+-    o->op_private = 0;
+-#ifdef USE_LOCALE
+-    if (PL_hints & HINT_LOCALE)
+-	o->op_private |= OPpLOCALE;
+-#endif
+-
+-    return o;
++    return listkids(o);
+ }
+ 
+ OP *
+@@ -5934,18 +5900,6 @@ Perl_ck_sassign(pTHX_ OP *o)
+ }
+ 
+ OP *
+-Perl_ck_scmp(pTHX_ OP *o)
+-{
+-    o->op_private = 0;
+-#ifdef USE_LOCALE
+-    if (PL_hints & HINT_LOCALE)
+-	o->op_private |= OPpLOCALE;
+-#endif
+-
+-    return o;
+-}
+-
+-OP *
+ Perl_ck_match(pTHX_ OP *o)
+ {
+     o->op_private |= OPpRUNTIME;
+@@ -6121,11 +6075,6 @@ OP *
+ Perl_ck_sort(pTHX_ OP *o)
+ {
+     OP *firstkid;
+-    o->op_private = 0;
+-#ifdef USE_LOCALE
+-    if (PL_hints & HINT_LOCALE)
+-	o->op_private |= OPpLOCALE;
+-#endif
+ 
+     if (o->op_type == OP_SORT && o->op_flags & OPf_STACKED)
+ 	simplify_sort(o);
+diff --git a/op.h b/op.h
+index e269934..13c75d8 100644
+--- a/op.h
++++ b/op.h
+@@ -184,10 +184,6 @@ Deprecated.  Use C<GIMME_V> instead.
+ /* Private for OP_EXISTS */
+ #define OPpEXISTS_SUB		64	/* Checking for &sub, not {} or [].  */
+ 
+-/* Private for OP_SORT, OP_PRTF, OP_SPRINTF, OP_FTTEXT, OP_FTBINARY, */
+-/*             string comparisons, and case changers. */
+-#define OPpLOCALE		64	/* Use locale */
+-
+ /* Private for OP_SORT */
+ #define OPpSORT_NUMERIC		1	/* Optimized away { $a <=> $b } */
+ #define OPpSORT_INTEGER		2	/* Ditto while under "use integer" */
+diff --git a/opcode.h b/opcode.h
+index 542ec60..7892f1f 100644
+--- a/opcode.h
++++ b/opcode.h
+@@ -1178,13 +1178,13 @@ EXT OP * (CPERLscope(*PL_check)[]) (pTHX_ OP *op) = {
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* i_ne */
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* ncmp */
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* i_ncmp */
+-	MEMBER_TO_FPTR(Perl_ck_scmp),	/* slt */
+-	MEMBER_TO_FPTR(Perl_ck_scmp),	/* sgt */
+-	MEMBER_TO_FPTR(Perl_ck_scmp),	/* sle */
+-	MEMBER_TO_FPTR(Perl_ck_scmp),	/* sge */
++	MEMBER_TO_FPTR(Perl_ck_null),	/* slt */
++	MEMBER_TO_FPTR(Perl_ck_null),	/* sgt */
++	MEMBER_TO_FPTR(Perl_ck_null),	/* sle */
++	MEMBER_TO_FPTR(Perl_ck_null),	/* sge */
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* seq */
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* sne */
+-	MEMBER_TO_FPTR(Perl_ck_scmp),	/* scmp */
++	MEMBER_TO_FPTR(Perl_ck_null),	/* scmp */
+ 	MEMBER_TO_FPTR(Perl_ck_bitop),	/* bit_and */
+ 	MEMBER_TO_FPTR(Perl_ck_bitop),	/* bit_xor */
+ 	MEMBER_TO_FPTR(Perl_ck_bitop),	/* bit_or */
+@@ -1209,15 +1209,15 @@ EXT OP * (CPERLscope(*PL_check)[]) (pTHX_ OP *op) = {
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* vec */
+ 	MEMBER_TO_FPTR(Perl_ck_index),	/* index */
+ 	MEMBER_TO_FPTR(Perl_ck_index),	/* rindex */
+-	MEMBER_TO_FPTR(Perl_ck_fun_locale),	/* sprintf */
++	MEMBER_TO_FPTR(Perl_ck_fun),	/* sprintf */
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* formline */
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* ord */
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* chr */
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* crypt */
+-	MEMBER_TO_FPTR(Perl_ck_fun_locale),	/* ucfirst */
+-	MEMBER_TO_FPTR(Perl_ck_fun_locale),	/* lcfirst */
+-	MEMBER_TO_FPTR(Perl_ck_fun_locale),	/* uc */
+-	MEMBER_TO_FPTR(Perl_ck_fun_locale),	/* lc */
++	MEMBER_TO_FPTR(Perl_ck_fun),	/* ucfirst */
++	MEMBER_TO_FPTR(Perl_ck_fun),	/* lcfirst */
++	MEMBER_TO_FPTR(Perl_ck_fun),	/* uc */
++	MEMBER_TO_FPTR(Perl_ck_fun),	/* lc */
+ 	MEMBER_TO_FPTR(Perl_ck_fun),	/* quotemeta */
+ 	MEMBER_TO_FPTR(Perl_ck_rvconst),	/* rv2av */
+ 	MEMBER_TO_FPTR(Perl_ck_null),	/* aelemfast */
+diff --git a/opcode.pl b/opcode.pl
+index 82de92f..4f5860c 100644
+--- a/opcode.pl
++++ b/opcode.pl
+@@ -478,13 +478,13 @@ i_ne		integer ne (!=)		ck_null		ifs2	S S
+ ncmp		numeric comparison (<=>)	ck_null		Iifst2	S S
+ i_ncmp		integer comparison (<=>)	ck_null		ifst2	S S
+ 
+-slt		string lt		ck_scmp		ifs2	S S
+-sgt		string gt		ck_scmp		ifs2	S S
+-sle		string le		ck_scmp		ifs2	S S
+-sge		string ge		ck_scmp		ifs2	S S
++slt		string lt		ck_null		ifs2	S S
++sgt		string gt		ck_null		ifs2	S S
++sle		string le		ck_null		ifs2	S S
++sge		string ge		ck_null		ifs2	S S
+ seq		string eq		ck_null		ifs2	S S
+ sne		string ne		ck_null		ifs2	S S
+-scmp		string comparison (cmp)	ck_scmp		ifst2	S S
++scmp		string comparison (cmp)	ck_null		ifst2	S S
+ 
+ bit_and		bitwise and (&)		ck_bitop	fst2	S S
+ bit_xor		bitwise xor (^)		ck_bitop	fst2	S S
+@@ -522,15 +522,15 @@ vec		vec			ck_fun		ist@	S S S
+ index		index			ck_index	isT@	S S S?
+ rindex		rindex			ck_index	isT@	S S S?
+ 
+-sprintf		sprintf			ck_fun_locale	mfst@	S L
++sprintf		sprintf			ck_fun		mfst@	S L
+ formline	formline		ck_fun		ms@	S L
+ ord		ord			ck_fun		ifsTu%	S?
+ chr		chr			ck_fun		fsTu%	S?
+ crypt		crypt			ck_fun		fsT@	S S
+-ucfirst		ucfirst			ck_fun_locale	fstu%	S?
+-lcfirst		lcfirst			ck_fun_locale	fstu%	S?
+-uc		uc			ck_fun_locale	fstu%	S?
+-lc		lc			ck_fun_locale	fstu%	S?
++ucfirst		ucfirst			ck_fun		fstu%	S?
++lcfirst		lcfirst			ck_fun		fstu%	S?
++uc		uc			ck_fun		fstu%	S?
++lc		lc			ck_fun		fstu%	S?
+ quotemeta	quotemeta		ck_fun		fstu%	S?
+ 
+ # Arrays.
+diff --git a/perl.c b/perl.c
+index 9596b6a..e0bc968 100644
+--- a/perl.c
++++ b/perl.c
+@@ -1279,7 +1279,7 @@ print \"  \\@INC:\\n    @INC\\n\";");
+ 
+     if (xsinit)
+ 	(*xsinit)(aTHXo);	/* in case linked C routines want magical variables */
+-#if defined(VMS) || defined(WIN32) || defined(DJGPP) || defined(__CYGWIN__) || defined(EPOC)
++#if defined(VMS) || defined(WIN32) || defined(DJGPP) || defined(__CYGWIN__) || defined(EPOC) || defined(__MSYS__)
+     init_os_extras();
+ #endif
+ 
+@@ -3087,6 +3087,9 @@ S_find_beginning(pTHX)
+ 		    while ((s = moreswitches(s)))
+ 			;
+ 	    }
++#ifdef MACOS_TRADITIONAL
++	    break;
++#endif
+ 	}
+     }
+ }
+diff --git a/perl.h b/perl.h
+index 1f187bd..bf312fc 100644
+--- a/perl.h
++++ b/perl.h
+@@ -1906,7 +1906,7 @@ typedef pthread_key_t	perl_key;
+ #   endif
+ #endif
+ 
+-#if defined(__CYGWIN__)
++#if defined(__CYGWIN__) || defined(__MSYS__)
+ /* USEMYBINMODE
+  *   This symbol, if defined, indicates that the program should
+  *   use the routine my_binmode(FILE *fp, char iotype, int mode) to insure
+@@ -2667,7 +2667,7 @@ enum {		/* pass one of these to get_vtbl */
+ #define HINT_PRIVATE_MASK	0x000000ff
+ #define HINT_INTEGER		0x00000001
+ #define HINT_STRICT_REFS	0x00000002
+-/* #define HINT_notused4	0x00000004 */
++#define HINT_LOCALE		0x00000004
+ #define HINT_BYTE		0x00000008
+ /* #define HINT_notused10	0x00000010 */
+ 				/* Note: 20,40,80 used for NATIVE_HINTS */
+@@ -2675,7 +2675,6 @@ enum {		/* pass one of these to get_vtbl */
+ #define HINT_BLOCK_SCOPE	0x00000100
+ #define HINT_STRICT_SUBS	0x00000200
+ #define HINT_STRICT_VARS	0x00000400
+-#define HINT_LOCALE		0x00000800
+ 
+ #define HINT_NEW_INTEGER	0x00001000
+ #define HINT_NEW_FLOAT		0x00002000
+@@ -3187,16 +3186,24 @@ typedef struct am_table_short AMTS;
+ #define SET_NUMERIC_LOCAL() \
+ 	set_numeric_local();
+ 
+-#define IS_NUMERIC_RADIX(s)	\
+-	((PL_hints & HINT_LOCALE) && \
+-	  PL_numeric_radix_sv && memEQ(s, SvPVX(PL_numeric_radix_sv), SvCUR(PL_numeric_radix_sv)))
++#define IN_LOCALE_RUNTIME	(PL_curcop->op_private & HINT_LOCALE)
++#define IN_LOCALE_COMPILETIME	(PL_hints & HINT_LOCALE)
++
++#define IN_LOCALE \
++	(PL_curcop == &PL_compiling ? IN_LOCALE_COMPILETIME : IN_LOCALE_RUNTIME)
++
++#define IS_NUMERIC_RADIX(s, send)	\
++	(PL_numeric_radix_sv \
++	 && IN_LOCALE \
++	 && SvCUR(PL_numeric_radix_sv) <= ((send)-(s)) \
++	 && memEQ(s, SvPVX(PL_numeric_radix_sv), SvCUR(PL_numeric_radix_sv)))
+ 
+ #define STORE_NUMERIC_LOCAL_SET_STANDARD() \
+-	bool was_local = (PL_hints & HINT_LOCALE) && PL_numeric_local; \
++	bool was_local = PL_numeric_local && IN_LOCALE; \
+ 	if (was_local) SET_NUMERIC_STANDARD();
+ 
+ #define STORE_NUMERIC_STANDARD_SET_LOCAL() \
+-	bool was_standard = (PL_hints & HINT_LOCALE) && PL_numeric_standard; \
++	bool was_standard = PL_numeric_standard && IN_LOCALE; \
+ 	if (was_standard) SET_NUMERIC_LOCAL();
+ 
+ #define RESTORE_NUMERIC_LOCAL() \
+@@ -3211,7 +3218,7 @@ typedef struct am_table_short AMTS;
+ 
+ #define SET_NUMERIC_STANDARD()  	/**/
+ #define SET_NUMERIC_LOCAL()     	/**/
+-#define IS_NUMERIC_RADIX(c)		(0)
++#define IS_NUMERIC_RADIX(a, b)		(0)
+ #define STORE_NUMERIC_LOCAL_SET_STANDARD()	/**/
+ #define STORE_NUMERIC_STANDARD_SET_LOCAL()	/**/
+ #define RESTORE_NUMERIC_LOCAL()		/**/
+diff --git a/perly.c b/perly.c
+index 2b5108f..805f1f0 100644
+--- a/perly.c
++++ b/perly.c
+@@ -1568,12 +1568,12 @@ case 1:
+ #if defined(YYDEBUG) && defined(DEBUGGING)
+ 		    yydebug = (PL_debug & 1);
+ #endif
+-		    PL_expect = XSTATE;
++		    PL_expect = XSTATE; yyval.ival = block_start(TRUE);
+ 		}
+ break;
+ case 2:
+ #line 132 "perly.y"
+-{ newPROG(yyvsp[0].opval); }
++{ newPROG(block_end(yyvsp[-1].ival,yyvsp[0].opval)); }
+ break;
+ case 3:
+ #line 136 "perly.y"
+diff --git a/perly.y b/perly.y
+index f9c5c5f..a01a673 100644
+--- a/perly.y
++++ b/perly.y
+@@ -127,10 +127,10 @@ prog	:	/* NULL */
+ #if defined(YYDEBUG) && defined(DEBUGGING)
+ 		    yydebug = (PL_debug & 1);
+ #endif
+-		    PL_expect = XSTATE;
++		    PL_expect = XSTATE; $$ = block_start(TRUE);
+ 		}
+ 	/*CONTINUED*/	lineseq
+-			{ newPROG($2); }
++			{ newPROG(block_end($1,$2)); }
+ 	;
+ 
+ block	:	'{' remember lineseq '}'
+diff --git a/pod/buildtoc.PL b/pod/buildtoc.PL
+index 7c5a450..472535b 100644
+--- a/pod/buildtoc.PL
++++ b/pod/buildtoc.PL
+@@ -160,6 +160,7 @@ if (-d "pod") {
+     perlmachten         
+     perlmacos
+     perlmpeix         
++    perlmsys
+     perlos2             
+     perlos390           
+     perlsolaris
+@@ -180,6 +181,7 @@ if (-d "pod") {
+     perlmachten         
+     perlmacos
+     perlmpeix
++    perlmsys
+     perlos2             
+     perlos390           
+     perlsolaris
+diff --git a/pod/perlport.pod b/pod/perlport.pod
+index 9ae89e0..6e06161 100644
+--- a/pod/perlport.pod
++++ b/pod/perlport.pod
+@@ -229,8 +229,8 @@ transferring or storing raw binary numbers.
+ One can circumnavigate both these problems in two ways.  Either
+ transfer and store numbers always in text format, instead of raw
+ binary, or else consider using modules like Data::Dumper (included in
+-the standard distribution as of Perl 5.005) and Storable.  Keeping
+-all data as text significantly simplifies matters.
++the standard distribution as of Perl 5.005) and Storable (included as
++of perl 5.8).  Keeping all data as text significantly simplifies matters.
+ 
+ =head2 Files and Filesystems
+ 
+@@ -595,7 +595,7 @@ are a few of the more popular Unix flavors:
+     Linux         linux      ppc-linux
+     HP-UX         hpux       PA-RISC1.1
+     IRIX          irix       irix
+-    Mac OS X      rhapsody   rhapsody
++    Mac OS X      darwin     darwin
+     MachTen PPC   machten    powerpc-machten
+     NeXT 3        next       next-fat
+     NeXT 4        next       OPENSTEP-Mach
+@@ -784,14 +784,10 @@ the application or MPW tool version is running, check:
+     $is_ppc    = $MacPerl::Architecture eq 'MacPPC';
+     $is_68k    = $MacPerl::Architecture eq 'Mac68K';
+ 
+-S<Mac OS X> and S<Mac OS X Server>, based on NeXT's OpenStep OS, will
+-(in theory) be able to run MacPerl natively, under the "Classic"
+-environment.  The new "Cocoa" environment (formerly called the "Yellow Box")
+-may run a slightly modified version of MacPerl, using the Carbon interfaces.
+-
+-S<Mac OS X Server> and its Open Source version, Darwin, both run Unix
+-perl natively (with a few patches).  Full support for these
+-is slated for perl 5.6.
++S<Mac OS X>, based on NeXT's OpenStep OS, runs MacPerl natively, under the
++"Classic" environment.  There is no "Carbon" version of MacPerl to run
++under the primary Mac OS X environment.  S<Mac OS X> and its Open Source
++version, Darwin, both run Unix perl natively.
+ 
+ Also see:
+ 
+@@ -799,15 +795,15 @@ Also see:
+ 
+ =item *
+ 
+-The MacPerl Pages, http://www.macperl.com/ .
++MacPerl Development, http://dev.macperl.org/ .
+ 
+ =item *
+ 
+-The MacPerl mailing lists, http://www.macperl.org/ .
++The MacPerl Pages, http://www.macperl.com/ .
+ 
+ =item *
+ 
+-MacPerl Module Porters, http://pudge.net/mmp/ .
++The MacPerl mailing lists, http://lists.perl.org/ .
+ 
+ =back
+ 
+@@ -874,10 +870,11 @@ process on VMS, is a pure Perl module that can easily be installed on
+ non-VMS platforms and can be helpful for conversions to and from RMS
+ native formats.
+ 
+-What C<\n> represents depends on the type of file opened.  It could
+-be C<\015>, C<\012>, C<\015\012>, or nothing.  The VMS::Stdio module
+-provides access to the special fopen() requirements of files with unusual
+-attributes on VMS.
++What C<\n> represents depends on the type of file opened.  It usually
++represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>,
++C<\000>, C<\040>, or nothing depending on the file organiztion and
++record format.  The VMS::Stdio module provides access to the
++special fopen() requirements of files with unusual attributes on VMS.
+ 
+ TCP/IP stacks are optional on VMS, so socket routines might not be
+ implemented.  UDP sockets may not be supported.
+@@ -1538,9 +1535,6 @@ Not implemented. (S<Mac OS>, Plan9)
+ 
+ =item glob
+ 
+-Globbing built-in, but only C<*> and C<?> metacharacters are supported.
+-(S<Mac OS>)
+-
+ This operator is implemented via the File::Glob extension on most
+ platforms.  See L<File::Glob> for portability information.
+ 
+@@ -1555,8 +1549,10 @@ Available only for socket handles. (S<RISC OS>)
+ 
+ =item kill SIGNAL, LIST
+ 
+-Not implemented, hence not useful for taint checking. (S<Mac OS>,
+-S<RISC OS>)
++C<kill(0, LIST)> is implemented for the sake of taint checking;
++use with other signals is unimplemented. (S<Mac OS>)
++
++Not implemented, hence not useful for taint checking. (S<RISC OS>)
+ 
+ C<kill()> doesn't have the semantics of C<raise()>, i.e. it doesn't send
+ a signal to the identified process like it does on Unix platforms.
+@@ -1609,8 +1605,6 @@ platforms.  (SunOS, Solaris, HP-UX)
+ 
+ =item pipe READHANDLE,WRITEHANDLE
+ 
+-Not implemented. (S<Mac OS>)
+-
+ Very limited functionality. (MiNT)
+ 
+ =item readlink EXPR
+@@ -1667,7 +1661,7 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
+ 
+ =item socketpair SOCKET1,SOCKET2,DOMAIN,TYPE,PROTOCOL
+ 
+-Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS, VM/ESA)
++Not implemented. (Win32, VMS, S<RISC OS>, VOS, VM/ESA)
+ 
+ =item stat FILEHANDLE
+ 
+@@ -1885,13 +1879,13 @@ First public release with perl5.005.
+ 
+ =head1 Supported Platforms
+ 
+-As of early 2001 (the Perl release 5.6.1), the following platforms are
+-able to build Perl from the standard source code distribution
+-available at http://www.perl.com/CPAN/src/index.html
++As of early 2001 (the Perl releases 5.6.1 and 5.7.1), the following
++platforms are able to build Perl from the standard source code
++distribution available at http://www.perl.com/CPAN/src/index.html
+ 
+ 	AIX
+ 	AmigaOS
+-	Darwin		(Rhapsody)
++	Darwin		(Mac OS X)
+ 	DG/UX
+ 	DOS DJGPP 	1)
+ 	DYNIX/ptx
+@@ -1919,13 +1913,13 @@ available at http://www.perl.com/CPAN/src/index.html
+         1) in DOS mode either the DOS or OS/2 ports can be used
+         2) Mac OS Classic (pre-X) is almost 5.6.1-ready; building from
+ 	   the source does work with 5.6.1, but additional MacOS specific
+-           source code is needed for a complete build.  Contact the mailing
+-           list macperl-porters@macperl.org for more information.
++           source code is needed for a complete build.  See the web
++           site http://dev.macperl.org/ for more information.
+         3) compilers: Borland, Cygwin, Mingw32 EGCS/GCC, VC++
+ 
+-The following platforms worked for the previous release (5.6.0),
+-but we did not manage to test these in time for the 5.6.1 release.
+-There is a very good chance that these will work fine with 5.6.1.
++The following platforms worked for the previous releases (5.6.0 and 5.7.0),
++but we did not manage to test these in time for the 5.7.1 release.
++There is a very good chance that these will work fine with the 5.7.1.
+ 
+ 	DomainOS
+ 	Hurd
+@@ -1944,12 +1938,11 @@ There is a very good chance that these will work fine with 5.6.1.
+ 	Windows Me
+ 
+ The following platform worked for the 5.005_03 major release but not
+-5.6.0.  Standardization on UTF-8 as the internal string representation
+-in 5.6.0 and 5.6.1 has introduced incompatibilities in this EBCDIC
+-platform.  While Perl 5.6.1 will build on this platform some
++for 5.6.0.  Standardization on UTF-8 as the internal string
++representation in 5.6.0 and 5.6.1 introduced incompatibilities in this
++EBCDIC platform.  While Perl 5.7.1 will build on this platform some
+ regression tests may fail and the C<use utf8;> pragma typically
+-introduces text handling errors.  UTF-8 support for this platform may
+-be enabled in a future release:
++introduces text handling errors.
+ 
+ 	OS/390	1)
+ 
+@@ -2038,28 +2031,31 @@ http://www.perl.com/CPAN/ports/index.html for binary distributions.
+ 
+ =head1 SEE ALSO
+ 
+-L<perlaix>, L<perlamiga>, L<perlcygwin>, L<perldos>, L<perlepoc>,
+-L<perlebcdic>, L<perlhpux>, L<perlos2>, L<perlos390>, L<perlbs2000>,
+-L<perlwin32>, L<perlvms>, L<perlvos>, and L<Win32>.
++L<perlaix>, L<perlapollo>, L<perlamiga>, L<perlbeos>, L<perlbs200>,
++L<perlcygwin>, L<perldgux>, L<perldos>, L<perlepoc>, L<perlebcdic>,
++L<perlhurd>, L<perlhpux>, L<perlmachten>, L<perlmacos>, L<perlmint>,
++L<perlmpeix>, L<perlnetware>, L<perlos2>, L<perlos390>, L<perlplan9>,
++L<perlqnx>, L<perlsolaris>, L<perltru64>, L<perlunicode>,
++L<perlvmesa>, L<perlvms>, L<perlvos>, L<perlwin32>, and L<Win32>.
+ 
+ =head1 AUTHORS / CONTRIBUTORS
+ 
+-Abigail <abigail@fnx.com>,
++Abigail <abigail@foad.org>,
+ Charles Bailey <bailey@newman.upenn.edu>,
+ Graham Barr <gbarr@pobox.com>,
+ Tom Christiansen <tchrist@perl.com>,
+-Nicholas Clark <Nicholas.Clark@liverpool.ac.uk>,
++Nicholas Clark <nick@ccl4.org>,
+ Thomas Dorner <Thomas.Dorner@start.de>,
+-Andy Dougherty <doughera@lafcol.lafayette.edu>,
+-Dominic Dunlop <domo@vo.lu>,
+-Neale Ferguson <neale@mailbox.tabnsw.com.au>,
++Andy Dougherty <doughera@lafayette.edu>,
++Dominic Dunlop <domo@computer.org>,
++Neale Ferguson <neale@vma.tabnsw.com.au>,
+ David J. Fiander <davidf@mks.com>,
+ Paul Green <Paul_Green@stratus.com>,
+-M.J.T. Guy <mjtg@cus.cam.ac.uk>,
++M.J.T. Guy <mjtg@cam.ac.uk>,
+ Jarkko Hietaniemi <jhi@iki.fi>,
+ Luther Huffman <lutherh@stratcom.com>,
+-Nick Ing-Simmons <nick@ni-s.u-net.com>,
+-Andreas J. KE<ouml>nig <koenig@kulturbox.de>,
++Nick Ing-Simmons <nick@ing-simmons.net>,
++Andreas J. KE<ouml>nig <a.koenig@mind.de>,
+ Markus Laker <mlaker@contax.co.uk>,
+ Andrew M. Langmead <aml@world.std.com>,
+ Larry Moore <ljmoore@freespace.net>,
+@@ -2074,12 +2070,9 @@ Hugo van der Sanden <hv@crypt0.demon.co.uk>,
+ Gurusamy Sarathy <gsar@activestate.com>,
+ Paul J. Schinder <schinder@pobox.com>,
+ Michael G Schwern <schwern@pobox.com>,
+-Dan Sugalski <sugalskd@ous.edu>,
++Dan Sugalski <dan@sidhe.org>,
+ Nathan Torkington <gnat@frii.com>.
+ 
+-This document is maintained by Chris Nandor
+-<pudge@pobox.com>.
+-
+ =head1 VERSION
+ 
+-Version 1.47, last modified 22 March 2000
++Version 1.50, last modified 10 Jul 2001
+diff --git a/pp.c b/pp.c
+index cc9a053..e4e2b01 100644
+--- a/pp.c
++++ b/pp.c
+@@ -1209,6 +1209,12 @@ PP(pp_ge)
+ PP(pp_ne)
+ {
+     dSP; tryAMAGICbinSET(ne,0);
++#ifndef NV_PRESERVES_UV
++    if (SvROK(TOPs) && SvROK(TOPm1s)) {
++	SETs(boolSV(SvRV(TOPs) != SvRV(TOPm1s)));
++	RETURN;
++    }
++#endif
+     {
+       dPOPnv;
+       SETs(boolSV(TOPn != value));
+@@ -1219,6 +1225,12 @@ PP(pp_ne)
+ PP(pp_ncmp)
+ {
+     dSP; dTARGET; tryAMAGICbin(ncmp,0);
++#ifndef NV_PRESERVES_UV
++    if (SvROK(TOPs) && SvROK(TOPm1s)) {
++	SETi(PTR2UV(SvRV(TOPs)) - PTR2UV(SvRV(TOPm1s)));
++	RETURN;
++    }
++#endif
+     {
+       dPOPTOPnnrl;
+       I32 value;
+@@ -1251,7 +1263,7 @@ PP(pp_slt)
+     dSP; tryAMAGICbinSET(slt,0);
+     {
+       dPOPTOPssrl;
+-      int cmp = ((PL_op->op_private & OPpLOCALE)
++      int cmp = (IN_LOCALE_RUNTIME
+ 		 ? sv_cmp_locale(left, right)
+ 		 : sv_cmp(left, right));
+       SETs(boolSV(cmp < 0));
+@@ -1264,7 +1276,7 @@ PP(pp_sgt)
+     dSP; tryAMAGICbinSET(sgt,0);
+     {
+       dPOPTOPssrl;
+-      int cmp = ((PL_op->op_private & OPpLOCALE)
++      int cmp = (IN_LOCALE_RUNTIME
+ 		 ? sv_cmp_locale(left, right)
+ 		 : sv_cmp(left, right));
+       SETs(boolSV(cmp > 0));
+@@ -1277,7 +1289,7 @@ PP(pp_sle)
+     dSP; tryAMAGICbinSET(sle,0);
+     {
+       dPOPTOPssrl;
+-      int cmp = ((PL_op->op_private & OPpLOCALE)
++      int cmp = (IN_LOCALE_RUNTIME
+ 		 ? sv_cmp_locale(left, right)
+ 		 : sv_cmp(left, right));
+       SETs(boolSV(cmp <= 0));
+@@ -1290,7 +1302,7 @@ PP(pp_sge)
+     dSP; tryAMAGICbinSET(sge,0);
+     {
+       dPOPTOPssrl;
+-      int cmp = ((PL_op->op_private & OPpLOCALE)
++      int cmp = (IN_LOCALE_RUNTIME
+ 		 ? sv_cmp_locale(left, right)
+ 		 : sv_cmp(left, right));
+       SETs(boolSV(cmp >= 0));
+@@ -1323,7 +1335,7 @@ PP(pp_scmp)
+     dSP; dTARGET;  tryAMAGICbin(scmp,0);
+     {
+       dPOPTOPssrl;
+-      int cmp = ((PL_op->op_private & OPpLOCALE)
++      int cmp = (IN_LOCALE_RUNTIME
+ 		 ? sv_cmp_locale(left, right)
+ 		 : sv_cmp(left, right));
+       SETi( cmp );
+@@ -2354,7 +2366,7 @@ PP(pp_ucfirst)
+ 	U8 *tend;
+ 	UV uv = utf8_to_uv(s, slen, &ulen, 0);
+ 
+-	if (PL_op->op_private & OPpLOCALE) {
++	if (IN_LOCALE_RUNTIME) {
+ 	    TAINT;
+ 	    SvTAINTED_on(sv);
+ 	    uv = toTITLE_LC_uni(uv);
+@@ -2386,7 +2398,7 @@ PP(pp_ucfirst)
+ 	}
+ 	s = (U8*)SvPV_force(sv, slen);
+ 	if (*s) {
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(sv);
+ 		*s = toUPPER_LC(*s);
+@@ -2413,7 +2425,7 @@ PP(pp_lcfirst)
+ 	U8 *tend;
+ 	UV uv = utf8_to_uv(s, slen, &ulen, 0);
+ 
+-	if (PL_op->op_private & OPpLOCALE) {
++	if (IN_LOCALE_RUNTIME) {
+ 	    TAINT;
+ 	    SvTAINTED_on(sv);
+ 	    uv = toLOWER_LC_uni(uv);
+@@ -2445,7 +2457,7 @@ PP(pp_lcfirst)
+ 	}
+ 	s = (U8*)SvPV_force(sv, slen);
+ 	if (*s) {
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(sv);
+ 		*s = toLOWER_LC(*s);
+@@ -2484,7 +2496,7 @@ PP(pp_uc)
+ 	    (void)SvPOK_only(TARG);
+ 	    d = (U8*)SvPVX(TARG);
+ 	    send = s + len;
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(TARG);
+ 		while (s < send) {
+@@ -2516,7 +2528,7 @@ PP(pp_uc)
+ 	if (len) {
+ 	    register U8 *send = s + len;
+ 
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(sv);
+ 		for (; s < send; s++)
+@@ -2558,7 +2570,7 @@ PP(pp_lc)
+ 	    (void)SvPOK_only(TARG);
+ 	    d = (U8*)SvPVX(TARG);
+ 	    send = s + len;
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(TARG);
+ 		while (s < send) {
+@@ -2591,7 +2603,7 @@ PP(pp_lc)
+ 	if (len) {
+ 	    register U8 *send = s + len;
+ 
+-	    if (PL_op->op_private & OPpLOCALE) {
++	    if (IN_LOCALE_RUNTIME) {
+ 		TAINT;
+ 		SvTAINTED_on(sv);
+ 		for (; s < send; s++)
+diff --git a/pp.h b/pp.h
+index 10da964..30f4c50 100644
+--- a/pp.h
++++ b/pp.h
+@@ -127,6 +127,8 @@ Pops a long off the stack.
+ #endif
+ 
+ #define TOPs		(*sp)
++#define TOPm1s		(*(sp-1))
++#define TOPp1s		(*(sp+1))
+ #define TOPp		(SvPV(TOPs, PL_na))		/* deprecated */
+ #define TOPpx		(SvPV(TOPs, n_a))
+ #define TOPn		(SvNV(TOPs))
+diff --git a/pp.sym b/pp.sym
+index 2bd3922..cd19fc6 100644
+--- a/pp.sym
++++ b/pp.sym
+@@ -16,7 +16,6 @@ Perl_ck_exists
+ Perl_ck_exit
+ Perl_ck_ftst
+ Perl_ck_fun
+-Perl_ck_fun_locale
+ Perl_ck_glob
+ Perl_ck_grep
+ Perl_ck_index
+@@ -34,7 +33,6 @@ Perl_ck_return
+ Perl_ck_rfun
+ Perl_ck_rvconst
+ Perl_ck_sassign
+-Perl_ck_scmp
+ Perl_ck_select
+ Perl_ck_shift
+ Perl_ck_sort
+diff --git a/pp_ctl.c b/pp_ctl.c
+index b267060..3489dba 100644
+--- a/pp_ctl.c
++++ b/pp_ctl.c
+@@ -981,7 +981,7 @@ PP(pp_sort)
+ 			? ( (PL_op->op_private & OPpSORT_INTEGER)
+ 			    ? ( overloading ? amagic_i_ncmp : sv_i_ncmp)
+ 			    : ( overloading ? amagic_ncmp : sv_ncmp))
+-			: ( (PL_op->op_private & OPpLOCALE)
++			: ( IN_LOCALE_RUNTIME
+ 			    ? ( overloading
+ 				? amagic_cmp_locale
+ 				: sv_cmp_locale_static)
+@@ -1029,7 +1029,7 @@ PP(pp_flip)
+  	if (PL_op->op_private & OPpFLIP_LINENUM) {
+  	    struct io *gp_io;
+  	    flip = PL_last_in_gv
+- 		&& (gp_io = GvIOp(PL_last_in_gv))
++		&& (gp_io = GvIO(PL_last_in_gv))
+  		&& SvIV(sv) == (IV)IoLINES(gp_io);
+  	} else {
+  	    flip = SvTRUE(sv);
+@@ -1110,7 +1110,8 @@ PP(pp_flop)
+ 	SV *targ = PAD_SV(cUNOP->op_first->op_targ);
+ 	sv_inc(targ);
+ 	if ((PL_op->op_private & OPpFLIP_LINENUM)
+-	  ? (PL_last_in_gv && SvIV(sv) == (IV)IoLINES(GvIOp(PL_last_in_gv)))
++	  ? (GvIO(PL_last_in_gv)
++	     && SvIV(sv) == (IV)IoLINES(GvIOp(PL_last_in_gv)))
+ 	  : SvTRUE(sv) ) {
+ 	    sv_setiv(PAD_SV(((UNOP*)cUNOP->op_first)->op_first->op_targ), 0);
+ 	    sv_catpv(targ, "E0");
+@@ -2759,6 +2760,9 @@ S_doeval(pTHX_ int gimme, OP** startop)
+     PL_compcv = (CV*)NEWSV(1104,0);
+     sv_upgrade((SV *)PL_compcv, SVt_PVCV);
+     CvEVAL_on(PL_compcv);
++    assert(CxTYPE(&cxstack[cxstack_ix]) == CXt_EVAL);
++    cxstack[cxstack_ix].blk_eval.cv = PL_compcv;
++
+ #ifdef USE_THREADS
+     CvOWNER(PL_compcv) = 0;
+     New(666, CvMUTEXP(PL_compcv), 1, perl_mutex);
+diff --git a/pp_hot.c b/pp_hot.c
+index aecfaba..5a993aa 100644
+--- a/pp_hot.c
++++ b/pp_hot.c
+@@ -230,6 +230,12 @@ PP(pp_readline)
+ PP(pp_eq)
+ {
+     dSP; tryAMAGICbinSET(eq,0);
++#ifndef NV_PRESERVES_UV
++    if (SvROK(TOPs) && SvROK(TOPm1s)) {
++	SETs(boolSV(SvRV(TOPs) == SvRV(TOPm1s)));
++	RETURN;
++    }
++#endif
+     {
+       dPOPnv;
+       SETs(boolSV(TOPn == value));
+@@ -1731,9 +1737,17 @@ PP(pp_iter)
+ 
+     SvREFCNT_dec(*itersvp);
+ 
+-    if ((sv = SvMAGICAL(av)
+-	      ? *av_fetch(av, ++cx->blk_loop.iterix, FALSE) 
+-	      : AvARRAY(av)[++cx->blk_loop.iterix]))
++    if (SvMAGICAL(av) || AvREIFY(av)) {
++	SV **svp = av_fetch(av, ++cx->blk_loop.iterix, FALSE);
++	if (svp)
++	    sv = *svp;
++	else
++	    sv = Nullsv;
++    }
++    else {
++	sv = AvARRAY(av)[++cx->blk_loop.iterix];
++    }
++    if (sv)
+ 	SvTEMP_off(sv);
+     else
+ 	sv = &PL_sv_undef;
+diff --git a/pp_proto.h b/pp_proto.h
+index c3b24e8..18882af 100644
+--- a/pp_proto.h
++++ b/pp_proto.h
+@@ -15,7 +15,6 @@ PERL_CKDEF(Perl_ck_exists)
+ PERL_CKDEF(Perl_ck_exit)
+ PERL_CKDEF(Perl_ck_ftst)
+ PERL_CKDEF(Perl_ck_fun)
+-PERL_CKDEF(Perl_ck_fun_locale)
+ PERL_CKDEF(Perl_ck_glob)
+ PERL_CKDEF(Perl_ck_grep)
+ PERL_CKDEF(Perl_ck_index)
+@@ -33,7 +32,6 @@ PERL_CKDEF(Perl_ck_return)
+ PERL_CKDEF(Perl_ck_rfun)
+ PERL_CKDEF(Perl_ck_rvconst)
+ PERL_CKDEF(Perl_ck_sassign)
+-PERL_CKDEF(Perl_ck_scmp)
+ PERL_CKDEF(Perl_ck_select)
+ PERL_CKDEF(Perl_ck_shift)
+ PERL_CKDEF(Perl_ck_sort)
+diff --git a/pp_sys.c b/pp_sys.c
+index 8423bd0..14c53c7 100644
+--- a/pp_sys.c
++++ b/pp_sys.c
+@@ -62,8 +62,10 @@ extern "C" int syscall(unsigned long,...);
+    compiling multithreaded and singlethreaded ($ccflags et al).
+    HOST_NOT_FOUND is typically defined in <netdb.h>.
+ */
+-#if defined(HOST_NOT_FOUND) && !defined(h_errno) && !defined(__CYGWIN__)
++#if defined(HOST_NOT_FOUND) && !defined(h_errno) && !defined(__CYGWIN__) && !defined(__MSYS__)
+ extern int h_errno;
++#else
++#include <errno.h>
+ #endif
+ 
+ #ifdef HAS_PASSWD
+@@ -3143,7 +3145,7 @@ PP(pp_fttext)
+ #else
+ 	else if (*s & 128) {
+ #ifdef USE_LOCALE
+-	    if ((PL_op->op_private & OPpLOCALE) && isALPHA_LC(*s))
++	    if (IN_LOCALE_RUNTIME && isALPHA_LC(*s))
+ 		continue;
+ #endif
+ 	    /* utf8 characters don't count as odd */
+@@ -3789,7 +3791,7 @@ PP(pp_system)
+ 	}
+     }
+     PERL_FLUSHALL_FOR_CHILD;
+-#if (defined(HAS_FORK) || defined(AMIGAOS)) && !defined(VMS) && !defined(OS2) && !defined(__CYGWIN__)
++#if (defined(HAS_FORK) || defined(AMIGAOS)) && !defined(VMS) && !defined(OS2) && !(defined(__CYGWIN__) || defined(__MSYS__))
+     if (PerlProc_pipe(pp) >= 0)
+ 	did_pipes = 1;
+     while ((childpid = vfork()) == -1) {
+diff --git a/regexec.c b/regexec.c
+index f4db4e0..67aba39 100644
+--- a/regexec.c
++++ b/regexec.c
+@@ -385,18 +385,17 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
+ 		     || ( (prog->reganch & ROPT_ANCH_BOL)
+ 			  && !PL_multiline ) );	/* Check after \n? */
+ 
+-	if (!ml_anch) {
+-	  if ( !(prog->reganch & ROPT_ANCH_GPOS) /* Checked by the caller */
+-	       /* SvCUR is not set on references: SvRV and SvPVX overlap */
+-	       && sv && !SvROK(sv)
+-	       && (strpos != strbeg)) {
+-	      DEBUG_r(PerlIO_printf(Perl_debug_log, "Not at start...\n"));
+-	      goto fail;
+-	  }
+-	  if (prog->check_offset_min == prog->check_offset_max) {
++	if ((prog->check_offset_min == prog->check_offset_max) && !ml_anch) {
+ 	    /* Substring at constant offset from beg-of-str... */
+ 	    I32 slen;
+ 
++	    if ( !(prog->reganch & ROPT_ANCH_GPOS) /* Checked by the caller */
++		 /* SvCUR is not set on references: SvRV and SvPVX overlap */
++		 && sv && !SvROK(sv)
++		 && (strpos != strbeg)) {
++		DEBUG_r(PerlIO_printf(Perl_debug_log, "Not at start...\n"));
++		goto fail;
++	    }
+ 	    PL_regeol = strend;			/* Used in HOP() */
+ 	    s = HOPc(strpos, prog->check_offset_min);
+ 	    if (SvTAIL(check)) {
+@@ -422,7 +421,6 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
+ 			 && memNE(SvPVX(check), s, slen)))
+ 		goto report_neq;
+ 	    goto success_at_start;
+-	  }
+ 	}
+ 	/* Match is anchored, but substr is not anchored wrt beg-of-str. */
+ 	s = strpos;
+diff --git a/sv.c b/sv.c
+index 7b8263b..074b344 100644
+--- a/sv.c
++++ b/sv.c
+@@ -1955,11 +1955,11 @@ Perl_looks_like_number(pTHX_ SV *sv)
+ 	else
+ 	    numtype |= IS_NUMBER_TO_INT_BY_ATOL;
+ 
+-        if (*s == '.'
++        if (
+ #ifdef USE_LOCALE_NUMERIC
+-	    || (specialradix = IS_NUMERIC_RADIX(s))
++	    (specialradix = IS_NUMERIC_RADIX(s, send)) ||
+ #endif
+-	    ) {
++	    *s == '.') {
+ #ifdef USE_LOCALE_NUMERIC
+ 	    if (specialradix)
+ 		s += SvCUR(PL_numeric_radix_sv);
+@@ -1971,10 +1971,11 @@ Perl_looks_like_number(pTHX_ SV *sv)
+                 s++;
+         }
+     }
+-    else if (*s == '.'
++    else if (
+ #ifdef USE_LOCALE_NUMERIC
+-	    || (specialradix = IS_NUMERIC_RADIX(s))
++	     (specialradix = IS_NUMERIC_RADIX(s, send)) ||
+ #endif
++	    *s == '.'
+ 	    ) {
+ #ifdef USE_LOCALE_NUMERIC
+ 	if (specialradix)
+diff --git a/toke.c b/toke.c
+index d33b95d..139c97b 100644
+--- a/toke.c
++++ b/toke.c
+@@ -1302,7 +1302,7 @@ S_scan_const(pTHX_ char *start)
+ 	else if (*s == '$') {
+ 	    if (!PL_lex_inpat)	/* not a regexp, so $ must be var */
+ 		break;
+-	    if (s + 1 < send && !strchr("()| \n\t", s[1]))
++	    if (s + 1 < send && !strchr("()| \r\n\t", s[1]))
+ 		break;		/* in regexp, $ might be tail anchor */
+ 	}
+ 
+diff --git a/util.c b/util.c
+index 31aff21..fefa5f6 100644
+--- a/util.c
++++ b/util.c
+@@ -2017,7 +2017,7 @@ Perl_my_setenv(pTHX_ char *nam, char *val)
+     (void)sprintf(environ[i],"%s=%s",nam,val);/* all that work just for this */
+ 
+ #else   /* PERL_USE_SAFE_PUTENV */
+-#   if defined(__CYGWIN__)
++#   if defined(__CYGWIN__) || defined(__MSYS__)
+     setenv(nam, val, 1);
+ #   else
+     char *new_env;
+@@ -2025,7 +2025,7 @@ Perl_my_setenv(pTHX_ char *nam, char *val)
+     new_env = (char*)safesysmalloc((strlen(nam) + strlen(val) + 2) * sizeof(char));
+     (void)sprintf(new_env,"%s=%s",nam,val);/* all that work just for this */
+     (void)putenv(new_env);
+-#   endif /* __CYGWIN__ */
++#   endif /* __CYGWIN__ || __MSYS__ */
+ #endif  /* PERL_USE_SAFE_PUTENV */
+ }
+ 
+@@ -3872,7 +3872,7 @@ Perl_my_atof(pTHX_ const char* s)
+ {
+     NV x = 0.0;
+ #ifdef USE_LOCALE_NUMERIC
+-    if ((PL_hints & HINT_LOCALE) && PL_numeric_local) {
++    if (PL_numeric_local && IN_LOCALE) {
+ 	NV y;
+ 
+ 	Perl_atof2(s, x);
+diff --git a/utils/h2ph.PL b/utils/h2ph.PL
+index 855a899..b77109f 100644
+--- a/utils/h2ph.PL
++++ b/utils/h2ph.PL
+@@ -563,9 +563,9 @@ sub build_preamble_if_necessary
+                 print PREAMBLE "# $_=$define{$_}\n";
+             }
+ 
+-            if ($define{$_} =~ /^\d+$/) {
++            if ($define{$_} =~ /^(\d+)U?L{0,2}$/i) {
+                 print PREAMBLE
+-                    "unless (defined &$_) { sub $_() { $define{$_} } }\n\n";
++                    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+             } elsif ($define{$_} =~ /^\w+$/) {
+                 print PREAMBLE
+                     "unless (defined &$_) { sub $_() { &$define{$_} } }\n\n";
+diff --git a/utils/perlcc.PL b/utils/perlcc.PL
+index 6304555..f408bfc 100644
+--- a/utils/perlcc.PL
++++ b/utils/perlcc.PL
+@@ -330,10 +330,11 @@ sub cc_harness {
+ 	my ($cfile,$stash)=@_;
+ 	use ExtUtils::Embed ();
+ 	my $command = ExtUtils::Embed::ccopts." -o $Output $cfile ";
++	$command .= " -DUSEIMPORTLIB";
+ 	$command .= " -I".$_ for split /\s+/, opt(I);
+ 	$command .= " -L".$_ for split /\s+/, opt(L);
+ 	my @mods = split /-?u /, $stash;
+-	$command .= " ".ExtUtils::Embed::ldopts("-std", \@mods);
++	$command .= " ".ExtUtils::Embed::ldopts("-std", \@mods,['-lperl5_6_1']);
+ 	vprint 3, "running $Config{cc} $command";
+ 	system("$Config{cc} $command");
+ }
+diff --git a/utils/perldoc.PL b/utils/perldoc.PL
+index cfb773e..6cdafaf 100644
+--- a/utils/perldoc.PL
++++ b/utils/perldoc.PL
+@@ -452,7 +452,7 @@ foreach (@pages) {
+     print STDERR "Searching for $_\n" if $opt_v;
+     # We must look both in @INC for library modules and in $bindir
+     # for executables, like h2xs or perldoc itself.
+-    my @searchdirs = ($bindir, @INC);
++    my @searchdirs = (@INC, $bindir);
+     if ($opt_F) {
+ 	next unless -r;
+ 	push @found, $_ if $opt_m or containspod($_);
+diff --git a/vms/perly_c.vms b/vms/perly_c.vms
+index 640780a..f73864c 100644
+--- a/vms/perly_c.vms
++++ b/vms/perly_c.vms
+@@ -1570,12 +1570,12 @@ case 1:
+ #if defined(YYDEBUG) && defined(DEBUGGING)
+ 		    yydebug = (PL_debug & 1);
+ #endif
+-		    PL_expect = XSTATE;
++		    PL_expect = XSTATE; yyval.ival = block_start(TRUE);
+ 		}
+ break;
+ case 2:
+ #line 132 "perly.y"
+-{ newPROG(yyvsp[0].opval); }
++{ newPROG(block_end(yyvsp[-1].ival,yyvsp[0].opval)); }
+ break;
+ case 3:
+ #line 136 "perly.y"
+diff --git a/vos/build.cm b/vos/build.cm
+index 04e880c..2b75671 100644
+--- a/vos/build.cm
++++ b/vos/build.cm
+@@ -83,8 +83,6 @@
+ &if (command_status) ^= 0 &then &return
+ !cc <<dump.c -suppress_diag 2006 &cpu& &cflags&
+ &if (command_status) ^= 0 &then &return
+-!cc <<ebcdic.c -suppress_diag 2006 &cpu& &cflags&
+-&if (command_status) ^= 0 &then &return
+ !cc <<globals.c -suppress_diag 2006 &cpu& &cflags&
+ &if (command_status) ^= 0 &then &return
+ !cc <<gv.c -suppress_diag 2006 2065 &cpu& &cflags&
+diff --git a/win32/config.bc b/win32/config.bc
+index 92c2bcb..82d5fdb 100644
+--- a/win32/config.bc
++++ b/win32/config.bc
+@@ -1,7 +1,7 @@
+ ## Configured by: ~cf_email~
+ ## Target system: WIN32 
+ Author=''
+-CONFIGDOTSH='true'
++PERL_CONFIG_SH='true'
+ Date='$Date'
+ Header=''
+ Id='$Id'
+diff --git a/win32/config.gc b/win32/config.gc
+index dbbdea0..c4efb49 100644
+--- a/win32/config.gc
++++ b/win32/config.gc
+@@ -1,7 +1,7 @@
+ ## Configured by: ~cf_email~
+ ## Target system: WIN32 
+ Author=''
+-CONFIGDOTSH='true'
++PERL_CONFIG_SH='true'
+ Date='$Date'
+ Header=''
+ Id='$Id'
+diff --git a/win32/config.vc b/win32/config.vc
+index d08fdb7..06b6eb0 100644
+--- a/win32/config.vc
++++ b/win32/config.vc
+@@ -1,7 +1,7 @@
+ # Configured by: ~cf_email~
+ ## Target system: WIN32 
+ Author=''
+-CONFIGDOTSH='true'
++PERL_CONFIG_SH='true'
+ Date='$Date'
+ Header=''
+ Id='$Id'
+diff --git a/win32/config_H.bc b/win32/config_H.bc
+index 5e8610e..5f5e70d 100644
+--- a/win32/config_H.bc
++++ b/win32/config_H.bc
+@@ -13,7 +13,7 @@
+ /*
+  * Package name      : perl5
+  * Source directory  : 
+- * Configuration time: Thu Feb  1 08:29:38 2001
++ * Configuration time: Thu May 17 10:32:46 2001
+  * Configured by     : gsar
+  * Target system     : 
+  */
+diff --git a/win32/config_H.gc b/win32/config_H.gc
+index fe08aa9..830a770 100644
+--- a/win32/config_H.gc
++++ b/win32/config_H.gc
+@@ -13,7 +13,7 @@
+ /*
+  * Package name      : perl5
+  * Source directory  : 
+- * Configuration time: Thu Feb  1 08:30:01 2001
++ * Configuration time: Thu May 17 10:32:51 2001
+  * Configured by     : gsar
+  * Target system     : 
+  */
+diff --git a/win32/config_H.vc b/win32/config_H.vc
+index e1b1f12..e65f60f 100644
+--- a/win32/config_H.vc
++++ b/win32/config_H.vc
+@@ -13,7 +13,7 @@
+ /*
+  * Package name      : perl5
+  * Source directory  : 
+- * Configuration time: Thu Feb  1 08:30:12 2001
++ * Configuration time: Thu May 17 10:32:57 2001
+  * Configured by     : gsar
+  * Target system     : 
+  */
+diff --git a/win32/perlhost.h b/win32/perlhost.h
+index 257131f..8660abd 100644
+--- a/win32/perlhost.h
++++ b/win32/perlhost.h
+@@ -2286,9 +2286,10 @@ CPerlHost::Reset(void)
+ void
+ CPerlHost::Clearenv(void)
+ {
++    dTHXo;
+     char ch;
+     LPSTR lpPtr, lpStr, lpEnvPtr;
+-    if(m_lppEnvList != NULL) {
++    if (m_lppEnvList != NULL) {
+ 	/* set every entry to an empty string */
+ 	for(DWORD index = 0; index < m_dwEnvCount; ++index) {
+ 	    char* ptr = strchr(m_lppEnvList[index], '=');
+@@ -2311,6 +2312,8 @@ CPerlHost::Clearenv(void)
+ 	    ch = *++lpPtr;
+ 	    *lpPtr = 0;
+ 	    Add(lpStr);
++	    if (!w32_pseudo_id)
++		(void)win32_putenv(lpStr);
+ 	    *lpPtr = ch;
+ 	}
+ 	lpStr += strlen(lpStr) + 1;
+@@ -2323,22 +2326,23 @@ CPerlHost::Clearenv(void)
+ char*
+ CPerlHost::Getenv(const char *varname)
+ {
+-    char* pEnv = Find(varname);
+-    if(pEnv == NULL) {
+-	pEnv = win32_getenv(varname);
+-    }
+-    else {
+-	if(!*pEnv)
+-	    pEnv = 0;
++    dTHXo;
++    if (w32_pseudo_id) {
++	char *pEnv = Find(varname);
++	if (pEnv && *pEnv)
++	    return pEnv;
+     }
+-
+-    return pEnv;
++    return win32_getenv(varname);
+ }
+ 
+ int
+ CPerlHost::Putenv(const char *envstring)
+ {
++    dTHXo;
+     Add(envstring);
++    if (!w32_pseudo_id)
++	return win32_putenv(envstring);
++
+     return 0;
+ }
+ 
+diff --git a/win32/win32.c b/win32/win32.c
+index cceb2e5..fe3f091 100644
+--- a/win32/win32.c
++++ b/win32/win32.c
+@@ -518,7 +518,7 @@ get_shell(void)
+ 	 */
+ 	const char* defaultshell = (IsWinNT()
+ 				    ? "cmd.exe /x/c" : "command.com /c");
+-	const char *usershell = getenv("PERL5SHELL");
++	const char *usershell = PerlEnv_getenv("PERL5SHELL");
+ 	w32_perlshell_items = tokenize(usershell ? usershell : defaultshell,
+ 				       &w32_perlshell_tokens,
+ 				       &w32_perlshell_vec);
+@@ -3055,7 +3055,7 @@ qualified_path(const char *cmd)
+     }
+ 
+     /* look in PATH */
+-    pathstr = win32_getenv("PATH");
++    pathstr = PerlEnv_getenv("PATH");
+     New(0, fullcmd, MAX_PATH+1, char);
+     curfullcmd = fullcmd;
+ 
+diff --git a/writemain.SH b/writemain.SH
+index 18544c1..ed8aca6 100644
+--- a/writemain.SH
++++ b/writemain.SH
+@@ -1,4 +1,4 @@
+-case $CONFIGDOTSH in
++case $PERL_CONFIG_SH in
+ '')
+ 	if test -f config.sh; then TOP=.;
+ 	elif test -f ../config.sh; then TOP=..;
+-- 
+1.5.3.729.gd231
+
