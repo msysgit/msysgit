@@ -1,24 +1,40 @@
-#!/bin/bash
+#!/bin/sh
 
-echo "Downloading perl-5.6.1.tar.gz.md5 ..." 
-curl ftp://ftp.funet.fi/pub/CPAN/src/perl-5.6.1.tar.gz.md5 -o perl-5.6.1.tar.gz.md5
+url=ftp://ftp.funet.fi/pub/CPAN/src/
+version=5.6.1
 
-test -f perl-5.6.1.tar.gz \
-	|| ( echo "Downloading perl-5.6.1.tar.gz ..." \
-	&& curl ftp://ftp.funet.fi/pub/CPAN/src/perl-5.6.1.tar.gz -o perl-5.6.1.tar.gz)
+p=perl-$version
+tar=$p.tar.gz
+for ext in "" .md5
+do
+	f=$tar$ext
+	test -f $f && continue
+	echo "Downloading $f ..." 
+	curl $url/$f -o $f || exit
+done
 
-echo -n "Verifying md5 sum ..." 
-md5sum -c --status perl-5.6.1.tar.gz.md5 \
-	|| ( echo "Failed"; exit )
-echo "Done"
+echo "Verifying md5 sum ..." 
+md5sum -c --status $tar.md5 || exit
 
-echo -n "Unpacking perl-5.6.1.tar.gz ..."
-tar -xzf perl-5.6.1.tar.gz
-echo "Done"
+test -d $p || {
+	echo "Unpacking $tar ..."
+	tar -xzf $tar || exit
+}
 
-cd perl-5.6.1
-git init
-git add .
-git commit -m "Perl 5.6.1 from perl-5.6.1.tar.gz" > /dev/null
-git am ../patches/*
+cd $p || {
+	echo "Could not cd to $p"
+	exit 1
+}
+
+test -d .git || {
+	git init &&
+	git add . &&
+	git commit -m "Perl $version from $tar" > /dev/null ||
+	exit
+}
+
+git rev-parse --verify HEAD^ 2>/dev/null ||
+	git am ../patches/* ||
+	exit
+
 echo "Done"
