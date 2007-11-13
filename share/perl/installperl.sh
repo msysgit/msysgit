@@ -37,4 +37,10 @@ git rev-parse --verify HEAD^ 2>/dev/null ||
 	git am ../patches/* ||
 	exit
 
+MSYSTEM=MSYS
+
+test -f config.sh || ./Configure -de || exit
+
+LIB= make || exit
+
 echo "Done"
