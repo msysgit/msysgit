@@ -1,0 +1,79 @@
+From e874100b4ce7ef4bb137d54d864269e5140f06b2 Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Fri, 1 Jun 2007 18:37:00 +0100
+Subject: [PATCH] fix compilation on MinGW
+
+A couple of includes are needed, jconfig.h is not copied properly
+(probably because of the lack of symlinks on MinGW), include paths
+are hated by MinGW when they end with "/.", and you have to link
+with the tk libs even when building a shared library.
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+
+	With this, the build runs through on my machine.
+
+	Of course, you have to generate the configure files (for some
+	reasons, this is not done automatically).
+
+ bmp/bmp.c                   |    1 +
+ tclconfig/img.m4            |    4 ++++
+ tclconfig/tcl.m4            |    2 +-
+ tiff/tiffJpeg.c             |    2 +-
+ 5 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/bmp/bmp.c b/bmp/bmp.c
+index 3528fe8..949e8f6 100644
+--- a/bmp/bmp.c
++++ b/bmp/bmp.c
+@@ -14,6 +14,7 @@
+  * Generic initialization code, parameterized via CPACKAGE and PACKAGE.
+  */
+ 
++#include <string.h>
+ #include "init.c"
+ 
+ /*
+diff --git a/tclconfig/img.m4 b/tclconfig/img.m4
+index ac30ac0..4b12c68 100644
+--- a/tclconfig/img.m4
++++ b/tclconfig/img.m4
+@@ -11,6 +11,10 @@ AC_DEFUN(IMG_SRCPATH, [
+ case [$]$1_SRC_DIR in
+ /*)	$1_SRC_PATH=[$]$1_SRC_DIR
+ 	;;
++.)
++	# SRC_DIR current dir, replace by BUILD_PATH
++	$1_SRC_PATH="`dirname [$]$1_BUILD_STUB_LIB_PATH`"
++	;;
+ *)	# SRC_DIR relative, splice with BUILD_PATH
+ 	$1_SRC_PATH="`dirname [$]$1_BUILD_STUB_LIB_PATH`/[$]$1_SRC_DIR"
+ esac
+diff --git a/tclconfig/tcl.m4 b/tclconfig/tcl.m4
+index 3b1f478..99ba384 100644
+--- a/tclconfig/tcl.m4
++++ b/tclconfig/tcl.m4
+@@ -3153,7 +3153,7 @@ AC_DEFUN(TEA_MAKE_LIB, [
+ 	MAKE_STUB_LIB="\${STLIB_LD} -out:\[$]@ \$(\[$](PACKAGE)stub_OBJECTS)"
+     else
+ 	MAKE_STATIC_LIB="\${STLIB_LD} \[$]@ \$(\[$](PACKAGE)_OBJECTS)"
+-	MAKE_SHARED_LIB="\${SHLIB_LD} -o \[$]@ \$(\[$](PACKAGE)_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
++	MAKE_SHARED_LIB="\${SHLIB_LD} -o \[$]@ \$(\[$](PACKAGE)_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS} \${TK_LIBS}"
+ 	MAKE_STUB_LIB="\${STLIB_LD} \[$]@ \$(\[$](PACKAGE)stub_OBJECTS)"
+     fi
+ 
+diff --git a/tiff/tiffJpeg.c b/tiff/tiffJpeg.c
+index 413e95b..7027c38 100644
+--- a/tiff/tiffJpeg.c
++++ b/tiff/tiffJpeg.c
+@@ -1520,7 +1520,7 @@ JPEGVGetField(tif, tag, ap)
+ 	case TIFFTAG_JPEGTABLES:
+ 		/* u_short is bogus --- should be uint32 ??? */
+ 		/* TIFFWriteNormalTag needs fixed  XXX */
+-		*va_arg(ap, u_short*) = (u_short) sp->jpegtables_length;
++		*va_arg(ap, unsigned short*) = (unsigned short) sp->jpegtables_length;
+ 		*va_arg(ap, void**) = sp->jpegtables;
+ 		break;
+ 	case TIFFTAG_JPEGQUALITY:
+-- 
+1.5.2.2663.gd77e7-dirty
