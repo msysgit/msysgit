@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkPlatDecls.h,v 1.7.2.1 2006/02/09 19:09:43 das Exp $
+ * RCS: @(#) $Id: tkPlatDecls.h,v 1.13 2006/12/18 16:42:46 dgp Exp $
  */
 
 #ifndef _TKPLATDECLS
@@ -32,89 +32,101 @@
  */
 
 #ifdef __WIN32__
+#ifndef Tk_AttachHWND_TCL_DECLARED
+#define Tk_AttachHWND_TCL_DECLARED
 /* 0 */
-EXTERN Window		Tk_AttachHWND _ANSI_ARGS_((Tk_Window tkwin, 
-				HWND hwnd));
+EXTERN Window		Tk_AttachHWND (Tk_Window tkwin, HWND hwnd);
+#endif
+#ifndef Tk_GetHINSTANCE_TCL_DECLARED
+#define Tk_GetHINSTANCE_TCL_DECLARED
 /* 1 */
-EXTERN HINSTANCE	Tk_GetHINSTANCE _ANSI_ARGS_((void));
+EXTERN HINSTANCE	Tk_GetHINSTANCE (void);
+#endif
+#ifndef Tk_GetHWND_TCL_DECLARED
+#define Tk_GetHWND_TCL_DECLARED
 /* 2 */
-EXTERN HWND		Tk_GetHWND _ANSI_ARGS_((Window window));
+EXTERN HWND		Tk_GetHWND (Window window);
+#endif
+#ifndef Tk_HWNDToWindow_TCL_DECLARED
+#define Tk_HWNDToWindow_TCL_DECLARED
 /* 3 */
-EXTERN Tk_Window	Tk_HWNDToWindow _ANSI_ARGS_((HWND hwnd));
+EXTERN Tk_Window	Tk_HWNDToWindow (HWND hwnd);
+#endif
+#ifndef Tk_PointerEvent_TCL_DECLARED
+#define Tk_PointerEvent_TCL_DECLARED
 /* 4 */
-EXTERN void		Tk_PointerEvent _ANSI_ARGS_((HWND hwnd, int x, int y));
+EXTERN void		Tk_PointerEvent (HWND hwnd, int x, int y);
+#endif
+#ifndef Tk_TranslateWinEvent_TCL_DECLARED
+#define Tk_TranslateWinEvent_TCL_DECLARED
 /* 5 */
-EXTERN int		Tk_TranslateWinEvent _ANSI_ARGS_((HWND hwnd, 
-				UINT message, WPARAM wParam, LPARAM lParam, 
-				LRESULT * result));
+EXTERN int		Tk_TranslateWinEvent (HWND hwnd, UINT message, 
+				WPARAM wParam, LPARAM lParam, 
+				LRESULT * result);
+#endif
 #endif /* __WIN32__ */
-#ifdef MAC_TCL
-/* 0 */
-EXTERN void		Tk_MacSetEmbedHandler _ANSI_ARGS_((
-				Tk_MacEmbedRegisterWinProc * registerWinProcPtr, 
-				Tk_MacEmbedGetGrafPortProc * getPortProcPtr, 
-				Tk_MacEmbedMakeContainerExistProc * containerExistProcPtr, 
-				Tk_MacEmbedGetClipProc * getClipProc, 
-				Tk_MacEmbedGetOffsetInParentProc * getOffsetProc));
-/* 1 */
-EXTERN void		Tk_MacTurnOffMenus _ANSI_ARGS_((void));
-/* 2 */
-EXTERN void		Tk_MacTkOwnsCursor _ANSI_ARGS_((int tkOwnsIt));
-/* 3 */
-EXTERN void		TkMacInitMenus _ANSI_ARGS_((Tcl_Interp * interp));
-/* 4 */
-EXTERN void		TkMacInitAppleEvents _ANSI_ARGS_((
-				Tcl_Interp * interp));
-/* 5 */
-EXTERN int		TkMacConvertEvent _ANSI_ARGS_((
-				EventRecord * eventPtr));
-/* 6 */
-EXTERN int		TkMacConvertTkEvent _ANSI_ARGS_((
-				EventRecord * eventPtr, Window window));
-/* 7 */
-EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin, 
-				int x, int y, int width, int height, 
-				int flags));
-/* 8 */
-EXTERN void		TkMacInvalClipRgns _ANSI_ARGS_((TkWindow * winPtr));
-/* 9 */
-EXTERN int		TkMacHaveAppearance _ANSI_ARGS_((void));
-/* 10 */
-EXTERN GWorldPtr	TkMacGetDrawablePort _ANSI_ARGS_((Drawable drawable));
-#endif /* MAC_TCL */
 #ifdef MAC_OSX_TK
+#ifndef Tk_MacOSXSetEmbedHandler_TCL_DECLARED
+#define Tk_MacOSXSetEmbedHandler_TCL_DECLARED
 /* 0 */
-EXTERN void		Tk_MacOSXSetEmbedHandler _ANSI_ARGS_((
+EXTERN void		Tk_MacOSXSetEmbedHandler (
 				Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, 
 				Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, 
 				Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, 
 				Tk_MacOSXEmbedGetClipProc * getClipProc, 
-				Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc));
+				Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc);
+#endif
+#ifndef Tk_MacOSXTurnOffMenus_TCL_DECLARED
+#define Tk_MacOSXTurnOffMenus_TCL_DECLARED
 /* 1 */
-EXTERN void		Tk_MacOSXTurnOffMenus _ANSI_ARGS_((void));
+EXTERN void		Tk_MacOSXTurnOffMenus (void);
+#endif
+#ifndef Tk_MacOSXTkOwnsCursor_TCL_DECLARED
+#define Tk_MacOSXTkOwnsCursor_TCL_DECLARED
 /* 2 */
-EXTERN void		Tk_MacOSXTkOwnsCursor _ANSI_ARGS_((int tkOwnsIt));
+EXTERN void		Tk_MacOSXTkOwnsCursor (int tkOwnsIt);
+#endif
+#ifndef TkMacOSXInitMenus_TCL_DECLARED
+#define TkMacOSXInitMenus_TCL_DECLARED
 /* 3 */
-EXTERN void		TkMacOSXInitMenus _ANSI_ARGS_((Tcl_Interp * interp));
+EXTERN void		TkMacOSXInitMenus (Tcl_Interp * interp);
+#endif
+#ifndef TkMacOSXInitAppleEvents_TCL_DECLARED
+#define TkMacOSXInitAppleEvents_TCL_DECLARED
 /* 4 */
-EXTERN void		TkMacOSXInitAppleEvents _ANSI_ARGS_((
-				Tcl_Interp * interp));
+EXTERN void		TkMacOSXInitAppleEvents (Tcl_Interp * interp);
+#endif
+#ifndef TkGenWMConfigureEvent_TCL_DECLARED
+#define TkGenWMConfigureEvent_TCL_DECLARED
 /* 5 */
-EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin, 
-				int x, int y, int width, int height, 
-				int flags));
+EXTERN void		TkGenWMConfigureEvent (Tk_Window tkwin, int x, int y, 
+				int width, int height, int flags);
+#endif
+#ifndef TkMacOSXInvalClipRgns_TCL_DECLARED
+#define TkMacOSXInvalClipRgns_TCL_DECLARED
 /* 6 */
-EXTERN void		TkMacOSXInvalClipRgns _ANSI_ARGS_((Tk_Window tkwin));
+EXTERN void		TkMacOSXInvalClipRgns (Tk_Window tkwin);
+#endif
+#ifndef TkMacOSXGetDrawablePort_TCL_DECLARED
+#define TkMacOSXGetDrawablePort_TCL_DECLARED
 /* 7 */
-EXTERN GWorldPtr	TkMacOSXGetDrawablePort _ANSI_ARGS_((
-				Drawable drawable));
+EXTERN GWorldPtr	TkMacOSXGetDrawablePort (Drawable drawable);
+#endif
+#ifndef TkMacOSXGetRootControl_TCL_DECLARED
+#define TkMacOSXGetRootControl_TCL_DECLARED
 /* 8 */
-EXTERN ControlRef	TkMacOSXGetRootControl _ANSI_ARGS_((
-				Drawable drawable));
+EXTERN ControlRef	TkMacOSXGetRootControl (Drawable drawable);
+#endif
+#ifndef Tk_MacOSXSetupTkNotifier_TCL_DECLARED
+#define Tk_MacOSXSetupTkNotifier_TCL_DECLARED
 /* 9 */
-EXTERN void		Tk_MacOSXSetupTkNotifier _ANSI_ARGS_((void));
+EXTERN void		Tk_MacOSXSetupTkNotifier (void);
+#endif
+#ifndef Tk_MacOSXIsAppInFront_TCL_DECLARED
+#define Tk_MacOSXIsAppInFront_TCL_DECLARED
 /* 10 */
-EXTERN int		Tk_MacOSXIsAppInFront _ANSI_ARGS_((void));
+EXTERN int		Tk_MacOSXIsAppInFront (void);
+#endif
 #endif /* MAC_OSX_TK */
 
 typedef struct TkPlatStubs {
@@ -122,38 +134,25 @@ typedef struct TkPlatStubs {
     struct TkPlatStubHooks *hooks;
 
 #ifdef __WIN32__
-    Window (*tk_AttachHWND) _ANSI_ARGS_((Tk_Window tkwin, HWND hwnd)); /* 0 */
-    HINSTANCE (*tk_GetHINSTANCE) _ANSI_ARGS_((void)); /* 1 */
-    HWND (*tk_GetHWND) _ANSI_ARGS_((Window window)); /* 2 */
-    Tk_Window (*tk_HWNDToWindow) _ANSI_ARGS_((HWND hwnd)); /* 3 */
-    void (*tk_PointerEvent) _ANSI_ARGS_((HWND hwnd, int x, int y)); /* 4 */
-    int (*tk_TranslateWinEvent) _ANSI_ARGS_((HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT * result)); /* 5 */
+    Window (*tk_AttachHWND) (Tk_Window tkwin, HWND hwnd); /* 0 */
+    HINSTANCE (*tk_GetHINSTANCE) (void); /* 1 */
+    HWND (*tk_GetHWND) (Window window); /* 2 */
+    Tk_Window (*tk_HWNDToWindow) (HWND hwnd); /* 3 */
+    void (*tk_PointerEvent) (HWND hwnd, int x, int y); /* 4 */
+    int (*tk_TranslateWinEvent) (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT * result); /* 5 */
 #endif /* __WIN32__ */
-#ifdef MAC_TCL
-    void (*tk_MacSetEmbedHandler) _ANSI_ARGS_((Tk_MacEmbedRegisterWinProc * registerWinProcPtr, Tk_MacEmbedGetGrafPortProc * getPortProcPtr, Tk_MacEmbedMakeContainerExistProc * containerExistProcPtr, Tk_MacEmbedGetClipProc * getClipProc, Tk_MacEmbedGetOffsetInParentProc * getOffsetProc)); /* 0 */
-    void (*tk_MacTurnOffMenus) _ANSI_ARGS_((void)); /* 1 */
-    void (*tk_MacTkOwnsCursor) _ANSI_ARGS_((int tkOwnsIt)); /* 2 */
-    void (*tkMacInitMenus) _ANSI_ARGS_((Tcl_Interp * interp)); /* 3 */
-    void (*tkMacInitAppleEvents) _ANSI_ARGS_((Tcl_Interp * interp)); /* 4 */
-    int (*tkMacConvertEvent) _ANSI_ARGS_((EventRecord * eventPtr)); /* 5 */
-    int (*tkMacConvertTkEvent) _ANSI_ARGS_((EventRecord * eventPtr, Window window)); /* 6 */
-    void (*tkGenWMConfigureEvent) _ANSI_ARGS_((Tk_Window tkwin, int x, int y, int width, int height, int flags)); /* 7 */
-    void (*tkMacInvalClipRgns) _ANSI_ARGS_((TkWindow * winPtr)); /* 8 */
-    int (*tkMacHaveAppearance) _ANSI_ARGS_((void)); /* 9 */
-    GWorldPtr (*tkMacGetDrawablePort) _ANSI_ARGS_((Drawable drawable)); /* 10 */
-#endif /* MAC_TCL */
 #ifdef MAC_OSX_TK
-    void (*tk_MacOSXSetEmbedHandler) _ANSI_ARGS_((Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, Tk_MacOSXEmbedGetClipProc * getClipProc, Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc)); /* 0 */
-    void (*tk_MacOSXTurnOffMenus) _ANSI_ARGS_((void)); /* 1 */
-    void (*tk_MacOSXTkOwnsCursor) _ANSI_ARGS_((int tkOwnsIt)); /* 2 */
-    void (*tkMacOSXInitMenus) _ANSI_ARGS_((Tcl_Interp * interp)); /* 3 */
-    void (*tkMacOSXInitAppleEvents) _ANSI_ARGS_((Tcl_Interp * interp)); /* 4 */
-    void (*tkGenWMConfigureEvent) _ANSI_ARGS_((Tk_Window tkwin, int x, int y, int width, int height, int flags)); /* 5 */
-    void (*tkMacOSXInvalClipRgns) _ANSI_ARGS_((Tk_Window tkwin)); /* 6 */
-    GWorldPtr (*tkMacOSXGetDrawablePort) _ANSI_ARGS_((Drawable drawable)); /* 7 */
-    ControlRef (*tkMacOSXGetRootControl) _ANSI_ARGS_((Drawable drawable)); /* 8 */
-    void (*tk_MacOSXSetupTkNotifier) _ANSI_ARGS_((void)); /* 9 */
-    int (*tk_MacOSXIsAppInFront) _ANSI_ARGS_((void)); /* 10 */
+    void (*tk_MacOSXSetEmbedHandler) (Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, Tk_MacOSXEmbedGetClipProc * getClipProc, Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc); /* 0 */
+    void (*tk_MacOSXTurnOffMenus) (void); /* 1 */
+    void (*tk_MacOSXTkOwnsCursor) (int tkOwnsIt); /* 2 */
+    void (*tkMacOSXInitMenus) (Tcl_Interp * interp); /* 3 */
+    void (*tkMacOSXInitAppleEvents) (Tcl_Interp * interp); /* 4 */
+    void (*tkGenWMConfigureEvent) (Tk_Window tkwin, int x, int y, int width, int height, int flags); /* 5 */
+    void (*tkMacOSXInvalClipRgns) (Tk_Window tkwin); /* 6 */
+    GWorldPtr (*tkMacOSXGetDrawablePort) (Drawable drawable); /* 7 */
+    ControlRef (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
+    void (*tk_MacOSXSetupTkNotifier) (void); /* 9 */
+    int (*tk_MacOSXIsAppInFront) (void); /* 10 */
 #endif /* MAC_OSX_TK */
 } TkPlatStubs;
 
@@ -197,52 +196,6 @@ extern TkPlatStubs *tkPlatStubsPtr;
 	(tkPlatStubsPtr->tk_TranslateWinEvent) /* 5 */
 #endif
 #endif /* __WIN32__ */
-#ifdef MAC_TCL
-#ifndef Tk_MacSetEmbedHandler
-#define Tk_MacSetEmbedHandler \
-	(tkPlatStubsPtr->tk_MacSetEmbedHandler) /* 0 */
-#endif
-#ifndef Tk_MacTurnOffMenus
-#define Tk_MacTurnOffMenus \
-	(tkPlatStubsPtr->tk_MacTurnOffMenus) /* 1 */
-#endif
-#ifndef Tk_MacTkOwnsCursor
-#define Tk_MacTkOwnsCursor \
-	(tkPlatStubsPtr->tk_MacTkOwnsCursor) /* 2 */
-#endif
-#ifndef TkMacInitMenus
-#define TkMacInitMenus \
-	(tkPlatStubsPtr->tkMacInitMenus) /* 3 */
-#endif
-#ifndef TkMacInitAppleEvents
-#define TkMacInitAppleEvents \
-	(tkPlatStubsPtr->tkMacInitAppleEvents) /* 4 */
-#endif
-#ifndef TkMacConvertEvent
-#define TkMacConvertEvent \
-	(tkPlatStubsPtr->tkMacConvertEvent) /* 5 */
-#endif
-#ifndef TkMacConvertTkEvent
-#define TkMacConvertTkEvent \
-	(tkPlatStubsPtr->tkMacConvertTkEvent) /* 6 */
-#endif
-#ifndef TkGenWMConfigureEvent
-#define TkGenWMConfigureEvent \
-	(tkPlatStubsPtr->tkGenWMConfigureEvent) /* 7 */
-#endif
-#ifndef TkMacInvalClipRgns
-#define TkMacInvalClipRgns \
-	(tkPlatStubsPtr->tkMacInvalClipRgns) /* 8 */
-#endif
-#ifndef TkMacHaveAppearance
-#define TkMacHaveAppearance \
-	(tkPlatStubsPtr->tkMacHaveAppearance) /* 9 */
-#endif
-#ifndef TkMacGetDrawablePort
-#define TkMacGetDrawablePort \
-	(tkPlatStubsPtr->tkMacGetDrawablePort) /* 10 */
-#endif
-#endif /* MAC_TCL */
 #ifdef MAC_OSX_TK
 #ifndef Tk_MacOSXSetEmbedHandler
 #define Tk_MacOSXSetEmbedHandler \

@@ -29,7 +29,7 @@ SOFTWARE.
 
 /* You must include <X11/Xlib.h> before including this file */
 
-#if defined(MAC_TCL) || defined(MAC_OSX_TK)
+#if defined(MAC_OSX_TK)
 #   define Region XRegion
 #endif
 
@@ -848,7 +848,7 @@ extern void XXorRegion(
 
 _XFUNCPROTOEND
 
-#if defined(MAC_TCL) || defined(MAC_OSX_TK)
+#if defined(MAC_OSX_TK)
 #   undef Region
 #endif
 

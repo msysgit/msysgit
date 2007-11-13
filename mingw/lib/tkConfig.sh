@@ -11,16 +11,18 @@
 #
 # The information in this file is specific to a single platform.
 #
-# RCS: @(#) $Id: tkConfig.sh.in,v 1.2 2001/10/15 21:19:16 hobbs Exp $
+# RCS: @(#) $Id: tkConfig.sh.in,v 1.3 2003/03/19 03:21:22 mdejong Exp $
+
+TK_DLL_FILE="tk85.dll"
 
 # Tk's version number.
-TK_VERSION='8.4'
+TK_VERSION='8.5'
 TK_MAJOR_VERSION='8'
-TK_MINOR_VERSION='4'
-TK_PATCH_LEVEL='.14'
+TK_MINOR_VERSION='5'
+TK_PATCH_LEVEL='b2'
 
 # -D flags for use with the C compiler.
-TK_DEFS=' '
+TK_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_UXTHEME_H=1 -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
 
 # Flag, 1: we built a shared lib, 0 we didn't
 TK_SHARED_BUILD=1
@@ -29,10 +31,10 @@ TK_SHARED_BUILD=1
 TK_DBGX=
 
 # The name of the Tk library (may be either a .a file or a shared library):
-TK_LIB_FILE='libtk84.a'
+TK_LIB_FILE='libtk85.a'
 
 # Additional libraries to use when linking Tk.
-TK_LIBS=' -lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32'
+TK_LIBS=' -lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -lole32 -loleaut32 -luuid'
 
 # Top-level directory in which Tcl's platform-independent files are
 # installed.
@@ -43,15 +45,15 @@ TK_PREFIX='/mingw'
 TK_EXEC_PREFIX='/mingw'
 
 # -l flag to pass to the linker to pick up the Tcl library
-TK_LIB_FLAG='-ltk84'
+TK_LIB_FLAG='-ltk85'
 
 # String to pass to linker to pick up the Tk library from its
 # build directory.
-TK_BUILD_LIB_SPEC='-L/home/Icke/tk8.4.14/win -ltk84'
+TK_BUILD_LIB_SPEC='-L/share/tcltk/tk8.5b2/win -ltk85'
 
 # String to pass to linker to pick up the Tk library from its
 # installed directory.
-TK_LIB_SPEC='-L/mingw/lib -ltk84'
+TK_LIB_SPEC='-L/mingw/lib -ltk85'
 
 # Location of the top-level source directory from which Tk was built.
 # This is the directory that contains a README file as well as
@@ -59,7 +61,7 @@ TK_LIB_SPEC='-L/mingw/lib -ltk84'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tk was
 # compiled.
-TK_SRC_DIR='/home/Icke/tk8.4.14'
+TK_SRC_DIR='/share/tcltk/tk8.5b2'
 
 # Needed if you want to make a 'fat' shared library library
 # containing tk objects or link a different wish.
@@ -67,21 +69,21 @@ TK_CC_SEARCH_FLAGS=''
 TK_LD_SEARCH_FLAGS=''
 
 # The name of the Tk stub library (.a):
-TK_STUB_LIB_FILE='libtkstub84.a'
+TK_STUB_LIB_FILE='libtkstub85.a'
 
 # -l flag to pass to the linker to pick up the Tk stub library
-TK_STUB_LIB_FLAG='-ltkstub84'
+TK_STUB_LIB_FLAG='-ltkstub85'
 
 # String to pass to linker to pick up the Tk stub library from its
 # build directory.
-TK_BUILD_STUB_LIB_SPEC='-L/home/Icke/tk8.4.14/win -ltkstub84'
+TK_BUILD_STUB_LIB_SPEC='-L/share/tcltk/tk8.5b2/win -ltkstub85'
 
 # String to pass to linker to pick up the Tk stub library from its
 # installed directory.
-TK_STUB_LIB_SPEC='-L/mingw/lib -ltkstub84'
+TK_STUB_LIB_SPEC='-L/mingw/lib -ltkstub85'
 
 # Path to the Tk stub library in the build directory.
-TK_BUILD_STUB_LIB_PATH='/home/Icke/tk8.4.14/win/libtkstub84.a'
+TK_BUILD_STUB_LIB_PATH='/share/tcltk/tk8.5b2/win/libtkstub85.a'
 
 # Path to the Tk stub library in the install directory.
-TK_STUB_LIB_PATH='/mingw/lib/libtkstub84.a'
+TK_STUB_LIB_PATH='/mingw/lib/libtkstub85.a'

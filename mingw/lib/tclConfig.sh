@@ -11,19 +11,19 @@
 #
 # RCS: @(#) $Id: tclConfig.sh.in,v 1.8 2001/11/08 03:07:22 mdejong Exp $
 
-TCL_DLL_FILE="tcl84.dll"
+TCL_DLL_FILE="tcl85.dll"
 
 # Tcl's version number.
-TCL_VERSION='8.4'
+TCL_VERSION='8.5'
 TCL_MAJOR_VERSION='8'
-TCL_MINOR_VERSION='4'
-TCL_PATCH_LEVEL='.14'
+TCL_MINOR_VERSION='5'
+TCL_PATCH_LEVEL='b2'
 
 # C compiler to use for compilation.
 TCL_CC='gcc'
 
 # -D flags for use with the C compiler.
-TCL_DEFS=' -DHAVE_NO_SEH=1 -DEXCEPTION_DISPOSITION=int -DHAVE_WINNT_IGNORE_VOID=1 -DHAVE_ALLOCA_GCC_INLINE=1 -DHAVE_CAST_TO_UNION=1 '
+TCL_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DHAVE_NO_SEH=1 -DEXCEPTION_DISPOSITION=int -DHAVE_WINNT_IGNORE_VOID=1 -DHAVE_ALLOCA_GCC_INLINE=1 -DHAVE_CAST_TO_UNION=1 -DTCL_CFGVAL_ENCODING=\"cp1252\" -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
 
 # If TCL was built with debugging symbols, generated libraries contain
 # this string at the end of the library name (before the extension).
@@ -41,7 +41,7 @@ TCL_LDFLAGS_OPTIMIZE=''
 TCL_SHARED_BUILD=1
 
 # The name of the Tcl library (may be either a .a file or a shared library):
-TCL_LIB_FILE='libtcl84.a'
+TCL_LIB_FILE='libtcl85.a'
 
 # Flag to indicate whether shared libraries need export files.
 TCL_NEEDS_EXP_FILE=
@@ -67,7 +67,7 @@ TCL_EXEC_PREFIX='/mingw'
 TCL_SHLIB_CFLAGS=''
 
 # Flags to pass to cc to get warning messages
-TCL_CFLAGS_WARNING='-Wall -Wconversion'
+TCL_CFLAGS_WARNING='-Wall'
 
 # Extra flags to pass to cc:
 TCL_EXTRA_CFLAGS=''
@@ -108,15 +108,15 @@ TCL_COMPAT_OBJS=''
 TCL_RANLIB='ranlib'
 
 # -l flag to pass to the linker to pick up the Tcl library
-TCL_LIB_FLAG='-ltcl84'
+TCL_LIB_FLAG='-ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # build directory.
-TCL_BUILD_LIB_SPEC='-L/home/Icke/tcl8.4.14/win -ltcl84'
+TCL_BUILD_LIB_SPEC='-L/share/tcltk/tcl8.5b2/win -ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # installed directory.
-TCL_LIB_SPEC='-L/mingw/lib -ltcl84'
+TCL_LIB_SPEC='-L/mingw/lib -ltcl85'
 
 # String to pass to the compiler so that an extension can
 # find installed Tcl headers.
@@ -147,7 +147,7 @@ TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.a'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tcl was
 # compiled.
-TCL_SRC_DIR='/home/Icke/tcl8.4.14'
+TCL_SRC_DIR='/share/tcltk/tcl8.5b2'
 
 # List of standard directories in which to look for packages during
 # "package require" commands.  Contains the "prefix" directory plus also
@@ -158,24 +158,24 @@ TCL_PACKAGE_PATH='/mingw/lib'
 TCL_SUPPORTS_STUBS=1
 
 # The name of the Tcl stub library (.a):
-TCL_STUB_LIB_FILE='libtclstub84.a'
+TCL_STUB_LIB_FILE='libtclstub85.a'
 
 # -l flag to pass to the linker to pick up the Tcl stub library
-TCL_STUB_LIB_FLAG='-ltclstub84'
+TCL_STUB_LIB_FLAG='-ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # build directory.
-TCL_BUILD_STUB_LIB_SPEC='-L/home/Icke/tcl8.4.14/win -ltclstub84'
+TCL_BUILD_STUB_LIB_SPEC='-L/share/tcltk/tcl8.5b2/win -ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # installed directory.
-TCL_STUB_LIB_SPEC='-L/mingw/lib -ltclstub84'
+TCL_STUB_LIB_SPEC='-L/mingw/lib -ltclstub85'
 
 # Path to the Tcl stub library in the build directory.
-TCL_BUILD_STUB_LIB_PATH='/home/Icke/tcl8.4.14/win/libtclstub84.a'
+TCL_BUILD_STUB_LIB_PATH='/share/tcltk/tcl8.5b2/win/libtclstub85.a'
 
 # Path to the Tcl stub library in the install directory.
-TCL_STUB_LIB_PATH='/mingw/lib/libtclstub84.a'
+TCL_STUB_LIB_PATH='/mingw/lib/libtclstub85.a'
 
 # Flag, 1: we built Tcl with threads enables, 0 we didn't
 TCL_THREADS=0

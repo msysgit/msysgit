@@ -32,8 +32,4 @@ SOFTWARE.
 #define XK_LATIN4
 #define XK_GREEK
 
-#ifdef MAC_TCL
-#include <keysymdef.h>
-#else
 #include <X11/keysymdef.h>
-#endif

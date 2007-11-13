@@ -33,7 +33,7 @@ SOFTWARE.
 #define X_PROTOCOL	11		/* current protocol version */
 #define X_PROTOCOL_REVISION 0		/* current minor version */
 
-#if defined(MAC_TCL) || defined(MAC_OSX_TK)
+#if defined(MAC_OSX_TK)
 #   define Cursor XCursor
 #   define Region XRegion
 #endif
@@ -669,7 +669,7 @@ are reserved in the protocol for errors and replies. */
 #define LSBFirst		0
 #define MSBFirst		1
 
-#if defined(MAC_TCL) || defined(MAC_OSX_TK)
+#if defined(MAC_OSX_TK)
 #   undef Cursor
 #   undef Region
 #endif
