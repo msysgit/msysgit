@@ -9,11 +9,11 @@
 (cd / &&
 	git diff-files --quiet &&
 	git diff-index --cached --quiet HEAD &&
-	test -z "$(git ls-files --exclude-from=.gitignore --others)") || {
+	test -z "$(git ls-files --exclude-from=.gitignore \
+		--exclude-per-directory=.gitignore --others)") || {
 	echo "State not pristine enough for successful Tcl/Tk update"
 	exit 1
 }
-
 
 cd "$(dirname "$0")"
 
