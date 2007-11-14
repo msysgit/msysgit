@@ -362,7 +362,7 @@ begin
     end;
 
     if IsTaskSelected('shellextension') then begin
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git &Shell Here');
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git &Bash Here');
         RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','cmd.exe /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
     end;
 
