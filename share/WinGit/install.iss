@@ -39,10 +39,10 @@ Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.txt, \install.*, \tmp.
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bin\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
-Name: "{group}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
+Name: "{group}\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
 Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
-Name: "{code:GetShellFolder|desktop}\Git Bash"; Filename: "{app}\bin\sh.exe"; Parameters: "--login -i"; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
+Name: "{code:GetShellFolder|desktop}\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
 
 [Messages]
 BeveledLabel={#emit APP_URL}
@@ -247,7 +247,7 @@ end;
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName:string;
+    AppDir,FileName,Cmd:string;
     BuiltIns,EnvPath,EnvHome:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
@@ -362,8 +362,9 @@ begin
     end;
 
     if IsTaskSelected('shellextension') then begin
+        Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
         RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git &Bash Here');
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','cmd.exe /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
     end;
 
     if IsTaskSelected('guiextension') then begin
