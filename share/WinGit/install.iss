@@ -20,6 +20,7 @@ ChangesEnvironment=yes
 DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
+InfoAfterFile=ReleaseNotes.txt
 LicenseFile=gpl-2.0.rtf
 PrivilegesRequired=none
 UninstallDisplayIcon=etc\git.ico
