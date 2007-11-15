@@ -31,7 +31,7 @@ WizardSmallImageFile=git.bmp
 [Tasks]
 Name: quicklaunchicon; Description: "Create a &Quick Launch icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
 Name: desktopicon; Description: "Create a &Desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
-Name: shellextension; Description: "Add ""Git &Bash Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
+Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
 
 [Files]
@@ -363,7 +363,7 @@ begin
 
     if IsTaskSelected('shellextension') then begin
         Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git &Bash Here');
+        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here');
         RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
     end;
 
@@ -440,7 +440,7 @@ begin
     end else begin
         RootKey:=HKEY_CURRENT_USER;
     end;
-    
+
     Command:='';
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
     if Pos(AppDir,Command)>0 then begin
