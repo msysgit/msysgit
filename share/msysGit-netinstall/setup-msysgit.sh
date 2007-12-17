@@ -62,7 +62,13 @@ USE_HTTP=
 git fetch ||
 	USE_HTTP=t &&
         git config remote.origin.url $MSYSGIT_REPO_HTTP &&
-        git fetch ||
+        git fetch || {
+		echo -n "Please enter a HTTP proxy: " &&
+		read proxy &&
+		test ! -z "$proxy" &&
+		export http_proxy="$proxy" &&
+		git fetch
+	} ||
 	error "Could not get msysgit.git"
 
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
