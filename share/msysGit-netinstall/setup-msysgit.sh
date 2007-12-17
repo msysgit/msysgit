@@ -42,9 +42,11 @@ MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-init.exe"
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe"
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-update-ref.exe"
+for builtin in init unpack-objects update-ref fetch ls-remote
+do
+	ln "$INSTALL_PATH/installer-tmp/bin/git.exe" \
+		"$INSTALL_PATH/installer-tmp/bin/git-$builtin.exe"
+done
 
 git init &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
