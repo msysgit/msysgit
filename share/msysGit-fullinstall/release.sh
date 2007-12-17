@@ -7,10 +7,10 @@ case "$1" in
 esac
 
 VERSION="$1"
-TARGET="$HOME"/msysGit-$VERSION.exe
+TARGET="$HOME"/msysGit-fullinstall-$VERSION.exe
 
 case "$(basename "$(cd /; pwd -W)")" in
-msysGit) ;;
+msysGit|msysgit) ;;
 *)
 	echo "Basename of the msysGit directory is not msysGit"
 	exit 1
@@ -22,12 +22,14 @@ cd "$(dirname "$(cd /; pwd -W)")"
 LIST=list.txt
 
 (cd / &&
- git ls-files | grep -v "^git$" &&
+ git ls-files | grep -ve "^git$" -e "^doc/git/html$" &&
+ (cd doc/git/html && git ls-files | sed 's|^|doc/git/html/|') &&
  cd git && git ls-files | grep -v '^\"\?gitweb' | sed 's|^|git/|' &&
  echo "git/gitweb") |
 sed "s|^|msysGit/|" > $LIST &&
 
 # make installer
+test -f "$TARGET".7z && rm "$TARGET".7z
 OPTS7="-m0=lzma -mx=9 -md=64M" &&
 /share/7-Zip/7z.exe a $OPTS7 "$TARGET".7z @$LIST &&
 
