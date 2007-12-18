@@ -250,7 +250,7 @@ end;
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,Cmd:string;
+    AppDir,FileName,Cmd,Msg:string;
     BuiltIns,EnvPath,EnvHome:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
@@ -296,19 +296,23 @@ begin
 
         // The fallback is to copy the files.
         if not IsNTFS then begin
-            for i:=0 to GetArrayLength(BuiltIns)-1 do begin
+            for i:=0 to Count do begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
                 // On non-NTFS partitions, copy simply the files (overwriting existing ones).
                 if not FileCopy(AppDir+'\bin\git.exe',FileName,false) then begin
-                    MsgBox('Line {#emit __LINE__}: Unable to create built-in "'+FileName+'".',mbError,MB_OK);
+                    Msg:='Line {#emit __LINE__}: Unable to create built-in "'+FileName+'".';
+                    MsgBox(Msg,mbError,MB_OK);
+                    Log(Msg);
                     // This is not a critical error, Git could basically be used without the
                     // aliases for built-ins, so we continue.
                 end;
             end;
         end;
     end else begin
-        MsgBox('Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".',mbError,MB_OK);
+        Msg:='Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
         // This is not a critical error, Git could basically be used without the
         // aliases for built-ins, so we continue.
     end;
@@ -336,7 +340,9 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            MsgBox('Line {#emit __LINE__}: Unable to reset HOME prior to install.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to reset HOME prior to install.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
@@ -362,7 +368,9 @@ begin
                 SetArrayLength(EnvHome,1);
                 EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
                 if not SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome) then begin
-                    MsgBox('Line {#emit __LINE__}: Unable to set the HOME environment variable.',mbError,MB_OK);
+                    Msg:='Line {#emit __LINE__}: Unable to set the HOME environment variable.';
+                    MsgBox(Msg,mbError,MB_OK);
+                    Log(Msg);
                     // This is not a critical error, the user can probably fix it manually,
                     // so we continue.
                 end;
@@ -370,7 +378,9 @@ begin
                 // Mark that we have changed HOME.
                 FileName:=AppDir+'\setup.ini';
                 if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
-                    MsgBox('Line {#emit __LINE__}: Unable to write to file "'+FileName+'".',mbError,MB_OK);
+                    Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+                    MsgBox(Msg,mbError,MB_OK);
+                    Log(Msg);
                     // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
                     // so we continue.
                 end;
@@ -380,7 +390,9 @@ begin
 
     // Set the current user's PATH directories.
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
-        MsgBox('Line {#emit __LINE__}: Unable to set the PATH environment variable.',mbError,MB_OK);
+        Msg:='Line {#emit __LINE__}: Unable to set the PATH environment variable.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
         // so we continue.
     end;
@@ -399,7 +411,9 @@ begin
         Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here'))
         or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
-            MsgBox('Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
@@ -408,7 +422,9 @@ begin
     if IsTaskSelected('guiextension') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here'))
         or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\bin\git-gui" "--working-dir" "%1"')) then begin
-            MsgBox('Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
@@ -420,16 +436,20 @@ end;
 }
 
 function InitializeUninstall:Boolean;
+var
+    Msg:string;
 begin
     Result:=DeleteFile(ExpandConstant('{app}')+'\bin\ssh-agent.exe');
     if not Result then begin
-        MsgBox('Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.',mbError,MB_OK);
+        Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
     end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir,Command:string;
+    AppDir,Command,Msg:string;
     EnvPath,EnvHome:TArrayOfString;
     i:Longint;
     RootKey:Integer;
@@ -460,7 +480,9 @@ begin
 
     // Reset the current user's directories in PATH.
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
-        MsgBox('Line {#emit __LINE__}: Unable to revert any possible changes to PATH.',mbError,MB_OK);
+        Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to PATH.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
         // so we continue.
     end;
@@ -470,7 +492,9 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            MsgBox('Line {#emit __LINE__}: Unable to revert any possible changes to HOME.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to HOME.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
@@ -478,7 +502,9 @@ begin
 
     Command:=AppDir+'\setup.ini';
     if not DeleteFile(Command) then begin
-        MsgBox('Line {#emit __LINE__}: Unable to delete file "'+Command+'".',mbError,MB_OK);
+        Msg:='Line {#emit __LINE__}: Unable to delete file "'+Command+'".';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
         // so we continue.
     end;
@@ -497,7 +523,9 @@ begin
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
     if Pos(AppDir,Command)>0 then begin
         if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
-            MsgBox('Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
@@ -507,7 +535,9 @@ begin
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
     if Pos(AppDir,Command)>0 then begin
         if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
-            MsgBox('Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.',mbError,MB_OK);
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
         end;
