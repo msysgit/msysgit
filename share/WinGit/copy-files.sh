@@ -8,7 +8,7 @@ test -z "$1" && {
 test -d /doc/git/html/.git || { echo "Error: html pages in /doc/git/html/.git missing"; exit 1; }
 
 if [ "$( cd /doc/git/html/ ; git config core.autocrlf )" != "true" ]
-then 
+then
 	echo "Error: documentation must be checked out with core.autocrlf=true."
 	echo "Hint: fix this by"
 	echo "   cd /doc/git/html"
@@ -36,7 +36,7 @@ patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} cmd/ lib/perl5/ share/git* share/vim) |
-tar xvf - &&
+tar xf - &&
 mkdir lib/perl5/site_perl &&
 cp /lib/{Error.pm,Git.pm} lib/perl5/site_perl/ &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
@@ -45,7 +45,7 @@ md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
 rm $(cat etc/fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl,libiconv}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
-tar xvf - &&
+tar xf - &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
