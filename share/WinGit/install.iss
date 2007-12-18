@@ -81,8 +81,10 @@ begin
 
     // See http://www.jrsoftware.org/isfaq.php#env
     if AllUsers then begin
+        // We ignore errors here. The resulting array of strings will be empty.
         RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
     end else begin
+        // We ignore errors here. The resulting array of strings will be empty.
         RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
     end;
 
@@ -266,35 +268,51 @@ begin
 
     // Load the built-ins from a text file.
     FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
-    if not LoadStringsFromFile(FileName,BuiltIns) then begin
-        MsgBox('Unable to read file "{#emit APP_BUILTINS}".',mbError,MB_OK);
-        Exit;
-    end;
+    if LoadStringsFromFile(FileName,BuiltIns) then begin
+        // Check if we are running on NTFS.
+        IsNTFS:=False;
+        if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
+            IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
+        end;
 
-    // Check if we are running on NTFS.
-    IsNTFS:=False;
-    if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
-        IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
-    end;
+        Count:=GetArrayLength(BuiltIns)-1;
 
-    Count:=GetArrayLength(BuiltIns)-1;
+        // Map the built-ins to git.exe.
+        if IsNTFS then begin
+            Log('Line {#emit __LINE__}: Assuming the partition is formatted using NTFS.');
 
-    // Map the built-ins to git.exe.
-    if IsNTFS then begin
-        for i:=0 to Count do begin
-            FileName:=AppDir+'\'+BuiltIns[i];
+            for i:=0 to Count do begin
+                FileName:=AppDir+'\'+BuiltIns[i];
 
-            // On non-NTFS partitions, create hard links.
-            CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
+                // On non-NTFS partitions, create hard links.
+                if (not DeleteFile(FileName))
+                or (not CreateHardLink(FileName,AppDir+'\bin\git.exe',0)) then begin
+                    Log('Line {#emit __LINE__}: Unable to create hard link "'+FileName+'", will try to copy files.');
+                    IsNTFS:=False;
+                    Break;
+                end;
+            end;
+        end;
+
+        // The fallback is to copy the files.
+        if not IsNTFS then begin
+            for i:=0 to GetArrayLength(BuiltIns)-1 do begin
+                FileName:=AppDir+'\'+BuiltIns[i];
+
+                // On non-NTFS partitions, copy simply the files (overwriting existing ones).
+                if not FileCopy(AppDir+'\bin\git.exe',FileName,false) then begin
+                    MsgBox('Line {#emit __LINE__}: Unable to create built-in "'+FileName+'".',mbError,MB_OK);
+                    // This is not a critical error, Git could basically be used without the
+                    // aliases for built-ins, so we continue.
+                end;
+            end;
         end;
     end else begin
-        for i:=0 to GetArrayLength(BuiltIns)-1 do begin
-            FileName:=AppDir+'\'+BuiltIns[i];
-
-            // On non-NTFS partitions, copy simply the files.
-            FileCopy(AppDir+'\bin\git.exe',FileName,false);
-        end;
+        MsgBox('Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".',mbError,MB_OK);
+        // This is not a critical error, Git could basically be used without the
+        // aliases for built-ins, so we continue.
     end;
+
 
     {
         Modify the environment
@@ -318,7 +336,9 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            MsgBox('Unable to reset HOME prior to install.',mbError,MB_OK);
+            MsgBox('Line {#emit __LINE__}: Unable to reset HOME prior to install.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
         end;
     end;
 
@@ -341,16 +361,29 @@ begin
             if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
                 SetArrayLength(EnvHome,1);
                 EnvHome[0]:=ExpandConstant('{%USERPROFILE}');
-                SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome);
+                if not SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome) then begin
+                    MsgBox('Line {#emit __LINE__}: Unable to set the HOME environment variable.',mbError,MB_OK);
+                    // This is not a critical error, the user can probably fix it manually,
+                    // so we continue.
+                end;
 
                 // Mark that we have changed HOME.
-                SetIniString('Environment','HOME',EnvHome[0],AppDir+'\setup.ini');
+                FileName:=AppDir+'\setup.ini';
+                if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
+                    MsgBox('Line {#emit __LINE__}: Unable to write to file "'+FileName+'".',mbError,MB_OK);
+                    // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
+                    // so we continue.
+                end;
             end;
         end;
     end;
 
-    // Set the current user's directories in PATH.
-    SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath);
+    // Set the current user's PATH directories.
+    if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
+        MsgBox('Line {#emit __LINE__}: Unable to set the PATH environment variable.',mbError,MB_OK);
+        // This is not a critical error, the user can probably fix it manually,
+        // so we continue.
+    end;
 
     {
         Create the Windows Explorer shell extensions
@@ -364,13 +397,21 @@ begin
 
     if IsTaskSelected('shellextension') then begin
         Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here');
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"');
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here'))
+        or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
+            MsgBox('Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
     end;
 
     if IsTaskSelected('guiextension') then begin
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here');
-        RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\bin\git-gui" "--working-dir" "%1"');
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here'))
+        or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\bin\git-gui" "--working-dir" "%1"')) then begin
+            MsgBox('Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
     end;
 end;
 
@@ -382,7 +423,7 @@ function InitializeUninstall:Boolean;
 begin
     Result:=DeleteFile(ExpandConstant('{app}')+'\bin\ssh-agent.exe');
     if not Result then begin
-        MsgBox('Please stop all ssh-agent processes and run uninstall again.',mbError,MB_OK);
+        MsgBox('Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.',mbError,MB_OK);
     end;
 end;
 
@@ -419,7 +460,9 @@ begin
 
     // Reset the current user's directories in PATH.
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
-        MsgBox('Unable to revert any possible changes to PATH.',mbError,MB_OK);
+        MsgBox('Line {#emit __LINE__}: Unable to revert any possible changes to PATH.',mbError,MB_OK);
+        // This is not a critical error, the user can probably fix it manually,
+        // so we continue.
     end;
 
     // Reset the current user's HOME if we modified it.
@@ -427,10 +470,18 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            MsgBox('Unable to revert any possible changes to HOME.',mbError,MB_OK);
+            MsgBox('Line {#emit __LINE__}: Unable to revert any possible changes to HOME.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
         end;
     end;
-    DeleteFile(AppDir+'\setup.ini');
+
+    Command:=AppDir+'\setup.ini';
+    if not DeleteFile(Command) then begin
+        MsgBox('Line {#emit __LINE__}: Unable to delete file "'+Command+'".',mbError,MB_OK);
+        // This is not a critical error, the user can probably fix it manually,
+        // so we continue.
+    end;
 
     {
         Delete the Windows Explorer shell extensions
@@ -445,12 +496,20 @@ begin
     Command:='';
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
     if Pos(AppDir,Command)>0 then begin
-        RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell');
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
+            MsgBox('Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
     end;
 
     Command:='';
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
     if Pos(AppDir,Command)>0 then begin
-        RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui');
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
+            MsgBox('Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.',mbError,MB_OK);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
     end;
 end;
