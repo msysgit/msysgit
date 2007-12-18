@@ -28,7 +28,7 @@ echo "Copying files" &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - bin/{git*,awk,basename.exe,bash.exe,bunzip2,bzip2.exe,\
-cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cpio,cut.exe,cvs.exe,date.exe,diff.exe,\
+cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
 gunzip,gzip.exe,head.exe,id.exe,less.exe,libW11.dll,libperl.dll,ln.exe,\
 ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
