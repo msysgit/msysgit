@@ -285,7 +285,7 @@ begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
                 // On non-NTFS partitions, create hard links.
-                if (not DeleteFile(FileName))
+                if (FileExists(FileName) and (not DeleteFile(FileName)))
                 or (not CreateHardLink(FileName,AppDir+'\bin\git.exe',0)) then begin
                     Log('Line {#emit __LINE__}: Unable to create hard link "'+FileName+'", will try to copy files.');
                     IsNTFS:=False;
@@ -449,7 +449,7 @@ begin
             Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
-            
+
             // Clean-up the temporary copy (ignoring any errors).
             DeleteFile(NewName);
         end else begin
