@@ -279,7 +279,7 @@ begin
 
         // Map the built-ins to git.exe.
         if IsNTFS then begin
-            Log('Line {#emit __LINE__}: Assuming the partition is formatted using NTFS, trying to create hard links.');
+            Log('Line {#emit __LINE__}: Partition seems to be NTFS, trying to create built-in aliases as hard links.');
 
             for i:=0 to Count do begin
                 FileName:=AppDir+'\'+BuiltIns[i];
@@ -292,6 +292,8 @@ begin
                     Break;
                 end;
             end;
+
+            Log('Line {#emit __LINE__}: Successfully created built-in aliases as hard links.');
         end;
 
         // The fallback is to copy the files.
@@ -303,13 +305,15 @@ begin
 
                 // On non-NTFS partitions, copy simply the files (overwriting existing ones).
                 if not FileCopy(AppDir+'\bin\git.exe',FileName,false) then begin
-                    Msg:='Line {#emit __LINE__}: Unable to create built-in "'+FileName+'".';
+                    Msg:='Line {#emit __LINE__}: Unable to create file copy "'+FileName+'".';
                     MsgBox(Msg,mbError,MB_OK);
                     Log(Msg);
                     // This is not a critical error, Git could basically be used without the
                     // aliases for built-ins, so we continue.
                 end;
             end;
+
+            Log('Line {#emit __LINE__}: Successfully created built-in aliases as file copies.');
         end;
     end else begin
         Msg:='Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".';
