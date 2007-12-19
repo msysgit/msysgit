@@ -279,7 +279,7 @@ begin
 
         // Map the built-ins to git.exe.
         if IsNTFS then begin
-            Log('Line {#emit __LINE__}: Assuming the partition is formatted using NTFS.');
+            Log('Line {#emit __LINE__}: Assuming the partition is formatted using NTFS, trying to create hard links.');
 
             for i:=0 to Count do begin
                 FileName:=AppDir+'\'+BuiltIns[i];
@@ -296,6 +296,8 @@ begin
 
         // The fallback is to copy the files.
         if not IsNTFS then begin
+            Log('Line {#emit __LINE__}: Trying to create built-in aliases as file copies.');
+
             for i:=0 to Count do begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
