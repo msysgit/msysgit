@@ -42,9 +42,11 @@ MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-init.exe"
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-unpack-objects.exe"
-cp "$INSTALL_PATH/installer-tmp/bin/git.exe" "$INSTALL_PATH/installer-tmp/bin/git-update-ref.exe"
+for builtin in init unpack-objects update-ref fetch ls-remote
+do
+	ln "$INSTALL_PATH/installer-tmp/bin/git.exe" \
+		"$INSTALL_PATH/installer-tmp/bin/git-$builtin.exe"
+done
 
 git init &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
@@ -57,10 +59,16 @@ git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
-git fetch --keep ||
+git fetch ||
 	USE_HTTP=t &&
         git config remote.origin.url $MSYSGIT_REPO_HTTP &&
-        git fetch --keep ||
+        git fetch || {
+		echo -n "Please enter a HTTP proxy: " &&
+		read proxy &&
+		test ! -z "$proxy" &&
+		export http_proxy="$proxy" &&
+		git fetch
+	} ||
 	error "Could not get msysgit.git"
 
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
@@ -107,7 +115,7 @@ git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
 git fetch mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git fetch --keep origin &&
+git fetch origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
 	FOURMSYS=$(cd .. && git ls-tree HEAD git |
@@ -131,7 +139,7 @@ cd doc/git/html &&
 git init &&
 git config remote.origin.url $GIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/html:refs/remotes/origin/html' &&
-git fetch --keep origin &&
+git fetch origin &&
 git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
 	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
 error "Couldn't update submodule doc/git/html (HTML help will not work)."

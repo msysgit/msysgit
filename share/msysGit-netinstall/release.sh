@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Recreate GitMe-$VERSION.exe
+# Recreate msysGit-netinstall-$VERSION.exe
 
 test -z "$1" && {
 	echo "Usage: $0 <version> [<msysgitbranch> [<4msysgitbranch>]]"
@@ -11,11 +11,11 @@ MSYSGITBRANCH="$2"
 test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=master
 FOURMSYSGITBRANCH="$3"
 
-TARGET="$HOME"/GitMe-"$1".exe
+TARGET="$HOME"/msysGit-netinstall-"$1".exe
 TMPDIR=/tmp/installer-tmp
 OPTS7="-m0=lzma -mx=9 -md=64M"
 TMPPACK=/tmp.7z
-SHARE=/share/GitMe
+SHARE=/share/msysGit-netinstall
 
 test ! -d "$TMPDIR" || rm -rf "$TMPDIR" || exit
 mkdir "$TMPDIR" &&
@@ -38,7 +38,7 @@ cd .. &&
 7z a $OPTS7 "$TMPPACK" installer-tmp &&
 (cat /share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
- echo 'Title="GitMe: MinGW Git + MSys installation"' &&
+ echo 'Title="msysGit-netinstall: MinGW Git + MSys DevEnv installation"' &&
  echo 'BeginPrompt="This archive contains the minimal system needed to\nbootstrap the latest MinGW Git and MSys environment"' &&
  echo 'CancelPrompt="Do you want to cancel MSysGit installation?"' &&
  echo 'ExtractDialogText="Please, wait..."' &&
