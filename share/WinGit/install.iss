@@ -437,13 +437,27 @@ end;
 
 function InitializeUninstall:Boolean;
 var
-    Msg:string;
+    FileName,NewName,Msg:string;
 begin
-    Result:=DeleteFile(ExpandConstant('{app}')+'\bin\ssh-agent.exe');
-    if not Result then begin
-        Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
-        MsgBox(Msg,mbError,MB_OK);
-        Log(Msg);
+    FileName:=ExpandConstant('{app}')+'\bin\ssh-agent.exe';
+    if FileExists(FileName) then begin
+        // Create a temporary copy of the file we try to delete.
+        NewName:=FileName+'.'+IntToStr(1000+Random(9000));
+        Result:=FileCopy(FileName,NewName,True) and DeleteFile(FileName);
+
+        if not Result then begin
+            Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            
+            // Clean-up the temporary copy (ignoring any errors).
+            DeleteFile(NewName);
+        end else begin
+            // Clean-up the temporary copy (ignoring any errors).
+            RenameFile(NewName,FileName);
+        end;
+    end else begin
+        Result:=True;
     end;
 end;
 
