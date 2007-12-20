@@ -18,7 +18,7 @@ cd "$(dirname "$0")"
 cat fileList.txt | (cd / && xargs git rm) || exit
 
 url=ftp://ftp.funet.fi/pub/CPAN/src/
-version=5.6.1
+version=5.8.8
 
 p=perl-$version
 tar=$p.tar.gz
