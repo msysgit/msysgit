@@ -20,7 +20,6 @@ ChangesEnvironment=yes
 DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
 DisableReadyPage=yes
-InfoAfterFile=ReleaseNotes.rtf
 LicenseFile=gpl-2.0.rtf
 PrivilegesRequired=none
 UninstallDisplayIcon=etc\git.ico
@@ -37,6 +36,7 @@ Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Win
 
 [Files]
 Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
+Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\bin\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
