@@ -20,17 +20,53 @@ Git-1.5.3.exe
 
 We'll not necessary reach a stable release for each official version
 number. If we merge changes from git.git we will adjust the number.
-For example, we might jump to WinGit-1.5.3.3-rc1 without ever releasing
-WinGit-1.5.3. We should stay with preview/beta/rc until we have reached
+For example, we might jump to Git-1.5.3.3-rc1 without ever releasing
+Git-1.5.3. We should stay with preview/beta/rc until we have reached
 sufficient stability.
 
 We use the following criteria to decide if we go stable.
     * features equivalent to official git-#-#-# are available in Git Bash.
-    * git-gui works if run from Git Bash.
-    * git-gui works if run from Start Menu.
-    * git and git-gui available from Windows Command Prompt (cmd shell).
+    * [DONE] git-gui works if run from Git Bash.
+    * [DONE] git-gui works if run from Start Menu.
+    * [DONE] git and git-gui available from Windows Command Prompt (cmd shell).
     * server functionality (git-daemon, git-shell, ...) _not_ necessarily
       supported.
     * git-cheetah _not_ needed.
 
 For now we should only release previews.
+
+
+He are the step by step instructions for the maintainer:
+
+   cd /git
+   git fetch mingw
+   git fetch junio
+   git checkout devel
+   git merge mingw/master
+   make clean
+   make install
+   make -k test | tee test.log
+   # check test.log
+   git push . devel:master  # should fast-forward
+
+   cd /doc/git/html
+   git fetch
+   git checkout origin/html
+
+   cd /share/WinGit
+   git checkout devel
+   start ReleaseNotes.rtf # edit and save
+   git commit -a
+   git push . devel:master
+   git tag -a -m "Git-<version>"
+   ./release.sh <version>
+
+   # test installer
+   # upload to Google code (verify sha1)
+   cd /git
+   git push
+   cd /
+   git push
+   git push Git-<version>  # don't forget to push tag
+
+   # reply to Junio's announcement
