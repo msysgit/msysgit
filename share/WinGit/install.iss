@@ -47,6 +47,8 @@ Name: "{code:GetShellFolder|desktop}\Git Bash"; Filename: "{syswow64}\cmd.exe"; 
 
 [Messages]
 BeveledLabel={#emit APP_URL}
+SetupAppTitle={#emit APP_NAME} Setup
+SetupWindowTitle={#emit APP_NAME} Setup
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
