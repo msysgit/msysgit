@@ -523,7 +523,7 @@ begin
     end;
 
     Command:=AppDir+'\setup.ini';
-    if not DeleteFile(Command) then begin
+    if (FileExists(Command) and (not DeleteFile(Command))) then begin
         Msg:='Line {#emit __LINE__}: Unable to delete file "'+Command+'".';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
