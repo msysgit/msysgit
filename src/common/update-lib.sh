@@ -24,7 +24,7 @@ pre_install () {
 		echo "No file list specified for pre_install"
 		exit 1
 	}
-	test -s "$FILELIST" &&
+	! test -s "$FILELIST" ||
 		cat "$FILELIST" | (cd / && xargs git --ignore-unmatch rm) ||
 		exit
 }
