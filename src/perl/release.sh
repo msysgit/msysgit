@@ -19,18 +19,17 @@ cat fileList.txt | (cd / && xargs git rm) || exit
 
 url=ftp://ftp.funet.fi/pub/CPAN/src/
 version=5.8.8
+md5='b8c118d4360846829beb30b02a6b91a7'
 
 p=perl-$version
 tar=$p.tar.gz
-for ext in "" .md5
-do
-	f=$tar$ext
-	test -f $f && continue
-	echo "Downloading $f ..." 
-	curl $url/$f -o $f || exit
-done
+test -f $tar || {
+	echo "Downloading $tar ..." 
+	curl $url/$tar -o $tar || exit
+}
 
 echo "Verifying md5 sum ..." 
+echo "$md5 *$tar" > $tar.md5
 md5sum -c --status $tar.md5 || exit
 
 test -d $p || {
@@ -58,6 +57,7 @@ MSYSTEM=MSYS
 
 test -f config.sh || ./Configure -de || exit
 
+# TODO! why is msys-perl5_8.dll not installed properly?
 LIB= make install || exit
 
 # update index
