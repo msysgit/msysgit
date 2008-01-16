@@ -1,0 +1,40 @@
+From b9850f5cc87124b9fdc95968124abe56e54796ee Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Thu, 20 Dec 2007 21:09:38 +0100
+Subject: [PATCH] Work around misdetected MSys features
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ apr-util/crypto/apr_md5.c |    2 +-
+ apr/file_io/unix/dir.c    |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/apr-util/crypto/apr_md5.c b/apr-util/crypto/apr_md5.c
+index ef77a58..765d6a3 100644
+--- a/apr-util/crypto/apr_md5.c
++++ b/apr-util/crypto/apr_md5.c
+@@ -692,7 +692,7 @@ APU_DECLARE(apr_status_t) apr_password_validate(const char *passwd,
+         /*
+          * It's not our algorithm, so feed it to crypt() if possible.
+          */
+-#if defined(WIN32) || defined(BEOS) || defined(NETWARE)
++#if defined(WIN32) || defined(BEOS) || defined(NETWARE) || 1
+         apr_cpystrn(sample, passwd, sizeof(sample) - 1);
+ #elif defined(CRYPT_R_CRYPTD)
+         CRYPTD buffer;
+diff --git a/apr/file_io/unix/dir.c b/apr/file_io/unix/dir.c
+index c42002a..1ead7e1 100644
+--- a/apr/file_io/unix/dir.c
++++ b/apr/file_io/unix/dir.c
+@@ -138,7 +138,7 @@ apr_status_t apr_dir_read(apr_finfo_t *finfo, apr_int32_t wanted,
+     apr_filetype_e type;
+ #endif
+ #if APR_HAS_THREADS && defined(_POSIX_THREAD_SAFE_FUNCTIONS) \
+-                    && !defined(READDIR_IS_THREAD_SAFE)
++                    && !defined(READDIR_IS_THREAD_SAFE) && 0
+     struct dirent *retent;
+ 
+     ret = readdir_r(thedir->dirstruct, thedir->entry, &retent);
+-- 
+1.5.3.6.2073.ga1e8
+
