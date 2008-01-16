@@ -72,6 +72,20 @@ extract () {
 	}
 }
 
+apply_patches () {
+	test -d "$d"/.git && return
+	patchdir="$(pwd)"/patches
+	(cd "$d" &&
+	 git init &&
+	 git add . &&
+	 git commit -m initial &&
+	 for p in "$patchdir"/*.patch
+	 do
+		git am "$p" || exit
+	 done) ||
+	exit
+}
+
 setup () {
 	test -z "$d" &&
 		die "Script did not specify a directory"
