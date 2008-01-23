@@ -5,6 +5,6 @@
 
 m4_define([m4_PACKAGE_NAME],      [GNU Autoconf])
 m4_define([m4_PACKAGE_TARNAME],   [autoconf])
-m4_define([m4_PACKAGE_VERSION],   [2.61])
-m4_define([m4_PACKAGE_STRING],    [GNU Autoconf 2.61])
+m4_define([m4_PACKAGE_VERSION],   [2.56])
+m4_define([m4_PACKAGE_STRING],    [GNU Autoconf 2.56])
 m4_define([m4_PACKAGE_BUGREPORT], [bug-autoconf@gnu.org])

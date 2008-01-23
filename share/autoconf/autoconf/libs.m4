@@ -1,7 +1,7 @@
 # This file is part of Autoconf.                       -*- Autoconf -*-
 # Checking for libraries.
 # Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-# 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+# 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
 
 # As a special exception, the Free Software Foundation gives unlimited
 # permission to copy, distribute and modify the configure scripts that
@@ -67,29 +67,24 @@
 # --------------------------------------------------------
 # Search for a library defining FUNC, if it's not already available.
 AC_DEFUN([AC_SEARCH_LIBS],
-[AS_VAR_PUSHDEF([ac_Search], [ac_cv_search_$1])dnl
-AC_CACHE_CHECK([for library containing $1], [ac_Search],
+[AC_CACHE_CHECK([for library containing $1], [ac_cv_search_$1],
 [ac_func_search_save_LIBS=$LIBS
-AC_LANG_CONFTEST([AC_LANG_CALL([], [$1])])
-for ac_lib in '' $2; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
+ac_cv_search_$1=no
+AC_LINK_IFELSE([AC_LANG_CALL([], [$1])],
+               [ac_cv_search_$1="none required"])
+if test "$ac_cv_search_$1" = no; then
+  for ac_lib in $2; do
     LIBS="-l$ac_lib $5 $ac_func_search_save_LIBS"
-  fi
-  AC_LINK_IFELSE([], [AS_VAR_SET([ac_Search], [$ac_res])])
-  AS_VAR_SET_IF([ac_Search], [break])dnl
-done
-AS_VAR_SET_IF([ac_Search], , [AS_VAR_SET([ac_Search], [no])])dnl
-rm conftest.$ac_ext
+    AC_LINK_IFELSE([AC_LANG_CALL([], [$1])],
+                   [ac_cv_search_$1="-l$ac_lib"
+break])
+  done
+fi
 LIBS=$ac_func_search_save_LIBS])
-ac_res=AS_VAR_GET([ac_Search])
-AS_IF([test "$ac_res" != no],
-  [test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+AS_IF([test "$ac_cv_search_$1" != no],
+  [test "$ac_cv_search_$1" = "none required" || LIBS="$ac_cv_search_$1 $LIBS"
   $3],
       [$4])dnl
-AS_VAR_POPDEF([ac_Search])dnl
 ])
 
 
@@ -121,16 +116,16 @@ AS_VAR_POPDEF([ac_Search])dnl
 AC_DEFUN([AC_CHECK_LIB],
 [m4_ifval([$3], , [AH_CHECK_LIB([$1])])dnl
 AS_LITERAL_IF([$1],
-	      [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1_$2])],
-	      [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1''_$2])])dnl
-AC_CACHE_CHECK([for $2 in -l$1], [ac_Lib],
+              [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1_$2])],
+              [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1''_$2])])dnl
+AC_CACHE_CHECK([for $2 in -l$1], ac_Lib,
 [ac_check_lib_save_LIBS=$LIBS
 LIBS="-l$1 $5 $LIBS"
 AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
-	       [AS_VAR_SET([ac_Lib], [yes])],
-	       [AS_VAR_SET([ac_Lib], [no])])
+               [AS_VAR_SET(ac_Lib, yes)],
+               [AS_VAR_SET(ac_Lib, no)])
 LIBS=$ac_check_lib_save_LIBS])
-AS_IF([test AS_VAR_GET([ac_Lib]) = yes],
+AS_IF([test AS_VAR_GET(ac_Lib) = yes],
       [m4_default([$3], [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$1))
   LIBS="-l$1 $LIBS"
 ])],
@@ -142,8 +137,8 @@ AS_VAR_POPDEF([ac_Lib])dnl
 # AH_CHECK_LIB(LIBNAME)
 # ---------------------
 m4_define([AH_CHECK_LIB],
-[AH_TEMPLATE(AS_TR_CPP([HAVE_LIB$1]),
-	     [Define to 1 if you have the `$1' library (-l$1).])])
+[AH_TEMPLATE(AS_TR_CPP(HAVE_LIB$1),
+             [Define to 1 if you have the `]$1[' library (-l]$1[).])])
 
 
 # AC_HAVE_LIBRARY(LIBRARY,
@@ -158,9 +153,9 @@ m4_define([AH_CHECK_LIB],
 # it must be a literal name.
 AU_DEFUN([AC_HAVE_LIBRARY],
 [m4_pushdef([AC_Lib_Name],
-	    m4_bpatsubst(m4_bpatsubst([[$1]],
-				    [lib\([^\.]*\)\.a], [\1]),
-			[-l], []))dnl
+            m4_bpatsubst(m4_bpatsubst([[$1]],
+                                    [lib\([^\.]*\)\.a], [\1]),
+                        [-l], []))dnl
 AC_CHECK_LIB(AC_Lib_Name, main, [$2], [$3], [$4])dnl
 ac_cv_lib_[]AC_Lib_Name()=ac_cv_lib_[]AC_Lib_Name()_main
 m4_popdef([AC_Lib_Name])dnl
@@ -185,35 +180,29 @@ m4_popdef([AC_Lib_Name])dnl
 # Internal subroutine of _AC_PATH_X.
 # Set ac_x_includes and/or ac_x_libraries.
 m4_define([_AC_PATH_X_XMKMF],
-[AC_ARG_VAR(XMKMF, [Path to xmkmf, Makefile generator for X Window System])dnl
-rm -f -r conftest.dir
+[rm -fr conftest.dir
 if mkdir conftest.dir; then
   cd conftest.dir
+  # Make sure to not put "make" in the Imakefile rules, since we grep it out.
   cat >Imakefile <<'_ACEOF'
-incroot:
-	@echo incroot='${INCROOT}'
-usrlibdir:
-	@echo usrlibdir='${USRLIBDIR}'
-libdir:
-	@echo libdir='${LIBDIR}'
+acfindx:
+	@echo 'ac_im_incroot="${INCROOT}"; ac_im_usrlibdir="${USRLIBDIR}"; ac_im_libdir="${LIBDIR}"'
 _ACEOF
-  if (export CC; ${XMKMF-xmkmf}) >/dev/null 2>/dev/null && test -f Makefile; then
+  if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
     # GNU make sometimes prints "make[1]: Entering...", which would confuse us.
-    for ac_var in incroot usrlibdir libdir; do
-      eval "ac_im_$ac_var=\`\${MAKE-make} $ac_var 2>/dev/null | sed -n 's/^$ac_var=//p'\`"
-    done
+    eval `${MAKE-make} acfindx 2>/dev/null | grep -v make`
     # Open Windows xmkmf reportedly sets LIBDIR instead of USRLIBDIR.
     for ac_extension in a so sl; do
-      if test ! -f "$ac_im_usrlibdir/libX11.$ac_extension" &&
-	 test -f "$ac_im_libdir/libX11.$ac_extension"; then
-	ac_im_usrlibdir=$ac_im_libdir; break
+      if test ! -f $ac_im_usrlibdir/libX11.$ac_extension &&
+         test -f $ac_im_libdir/libX11.$ac_extension; then
+        ac_im_usrlibdir=$ac_im_libdir; break
       fi
     done
     # Screen out bogus values from the imake configuration.  They are
     # bogus both because they are the default anyway, and because
     # using them would break gcc on systems where it needs fixed includes.
     case $ac_im_incroot in
-	/usr/include) ac_x_includes= ;;
+	/usr/include) ;;
 	*) test -f "$ac_im_incroot/X11/Xos.h" && ac_x_includes=$ac_im_incroot;;
     esac
     case $ac_im_usrlibdir in
@@ -222,7 +211,7 @@ _ACEOF
     esac
   fi
   cd ..
-  rm -f -r conftest.dir
+  rm -fr conftest.dir
 fi
 ])# _AC_PATH_X_XMKMF
 
@@ -270,13 +259,13 @@ ac_x_header_dirs='
 /usr/openwin/share/include'
 
 if test "$ac_x_includes" = no; then
-  # Guess where to find include files, by looking for Xlib.h.
+  # Guess where to find include files, by looking for Intrinsic.h.
   # First, try using that file with no special directory specified.
-  AC_PREPROC_IFELSE([AC_LANG_SOURCE([@%:@include <X11/Xlib.h>])],
+  AC_PREPROC_IFELSE([AC_LANG_SOURCE([@%:@include <X11/Intrinsic.h>])],
 [# We can compile using X headers with no special include directory.
 ac_x_includes=],
 [for ac_dir in $ac_x_header_dirs; do
-  if test -r "$ac_dir/X11/Xlib.h"; then
+  if test -r "$ac_dir/X11/Intrinsic.h"; then
     ac_x_includes=$ac_dir
     break
   fi
@@ -288,18 +277,18 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lX11 $LIBS"
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <X11/Xlib.h>],
-				  [XrmInitialize ()])],
-		 [LIBS=$ac_save_LIBS
+  LIBS="-lXt $LIBS"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <X11/Intrinsic.h>],
+                                  [XtMalloc (0)])],
+                 [LIBS=$ac_save_LIBS
 # We can link X programs with no special library path.
 ac_x_libraries=],
-		 [LIBS=$ac_save_LIBS
+                 [LIBS=$ac_save_LIBS
 for ac_dir in `echo "$ac_x_includes $ac_x_header_dirs" | sed s/include/lib/g`
 do
   # Don't even attempt the hair of trying to link an X program!
   for ac_extension in a so sl; do
-    if test -r "$ac_dir/libX11.$ac_extension"; then
+    if test -r $ac_dir/libXt.$ac_extension; then
       ac_x_libraries=$ac_dir
       break 2
     fi
@@ -318,16 +307,14 @@ AC_DEFUN([_AC_PATH_X],
 ac_x_includes=no ac_x_libraries=no
 _AC_PATH_X_XMKMF
 _AC_PATH_X_DIRECT
-case $ac_x_includes,$ac_x_libraries in #(
-  no,* | *,no | *\'*)
-    # Didn't find X, or a directory has "'" in its name.
-    ac_cv_have_x="have_x=no";; #(
-  *)
-    # Record where we found X for the cache.
-    ac_cv_have_x="have_x=yes\
-	ac_x_includes='$ac_x_includes'\
-	ac_x_libraries='$ac_x_libraries'"
-esac])dnl
+if test "$ac_x_includes" = no || test "$ac_x_libraries" = no; then
+  # Didn't find X anywhere.  Cache the known absence of X.
+  ac_cv_have_x="have_x=no"
+else
+  # Record where we found X for the cache.
+  ac_cv_have_x="have_x=yes \
+	        ac_x_includes=$ac_x_includes ac_x_libraries=$ac_x_libraries"
+fi])dnl
 ])
 
 
@@ -352,11 +339,12 @@ if test "x$with_x" = xno; then
   # The user explicitly disabled X.
   have_x=disabled
 else
-  case $x_includes,$x_libraries in #(
-    *\'*) AC_MSG_ERROR([Cannot use X directory names containing ']);; #(
-    *,NONE | NONE,*) _AC_PATH_X;; #(
-    *) have_x=yes;;
-  esac
+  if test "x$x_includes" != xNONE && test "x$x_libraries" != xNONE; then
+    # Both variables are already set.
+    have_x=yes
+  else
+    _AC_PATH_X
+  fi
   eval "$ac_cv_have_x"
 fi # $with_x != no
 
@@ -368,9 +356,8 @@ else
   test "x$x_includes" = xNONE && x_includes=$ac_x_includes
   test "x$x_libraries" = xNONE && x_libraries=$ac_x_libraries
   # Update the cache value to reflect the command line values.
-  ac_cv_have_x="have_x=yes\
-	ac_x_includes='$x_includes'\
-	ac_x_libraries='$x_libraries'"
+  ac_cv_have_x="have_x=yes \
+		ac_x_includes=$x_includes ac_x_libraries=$x_libraries"
   AC_MSG_RESULT([libraries $x_libraries, headers $x_includes])
 fi
 ])# AC_PATH_X
@@ -385,7 +372,7 @@ AC_DEFUN([AC_PATH_XTRA],
 if test "$no_x" = yes; then
   # Not all programs may use this symbol, but it does not hurt to define it.
   AC_DEFINE([X_DISPLAY_MISSING], 1,
-	    [Define to 1 if the X Window System is missing or not being used.])
+            [Define to 1 if the X Window System is missing or not being used.])
   X_CFLAGS= X_PRE_LIBS= X_LIBS= X_EXTRA_LIBS=
 else
   if test -n "$x_includes"; then
@@ -395,22 +382,29 @@ else
   # It would also be nice to do this for all -L options, not just this one.
   if test -n "$x_libraries"; then
     X_LIBS="$X_LIBS -L$x_libraries"
+dnl FIXME: banish uname from this macro!
     # For Solaris; some versions of Sun CC require a space after -R and
     # others require no space.  Words are not sufficient . . . .
-    AC_MSG_CHECKING([whether -R must be followed by a space])
-    ac_xsave_LIBS=$LIBS; LIBS="$LIBS -R$x_libraries"
-    ac_xsave_[]_AC_LANG_ABBREV[]_werror_flag=$ac_[]_AC_LANG_ABBREV[]_werror_flag
-    ac_[]_AC_LANG_ABBREV[]_werror_flag=yes
-    AC_LINK_IFELSE([AC_LANG_PROGRAM()],
-      [AC_MSG_RESULT([no])
-       X_LIBS="$X_LIBS -R$x_libraries"],
-      [LIBS="$ac_xsave_LIBS -R $x_libraries"
-       AC_LINK_IFELSE([AC_LANG_PROGRAM()],
-	 [AC_MSG_RESULT([yes])
-	  X_LIBS="$X_LIBS -R $x_libraries"],
-	 [AC_MSG_RESULT([neither works])])])
-    ac_[]_AC_LANG_ABBREV[]_werror_flag=$ac_xsave_[]_AC_LANG_ABBREV[]_werror_flag
-    LIBS=$ac_xsave_LIBS
+    case `(uname -sr) 2>/dev/null` in
+    "SunOS 5"*)
+      AC_MSG_CHECKING([whether -R must be followed by a space])
+      ac_xsave_LIBS=$LIBS; LIBS="$LIBS -R$x_libraries"
+      AC_LINK_IFELSE([AC_LANG_PROGRAM()], ac_R_nospace=yes, ac_R_nospace=no)
+      if test $ac_R_nospace = yes; then
+	AC_MSG_RESULT([no])
+	X_LIBS="$X_LIBS -R$x_libraries"
+      else
+	LIBS="$ac_xsave_LIBS -R $x_libraries"
+	AC_LINK_IFELSE([AC_LANG_PROGRAM()], ac_R_space=yes, ac_R_space=no)
+	if test $ac_R_space = yes; then
+	  AC_MSG_RESULT([yes])
+	  X_LIBS="$X_LIBS -R $x_libraries"
+	else
+	  AC_MSG_RESULT([neither works])
+	fi
+      fi
+      LIBS=$ac_xsave_LIBS
+    esac
   fi
 
   # Check for system-dependent libraries X programs must link with.
@@ -425,7 +419,7 @@ else
     # the Alpha needs dnet_stub (dnet does not exist).
     ac_xsave_LIBS="$LIBS"; LIBS="$LIBS $X_LIBS -lX11"
     AC_LINK_IFELSE([AC_LANG_CALL([], [XOpenDisplay])],
-		   [],
+                   [],
     [AC_CHECK_LIB(dnet, dnet_ntoa, [X_EXTRA_LIBS="$X_EXTRA_LIBS -ldnet"])
     if test $ac_cv_lib_dnet_dnet_ntoa = no; then
       AC_CHECK_LIB(dnet_stub, dnet_ntoa,
@@ -445,7 +439,7 @@ else
     if test $ac_cv_func_gethostbyname = no; then
       AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl")
       if test $ac_cv_lib_nsl_gethostbyname = no; then
-	AC_CHECK_LIB(bsd, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lbsd")
+        AC_CHECK_LIB(bsd, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lbsd")
       fi
     fi
 

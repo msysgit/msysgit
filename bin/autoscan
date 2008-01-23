@@ -1,10 +1,7 @@
 #! /bin/perl -w
 # -*- perl -*-
-# Generated from autoscan.in; do not edit by hand.
-
 # autoscan - Create configure.scan (a preliminary configure.ac) for a package.
-# Copyright (C) 1994, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-#  Free Software Foundation, Inc.
+# Copyright (C) 1994, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +15,8 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
 
 # Written by David MacKenzie <djm@gnu.ai.mit.edu>.
 
@@ -28,30 +25,21 @@ eval 'case $# in 0) exec /bin/perl -S "$0";; *) exec /bin/perl -S "$0" "$@";; es
 
 BEGIN
 {
-  my $datadir = $ENV{'autom4te_perllibdir'} || '/usr/share/autoconf';
-  unshift @INC, $datadir;
-
-  # Override SHELL.  On DJGPP SHELL may not be set to a shell
-  # that can handle redirection and quote arguments correctly,
-  # e.g.: COMMAND.COM.  For DJGPP always use the shell that configure
-  # has detected.
-  $ENV{'SHELL'} = '/bin/sh' if ($^O eq 'dos');
+  my $perllibdir = $ENV{'autom4te_perllibdir'} || "/usr/share/autoconf";
+  unshift @INC, "$perllibdir";
 }
 
-use Autom4te::ChannelDefs;
-use Autom4te::Configure_ac;
 use Autom4te::General;
-use Autom4te::FileUtils;
 use Autom4te::XFile;
 use File::Basename;
 use File::Find;
 use strict;
 
-use vars qw(@cfiles @makefiles @shfiles @subdirs %printed);
+use vars qw(@cfiles @makefiles @shfiles %printed);
 
 # The kind of the words we are looking for.
 my @kinds = qw (function header identifier program
-		makevar librarie);
+                makevar librarie);
 
 # For each kind, the default macro.
 my %generic_macro =
@@ -91,7 +79,7 @@ my %needed_macros =
   );
 
 my $configure_scan = 'configure.scan';
-my $log;
+my $log = new Autom4te::XFile ">$me.log";
 
 # Autoconf and lib files.
 my $autom4te = $ENV{'AUTOM4TE'} || '/usr/bin/autom4te';
@@ -122,14 +110,12 @@ Report bugs to <bug-autoconf\@gnu.org>.\n";
 
 # $version
 # --------
-$version = "autoscan (GNU Autoconf) 2.61
-Copyright (C) 2006 Free Software Foundation, Inc.
-This is free software.  You may redistribute copies of it under the terms of
-the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
-There is NO WARRANTY, to the extent permitted by law.
-
+$version = "autoscan (GNU Autoconf) 2.56
 Written by David J. MacKenzie and Akim Demaille.
-";
+
+Copyright 2002 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
 
 
 
@@ -152,7 +138,7 @@ Try `$me --help' for more information.\n"
 
   my $srcdir = $ARGV[0] || ".";
 
-  verb "srcdir = $srcdir";
+  verbose "srcdir = $srcdir";
   chdir $srcdir || error "cannot cd to $srcdir: $!";
 }
 
@@ -233,17 +219,17 @@ sub used ($$;$)
 ## ----------------------- ##
 
 
-# scan_c_file ($FILE-NAME)
-# ------------------------
+# scan_c_file ($FILENAME)
+# -----------------------
 sub scan_c_file ($)
 {
-  my ($file_name) = @_;
+  my ($filename) = @_;
   push @cfiles, $File::Find::name;
 
   # Nonzero if in a multiline comment.
   my $in_comment = 0;
 
-  my $file = new Autom4te::XFile "<$file_name";
+  my $file = new Autom4te::XFile "<$filename";
 
   while ($_ = $file->getline)
     {
@@ -306,10 +292,10 @@ sub scan_c_file ($)
 # -----------------------------
 sub scan_makefile ($)
 {
-  my ($file_name) = @_;
+  my ($filename) = @_;
   push @makefiles, $File::Find::name;
 
-  my $file = new Autom4te::XFile "<$file_name";
+  my $file = new Autom4te::XFile "<$filename";
 
   while ($_ = $file->getline)
     {
@@ -348,10 +334,10 @@ sub scan_makefile ($)
 # --------------------------------
 sub scan_sh_file ($)
 {
-  my ($file_name) = @_;
+  my ($filename) = @_;
   push @shfiles, $File::Find::name;
 
-  my $file = new Autom4te::XFile "<$file_name";
+  my $file = new Autom4te::XFile "<$filename";
 
   while ($_ = $file->getline)
     {
@@ -373,7 +359,7 @@ sub scan_sh_file ($)
 
 # scan_file ()
 # ------------
-# Called by &find on each file.  $_ contains the current file name with
+# Called by &find on each file.  $_ contains the current filename with
 # the current directory of the walk through.
 sub scan_file ()
 {
@@ -387,15 +373,6 @@ sub scan_file ()
   # Strip a useless leading `./'.
   $File::Find::name =~ s,^\./,,;
 
-  if ($_ ne '.' and -d $_ and
-      -f "$_/configure.in"  ||
-      -f "$_/configure.ac"  ||
-      -f "$_/configure.gnu" ||
-      -f "$_/configure")
-    {
-      $File::Find::prune = 1;
-      push @subdirs, $File::Find::name;
-    }
   if (/\.[chlym](\.in)?$/)
     {
       used 'program', 'cc', $File::Find::name;
@@ -526,7 +503,7 @@ sub output ($)
     ("#                                               -*- Autoconf -*-\n" .
      "# Process this file with autoconf to produce a configure script.\n" .
      "\n" .
-     "AC_PREREQ(2.61)\n" .
+     "AC_PREREQ(2.56)\n" .
      "AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)\n");
   if (defined $cfiles[0])
     {
@@ -541,7 +518,6 @@ sub output ($)
   output_kind ($file, 'identifier');
   output_kind ($file, 'function');
 
-  print $file "\n";
   if (@makefiles)
     {
       # Change DIR/Makefile.in to DIR/Makefile.
@@ -550,15 +526,9 @@ sub output ($)
 	  $m =~ s/\.(?:in|am)$//;
 	  $unique_makefiles{$m}++;
 	}
-      print $file ("AC_CONFIG_FILES([",
+      print $file ("\nAC_CONFIG_FILES([",
 		   join ("\n                 ",
 			 sort keys %unique_makefiles), "])\n");
-    }
-  if (@subdirs)
-    {
-      print $file ("AC_CONFIG_SUBDIRS([",
-		   join ("\n                   ",
-			 sort @subdirs), "])\n");
     }
   print $file "AC_OUTPUT\n";
 
@@ -587,7 +557,7 @@ sub check_configure_ac ($)
     join (' --trace=', '',
 	  uniq (sort (map { s/\(.*//; $_ } keys %needed_macros)));
 
-  verb "running: $autoconf $trace_option $configure_ac";
+  verbose "running: $autoconf $trace_option $configure_ac";
   my $traces =
     new Autom4te::XFile "$autoconf $trace_option $configure_ac|";
 
@@ -626,9 +596,9 @@ sub check_configure_ac ($)
 	    . "\n");
       print $log "$me: warning: missing $macro wanted by: \n";
       foreach my $need (@{$needed_macros{$macro}})
-	{
-	  print $log "\t$need\n";
-	}
+        {
+          print $log "\t$need\n";
+        }
     }
 }
 
@@ -638,8 +608,6 @@ sub check_configure_ac ($)
 ## -------------- ##
 
 parse_args;
-$log = new Autom4te::XFile ">$me.log";
-
 $autoconf .= " --debug" if $debug;
 $autoconf .= " --verbose" if $verbose;
 $autoconf .= join (' --include=', '', @include);
@@ -649,7 +617,7 @@ my $configure_ac = find_configure_ac;
 init_tables;
 scan_files;
 output ('configure.scan');
-if (-f $configure_ac)
+if ($configure_ac)
   {
     check_configure_ac ($configure_ac);
   }

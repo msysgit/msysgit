@@ -1,4 +1,4 @@
-# Copyright (C) 2001, 2003, 2004, 2006 Free Software Foundation, Inc.
+# Copyright 2001 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,14 +12,14 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
 
 # Written by Akim Demaille <akim@freefriends.org>.
 
 ###############################################################
-# The main copy of this file is in Automake's CVS repository. #
-# Updates should be sent to automake-patches@gnu.org.         #
+# The main copy of this file is in Autoconf's CVS repository. #
+# Updates should be sent to autoconf-patches@gnu.org.         #
 ###############################################################
 
 package Autom4te::XFile;
@@ -33,7 +33,7 @@ Autom4te::XFile - supply object methods for filehandles with error handling
     use Autom4te::XFile;
 
     $fh = new Autom4te::XFile;
-    $fh->open ("< file");
+    $fh->open("< file"))
     # No need to check $FH: we died if open failed.
     print <$fh>;
     $fh->close;
@@ -50,12 +50,12 @@ Autom4te::XFile - supply object methods for filehandles with error handling
     print <$fh>;
     undef $fh;   # automatically closes the file and checks for errors.
 
-    $fh = new Autom4te::XFile "file", O_WRONLY | O_APPEND;
+    $fh = new Autom4te::XFile "file", O_WRONLY|O_APPEND;
     # No need to check $FH: we died if new failed.
     print $fh "corge\n";
 
     $pos = $fh->getpos;
-    $fh->setpos ($pos);
+    $fh->setpos($pos);
 
     undef $fh;   # automatically closes the file and checks for errors.
 
@@ -63,11 +63,9 @@ Autom4te::XFile - supply object methods for filehandles with error handling
 
 =head1 DESCRIPTION
 
-C<Autom4te::XFile> inherits from C<IO::File>.  It provides the method
-C<name> returning the file name.  It provides dying version of the
-methods C<close>, C<lock> (corresponding to C<flock>), C<new>,
-C<open>, C<seek>, and C<trunctate>.  It also overrides the C<getline>
-and C<getlines> methods to translate C<\r\n> to C<\n>.
+C<Autom4te::XFile> inherits from C<IO::File>.  It provides dying
+version of the methods C<open>, C<new>, and C<close>.  It also overrides
+the C<getline> and C<getlines> methods to translate C<\r\n> to C<\n>.
 
 =head1 SEE ALSO
 
@@ -87,32 +85,25 @@ require 5.000;
 use strict;
 use vars qw($VERSION @EXPORT @EXPORT_OK $AUTOLOAD @ISA);
 use Carp;
-use Errno;
-use IO::File;
 use File::Basename;
-use Autom4te::ChannelDefs;
-use Autom4te::Channels qw(msg);
-use Autom4te::FileUtils;
 
 require Exporter;
 require DynaLoader;
 
 @ISA = qw(IO::File Exporter DynaLoader);
 
-$VERSION = "1.2";
+$VERSION = "1.1";
 
 @EXPORT = @IO::File::EXPORT;
 
 eval {
-  # Make all Fcntl O_XXX and LOCK_XXX constants available for importing
-  require Fcntl;
-  my @O = grep /^(LOCK|O)_/, @Fcntl::EXPORT, @Fcntl::EXPORT_OK;
-  Fcntl->import (@O);  # first we import what we want to export
-  push (@EXPORT, @O);
+    # Make all Fcntl O_XXX constants available for importing
+    require Fcntl;
+    my @O = grep /^O_/, @Fcntl::EXPORT;
+    Fcntl->import(@O);  # first we import what we want to export
+    push(@EXPORT, @O);
 };
 
-# Used in croak error messages.
-my $me = basename ($0);
 
 ################################################
 ## Constructor
@@ -121,7 +112,7 @@ my $me = basename ($0);
 sub new
 {
   my $type = shift;
-  my $class = ref $type || $type || "Autom4te::XFile";
+  my $class = ref($type) || $type || "Autom4te::XFile";
   my $fh = $class->SUPER::new ();
   if (@_)
     {
@@ -136,7 +127,7 @@ sub new
 
 sub open
 {
-  my $fh = shift;
+  my ($fh) = shift;
   my ($file) = @_;
 
   # WARNING: Gross hack: $FH is a typeglob: use its hash slot to store
@@ -147,7 +138,8 @@ sub open
 
   if (!$fh->SUPER::open (@_))
     {
-      fatal "cannot open $file: $!";
+      my $me = basename ($0);
+      croak "$me: cannot open $file: $!\n";
     }
 
   # In case we're running under MSWindows, don't write with CRLF.
@@ -163,13 +155,12 @@ sub open
 
 sub close
 {
-  my $fh = shift;
+  my ($fh) = shift;
   if (!$fh->SUPER::close (@_))
     {
-      my $file = $fh->name;
-      Autom4te::FileUtils::handle_exec_errors $file
-	unless $!;
-      fatal "cannot close $file: $!";
+      my $me = basename ($0);
+      my $file = ${*$fh}{'autom4te_xfile_file'};
+      croak "$me: cannot close $file: $!\n";
     }
 }
 
@@ -181,11 +172,11 @@ sub close
 # so we do that here.
 sub getline
 {
-  local $_ = $_[0]->SUPER::getline;
-  # Perform a _global_ replacement: $_ may can contains many lines
-  # in slurp mode ($/ = undef).
-  s/\015\012/\n/gs if defined $_;
-  return $_;
+    local $_ = $_[0]->SUPER::getline;
+    # Perform a _global_ replacement: $_ may can contains many lines
+    # in slurp mode ($/ = undef).
+    s/\015\012/\n/gs if defined $_;
+    return $_;
 }
 
 ################################################
@@ -194,81 +185,10 @@ sub getline
 
 sub getlines
 {
-  my @res = ();
-  my $line;
-  push @res, $line while $line = $_[0]->getline;
-  return @res;
-}
-
-################################################
-## Name
-##
-
-sub name
-{
-  my $fh = shift;
-  return ${*$fh}{'autom4te_xfile_file'};
-}
-
-################################################
-## Lock
-##
-
-sub lock
-{
-  my ($fh, $mode) = @_;
-  # Cannot use @_ here.
-
-  # Unless explicitly configured otherwise, Perl implements its `flock' with the
-  # first of flock(2), fcntl(2), or lockf(3) that works.  These can fail on
-  # NFS-backed files, with ENOLCK (GNU/Linux) or EOPNOTSUPP (FreeBSD); we
-  # usually ignore these errors.  If $ENV{MAKEFLAGS} suggests that a parallel
-  # invocation of GNU `make' has invoked the tool we serve, report all locking
-  # failures and abort.
-  #
-  # On Unicos, flock(2) and fcntl(2) over NFS hang indefinitely when `lockd' is
-  # not running.  NetBSD NFS clients silently grant all locks.  We do not
-  # attempt to defend against these dangers.
-  if (!flock ($fh, $mode))
-    {
-      my $make_j = (exists $ENV{'MAKEFLAGS'}
-		    && " -$ENV{'MAKEFLAGS'}" =~ / (-[BdeikrRsSw]*j|---?jobs)/);
-      my $note = "\nforgo `make -j' or use a file system that supports locks";
-      my $file = $fh->name;
-
-      msg ($make_j ? 'fatal' : 'unsupported',
-	   "cannot lock $file with mode $mode: $!" . ($make_j ? $note : ""))
-	if $make_j || !($!{ENOLCK} || $!{EOPNOTSUPP});
-    }
-}
-
-################################################
-## Seek
-##
-
-sub seek
-{
-  my $fh = shift;
-  # Cannot use @_ here.
-  if (!seek ($fh, $_[0], $_[1]))
-    {
-      my $file = $fh->name;
-      fatal "$me: cannot rewind $file with @_: $!";
-    }
-}
-
-################################################
-## Truncate
-##
-
-sub truncate
-{
-  my ($fh, $len) = @_;
-  if (!truncate ($fh, $len))
-    {
-      my $file = $fh->name;
-      fatal "cannot truncate $file at $len: $!";
-    }
+    my @res = ();
+    my $line;
+    push @res, $line while $line = $_[0]->getline;
+    return @res;
 }
 
 1;

@@ -1,8 +1,6 @@
 # This file is part of Autoconf.                -*- Autoconf -*-
 # Driver that loads the Autoconf macro files.
-#
-# Copyright (C) 1994, 1999, 2000, 2001, 2002, 2006 Free Software
-# Foundation, Inc.
+# Copyright (C) 1994, 1999, 2000, 2001, 2002  Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
 #
 # As a special exception, the Free Software Foundation gives unlimited
 # permission to copy, distribute and modify the configure scripts that
@@ -62,7 +60,6 @@ m4_include([autoconf/autotest.m4])
 m4_include([autoconf/programs.m4])
 m4_include([autoconf/lang.m4])
 m4_include([autoconf/c.m4])
-m4_include([autoconf/erlang.m4])
 m4_include([autoconf/fortran.m4])
 m4_include([autoconf/functions.m4])
 m4_include([autoconf/headers.m4])
@@ -107,10 +104,10 @@ m4_copy_unm4([m4_undivert])
 # Yet some people have started to use m4_patsubst and m4_regexp.
 m4_define([m4_patsubst],
 [m4_expand_once([m4_warn([syntax],
-		 [do not use m4_patsubst: use patsubst or m4_bpatsubst])])dnl
+                 [do not use m4_patsubst: use patsubst or m4_bpatsubst])])dnl
 patsubst($@)])
 
 m4_define([m4_regexp],
 [m4_expand_once([m4_warn([syntax],
-		 [do not use m4_regexp: use regexp or m4_bregexp])])dnl
+                 [do not use m4_regexp: use regexp or m4_bregexp])])dnl
 regexp($@)])

@@ -1,12 +1,12 @@
 #! /bin/perl -w
 # -*- perl -*-
-# Generated from autom4te.in; do not edit by hand.
+# @configure_input@
 
 eval 'case $# in 0) exec /bin/perl -S "$0";; *) exec /bin/perl -S "$0" "$@";; esac'
     if 0;
 
 # autom4te - Wrapper around M4 libraries.
-# Copyright (C) 2001, 2002, 2003, 2005, 2006 Free Software Foundation, Inc.
+# Copyright (C) 2001, 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,29 +20,214 @@ eval 'case $# in 0) exec /bin/perl -S "$0";; *) exec /bin/perl -S "$0" "$@";; es
 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
 
 
 BEGIN
 {
-  my $datadir = $ENV{'autom4te_perllibdir'} || '/usr/share/autoconf';
-  unshift @INC, $datadir;
-
-  # Override SHELL.  On DJGPP SHELL may not be set to a shell
-  # that can handle redirection and quote arguments correctly,
-  # e.g.: COMMAND.COM.  For DJGPP always use the shell that configure
-  # has detected.
-  $ENV{'SHELL'} = '/bin/sh' if ($^O eq 'dos');
+  my $datadir = ($ENV{'autom4te_perllibdir'} || '/usr/share/autoconf');
+  unshift @INC, "$datadir";
 }
 
-use Autom4te::C4che;
-use Autom4te::ChannelDefs;
-use Autom4te::Channels;
-use Autom4te::FileUtils;
+## --------- ##
+## Request.  ##
+## --------- ##
+
+package Request;
+
+use Data::Dumper;
 use Autom4te::General;
+use Autom4te::Struct;
 use Autom4te::XFile;
+use Carp;
+use strict;
+
+# List of requests.
+# We can't declare it `my' as the loading, performed via `do',
+# would refer to another scope, and @request would not be updated.
+# It used to work with `my' vars, and I don't know whether the current
+# behavior (5.6) is wanted or not.
+use vars qw(@request);
+
+struct
+  (
+   # The key of the cache files.
+   'id' => "\$",
+   # True iff %MACRO contains all the macros we want to trace.
+   'valid' => "\$",
+   # The include path.
+   'path' => '@',
+   # The set of input files.
+   'input' => '@',
+   # The set of macros currently traced.
+   'macro' => '%',
+  );
+
+
+# $REQUEST-OBJ
+# retrieve ($SELF, %ATTR)
+# -----------------------
+# Find a request with the same path and input.
+# Private.
+sub retrieve
+{
+  my ($self, %attr) = @_;
+
+  foreach (@request)
+    {
+      # Same path.
+      next
+	if join ("\n", @{$_->path}) ne join ("\n", @{$attr{path}});
+
+      # Same inputs.
+      next
+	if join ("\n", @{$_->input}) ne join ("\n", @{$attr{input}});
+
+      # Found it.
+      return $_;
+    }
+
+  return undef;
+}
+
+
+# $REQUEST-OBJ
+# register ($SELF, %ATTR)
+# -----------------------
+# NEW should not be called directly.
+# Private.
+sub register ($%)
+{
+  my ($self, %attr) = @_;
+
+  # path and input are the only ID for a request object.
+  my $obj = $self->new ('path'  => $attr{path},
+			'input' => $attr{input});
+  push @request, $obj;
+
+  # Assign an id for cache file.
+  $obj->id ("$#request");
+
+  return $obj;
+}
+
+
+# $REQUEST-OBJ
+# request($SELF, %REQUEST)
+# ------------------------
+# Return a request corresponding to $REQUEST{path} and $REQUEST{input},
+# using a cache value if it exists.
+sub request ($%)
+{
+  my ($self, %request) = @_;
+
+  my $req = Request->retrieve (%request) || Request->register (%request);
+
+  # If there are new traces to produce, then we are not valid.
+  foreach (@{$request{'macro'}})
+    {
+      if (! exists ${$req->macro}{$_})
+        {
+          ${$req->macro}{$_} = 1;
+          $req->valid (0);
+        }
+    }
+
+  # It would be great to have $REQ check that it up to date wrt its
+  # dependencies, but that requires getting traces (to fetch the
+  # included files), which is out of the scope of Request
+  # (currently?).
+
+  return $req;
+}
+
+# Serialize a request or all the current requests.
+sub marshall
+{
+  my ($caller) = @_;
+  my $res = '';
+
+  if (ref ($caller))
+    {
+      # CALLER is an object: instance method.
+      my $marshall = Data::Dumper->new ([$caller]);
+      $marshall->Indent(2)->Terse(0);
+      $res = $marshall->Dump . "\n";
+    }
+  else
+    {
+      # CALLER is the package: class method.
+      my $marshall = Data::Dumper->new ([\@request], [qw (*request)]);
+      $marshall->Indent(2)->Terse(0);
+      $res = $marshall->Dump . "\n";
+    }
+
+  return $res;
+}
+
+
+# includes_p (@MACRO)
+# -------------------
+# Does this request covers all the @MACRO.
+sub includes_p
+{
+  my ($self, @macro) = @_;
+
+  foreach (@macro)
+    {
+      return 0
+	if ! exists ${$self->macro}{$_};
+    }
+  return 1;
+}
+
+
+# SAVE ($FILENAME)
+# ----------------
+sub save
+{
+  my ($self, $filename) = @_;
+
+  croak "$me: cannot save a single request\n"
+    if ref ($self);
+
+  my $requests = new Autom4te::XFile ("> $filename");
+  print $requests
+    "# This file was created by $me.\n",
+    "# It contains the lists of macros which have been traced.\n",
+    "# It can be safely removed.\n",
+    "\n",
+    $self->marshall;
+}
+
+
+# LOAD ($FILE)
+# ------------
+sub load
+{
+  my ($self, $file) = @_;
+
+  croak "$me: cannot load a single request\n"
+    if ref ($self);
+
+  (my $return) = do "$file";
+
+  croak "$me: cannot parse $file: $@\n" if $@;
+  croak "$me: cannot do $file: $!\n"    unless defined $return;
+  croak "$me: cannot run $file\n"       unless $return;
+}
+
+
+## ---------- ##
+## Autom4te.  ##
+## ---------- ##
+
+package Autom4te;
+
+use Autom4te::General;
 use File::Basename;
+use Autom4te::XFile;
 use strict;
 
 # Data directory.
@@ -60,12 +245,11 @@ my $mode = "0666";
 my $melt = 0;
 
 # Names of the cache directory, cache directory index, trace cache
-# prefix, and output cache prefix.  And the IO objet for the index.
+# prefix, and output cache prefix.
 my $cache;
 my $icache;
 my $tcache;
 my $ocache;
-my $icache_file;
 
 # The macros to trace mapped to their format, as specified by the
 # user.
@@ -76,12 +260,16 @@ my %trace;
 # `m4_pattern_allow' to check the output.
 #
 # FIXME: What about `sinclude'?
-my @preselect = ('include',
-		 'm4_pattern_allow', 'm4_pattern_forbid',
-		 '_m4_warn');
+my @preselect = ('include', 'm4_pattern_allow', 'm4_pattern_forbid');
+
+# List of warnings.
+my @warning;
 
 # M4 include path.
 my @include;
+
+# 0 for EXIT_SUCCESS.
+my $exit_status = 0;
 
 # Do we freeze?
 my $freeze = 0;
@@ -89,13 +277,13 @@ my $freeze = 0;
 # $M4.
 my $m4 = $ENV{"M4"} || '/bin/m4';
 # Some non-GNU m4's don't reject the --help option, so give them /dev/null.
-fatal "need GNU m4 1.4 or later: $m4"
+error "need GNU m4 1.4 or later: $m4"
   if system "$m4 --help </dev/null 2>&1 | grep reload-state >/dev/null";
 
 # Set some high recursion limit as the default limit, 250, has already
 # been hit with AC_OUTPUT.  Don't override the user's choice.
 $m4 .= ' --nesting-limit=1024'
-  if " $m4 " !~ / (--nesting-limit(=[0-9]+)?|-L[0-9]*) /;
+  if " $m4 " !~ / (--nesting-limit|-L) /;
 
 
 # @M4_BUILTIN -- M4 builtins and a useful comment.
@@ -155,7 +343,8 @@ my %m4_builtin_alternate_name;
 
 # $HELP
 # -----
-$help = "Usage: $0 [OPTION] ... [FILES]
+$help = << "EOF";
+Usage: $0 [OPTION] ... [FILES]
 
 Run GNU M4 on the FILES, avoiding useless runs.  Output the traces if tracing,
 the frozen file if freezing, otherwise the expansion of the FILES.
@@ -189,9 +378,16 @@ Languages include:
   \`M4sh\'       create M4sh shell scripts
   \`M4sugar\'    create M4sugar output
 
-" . Autom4te::ChannelDefs::usage . "
+Warning categories include:
+  \`cross\'         cross compilation issues
+  \`obsolete\'      obsolete constructs
+  \`syntax\'        dubious syntactic constructs
+  \`all\'           all the warnings
+  \`no-CATEGORY\'   turn off the warnings on CATEGORY
+  \`none\'          turn off all the warnings
+  \`error\'         warnings are error
 
-The environment variables \`M4\' and \`WARNINGS\' are honored.
+The environment variable \`WARNINGS\' is honored.
 
 Library directories:
   -B, --prepend-include=DIR  prepend directory DIR to search path
@@ -205,18 +401,17 @@ Freezing:
   -F, --freeze   produce an M4 frozen state file for FILES
 
 Report bugs to <bug-autoconf\@gnu.org>.
-";
+EOF
 
 # $VERSION
 # --------
 $version =  <<"EOF";
-autom4te (GNU Autoconf) 2.61
-Copyright (C) 2006 Free Software Foundation, Inc.
-This is free software.  You may redistribute copies of it under the terms of
-the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
-There is NO WARRANTY, to the extent permitted by law.
-
+autom4te (GNU Autoconf) 2.56
 Written by Akim Demaille.
+
+Copyright 2002 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
 
@@ -270,7 +465,7 @@ sub load_configuration ($)
       my $type = shift @words;
       if ($type eq 'begin-language:')
 	{
-	  fatal "$file:$.: end-language missing for: $lang"
+	  error "$file:$.: end-language missing for: $lang"
 	    if defined $lang;
 	  $lang = lc $words[0];
 	}
@@ -282,7 +477,7 @@ sub load_configuration ($)
 	}
       elsif ($type eq 'args:')
 	{
-	  fatal "$file:$.: no current language"
+	  error "$file:$.: no current language"
 	    unless defined $lang;
 	  push @{$language{$lang}}, @words;
 	}
@@ -332,12 +527,11 @@ sub parse_args ()
   # Process the arguments for real this time.
   my @trace;
   my @prepend_include;
-  parse_WARNINGS;
   getopt
     (
      # Operation modes:
      "o|output=s"   => \$output,
-     "W|warnings=s" => \&parse_warnings,
+     "W|warnings=s" => \@warning,
      "m|mode=s"     => \$mode,
      "M|melt"       => \$melt,
 
@@ -361,7 +555,7 @@ sub parse_args ()
      "no-cache"  => sub { $cache = undef; },
     );
 
-  fatal "too few arguments
+  error "too few arguments
 Try `$me --help' for more information."
     unless @ARGV;
 
@@ -370,7 +564,7 @@ Try `$me --help' for more information."
   # And it implies melting: there is risk not to update properly using
   # old frozen files, and worse yet: we could load a frozen file and
   # refreeze it!  A sort of caching :)
-  fatal "cannot freeze and trace"
+  error "cannot freeze and trace"
     if $freeze && @trace;
   $melt = 1
     if $freeze;
@@ -449,20 +643,31 @@ sub handle_m4 ($@)
 {
   my ($req, @macro) = @_;
 
-  # GNU m4 appends when using --debugfile/--error-output.
+  # The warnings are the concatenation of 1. application's defaults,
+  # 2. $WARNINGS, $3 command line options, in that order.
+  # Set them in the order expected by the M4 macros: the converse.
+  my $m4_warnings =
+    lc join (',', reverse (split (',', ($ENV{'WARNINGS'} || '')),
+			   map { split /,/ } @warning));
+
+  # GNU m4 appends when using --error-output.
   unlink ($tcache . $req->id . "t");
 
   # Run m4.
+  #
+  # Neutralize its stdin, so that GNU M4 1.5 doesn't neutralize SIGINT.
   #
   # We don't output directly to the cache files, to avoid problems
   # when we are interrupted (that leaves corrupted files).
   xsystem ("$m4"
 	   . join (' --include=', '', @include)
+	   . " --define=m4_warnings=$m4_warnings"
 	   . ' --debug=aflq'
 	   . (!exists $ENV{'AUTOM4TE_NO_FATAL'} ? ' --fatal-warning' : '')
 	   . " --error-output=$tcache" . $req->id . "t"
 	   . join (' --trace=',   '', sort @macro)
 	   . " " . files_to_options (@ARGV)
+	   . ' </dev/null'
 	   . " >$ocache" . $req->id . "t");
 
   # Everything went ok: preserve the outputs.
@@ -470,7 +675,7 @@ sub handle_m4 ($@)
     {
       use File::Copy;
       move ("${file}t", "$file")
-	or fatal "cannot rename ${file}t as $file: $!";
+	or error "cannot not rename ${file}t as $file: $!";
     }
 }
 
@@ -515,7 +720,7 @@ sub handle_output ($$)
 {
   my ($req, $output) = @_;
 
-  verb "creating $output";
+  verbose "creating $output";
 
   # Load the forbidden/allowed patterns.
   handle_traces ($req, "$tmp/patterns",
@@ -528,10 +733,10 @@ sub handle_output ($$)
   my $forbidden = join ('|', map { /^forbid:([^:]+)/ } @patterns) || "^\$";
   my $allowed   = join ('|', map { /^allow:([^:]+)/  } @patterns) || "^\$";
 
-  verb "forbidden tokens: $forbidden";
-  verb "forbidden token : $_ => $forbidden{$_}"
+  verbose "forbidden tokens: $forbidden";
+  verbose "forbidden token : $_ => $forbidden{$_}"
     foreach (sort keys %forbidden);
-  verb "allowed   tokens: $allowed";
+  verbose "allowed   tokens: $allowed";
 
   # Read the (cached) raw M4 output, produce the actual result.  We
   # have to use the 2nd arg to have Autom4te::XFile honor the third, but then
@@ -546,7 +751,7 @@ sub handle_output ($$)
     {
       $out->open($output, O_CREAT | O_WRONLY | O_TRUNC, oct ($mode));
     }
-  fatal "cannot create $output: $!"
+  error "cannot create $output: $!"
     unless $out;
   my $in = new Autom4te::XFile ($ocache . $req->id);
 
@@ -570,7 +775,7 @@ sub handle_output ($$)
       foreach (split (/\W+/))
 	{
 	  $prohibited{$_} = $.
-	    if !/^$/ && /$forbidden/o && !/$allowed/o && ! exists $prohibited{$_};
+	    if /$forbidden/o && !/$allowed/o && ! exists $prohibited{$_};
 	}
 
       # Performed *last*: the empty quadrigraph.
@@ -587,7 +792,7 @@ sub handle_output ($$)
   # This is unsatisfying but...
   my $prohibited = '\b(' . join ('|', keys %prohibited) . ')\b';
   my $file = new Autom4te::XFile ($ARGV[$#ARGV]);
-  $exit_code = 1;
+  $exit_status = 1;
 
   while ($_ = $file->getline)
     {
@@ -648,7 +853,7 @@ sub trace_format_to_m4 ($)
 	}
       # $x, no separator given.
       elsif (s/^\$([fldn\$])//)
-	{
+        {
 	  $res .= $escape{$1};
 	}
       # $.x or ${sep}x.
@@ -672,14 +877,14 @@ sub trace_format_to_m4 ($)
 	    }
 	}
       elsif (/^(\$.)/)
-	{
+        {
 	  error "invalid escape: $1";
-	}
+        }
       else
-	{
+        {
 	  s/^([^\$]+)//;
 	  $res .= $1;
-	}
+        }
     }
 
   $_ = $underscore;
@@ -701,7 +906,7 @@ sub handle_traces ($$%)
 {
   my ($req, $output, %trace) = @_;
 
-  verb "formatting traces for `$output': " . join (', ', sort keys %trace);
+  verbose "formatting traces for `$output': ", join (', ', sort keys %trace);
 
   # Processing the traces.
   my $trace_m4 = new Autom4te::XFile (">$tmp/traces.m4");
@@ -719,27 +924,26 @@ sub handle_traces ($$%)
   #                and no new line remains.
   define([_at_at],
   [at_ifelse([$#], [1], [],
-	     [$#], [2], [[[$2]]],
-	     [[[$2]][$1]$0([$1], at_shift(at_shift($@)))])])
+             [$#], [2], [[[$2]]],
+             [[[$2]][$1]$0([$1], at_shift(at_shift($@)))])])
 
   define([_at_percent],
   [at_ifelse([$#], [1], [],
-	     [$#], [2], [at_flatten([$2])],
-	     [at_flatten([$2])[$1]$0([$1], at_shift(at_shift($@)))])])
+             [$#], [2], [at_flatten([$2])],
+             [at_flatten([$2])[$1]$0([$1], at_shift(at_shift($@)))])])
 
   define([_at_star],
   [at_ifelse([$#], [1], [],
-	     [$#], [2], [[$2]],
-	     [[$2][$1]$0([$1], at_shift(at_shift($@)))])])
+             [$#], [2], [[$2]],
+             [[$2][$1]$0([$1], at_shift(at_shift($@)))])])
 
   # FLATTEN quotes its result.
   # Note that the second pattern is `newline, tab or space'.  Don't lose
   # the tab!
   define([at_flatten],
-  [at_patsubst(at_patsubst(at_patsubst(at_patsubst([[[[$1]]]], [\\\n]),
-				       [[\n\t ]+], [ ]),
-			   [ *\(.\)$], [\1]),
-	       [^ *\(.*\)], [[\1]])])
+  [at_patsubst(at_patsubst(at_patsubst([[[$1]]], [\\\n]),
+                           [[\n\t ]+], [ ]),
+               [^ *\(.*\) *$], [[\1]])])
 
   define([at_args],    [at_shift(at_shift(at_shift(at_shift(at_shift($@)))))])
   define([at_at],      [_$0([$1], at_args($@))])
@@ -834,7 +1038,7 @@ EOF
       # It makes no sense to try to transform __oline__.
       s/\@<:\@/[/g;
       s/\@:>\@/]/g;
-      s/\@S\|\@/\$/g;
+      s/\@\$\|\@/\$/g;
       s/\@%:\@/#/g;
       s/\@&t\@//g;
       print $out $_;
@@ -920,7 +1124,7 @@ sub freeze ($)
   $result =~ s/#.*\n//g;
   $result =~ s/^\n//mg;
 
-  fatal "freezing produced output:\n$result"
+  error "freezing produced output:\n$result"
     if $result;
 
   # If freezing produces output, something went wrong: a bad `divert',
@@ -940,7 +1144,7 @@ sub freeze ($)
 mktmpdir ('am4t');
 load_configuration ($ENV{'AUTOM4TE_CFG'} || "$datadir/autom4te.cfg");
 load_configuration ("$ENV{'HOME'}/.autom4te.cfg")
-  if exists $ENV{'HOME'} && -f "$ENV{'HOME'}/.autom4te.cfg";
+  if -f "$ENV{'HOME'}/.autom4te.cfg";
 load_configuration (".autom4te.cfg")
   if -f ".autom4te.cfg";
 parse_args;
@@ -949,32 +1153,26 @@ parse_args;
 if ($freeze)
   {
     freeze ($output);
-    exit $exit_code;
+    exit 0;
   }
 
 # We need our cache directory.
 if (! -d "$cache")
   {
     mkdir "$cache", 0755
-      or fatal "cannot create $cache: $!";
+      or error "cannot create $cache: $!";
   }
 
-# Open the index for update, and lock it.  autom4te handles several
-# files, but the index is the first and last file to be update, so
-# locking it is sufficient.
-$icache_file = new Autom4te::XFile $icache, O_RDWR|O_CREAT;
-$icache_file->lock (LOCK_EX);
-
 # Read the cache index if available and older than autom4te itself.
-# If autom4te is younger, then some structures such as C4che, might
+# If autom4te is younger, then some structures such as Request, might
 # have changed, which would corrupt its processing.
-Autom4te::C4che->load ($icache_file)
+Request->load ($icache)
   if -f $icache && mtime ($icache) > mtime ($0);
 
 # Add the new trace requests.
-my $req = Autom4te::C4che->request ('input' => \@ARGV,
-				    'path'  => \@include,
-				    'macro' => [keys %trace, @preselect]);
+my $req = Request->request ('input' => \@ARGV,
+			    'path'  => \@include,
+			    'macro' => [keys %trace, @preselect]);
 
 # If $REQ's cache files are not up to date, or simply if the user
 # discarded them (-f), declare it invalid.
@@ -982,34 +1180,12 @@ $req->valid (0)
   if $force || ! up_to_date ($req);
 
 # We now know whether we can trust the Request object.  Say it.
-verb "the trace request object is:\n" . $req->marshall;
+verbose "$me: the trace request object is:\n" . $req->marshall;
 
-# We need to run M4 if (i) the user wants it (--force), (ii) $REQ is
+# We need to run M4 if (i) the users wants it (--force), (ii) $REQ is
 # invalid.
 handle_m4 ($req, keys %{$req->macro})
   if $force || ! $req->valid;
-
-# Issue the warnings each time autom4te was run.
-my $separator = "\n" . ('-' x 25) . " END OF WARNING " . ('-' x 25) . "\n\n";
-handle_traces ($req, "$tmp/warnings",
-	       ('_m4_warn' => "\$1::\$f:\$l::\$2::\$3$separator"));
-# Swallow excessive newlines.
-for (split (/\n*$separator\n*/o, contents ("$tmp/warnings")))
-{
-  # The message looks like:
-  # | syntax::input.as:5::ouch
-  # | ::input.as:4: baz is expanded from...
-  # | input.as:2: bar is expanded from...
-  # | input.as:3: foo is expanded from...
-  # | input.as:5: the top level
-  my ($cat, $loc, $msg, $stacktrace) = split ('::', $_, 4);
-  msg $cat, $loc, "warning: $msg";
-  for (split /\n/, $stacktrace)
-    {
-      my ($loc, $trace) = split (': ', $_, 2);
-      msg $cat, $loc, $trace;
-    }
-}
 
 # Now output...
 if (%trace)
@@ -1023,17 +1199,19 @@ if (%trace)
   }
 else
   {
-    # Actual M4 expansion, if the user wants it, or if $output is old
-    # (STDOUT is pretty old).
+    # Actual M4 expansion, only if $output is too old. STDOUT is
+    # pretty old.
     handle_output ($req, $output)
-      if $force || mtime ($output) < mtime ($ocache . $req->id);
+      if mtime ($output) < mtime ($ocache . $req->id);
   }
 
-# If we ran up to here, the cache is valid.
-$req->valid (1);
-Autom4te::C4che->save ($icache_file);
+# If all went fine, the cache is valid.
+$req->valid (1)
+  if $exit_status == 0;
 
-exit $exit_code;
+Request->save ($icache);
+
+exit $exit_status;
 
 ### Setup "GNU" style for perl-mode and cperl-mode.
 ## Local Variables:
