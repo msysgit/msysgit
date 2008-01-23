@@ -1,0 +1,47 @@
+#!/bin/sh
+# Copyright (C) 2002, Earnie Boyd <earnie@users.sf.net>
+# This file is a part of msysDVLPR
+#   http://www.mingw.org/msysdvlpr.shtml
+#
+# File: msysrlsbld
+# Desc: Build a package for MSYS release.
+# Vers: 1.1
+# LMDt: 2002.04.17
+
+# ccflags can be set external to control use of new flags without needing to
+# change this file. E.G.: ccflags='-O0 -g -fnative-struct -fgnu-linker'.
+if [ -z "$ccflags" ]
+then
+  ccflags='-O2 -s -fnative-struct -fgnu-linker -finline-functions'
+fi
+
+# Setting arch or archlist can be used to test changes for one arch build
+# E.G.: export arch=i686
+if [ -z $archlist ]
+then
+  if [ -z $arch ]
+  then
+    archlist='i386 i586 i686'
+  else
+    archlist=$arch
+  fi
+fi
+
+# You can set msysinstalldir so that the build installs to the project store
+# directory.  E.G.: export msysinstalldir=/prj/msys/nstl.
+if [ -z $msysinstalldir ]
+then
+  msysinstalldir=`pwd`/nstl
+fi
+
+for arch in $archlist
+do
+  make clean
+  make CFLAGS="$ccflags -march=$arch" CXXFLAGS="$ccflags -march=$arch"
+  make install prefix=$msysinstalldir/$arch
+done
+exit
+
+#TODO:
+# Add package options for configuring and building the release
+# Add release management routines.
