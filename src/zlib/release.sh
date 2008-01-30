@@ -13,15 +13,26 @@ configure_options=--prefix=
 
 download &&
 extract &&
-setup &&
-compile
+setup
+
+(cd $d &&
+for fn in `ls *.c | grep -v example`; do
+	libtool --mode=compile gcc -O3 -DUSE_MMAP -g -c -o $fn.lo $fn
+done &&
+libtool --mode=link gcc -shared -o libz.dll -Wl,--out-implib=libz.dll.a *.lo
+)
 
 # update index
 FILELIST=fileList.txt
 
 pre_install
 
-(cd $d && make install) || exit
+(cd $d &&
+	cp zconf.h /include/. &&
+	cp zlib.h /include/. &&
+	cp libz.dll /bin/. &&
+	cp libz.dll.a /lib/.
+) || exit
 
 post_install
 
