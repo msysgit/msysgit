@@ -1,7 +1,8 @@
 #! /bin/sh
 # libtoolize - Prepare a package to use libtool.
 # libtoolize.  Generated from libtoolize.in by configure.
-# Copyright (C) 1996-2000, 2001 Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2005
+# Free Software Foundation, Inc.
 # Originally by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -29,11 +30,12 @@ progname=`echo "$0" | sed 's%^.*/%%'`
 # Constants.
 PROGRAM=libtoolize
 PACKAGE=libtool
-VERSION=1.4e
+VERSION=1.5.24
 
 # Directory names.
-prefix=/usr
-datadir=${prefix}/share
+prefix=
+datarootdir=${prefix}/share
+datadir=${datarootdir}
 pkgdatadir=${datadir}/libtool
 aclocaldir=${datadir}/aclocal
 
@@ -43,9 +45,10 @@ ltdl_m4="$aclocaldir/ltdl.m4"
 dry_run=no
 help="Try \`$progname --help' for more information."
 rm="rm -f"
-ln_s="ln -s"
-cp="cp -f"
+ln_s="cp -p"
+cp="cp -f -p"
 mkdir="mkdir"
+tar="tar"
 
 # Global variables.
 automake=
@@ -77,17 +80,19 @@ Prepare a package to use libtool.
 
 You must \`cd' to the top directory of your package before you run
 \`$progname'.
+
+Report bugs to <bug-libtool@gnu.org>.
 EOF
-    exit 0
+    exit $?
     ;;
 
   --version)
     echo "$PROGRAM (GNU $PACKAGE) $VERSION"
     echo
-    echo "Copyright 1996-2000, 2001 Free Software Foundation, Inc."
+    echo "Copyright (C) 2005 Free Software Foundation, Inc."
     echo "This is free software; see the source for copying conditions.  There is NO"
     echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
-    exit 0
+    exit $?
     ;;
 
   --automake)
@@ -110,6 +115,7 @@ EOF
       test -n "$ln_s" && ln_s="echo $ln_s"
       cp="echo $cp"
       mkdir="echo mkdir"
+      tar="echo $tar"
     fi
     ;;
 
@@ -275,6 +281,10 @@ fi
 if test "x$ltdl" = xyes; then
   test -d libltdl || $mkdir libltdl
   ltdlfiles=`cd $pkgdatadir && ls libltdl/*`
+  if test -z "$ltdlfiles"; then
+    echo "$progname: cannot list files in \`$pkgdatadir/libltdl'" 1>&2
+    exit 1
+  fi
 else
   ltdlfiles=
 fi
@@ -287,6 +297,8 @@ for file in $ltdlfiles; do
 
   $rm $file
   if test -n "$ln_s" && $ln_s $pkgdatadir/$file $file; then :
+  elif { ( cd $pkgdatadir 2>/dev/null && $tar chf - $file 2> /dev/null; ) \
+      | ( umask 0 && $tar xf - > /dev/null 2>&1; ); } ; then :
   elif $cp $pkgdatadir/$file $file; then :
   else
     echo "$progname: cannot copy \`$pkgdatadir/$file' to \`$file'" 1>&2
@@ -304,7 +316,9 @@ if test "x$ltdl_tar" = x"yes"; then
     $mkdir libltdl
     ltdlfiles=`cd $pkgdatadir && ls libltdl/*`
     for file in $ltdlfiles; do
-      if $cp $pkgdatadir/$file $file; then :
+      if { ( cd $pkgdatadir 2>/dev/null && $tar chf - $file 2> /dev/null; ) \
+          | ( umask 0 && $tar xf - > /dev/null 2>&1; ); } ; then :
+      elif $cp $pkgdatadir/$file $file; then :
       else
 	echo "$progname: cannot copy \`$pkgdatadir/$file' to \`$file'" 1>&2
 	status=1
@@ -312,7 +326,9 @@ if test "x$ltdl_tar" = x"yes"; then
       fi
     done
     for file in $files; do
-      if $cp $pkgdatadir/$file libltdl/$file; then :
+      if { ( cd $pkgdatadir 2>/dev/null && $tar chf - $file 2> /dev/null; ) \
+          | ( umask 0 && cd libltdl 2>/dev/null && $tar xf - > /dev/null 2>&1; ); } ; then :
+      elif $cp $pkgdatadir/$file libltdl/$file; then :
       else
 	echo "$progname: cannot copy \`$pkgdatadir/$file' to \`libltdl/$file'" 1>&2
 	status=1
@@ -327,6 +343,7 @@ fi
 # Change to the auxiliary directory.
 if test "$auxdir" != .; then
   test -z "$automake" && echo "Putting files in AC_CONFIG_AUX_DIR, \`$auxdir'."
+  test "x$dry_run" = x"yes" && echo "cd $auxdir"
   cd $auxdir || exit 1
 fi
 
@@ -338,6 +355,8 @@ for file in $files; do
 
   $rm $file
   if test -n "$ln_s" && $ln_s $pkgdatadir/$file $file; then :
+  elif { ( cd $pkgdatadir 2>/dev/null && $tar chf - $file 2> /dev/null; ) \
+      | ( umask 0 && $tar xf - > /dev/null 2>&1; ); } ; then :
   elif $cp $pkgdatadir/$file $file; then :
   else
     echo "$progname: cannot copy \`$pkgdatadir/$file' to \`$file'" 1>&2
