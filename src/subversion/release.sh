@@ -28,7 +28,7 @@ extract &&
 perl -i.bak -pe 's/CYGWIN/MSYS/g;s/cygwin/msys/g' \
 	$(find $d -name config.guess) $(find $d -name config.sub) &&
 apply_patches &&
-(cd $d && ./autogen.sh) &&
+(cd $d && ./autogen.sh && cd neon && ./autogen.sh) &&
 setup &&
 perl -i.bak -pe 's/(deplibs_check_method=).*/\1pass_all/' \
 	$(find $d -name libtool) &&
