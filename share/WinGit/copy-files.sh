@@ -28,7 +28,7 @@ echo "Copying files" &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
-$(ls bin/git* | grep -v 'cvs\|svn\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
+$(ls bin/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
 bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
@@ -37,10 +37,9 @@ ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
+msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,\
 vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} cmd/ lib/perl5/ share/git* share/vim) |
 tar xf - &&
-mkdir lib/perl5/site_perl &&
-cp /lib/{Error.pm,Git.pm} lib/perl5/site_perl/ &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
 md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
