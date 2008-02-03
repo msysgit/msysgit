@@ -29,7 +29,7 @@ echo "Copying files" &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
 $(ls bin/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
-bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,\
+bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
 gunzip,gzip.exe,head.exe,id.exe,less.exe,libW11.dll,ln.exe,\
@@ -38,7 +38,9 @@ patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,\
-vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} cmd/ lib/perl5/ share/git* share/vim) |
+msys-crypto-0.9.8.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
+openssl.exe,vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} lib/engines/ \
+ssl/ cmd/ lib/perl5/ share/git* share/vim) |
 tar xf - &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
