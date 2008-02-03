@@ -279,6 +279,14 @@ begin
 
         Count:=GetArrayLength(BuiltIns)-1;
 
+        // Delete all scripts as they might have been replaced by built-ins by now.
+        for i:=0 to Count do begin
+            FileName:=ChangeFileExt(AppDir+'\'+BuiltIns[i],'');
+            if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
+                Log('Line {#emit __LINE__}: Unable to delete script "'+FileName+'", ignoring.');
+            end;
+        end;
+
         // Map the built-ins to git.exe.
         if IsNTFS then begin
             Log('Line {#emit __LINE__}: Partition seems to be NTFS, trying to create built-in aliases as hard links.');
