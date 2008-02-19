@@ -38,8 +38,12 @@ patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,ssh-agent.exe,ssh.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,\
-vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} cmd/ lib/perl5/ share/git* share/vim) |
+vim.exe,wc.exe,which,xargs.exe,ssh-add.exe,start} cmd/ lib/perl5/ share/git* \
+share/vim/vimrc share/vim/vim58/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
+scripts.vim,syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/gitcommit.vim\
+syntax/synload.vim,syntax/syntax.vim}) |
 tar xf - &&
+rm -rf lib/perl5/5.8.8/Encode/ lib/perl5/5.8.8/msys/auto/Encode/ bin/cvs.exe &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
 md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
