@@ -1,0 +1,44 @@
+From 599129078e624f0026090b6efc1f3782401b02bf Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Thu, 21 Feb 2008 17:34:11 +0000
+Subject: [PATCH 1/1] Fix for stricter g++
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ imagehelper/sections.cc |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/imagehelper/sections.cc b/imagehelper/sections.cc
+index 9dee579..d981555 100644
+--- a/imagehelper/sections.cc
++++ b/imagehelper/sections.cc
+@@ -285,7 +285,7 @@ bool Relocations::check(void)
+   if (debug)
+     std::cerr << "debug: checking relocations .... " << std::endl;
+ 
+-  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; ((char *)relocp) += relocp->SizeOfBlock)
++  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; relocp = (PIMAGE_BASE_RELOCATION)(((char *)relocp) + relocp->SizeOfBlock))
+     {
+       int NumOfRelocs = (relocp->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof (WORD);
+       int va = relocp->VirtualAddress;
+@@ -328,7 +328,7 @@ bool Relocations::fix(void)
+   if (debug)
+     std::cerr << "warning: fixing bad relocations .... ";
+ 
+-  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; ((char *)relocp) += relocp->SizeOfBlock)
++  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; relocp = (PIMAGE_BASE_RELOCATION)(((char *)relocp) + relocp->SizeOfBlock))
+     {
+       int NumOfRelocs = (relocp->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof (WORD);
+       int va = relocp->VirtualAddress;
+@@ -363,7 +363,7 @@ bool Relocations::relocate(int difference)
+   if (!relocs)
+     return false;
+ 
+-  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; ((char *)relocp) += relocp->SizeOfBlock)
++  for (; (char *)&relocp->SizeOfBlock < (char *)relocs + size && relocp->SizeOfBlock != 0; relocp = (PIMAGE_BASE_RELOCATION)(((char *)relocp) + relocp->SizeOfBlock))
+     {
+       int NumOfRelocs = (relocp->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof (WORD);
+       int va = relocp->VirtualAddress;
+-- 
+1.5.3.6.2529.ga176-dirty
+
