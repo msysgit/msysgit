@@ -107,6 +107,7 @@ git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
 mkdir git &&
 cd git &&
 git init &&
+git config core.autocrlf = input &&
 git config remote.junio.url $GIT_REPO_URL &&
 git config remote.junio.fetch '+refs/heads/*:refs/remotes/junio/*' &&
 git fetch junio &&
