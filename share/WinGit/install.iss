@@ -182,11 +182,11 @@ begin
     with LblGitBash do begin
         Parent:=EnvPage.Surface;
         Caption:=
-            'This is the most conservative choice if you are concerned about the' + #13 +
-            'stability of your system. Your PATH will not be modified.';
+            'This is the most conservative choice if you are concerned about the stability' + #13 +
+            'of your system. Your PATH will not be modified.';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
-        Width:=ScaleX(324);
+        Width:=ScaleX(405);
         Height:=ScaleY(26);
     end;
 
@@ -206,12 +206,13 @@ begin
     with LblGitCmd do begin
         Parent:=EnvPage.Surface;
         Caption:=
-            'This option is considered safe and no conflicts with other tools are' + #13 +
-            'known. Only Git will be added to your PATH.';
+            'This option is considered safe and no conflicts with other tools are known.' + #13 +
+            'Only Git will be added to your PATH. Use this option if you want to use Git' + #13 +
+            'from a Cygwin Prompt (make sure to not have Cygwin''s Git installed).';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
-        Width:=ScaleX(316);
-        Height:=ScaleY(26);
+        Width:=ScaleX(405);
+        Height:=ScaleY(39);
     end;
 
     // 3rd choice
@@ -229,10 +230,10 @@ begin
     LblGitCmdTools:=TLabel.Create(EnvPage);
     with LblGitCmdTools do begin
         Parent:=EnvPage.Surface;
-        Caption:='Both Git and the Unix tools will be added to your PATH.';
+        Caption:='Both Git and its accompanying Unix tools will be added to your PATH.';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
-        Width:=ScaleX(280);
+        Width:=ScaleX(405);
         Height:=ScaleY(13);
     end;
     LblGitCmdToolsWarn:=TLabel.Create(EnvPage);
