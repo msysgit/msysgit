@@ -146,17 +146,60 @@ begin
     end;
 end;
 
+const
+    PuTTYUninstallKey='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PuTTY_is1';
+    PuTTYPrivateKeyAssoc='PuTTYPrivateKey\shell\open\command';
+
+function GetPuTTYLocation:string;
+begin
+    if RegQueryStringValue(HKEY_LOCAL_MACHINE,PuTTYUninstallKey,'InstallLocation',Result) and DirExists(Result) then begin
+        // C:\Program Files\PuTTY\
+        Exit;
+    end;
+    if RegQueryStringValue(HKEY_CLASSES_ROOT,PuTTYPrivateKeyAssoc,'',Result) then begin
+        // "C:\Program Files\PuTTY\pageant.exe" "%1"
+        Result:=RemoveQuotes(Result);
+        // C:\Program Files\PuTTY\pageant.exe" "%1
+        Result:=ExtractFilePath(Result);
+        // C:\Program Files\PuTTY\
+        if DirExists(Result) then begin
+            Exit;
+        end;
+    end;
+    // Guess something.
+    Result:='C:\Program Files\PuTTY\';
+end;
+
+var
+    EnvPage,PuTTYPage:TWizardPage;
+    RdbGitBash,RdbGitCmd,RdbGitCmdTools:TRadioButton;
+    RdbOpenSSH,RdbPLink:TRadioButton;
+    EdtPLink:TEdit;
+
+procedure BrowseForPuTTYFolder(Sender:TObject);
+var
+    Path:string;
+begin
+    Path:=ExtractFilePath(EdtPLink.Text);
+    BrowseForFolder('Please select the PuTTY folder:',Path,False);
+    Path:=Path+'\plink.exe';
+    if FileExists(Path) then begin
+        EdtPLink.Text:=Path;
+        RdbPLink.Checked:=True;
+    end else begin
+        MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
+    end;
+end;
+
 {
     Installer code
 }
 
-var
-    EnvPage:TWizardPage;
-    RdbGitBash,RdbGitCmd,RdbGitCmdTools:TRadioButton;
-
 procedure InitializeWizard;
 var
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
+    LblOpenSSH,LblPLink:TLabel;
+    BtnPLink:TButton;
 begin
     // Create a custom page for modifying the environment.
     EnvPage:=CreateCustomPage(
@@ -248,12 +291,106 @@ begin
         Font.Color:=255;
         Font.Style:=[fsBold];
     end;
+
+    // Create a custom page for using PuTTY's plink instead of ssh.
+    PuTTYPage:=CreateCustomPage(
+        EnvPage.ID,
+        'Choosing the SSH executable',
+        'Which Secure Shell client program would you like Git to use?'
+    );
+
+    // 1st choice
+    RdbOpenSSH:=TRadioButton.Create(PuTTYPage);
+    with RdbOpenSSH do begin
+      Parent:=PuTTYPage.Surface;
+      Caption:='Use OpenSSH';
+      Left:=ScaleX(4);
+      Top:=ScaleY(8);
+      Width:=ScaleX(129);
+      Height:=ScaleY(17);
+      Font.Style:=[fsBold];
+      TabOrder:=0;
+      Checked:=True;
+    end;
+    LblOpenSSH:=TLabel.Create(PuTTYPage);
+    with LblOpenSSH do begin
+        Parent:=PuTTYPage.Surface;
+        Caption:=
+            'This uses ssh.exe that comes with Git. The GIT_SSH environment' + #13 +
+            'variable will not be modified.';
+        Left:=ScaleX(28);
+        Top:=ScaleY(32);
+        Width:=ScaleX(324);
+        Height:=ScaleY(26);
+    end;
+
+    // 2nd choice
+    RdbPLink:=TRadioButton.Create(PuTTYPage);
+    with RdbPLink do begin
+      Parent:=PuTTYPage.Surface;
+      Caption:='Use PLink';
+      Left:=ScaleX(4);
+      Top:=ScaleY(76);
+      Width:=ScaleX(281);
+      Height:=ScaleY(17);
+      Font.Style:=[fsBold];
+      TabOrder:=1;
+    end;
+    LblPLink:=TLabel.Create(PuTTYPage);
+    with LblPLink do begin
+        Parent:=PuTTYPage.Surface;
+        Caption:=
+            'This uses plink.exe from the PuTTY package which needs to be' + #13 +
+            'provided by the user. The GIT_SSH environment variable will be' + #13 +
+            'set to the path to plink.exe as specified below.';
+        Left:=ScaleX(28);
+        Top:=ScaleY(100);
+        Width:=ScaleX(316);
+        Height:=ScaleY(39);
+    end;
+    EdtPLink:=TEdit.Create(PuTTYPage);
+    with EdtPLink do begin
+        Parent:=PuTTYPage.Surface;
+        Text:=GetPuTTYLocation+'plink.exe';
+        if not FileExists(Text) then begin
+            Text:='';
+        end;
+        Left:=ScaleX(28);
+        Top:=ScaleY(148);
+        Width:=ScaleX(316);
+        Height:=ScaleY(13);
+    end;
+    BtnPLink:=TButton.Create(PuTTYPage);
+    with BtnPLink do begin
+        Parent:=PuTTYPage.Surface;
+        Caption:='...';
+        OnClick:=@BrowseForPuTTYFolder;
+        Left:=ScaleX(348);
+        Top:=ScaleY(148);
+        Width:=ScaleX(21);
+        Height:=ScaleY(21);
+    end;
+end;
+
+function NextButtonClick(CurPageID:Integer):Boolean;
+begin
+    if CurPageID<>PuTTYPage.ID then begin
+        Result:=True;
+        Exit;
+    end;
+
+    Result:=RdbOpenSSH.Checked
+        or (RdbPLink.Checked and FileExists(EdtPLink.Text));
+
+    if not Result then begin
+        MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
+    end;
 end;
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,FileName,Cmd,Msg:string;
-    BuiltIns,EnvPath,EnvHome:TArrayOfString;
+    BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
     RootKey:Integer;
@@ -333,13 +470,48 @@ begin
         // aliases for built-ins, so we continue.
     end;
 
-
     {
         Modify the environment
 
         This must happen no later than ssPostInstall to make
         "ChangesEnvironment=yes" not happend before the change!
     }
+
+    FileName:=AppDir+'\setup.ini';
+
+    // Delete GIT_SSH if a previous installation modified it.
+    EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
+    if (GetArrayLength(EnvSSH)=1) and
+       (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
+        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
+            Msg:='Line {#emit __LINE__}: Unable to reset GIT_SSH prior to install.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
+    if RdbPLink.Checked then begin
+        SetArrayLength(EnvSSH,1);
+        EnvSSH[0]:=EdtPLink.Text;
+        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
+            Msg:='Line {#emit __LINE__}: Unable to set the GIT_SSH environment variable.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+
+        // Mark that we have changed GIT_SSH.
+        if not SetIniString('Environment','GIT_SSH',EnvSSH[0],FileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
+            // so we continue.
+        end;
+    end;
 
     // Get the current user's directories in PATH.
     EnvPath:=GetEnvStrings('PATH',IsAdminLoggedOn);
@@ -354,7 +526,7 @@ begin
     // Delete HOME if a previous installation modified it.
     EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
+       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',FileName))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to reset HOME prior to install.';
             MsgBox(Msg,mbError,MB_OK);
@@ -377,7 +549,7 @@ begin
             SetArrayLength(EnvPath,i+2);
             EnvPath[i+1]:=ExpandConstant('{app}\bin');
 
-            // Set HOME for the Windows Command Prompt.
+            // Set HOME for the Windows Command Prompt, but only if it has not been set manually before.
             EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
             i:=GetArrayLength(EnvHome);
             if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
@@ -392,7 +564,6 @@ begin
                 end;
 
                 // Mark that we have changed HOME.
-                FileName:=AppDir+'\setup.ini';
                 if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
                     Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
                     MsgBox(Msg,mbError,MB_OK);
@@ -480,7 +651,7 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
     AppDir,Command,Msg:string;
-    EnvPath,EnvHome:TArrayOfString;
+    EnvPath,EnvHome,EnvSSH:TArrayOfString;
     i:Longint;
     RootKey:Integer;
 begin
@@ -496,6 +667,20 @@ begin
     }
 
     AppDir:=ExpandConstant('{app}');
+    Command:=AppDir+'\setup.ini';
+
+    // Reset the current user's GIT_SSH if we modified it.
+    EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
+    if (GetArrayLength(EnvSSH)=1) and
+       (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',Command))=0) then begin
+        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
+            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to GIT_SSH.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
 
     // Get the current user's directories in PATH.
     EnvPath:=GetEnvStrings('PATH',IsAdminLoggedOn);
@@ -520,7 +705,7 @@ begin
     // Reset the current user's HOME if we modified it.
     EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',AppDir+'\setup.ini'))=0) then begin
+       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',Command))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to HOME.';
             MsgBox(Msg,mbError,MB_OK);
@@ -530,7 +715,6 @@ begin
         end;
     end;
 
-    Command:=AppDir+'\setup.ini';
     if (FileExists(Command) and (not DeleteFile(Command))) then begin
         Msg:='Line {#emit __LINE__}: Unable to delete file "'+Command+'".';
         MsgBox(Msg,mbError,MB_OK);
