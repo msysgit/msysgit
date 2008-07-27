@@ -28,7 +28,7 @@ echo "Copying files" &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
-$(ls bin/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
+$(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
 bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
@@ -49,12 +49,12 @@ tar xf - &&
 rm -rf lib/perl5/5.8.8/Encode/ lib/perl5/5.8.8/msys/auto/Encode/ bin/cvs.exe &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
-md5sum bin/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
+md5sum {bin,libexec/git-core}/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
 rm $(cat etc/fileList-builtins.txt) &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl,libiconv}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xf - &&
-strip bin/{[a-fh-z],g[a-oq-z]}*.exe &&
+strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/gitconfig etc/ &&
