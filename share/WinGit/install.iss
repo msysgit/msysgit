@@ -52,6 +52,7 @@ SetupWindowTitle={#emit APP_NAME} Setup
 
 [UninstallDelete]
 Type: files; Name: "{app}\bin\git-*.exe"
+Type: files; Name: "{app}\libexec\git-core\git-*.exe"
 Type: dirifempty; Name: "{app}\home\{username}"
 Type: dirifempty; Name: "{app}\home"
 
