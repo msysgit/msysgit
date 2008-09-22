@@ -32,7 +32,7 @@ $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|svn\|send-email\|shell\|archimp
 bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
-gunzip,gzip.exe,head.exe,id.exe,less.exe,libW11.dll,ln.exe,\
+gunzip,gzip.exe,head.exe,id.exe,kill.exe,less.exe,libW11.dll,ln.exe,\
 ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,\

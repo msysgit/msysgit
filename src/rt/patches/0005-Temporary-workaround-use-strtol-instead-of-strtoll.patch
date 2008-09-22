@@ -1,0 +1,59 @@
+From e0e110e8062b643b02ef16c8ee4a503161a9546d Mon Sep 17 00:00:00 2001
+From: Alexander Gavrilov <angavrilov@gmail.com>
+Date: Wed, 16 Jul 2008 20:48:53 +0400
+Subject: [PATCH] Temporary workaround: use strtoul instead of strtoll.
+
+Also fixes a bug in negative pid handling (the 'av' part).
+---
+ source/winsup/utils/kill.cc |   20 +++++++++++++++++---
+ 1 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/source/winsup/utils/kill.cc b/source/winsup/utils/kill.cc
+index e21646f..3f4934c 100644
+--- a/source/winsup/utils/kill.cc
++++ b/source/winsup/utils/kill.cc
+@@ -179,6 +179,17 @@ forcekill (int pid, int sig, int wait)
+   CloseHandle (h);
+ }
+ 
++static long long
++strtoll_compat(char *str, char **p, int base)
++{
++  if (*str == '-')
++    return -(long long) strtoul(str+1, p, base);
++  else if (*str == '+')
++    return strtoul(str+1, p, base);
++  else
++    return strtoul(str, p, base);
++}
++
+ int
+ main (int argc, char **argv)
+ {
+@@ -241,9 +252,12 @@ main (int argc, char **argv)
+ 	case '?':
+ 	  if (gotasig)
+ 	    {
+-	      pid = strtoll (argv[optind], &p, 10);
++	      pid = strtoll_compat (*av, &p, 10);
+ 	      if (pid < 0)
+-		goto out;
++	        {
++		  optind = av - argv;
++		  goto out;
++		}
+ 	      usage ();
+ 	    }
+ 	  optreset = 1;
+@@ -264,7 +278,7 @@ out:
+   while (*argv != NULL)
+     {
+       if (!pid)
+-	pid = strtoll (*argv, &p, 10);
++	pid = strtoll_compat (*argv, &p, 10);
+       if (*p != '\0'
+           || (!force && (pid < LONG_MIN || pid > LONG_MAX))
+           || (force && (pid <= 0 || pid > ULONG_MAX))) 
+-- 
+1.5.6.3.1089.g3c8b0
+
