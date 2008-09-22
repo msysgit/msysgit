@@ -37,6 +37,7 @@ ls.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,\
 ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,\
+msys-crypto-0.9.8.dll,msys-minires.dll,msys-z.dll,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 vim.exe,wc.exe,which,xargs.exe,start} \
 cmd/ lib/perl5/ share/git* \
