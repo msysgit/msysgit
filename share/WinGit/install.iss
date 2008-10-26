@@ -171,10 +171,24 @@ begin
     Result:='C:\Program Files\PuTTY\';
 end;
 
+const
+    // Git Path options.
+    GP_BashOnly     = 1;
+    GP_Cmd      = 2;
+    GP_CmdTools = 3;
+
+    // Git SSH options.
+    GS_OpenSSH  = 1;
+    GS_PLink    = 2;
+
 var
-    EnvPage,PuTTYPage:TWizardPage;
-    RdbGitBash,RdbGitCmd,RdbGitCmdTools:TRadioButton;
-    RdbOpenSSH,RdbPLink:TRadioButton;
+    // Wizard page and variables for the Path options.
+    PathPage:TWizardPage;
+    RdbPath:array[GP_BashOnly..GP_CmdTools] of TRadioButton;
+
+    // Wizard page and variables for the SSH options.
+    PuTTYPage:TWizardPage;
+    RdbSSH:array[GS_OpenSSH..GS_PLink] of TRadioButton;
     EdtPLink:TEdit;
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
@@ -186,7 +200,7 @@ begin
     Path:=Path+'\plink.exe';
     if FileExists(Path) then begin
         EdtPLink.Text:=Path;
-        RdbPLink.Checked:=True;
+        RdbSSH[GS_PLink].Checked:=True;
     end else begin
         MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
     end;
@@ -203,16 +217,16 @@ var
     BtnPLink:TButton;
 begin
     // Create a custom page for modifying the environment.
-    EnvPage:=CreateCustomPage(
+    PathPage:=CreateCustomPage(
         wpSelectTasks,
         'Adjusting your PATH environment',
         'How would you like to use Git from the command line?'
     );
 
     // 1st choice
-    RdbGitBash:=TRadioButton.Create(EnvPage);
-    with RdbGitBash do begin
-      Parent:=EnvPage.Surface;
+    RdbPath[GP_BashOnly]:=TRadioButton.Create(PathPage);
+    with RdbPath[GP_BashOnly] do begin
+      Parent:=PathPage.Surface;
       Caption:='Use Git Bash only';
       Left:=ScaleX(4);
       Top:=ScaleY(8);
@@ -222,9 +236,9 @@ begin
       TabOrder:=0;
       Checked:=True;
     end;
-    LblGitBash:=TLabel.Create(EnvPage);
+    LblGitBash:=TLabel.Create(PathPage);
     with LblGitBash do begin
-        Parent:=EnvPage.Surface;
+        Parent:=PathPage.Surface;
         Caption:=
             'This is the most conservative choice if you are concerned about the stability' + #13 +
             'of your system. Your PATH will not be modified.';
@@ -235,9 +249,9 @@ begin
     end;
 
     // 2nd choice
-    RdbGitCmd:=TRadioButton.Create(EnvPage);
-    with RdbGitCmd do begin
-      Parent:=EnvPage.Surface;
+    RdbPath[GP_Cmd]:=TRadioButton.Create(PathPage);
+    with RdbPath[GP_Cmd] do begin
+      Parent:=PathPage.Surface;
       Caption:='Run Git from the Windows Command Prompt';
       Left:=ScaleX(4);
       Top:=ScaleY(76);
@@ -246,9 +260,9 @@ begin
       Font.Style:=[fsBold];
       TabOrder:=1;
     end;
-    LblGitCmd:=TLabel.Create(EnvPage);
+    LblGitCmd:=TLabel.Create(PathPage);
     with LblGitCmd do begin
-        Parent:=EnvPage.Surface;
+        Parent:=PathPage.Surface;
         Caption:=
             'This option is considered safe and no conflicts with other tools are known.' + #13 +
             'Only Git will be added to your PATH. Use this option if you want to use Git' + #13 +
@@ -260,9 +274,9 @@ begin
     end;
 
     // 3rd choice
-    RdbGitCmdTools:=TRadioButton.Create(EnvPage);
-    with RdbGitCmdTools do begin
-      Parent:=EnvPage.Surface;
+    RdbPath[GP_CmdTools]:=TRadioButton.Create(PathPage);
+    with RdbPath[GP_CmdTools] do begin
+      Parent:=PathPage.Surface;
       Caption:='Run Git and included Unix tools from the Windows Command Prompt';
       Left:=ScaleX(4);
       Top:=ScaleY(152);
@@ -271,18 +285,18 @@ begin
       Font.Style:=[fsBold];
       TabOrder:=2;
     end;
-    LblGitCmdTools:=TLabel.Create(EnvPage);
+    LblGitCmdTools:=TLabel.Create(PathPage);
     with LblGitCmdTools do begin
-        Parent:=EnvPage.Surface;
+        Parent:=PathPage.Surface;
         Caption:='Both Git and its accompanying Unix tools will be added to your PATH.';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
         Width:=ScaleX(405);
         Height:=ScaleY(13);
     end;
-    LblGitCmdToolsWarn:=TLabel.Create(EnvPage);
+    LblGitCmdToolsWarn:=TLabel.Create(PathPage);
     with LblGitCmdToolsWarn do begin
-        Parent:=EnvPage.Surface;
+        Parent:=PathPage.Surface;
         Caption:=
             'Warning: This will override Windows tools like find.exe and' + #13 +
             'sort.exe. Select this option only if you understand the implications.';
@@ -296,14 +310,14 @@ begin
 
     // Create a custom page for using PuTTY's plink instead of ssh.
     PuTTYPage:=CreateCustomPage(
-        EnvPage.ID,
+        PathPage.ID,
         'Choosing the SSH executable',
         'Which Secure Shell client program would you like Git to use?'
     );
 
     // 1st choice
-    RdbOpenSSH:=TRadioButton.Create(PuTTYPage);
-    with RdbOpenSSH do begin
+    RdbSSH[GS_OpenSSH]:=TRadioButton.Create(PuTTYPage);
+    with RdbSSH[GS_OpenSSH] do begin
       Parent:=PuTTYPage.Surface;
       Caption:='Use OpenSSH';
       Left:=ScaleX(4);
@@ -327,8 +341,8 @@ begin
     end;
 
     // 2nd choice
-    RdbPLink:=TRadioButton.Create(PuTTYPage);
-    with RdbPLink do begin
+    RdbSSH[GS_PLink]:=TRadioButton.Create(PuTTYPage);
+    with RdbSSH[GS_PLink] do begin
       Parent:=PuTTYPage.Surface;
       Caption:='Use PLink';
       Left:=ScaleX(4);
@@ -381,8 +395,8 @@ begin
         Exit;
     end;
 
-    Result:=RdbOpenSSH.Checked
-        or (RdbPLink.Checked and FileExists(EdtPLink.Text));
+    Result:=RdbSSH[GS_OpenSSH].Checked
+        or (RdbSSH[GS_PLink].Checked and FileExists(EdtPLink.Text));
 
     if not Result then begin
         MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
@@ -494,7 +508,7 @@ begin
         end;
     end;
 
-    if RdbPLink.Checked then begin
+    if RdbSSH[GS_PLink].Checked then begin
         SetArrayLength(EnvSSH,1);
         EnvSSH[0]:=EdtPLink.Text;
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
@@ -539,7 +553,7 @@ begin
     end;
 
     // Modify the PATH variable as requested by the user.
-    if RdbGitCmd.Checked or RdbGitCmdTools.Checked then begin
+    if RdbPath[GP_Cmd].Checked or RdbPath[GP_CmdTools].Checked then begin
         i:=GetArrayLength(EnvPath);
         SetArrayLength(EnvPath,i+1);
 
@@ -547,7 +561,7 @@ begin
         // there will be called in favor of those in \bin.
         EnvPath[i]:=ExpandConstant('{app}\cmd');
 
-        if RdbGitCmdTools.Checked then begin
+        if RdbPath[GP_CmdTools].Checked then begin
             SetArrayLength(EnvPath,i+2);
             EnvPath[i+1]:=ExpandConstant('{app}\bin');
 
