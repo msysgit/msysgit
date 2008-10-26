@@ -215,6 +215,7 @@ var
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPLink:TLabel;
     BtnPLink:TButton;
+    Data:String;
 begin
     // Create a custom page for modifying the environment.
     PathPage:=CreateCustomPage(
@@ -308,6 +309,16 @@ begin
         Font.Style:=[fsBold];
     end;
 
+    // Restore the setting chosen during a previous install.
+    Data:=GetPreviousData('Path Option','BashOnly');
+    if Data='BashOnly' then begin
+        RdbPath[GP_BashOnly].Checked:=True;
+    end else if Data='Cmd' then begin
+        RdbPath[GP_Cmd].Checked:=True;
+    end else if Data='CmdTools' then begin
+        RdbPath[GP_CmdTools].Checked:=True;
+    end;
+
     // Create a custom page for using PuTTY's plink instead of ssh.
     PuTTYPage:=CreateCustomPage(
         PathPage.ID,
@@ -385,6 +396,14 @@ begin
         Top:=ScaleY(148);
         Width:=ScaleX(21);
         Height:=ScaleY(21);
+    end;
+
+    // Restore the setting chosen during a previous install.
+    Data:=GetPreviousData('SSH Option','OpenSSH');
+    if Data='OpenSSH' then begin
+        RdbSSH[GS_OpenSSH].Checked:=True;
+    end else if Data='PLink' then begin
+        RdbSSH[GS_PLink].Checked:=True;
     end;
 end;
 
@@ -632,6 +651,31 @@ begin
             // so we continue.
         end;
     end;
+end;
+
+procedure RegisterPreviousData(PreviousDataKey:Integer);
+var
+    Data:string;
+begin
+    // Git Path options.
+    Data:='';
+    if RdbPath[GP_BashOnly].Checked then begin
+        Data:='BashOnly';
+    end else if RdbPath[GP_Cmd].Checked then begin
+        Data:='Cmd';
+    end else if RdbPath[GP_CmdTools].Checked then begin
+        Data:='CmdTools';
+    end;
+    SetPreviousData(PreviousDataKey,'Path Option',Data);
+
+    // Git SSH options.
+    Data:='';
+    if RdbSSH[GS_OpenSSH].Checked then begin
+        Data:='OpenSSH';
+    end else if RdbSSH[GS_PLink].Checked then begin
+        Data:='PLink';
+    end;
+    SetPreviousData(PreviousDataKey,'SSH Option',Data);
 end;
 
 {
