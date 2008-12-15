@@ -1,4 +1,5 @@
 @setlocal
-@for /F "delims=" %%I in ("%~dp0..") do @set path=%%~fI\bin;%%~fI\mingw\bin;%PATH%
+@for /F "delims=" %%I in ("%~dp0..") do @set git_install_root=%%~fI
+@set path=%git_install_root%\bin;%git_install_root%\mingw\bin;%PATH%
 @if "%HOME%"=="" @set HOME=%USERPROFILE%
-@start /B sh.exe /bin/gitk %*
+@start wish.exe "%git_install_root%\bin\gitk" -- %*
