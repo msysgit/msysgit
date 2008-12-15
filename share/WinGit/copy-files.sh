@@ -13,7 +13,7 @@ then
 	echo "Hint: fix this by"
 	echo "   cd /doc/git/html"
 	echo "   git config core.autocrlf true"
-	echo "   rm *.html *.txt howto"
+	echo "   rm -r *.html *.txt howto"
 	echo "   git checkout -f"
 	exit 1
 fi
