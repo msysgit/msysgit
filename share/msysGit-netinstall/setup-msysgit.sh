@@ -55,7 +55,7 @@ git config remote.origin.fetch \
 git config branch.master.remote origin &&
 git config branch.master.merge refs/heads/@@MSYSGITBRANCH@@ &&
 git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
-git config remote.mob.fetch +refs/remote/mob:refs/remotes/origin/mob &&
+git config remote.mob.fetch +refs/heads/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
