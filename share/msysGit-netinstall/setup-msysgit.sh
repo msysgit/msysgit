@@ -42,7 +42,7 @@ MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
 
 # Multiply git.exe
 
-for builtin in init unpack-objects update-ref fetch ls-remote
+for builtin in init unpack-objects update-ref fetch ls-remote clone checkout
 do
 	ln "$INSTALL_PATH/installer-tmp/bin/git.exe" \
 		"$INSTALL_PATH/installer-tmp/bin/git-$builtin.exe"
