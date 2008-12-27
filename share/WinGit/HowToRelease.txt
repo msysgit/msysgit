@@ -2,6 +2,7 @@ How to create a Windows Release
 ===============================
 
 A setup executable is named as follows
+
  - it starts with Git;
  - followed by the official git version if the release is closely
    related to a specific version of official git;
@@ -20,23 +21,20 @@ Git-1.5.4-preview20071014.exe
 Git-1.5.4-winrc3.exe
 Git-1.5.4.exe
 
-We'll not necessary release a stable version for each official version
-number. If we merge changes from git.git we will adjust the number.
+We'll not necessary release a stable version for each official
+version. If we merge changes from git.git we will adjust the number.
 We will continue releasing previews until we have reached sufficient
 stability.
 
-The following criteria should be met before we go stable.
-    * features equivalent to official git-#-#-# are available in Git Bash.
-    * [DONE] safe crlf handling.
-    * good support for case insensitive filesystems.
-    * [DONE] git-gui works if run from Git Bash.
-    * [DONE] git-gui works if run from Start Menu.
-    * [DONE] git and git-gui available from Windows Command Prompt (cmd shell).
-    * server functionality (git-daemon, git-shell, ...) _not_ necessarily
-      supported.
-    * git-cheetah _not_ needed.
+The following is missing before we release a stable installer.
 
-For now we should only release previews.
+    * features equivalent to official git-#-#-# available in Git Bash.
+    * good support for case insensitive filesystems.
+
+We will *not* wait for
+
+    * server functionality (git-daemon, git-shell, ...).
+    * git-cheetah.
 
 A release is created from official git.git plus a number of patches
 that are not yet in upstream.  Since 1.6.0, most of the MinGW port is
@@ -45,7 +43,7 @@ yet included.  Those patches are maintained as a branch 'release' that
 is regularily rebased onto Junio's master.  A msysgit release is
 tagged by a tag having a postfix '-msysgit<number>'.
 
-He are the step by step instructions for the maintainer:
+Here is a step-by-step instruction for the maintainer:
 
    cd /git
    git fetch mingw
@@ -55,15 +53,15 @@ He are the step by step instructions for the maintainer:
    git merge junio/master
    make -k test | tee test.log
    # check test.log
+
    git checkout release
    git rebase junio/master
-   # check that differences between devel and release
+   # Check that differences between devel and release
    # are only trivial ones, i.e. tests, that do not
    # change the released binaries.
    make clean
    make install
-   git push . devel:master  # should fast-forward
-   git tag -a <version>-msysgit1
+   git tag -a <version>-msysgit<number>
 
    cd /doc/git/html
    git fetch
@@ -73,17 +71,22 @@ He are the step by step instructions for the maintainer:
    git checkout devel
    start ReleaseNotes.rtf # edit and save
    git commit -a
-   git push . devel:master
    git tag -a -m "Git-<version>" Git-<version>
    ./release.sh <version>
 
-   # test installer
-   # upload to Google code (verify sha1)
-   cd /git
-   git push
-   cd /
-   git push
-   git push Git-<version>  # don't forget to push tag
+   # Test installer.
 
-   # reply to Junio's announcement.
-   # The subject of your email should start with [ANNOUNCE].
+   # Upload to Google code (verify sha1).
+
+   cd /git
+   git push . devel:master  # should fast-forward
+   git push
+   git push <version>-msysgit<number>
+   cd /
+   git push . devel:master
+   git push
+   git push Git-<version>
+   # Don't forget to push tags.
+
+   # Reply to Junio's announcement.
+   # Start the subject of your email with '[ANNOUNCE]'.
