@@ -428,6 +428,7 @@ var
     BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
+    FindRec:TFindRec;
     RootKey:Integer;
 begin
     if CurStep<>ssPostInstall then begin
@@ -496,6 +497,19 @@ begin
             end;
 
             Log('Line {#emit __LINE__}: Successfully created built-in aliases as file copies.');
+        end;
+
+        // Delete any duplicate files in case we are updating from a non-libexec to a libexec directory layout.
+        if FindFirst(AppDir+'\libexec\git-core\*',FindRec) then begin
+            repeat
+                if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY)=0 then begin
+                    FileName:=AppDir+'\bin\'+FindRec.name;
+                    if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
+                        Log('Line {#emit __LINE__}: Unable to delete dupe "'+FileName+'", ignoring.');
+                    end;
+                end;
+            until not FindNext(FindRec);
+            FindClose(FindRec);
         end;
     end else begin
         Msg:='Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".';
