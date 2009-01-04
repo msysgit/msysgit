@@ -173,7 +173,7 @@ end;
 
 const
     // Git Path options.
-    GP_BashOnly     = 1;
+    GP_BashOnly = 1;
     GP_Cmd      = 2;
     GP_CmdTools = 3;
 
