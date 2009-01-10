@@ -718,9 +718,8 @@ begin
         EnvPath[i]:=ExpandConstant('{app}\cmd');
 
         if RdbPath[GP_CmdTools].Checked then begin
-            SetArrayLength(EnvPath,i+3);
+            SetArrayLength(EnvPath,i+2);
             EnvPath[i+1]:=ExpandConstant('{app}\bin');
-            EnvPath[i+2]:=ExpandConstant('{app}\libexec\git-core');
 
             // Set HOME for the Windows Command Prompt, but only if it has not been set manually before.
             EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
