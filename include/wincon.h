@@ -1,5 +1,8 @@
 #ifndef _WINCON_H
 #define _WINCON_H
+#if __GNUC__ >= 3
+#pragma GCC system_header
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +16,10 @@ extern "C" {
 #define BACKGROUND_GREEN	32
 #define BACKGROUND_RED	64
 #define BACKGROUND_INTENSITY	128
+#if (_WIN32_WINNT >= 0x0501)
+#define CONSOLE_FULLSCREEN_MODE	1
+#define CONSOLE_WINDOWED_MODE	2
+#endif
 #define CTRL_C_EVENT 0
 #define CTRL_BREAK_EVENT 1
 #define CTRL_CLOSE_EVENT 2
@@ -23,6 +30,10 @@ extern "C" {
 #define ENABLE_PROCESSED_INPUT 1
 #define ENABLE_WINDOW_INPUT 8
 #define ENABLE_MOUSE_INPUT 16
+#define ENABLE_INSERT_MODE 32
+#define ENABLE_QUICK_EDIT_MODE 64
+#define ENABLE_EXTENDED_FLAGS  128
+#define ENABLE_AUTO_POSITION   256
 #define ENABLE_PROCESSED_OUTPUT 1
 #define ENABLE_WRAP_AT_EOL_OUTPUT 2
 #define KEY_EVENT 1
@@ -54,13 +65,13 @@ typedef struct _CHAR_INFO {
 		CHAR AsciiChar;
 	} Char;
 	WORD Attributes;
-} CHAR_INFO,*PCHAR_INFO;
+} CHAR_INFO, *PCHAR_INFO;
 typedef struct _SMALL_RECT {
 	SHORT Left;
 	SHORT Top;
 	SHORT Right;
 	SHORT Bottom;
-} SMALL_RECT,*PSMALL_RECT;
+} SMALL_RECT, *PSMALL_RECT;
 typedef struct _CONSOLE_CURSOR_INFO {
 	DWORD	dwSize;
 	BOOL	bVisible;
@@ -68,7 +79,11 @@ typedef struct _CONSOLE_CURSOR_INFO {
 typedef struct _COORD {
 	SHORT X;
 	SHORT Y;
-} COORD;
+} COORD, *PCOORD;
+typedef struct _CONSOLE_FONT_INFO {
+	DWORD nFont;
+	COORD dwFontSize;
+} CONSOLE_FONT_INFO, *PCONSOLE_FONT_INFO;
 typedef struct _CONSOLE_SCREEN_BUFFER_INFO {
 	COORD	dwSize;
 	COORD	dwCursorPosition;
@@ -87,7 +102,7 @@ typedef struct _KEY_EVENT_RECORD {
 		CHAR AsciiChar;
 	} uChar;
 	DWORD dwControlKeyState;
-} 
+}
 #ifdef __GNUC__
 /* gcc's alignment is not what win32 expects */
  PACKED
@@ -115,7 +130,11 @@ typedef struct _INPUT_RECORD {
 } INPUT_RECORD,*PINPUT_RECORD;
 
 BOOL WINAPI AllocConsole(void);
-HANDLE WINAPI CreateConsoleScreenBuffer(DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,PVOID);
+#if (_WIN32_WINNT >= 0x0500)
+#define ATTACH_PARENT_PROCESS	((DWORD)-1)
+BOOL WINAPI AttachConsole(DWORD);
+#endif
+HANDLE WINAPI CreateConsoleScreenBuffer(DWORD,DWORD,CONST SECURITY_ATTRIBUTES*,DWORD,LPVOID);
 BOOL WINAPI FillConsoleOutputAttribute(HANDLE,WORD,DWORD,COORD,PDWORD);
 BOOL WINAPI FillConsoleOutputCharacterA(HANDLE,CHAR,DWORD,COORD,PDWORD);
 BOOL WINAPI FillConsoleOutputCharacterW(HANDLE,WCHAR,DWORD,COORD,PDWORD);
@@ -129,6 +148,13 @@ UINT WINAPI GetConsoleOutputCP(void);
 BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE,PCONSOLE_SCREEN_BUFFER_INFO);
 DWORD WINAPI GetConsoleTitleA(LPSTR,DWORD);
 DWORD WINAPI GetConsoleTitleW(LPWSTR,DWORD);
+#if (_WIN32_WINNT >= 0x0500)
+BOOL WINAPI GetConsoleDisplayMode(LPDWORD);
+HWND WINAPI GetConsoleWindow(void);
+#endif
+#if (_WIN32_WINNT >= 0x0501)
+DWORD WINAPI GetConsoleProcessList(LPDWORD, DWORD);
+#endif
 COORD WINAPI GetLargestConsoleWindowSize(HANDLE);
 BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE,PDWORD);
 BOOL WINAPI GetNumberOfConsoleMouseButtons(PDWORD);
@@ -150,6 +176,9 @@ BOOL WINAPI SetConsoleCP(UINT);
 BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE,BOOL);
 BOOL WINAPI SetConsoleCursorInfo(HANDLE,const CONSOLE_CURSOR_INFO*);
 BOOL WINAPI SetConsoleCursorPosition(HANDLE,COORD);
+#if (_WIN32_WINNT >= 0x0501)
+BOOL WINAPI SetConsoleDisplayMode(HANDLE,DWORD,PCOORD);
+#endif
 BOOL WINAPI SetConsoleMode(HANDLE,DWORD);
 BOOL WINAPI SetConsoleOutputCP(UINT);
 BOOL WINAPI SetConsoleScreenBufferSize(HANDLE,COORD);
