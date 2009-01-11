@@ -635,7 +635,7 @@ begin
     end else begin
         Cmd:='core.autoCRLF false';
     end;
-    if not Exec(AppDir + '\bin\git-config.exe', '-f gitconfig ' + Cmd,
+    if not Exec(AppDir + '\bin\git.exe', 'config -f gitconfig ' + Cmd,
             AppDir + '\etc', SW_HIDE, ewWaitUntilTerminated, i) then begin
         Msg:='Could not set CR/LF behavior: ' + Cmd;
         MsgBox(Msg,mbError,MB_OK);
