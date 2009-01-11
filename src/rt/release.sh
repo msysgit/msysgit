@@ -12,12 +12,7 @@ then
 	curl -o $src $mirror/$src
 fi
 
-if test -e $release
-then
-	echo "Error: Source directory build/$src already exists."
-	exit 1
-fi
-
+test -e $release ||
 (
 tar xjvf $src &&
 cd $release &&
@@ -28,45 +23,26 @@ git commit -m "Import of $release"
 ) ||
 { echo "Error: Initializing git repository from MSYS source fails." ; exit 1 ; }
 
-cd $release
+cd $release || {
+  echo "Huh? $release does not exist."
+  exit 1
+}
+
+test 1 -lt $(git rev-list --all | wc -l) ||
 git am ../../patches/*.patch ||
 { echo "Error: Applying patches failed." ; exit 1 ; }
 
-winpath=$(pwd -W)
+(export MSYSTEM=MSYS &&
+ (test -d bld || mkdir bld) &&
+ cd bld &&
+ (test -f Makefile || ../source/configure --prefix=/usr) &&
+ (make || test -f i686-pc-msys/winsup/cygwin/new-msys-1.0.dll)) &&
+ mv bld/i686-pc-msys/winsup/cygwin/new-msys-1.0.dll /bin/ &&
+cat << EOD
+The new msys-1.0.dll was built successfully and is available as
 
-cat <<EOD
+	$(cd /bin/ && pwd -W)/new-msys-1.0.dll
 
-The MSYS source is prepared in 
-
-  $winpath
-
-The source has been unpacked, checked in to git, and all necessary
-patches have been applied.  You can verifying this by looking at
-the git history.
-
-Unfortunately, there is no automatic way to build msys-1.0.dll from
-the source, so you now need to manually continue as described on:
-
-   http://www.mingw.org/MinGWiki/index.php/Build%20MSYS
-
-In a properly setup MSYS, you can start the build shell by
-
-   msysdvlpr
-
-In the newly opend build shell you need to run:
-
-   cd $winpath
-   mkdir bld
-   cd bld
-   ../source/configure --prefix=/usr
-   make
-
-The replacement for msys-1.0.dll will be created as
-
-   i686-pc-msys/winsup/cygwin/new-msys-1.0.dll
-
-You need to copy the new dll to your msysgit directory.  Note that
-this is only possible if no msysgit bash is open.  Otherwise, Windows
-refuses to replace the msys-1.0.dll.
-
+Please exit all msysGit instances, replace msys-1.0.dll with that file, and
+restart msysGit.
 EOD
