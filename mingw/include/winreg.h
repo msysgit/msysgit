@@ -41,11 +41,6 @@ extern "C" {
 #define REG_NOTIFY_CHANGE_LAST_SET 4
 #define REG_NOTIFY_CHANGE_SECURITY 8
 
-#if (WINVER >= 0x0502)
-#define KEY_WOW64_32KEY 0x0200
-#define KEY_WOW64_64KEY 0x0100
-#endif
-
 #ifndef RC_INVOKED
 typedef ACCESS_MASK REGSAM;
 typedef struct value_entA {

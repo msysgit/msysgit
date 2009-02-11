@@ -55,7 +55,7 @@ extern "C" {
 #define TRUE 1
 #endif
 
-/* Pseudo modifiers for parameters 
+/* Pseudo modifiers for parameters
    We don't use these unnecessary defines in the w32api headers. Define
    them by default since that is what people expect, but allow users
    to avoid the pollution.  */
@@ -158,7 +158,7 @@ extern "C" {
 
 #ifndef NONAMELESSUNION
 #ifdef __GNUC__
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95) 
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
 #define _ANONYMOUS_UNION __extension__
 #define _ANONYMOUS_STRUCT __extension__
 #else
