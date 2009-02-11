@@ -31,6 +31,7 @@ cat "$SHARE"/fileList-mingw.txt |
 	 echo $? > /tmp/exitstatus) |
 	tar xvf - &&
 test 0 = "$(cat /tmp/exitstatus)" &&
+strip bin/*.exe libexec/git-core/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
 sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
