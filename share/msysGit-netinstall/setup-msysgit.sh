@@ -110,13 +110,13 @@ git init &&
 git config core.autocrlf input &&
 git config remote.junio.url $GIT_REPO_URL &&
 git config remote.junio.fetch '+refs/heads/*:refs/remotes/junio/*' &&
-git fetch junio &&
+git fetch --tags junio &&
 git config remote.mingw.url $MINGW_REPO_URL &&
 git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
-git fetch mingw &&
+git fetch --tags mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git fetch origin &&
+git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
 	FOURMSYS=$(cd .. && git ls-tree HEAD git |
