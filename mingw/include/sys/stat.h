@@ -103,14 +103,14 @@ struct _stat
 /* NOTE: Must be the same as _stat above. */
 struct stat
 {
-	_dev_t	st_dev;		/* Equivalent to drive number 0=A 1=B ... */
-	_ino_t	st_ino;		/* Always zero ? */
-	_mode_t	st_mode;	/* See above constants */
+	dev_t	st_dev;		/* Equivalent to drive number 0=A 1=B ... */
+	ino_t	st_ino;		/* Always zero ? */
+	mode_t	st_mode;	/* See above constants */
 	short	st_nlink;	/* Number of links. */
 	short	st_uid;		/* User: Maybe significant on NT ? */
 	short	st_gid;		/* Group: Ditto */
-	_dev_t	st_rdev;	/* Seems useless (not even filled in) */
-	_off_t	st_size;	/* File size in bytes */
+	dev_t	st_rdev;	/* Seems useless (not even filled in) */
+	off_t	st_size;	/* File size in bytes */
 	time_t	st_atime;	/* Accessed date (always 00:00 hrs local
 				 * on FAT) */
 	time_t	st_mtime;	/* Modified time */
@@ -122,7 +122,7 @@ struct stat
 struct _stati64 {
     _dev_t st_dev;
     _ino_t st_ino;
-    unsigned short st_mode;
+    _mode_t st_mode;
     short st_nlink;
     short st_uid;
     short st_gid;
@@ -132,7 +132,7 @@ struct _stati64 {
     time_t st_mtime;
     time_t st_ctime;
 };
-
+#if __MSVCRT_VERSION__ >= 0x0601
 struct __stat64
 {
     _dev_t st_dev;
@@ -147,6 +147,7 @@ struct __stat64
     __time64_t st_mtime;
     __time64_t st_ctime;
 };
+#endif /* __MSVCRT_VERSION__ */
 #endif /* __MSVCRT__ */
 #define _STAT_DEFINED
 #endif /* _STAT_DEFINED */
@@ -155,32 +156,32 @@ struct __stat64
 extern "C" {
 #endif
 
-_CRTIMP int __cdecl	_fstat (int, struct _stat*);
-_CRTIMP int __cdecl	_chmod (const char*, int);
-_CRTIMP int __cdecl	_stat (const char*, struct _stat*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	_fstat (int, struct _stat*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	_chmod (const char*, int);
+_CRTIMP int __cdecl __MINGW_NOTHROW	_stat (const char*, struct _stat*);
 
 #ifndef	_NO_OLDNAMES
 
 /* These functions live in liboldnames.a. */
-_CRTIMP int __cdecl	fstat (int, struct stat*);
-_CRTIMP int __cdecl	chmod (const char*, int);
-_CRTIMP int __cdecl	stat (const char*, struct stat*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	fstat (int, struct stat*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	chmod (const char*, int);
+_CRTIMP int __cdecl __MINGW_NOTHROW	stat (const char*, struct stat*);
 
 #endif	/* Not _NO_OLDNAMES */
 
 #if defined (__MSVCRT__)
-_CRTIMP int __cdecl  _fstati64(int, struct _stati64 *);
-_CRTIMP int __cdecl  _stati64(const char *, struct _stati64 *);
+_CRTIMP int __cdecl __MINGW_NOTHROW  _fstati64(int, struct _stati64 *);
+_CRTIMP int __cdecl __MINGW_NOTHROW  _stati64(const char *, struct _stati64 *);
 /* These require newer versions of msvcrt.dll (6.10 or higher).  */ 
 #if __MSVCRT_VERSION__ >= 0x0601
-_CRTIMP int __cdecl _fstat64 (int, struct __stat64*);
-_CRTIMP int __cdecl _stat64 (const char*, struct __stat64*);
+_CRTIMP int __cdecl __MINGW_NOTHROW _fstat64 (int, struct __stat64*);
+_CRTIMP int __cdecl __MINGW_NOTHROW _stat64 (const char*, struct __stat64*);
 #endif /* __MSVCRT_VERSION__ >= 0x0601 */
 #if !defined ( _WSTAT_DEFINED) /* also declared in wchar.h */
-_CRTIMP int __cdecl	_wstat(const wchar_t*, struct _stat*);
-_CRTIMP int __cdecl	_wstati64 (const wchar_t*, struct _stati64*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	_wstat(const wchar_t*, struct _stat*);
+_CRTIMP int __cdecl __MINGW_NOTHROW	_wstati64 (const wchar_t*, struct _stati64*);
 #if __MSVCRT_VERSION__ >= 0x0601
-_CRTIMP int __cdecl _wstat64 (const wchar_t*, struct __stat64*);
+_CRTIMP int __cdecl __MINGW_NOTHROW _wstat64 (const wchar_t*, struct __stat64*);
 #endif /* __MSVCRT_VERSION__ >= 0x0601 */
 #define _WSTAT_DEFINED
 #endif /* _WSTAT_DEFIND */
