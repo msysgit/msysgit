@@ -22,12 +22,15 @@ mkdir "$TMPDIR" &&
 cd "$TMPDIR" &&
 (cd .. && test ! -f "$TMPPACK" || rm "$TMPPACK") &&
 echo "Copying files" &&
-cat "$SHARE"/fileList.txt | (cd / && tar -c --file=- --files-from=-) |
+cat "$SHARE"/fileList.txt |
+	(cd / && tar -c --file=- --files-from=-; echo $? > /tmp/exitstatus) |
 	tar xvf - &&
+test 0 = "$(cat /tmp/exitstatus)" &&
 cat "$SHARE"/fileList-mingw.txt |
-	(cd /mingw && tar -c --file=- --files-from=-) |
+	(cd /mingw && tar -c --file=- --files-from=-;
+	 echo $? > /tmp/exitstatus) |
 	tar xvf - &&
-strip bin/*.exe &&
+test 0 = "$(cat /tmp/exitstatus)" &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
 sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
