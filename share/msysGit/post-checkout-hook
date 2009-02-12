@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# This post-checkout hook is meant to be installed in msysGit's root repository.
+#
+# The problem:
+#	Windows does not allow deleting or overwriting files that are in use.
+#	Concretely, it does not allow msysGit's shell to call Git to update
+#	msys-1.0.dll, because the shell still uses it.
+#
+# The symptoms:
+#	Directly after a checkout (as is the case when this hook is called),
+#	some files that should have been changed (i.e. that are in the output
+#	of 'git diff --name-only $old..$new') are marked modified, i.e. the
+#	command 'git diff-files --quiet -- $files' fails.
+#
+# The solution:
+#	We copy a fresh /bin/sh.exe and /bin/msys-1.0.dll into a temporary
+#	directory, add a script to that directory that will add the PATH back
+#	so we can use the Git commands (which are unaffected by the issue, as
+#	they are neither MSys programs nor are they tracked), and then fixes
+#	the issue.
+#
+#	Finally, we add a shortcut on the desktop so that it is easy for the
+#	user to start after closing all msysGit windows.
+
+die () {
+	echo "$*" >&2
+	exit 1
+}
+
+test "$3" != 1 && exit
+test "$1" = "$2" && exit
+MODIFIED="$(cd / && git diff --ignore-submodules --name-only -z "$1".."$2" |
+		xargs -0r git ls-files --modified)"
+test -z "$MODIFIED" && exit
+cd /share/msysGit || exit 0 # called from tmproot
+
+mkdir -p tmproot/bin tmproot/etc &&
+echo "$MODIFIED" > tmproot/etc/modifiedFiles &&
+make create-shortcut.exe > /dev/null &&
+cp /bin/{sh.exe,msys-1.0.dll,git.exe,cat.exe,rm.exe,xargs.exe} \
+	/mingw/bin/{libcurl-4.dll,libiconv2.dll} tmproot/bin/ &&
+cat > tmproot/etc/profile << \EOF &&
+# cd to msysGit root
+cd "$(pwd -W)"/../../../..
+
+# add original msysGit PATH
+export PATH=/bin:"$(pwd)/bin:$(pwd)/mingw/bin"
+
+prompt_and_exit () {
+	echo "<Press Enter to close this window>" >&2
+	read line
+	exit "$1"
+}
+
+die () {
+	printf '\n' >&2
+	echo "$*" >&2
+	prompt_and_exit 1
+}
+
+# Try to update files marked 'modified'
+test -s /etc/modifiedFiles && {
+	echo "Trying to finish checkout" >&2
+	cat /etc/modifiedFiles |
+	xargs git checkout -- ||
+	die "Please close _all_ msysGit instances and run this shortcut again"
+	test -z "$(cat /etc/modifiedFiles |
+			xargs git diff --ignore-submodules --name-only)" ||
+	die "At least one file could not be updated; is msysGit still running?"
+}
+
+echo "Everything up-to-date"
+test -f /etc/linkfile && rm -f "$(cat /etc/linkfile)"
+prompt_and_exit 0
+EOF
+echo "$USERPROFILE/Desktop/finish-checkout.lnk" > tmproot/etc/linkfile &&
+./create-shortcut --work-dir "$(cd tmproot/bin && pwd -W)" \
+	--icon-file "$(cd ../resources && pwd -W)/msysgitlogo.ico" \
+	--arguments "--login -i" \
+	"$(pwd -W)"/tmproot/bin/sh.exe \
+	"$(cat tmproot/etc/linkfile)" &&
+cat << EOF ||
+
+WARNING!
+--------
+
+You appear to have modified files after switching branches.  As Windows has
+problems updating files that are in use, the most likely reason is that a
+.dll or a .exe file needs to be updated, but that was refused due to a process
+locking it.
+
+A shortcut 'finish-checkout' was created on your desktop to help you: quit
+all msysGit programs, launch that shortcut, and all should be fixed.
+EOF
+die "Could not set up temporary MSys root"
