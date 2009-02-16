@@ -78,8 +78,10 @@ echo -------------------------------------------------------
 echo Checking out the master branch
 echo -------------------------------------------------------
 git-checkout -l -f -q -b master origin/@@MSYSGITBRANCH@@ ||
-    error Couldn\'t checkout the master branch!
-
+	error Couldn\'t checkout the master branch!
+mkdir -p .git/hooks &&
+cp share/msysGit/post-checkout-hook .git/hooks/post-checkout ||
+	error Could not install post-checkout hook
 
 # TEMP: Remove pre-existing git directory
 rm -rf git
