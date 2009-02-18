@@ -557,9 +557,9 @@ begin
 
         Count:=GetArrayLength(BuiltIns)-1;
 
-        // Delete all scripts as they might have been replaced by built-ins by now.
+        // Delete those scripts from "bin" which have been replaced by built-ins in "libexec\git-core".
         for i:=0 to Count do begin
-            FileName:=ChangeFileExt(AppDir+'\'+BuiltIns[i],'');
+            FileName:=AppDir+'\bin\'+ChangeFileExt(ExtractFileName(BuiltIns[i]),'');
             if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
                 Log('Line {#emit __LINE__}: Unable to delete script "'+FileName+'", ignoring.');
             end;
