@@ -1,0 +1,68 @@
+This is a simple port of DJGPP's redir utility for those who're stuck with
+braindead COMMAND/CMD shells on windows32 that cannot redirect standard
+error correctly.
+
+Here's the documentation provided with DJGPP's redir utility (also
+provided in the .zip file):
+
+                                     redir
+                                       
+   DOS, in its many flavors and versions, lacks a decent I/O redirection
+   mechanism. Sure, it's got < and > and >>, but what about error
+   messages? Lots of people ask, "How do you send those error messages to
+   a file?" Well, you use a program like redir.
+   
+   redir is basically a program that manipulates the standard file
+   descriptors by copying them, closing and opening them, etc. Once it
+   has the file descriptors where it wants them, it runs your program,
+   which inherits the changed descriptors. Thus, redir has nearly
+   complete control over the input and output of your program.
+   
+   It also allows you to view the exit code of the program, and the
+   elapsed time of the program, by supplying the appropriate options on
+   the command line.
+   
+   Note that redir is built with command-line expansion and response
+   files disabled, so as to allow the application to control that
+   themselves. This means that you can't use those features to provide
+   redir's options or the command name, but if you use them for the
+   command's options, the command will do the expansion if it wants to.
+   
+   The exit code of redir is 1 if it exits on its own accord, else it
+   returns the same error code as the program it runs.
+   
+   Usage: redir [-i file] [-o file] [-oa file] [-e file] [-ea file] [-eo]
+   [-oe] [-x] command [args . . .]
+   -i file
+          Redirect stdandard input from file
+   -o file
+          Redirect standard output to file
+   -oa file
+          Append standard output to file
+   -e file
+          Redirect standard error to file
+   -ea file
+          Append standard error to file
+   -eo
+          Redirect standard error to standard output
+   -oe
+          Redirect standard output to standard error
+   -x
+          Print the exit code of the command after it exits. If the exit
+          code is 0..255, it is printed as is. If it is not, the low byte
+          (0..255) is printed in decimal and the whole value is also
+          printed in hex.
+          
+   Options are processed in the order they are encountered. Thus, "-o foo
+   -eo" means "redirect output to foo, then redirect errors there also",
+   whereas "-eo -o foo" means "send errors to where output was going,
+   then move output to foo".
+   
+   Examples:
+   
+   To redirect errors to a file:
+redir -e errors.lst command ...
+
+   To redirect output to a file, and errors through a pipe:
+redir -eo -o prog.out command ... | pipe
+

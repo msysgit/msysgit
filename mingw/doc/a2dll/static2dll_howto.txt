@@ -1,0 +1,141 @@
+How to build Win32 Dynamic-Loading Library (DLL) from existing static library
+-----------------------------------------------------------------------------
+
+-------
+NOTE: To perform steps below, you'll need contemparary dlltool, for
+example from Mumit Khan's gcc-2.95.2 packages.
+-------
+
+
+This document describes step-by-step procedure of building Win32 DLL from
+static library. It suitable for both your own and third-party (i.e. ones
+which you know, and would like to, little about) libs. However, for your
+own libraries you may adopt more handy and adequate method (exporting all
+symbols, as done here, may be not the best solution). However, procedure
+given here describes easiest and fastest way if what you want is just
+create proper DLL and forget about it. This documets assumes that
+you have, or will, read documentation for Mumit Khan's dllwrappers
+tools (dllwrap & dlltool utilities).
+
+Before proceeding with description of process, some notes about
+distinction of DLLs and usual *nix-style shared libraries (.so, referred
+as SO below) (read also if you don't have experience with .so):
+
+[Once again note that there's a big gap between abstract information
+below and specific practical steps which follow; if you want to fill
+that gap, read standard documentation.]
+
+
+Theory
+------
+
+1. Usually, compilation of objects for shared libraries requires different
+set of compiler options comparing to static counterparts. For example,
+many systems require -fpic flag to generate position-independent code.
+However, for Win32, both static libs and DLLs are created from the same
+set of objects. Despite this little advantage, DLLs have following big
+disadvantage:
+
+2. Once have been created, shared libraries require no additional fuzz
+for usage. When so-using executable is loaded, every reference to
+so-symbol gets fixed up to point directly to SO. Win32 has different
+system: every executable importing DLL has special section, .idata, to hold
+pointers to imported symbols. During loading, OS loader fills this section
+with actual info. And application is supposed, when needed DLL-symbol, first
+lookup its pointer in .idata, and only then have access by that pointer,
+As you see, for DLL-imported symbols, additional level of indirection is
+required. This stems probably from dark times of real-mode 16-bit Windows,
+working on 8086 processor lacking virtual memory. Having all import-related
+stuff in one single place facilated runtime relocation, which was needed
+to effictively manage memory there. So or other, but it is that way.
+   So, as you see, special compiler support required to compile client of
+DLL (note strange symmetry - *nix require special support to compile library,
+while Win32 - to compile client. Former is better, I agree).
+
+3. As was said before, with SO you use library just as you would static
+version. This is not so for Win32. Win32 DLL is self-contained executable,
+not supposed to be linked against. Instead, client is linked with special
+auxilary library, called 'import library' or 'implib'. Implib contains
+information to properly layout .idata section to be filled in by OS loader
+with information about DLL.
+
+
+Building DLL from existing static library
+-----------------------------------------
+
+We assume that you already build static lib, which we will call 'libfoo.a'.
+However, building yourself is not requirement, to perform these instructions,
+you don't needed sources of library - only library itself and its headers.
+
+1. Fisrt step would be to create export definition file (or just def). You
+can do this directly from library:
+
+dlltool libfoo.a --export-all-symbols --output-def foo.def
+
+2. Now, we can create DLL itself. This may be done by two ways: 1) link
+dummy file referencing each symbol in libfoo.a (created by script acting on
+output from 'nm libfoo.a') against libfoo.a (so, each foo's object for
+sure will be in foo.dll) or 2) exploding library and linking all its objects
+together. I consider second way cleaner and show it:
+
+mkdir tmp
+cp libfoo.a tmp/
+cd tmp
+ar x libfoo.a
+dllwrap *.o --def ../foo.def -o ../foo.dll [usual -l libraries here]
+cd ..
+
+3. Let's create implib. If you want totally transparent transition from
+static to DLL, call it 'libfoo.a'. However, if you want to keep destinction,
+'libfoo.dll.a' is good:
+
+dlltool --def foo.def  --ouput-lib libfoo.dll.a
+
+4. Now grep foo.def for entries containing 'DATA'. If there's none -
+congratulations, your library uses functional-only interface and you've done.
+Else, most unpleasant work left - patch headers to include dllimport tag.
+
+If you want to do it once-and-for-all (you should), do following:
+
+  a) make something like 'dl_import.h' and put there:
+   -----
+   #if !defined(STATIC) && defined(_WIN32)
+   #define _DL_IMPORT __delcspec(dllimport)
+   #else
+   #define _DL_IMPORT
+   #endif
+   -----
+   , if you want to use DLL by default (note that you will need to compile
+   library itself with STATIC defined), or
+   -----
+   #if defined(DLL) && defined(_WIN32)
+   #define _DL_IMPORT __delcspec(dllimport)
+   #else
+   #define _DL_IMPORT
+   #endif
+   -----
+   , if you want to include -DDLL each time you compile DLL client.
+
+  b) for each def symbol having DATA attribute, find header where its declared
+  as extern. If that header doesn't have '#include "dl_import.h"' at the top,
+  add it. Put '_DL_IMPORT' in front of 'extern' (strictly speaking, position
+  matters and proper place is after both extern and type, but for data
+  declaration above works also (at least for me)). For example, if it was
+
+    extern void *(*my_malloc)(int sz);
+
+  becoming
+
+    _DL_IMPORT extern void *(*my_malloc)(int sz);
+
+  will suffice. Procedd with next symbol.
+
+However, if you're lazy for that, you may stretch the pleasure and mark
+symbol as _DL_IMPORT only whenever you encounter it in undefined symbol
+error during linking of client.
+
+5. That's all! Now, just compile client either as usually or with -DDLL,
+and link either as usually or with -lfoo.dll .
+
+Paul.Sokolovsky@technologist.com
+1999-08-28
