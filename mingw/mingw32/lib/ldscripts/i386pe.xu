@@ -1,6 +1,6 @@
 /* Script for ld -Ur: link w/out relocation, do create constructors */
 OUTPUT_FORMAT(pe-i386)
-SEARCH_DIR("/mingw/mingw32/lib"); SEARCH_DIR("/mingw/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
+SEARCH_DIR("/usr/local/mingw32/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
 SECTIONS
 {
   .text  :
@@ -8,22 +8,11 @@ SECTIONS
     *(.text)
     *(.glue_7t)
     *(.glue_7)
-    	___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
-			LONG (-1);
-			*(EXCLUDE_FILE (*crtend.o) .ctors);
-			*(.ctor);
-			*(SORT(.ctors.*));
-			*(.ctors);
-			LONG (0);
-    	___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
-			LONG (-1);
-			*(EXCLUDE_FILE (*crtend.o) .dtors);
-			*(.dtor);
-			*(SORT(.dtors.*));
-			*(.dtors);
-			LONG (0);
+     ___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
+			LONG (-1);*(.ctors); *(.ctor); *(SORT(.ctors.*));  LONG (0);
+     ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
+			LONG (-1); *(.dtors); *(.dtor); *(SORT(.dtors.*));  LONG (0);
     /* ??? Why is .gcc_exc here?  */
-    *(.gcc_except_table)
   }
   /* The Cygwin32 library uses a section to avoid copying certain data
      on fork.  This used to be named ".data".  The linker used
@@ -39,7 +28,6 @@ SECTIONS
   .rdata  :
   {
     *(.rdata)
-    *(.eh_frame)
     *(.rdata_runtime_pseudo_reloc)
   }
   .pdata  :
