@@ -198,9 +198,6 @@ extern void bfd_link_add_undef
 extern void bfd_link_repair_undef_list
   (struct bfd_link_hash_table *table);
 
-/* Read symbols and cache symbol pointer array in outsymbols.  */
-extern bfd_boolean bfd_generic_link_read_symbols (bfd *);
-
 struct bfd_sym_chain
 {
   struct bfd_sym_chain *next;
@@ -374,9 +371,6 @@ struct bfd_link_info
      skipped (like symbol_leading_char) when looking up symbols in
      wrap_hash.  Used by PowerPC Linux for 'dot' symbols.  */
   char wrap_char;
-
-  /* Separator between archive and filename in linker script filespecs.  */
-  char path_separator;
 
   /* Function callbacks.  */
   const struct bfd_link_callbacks *callbacks;
