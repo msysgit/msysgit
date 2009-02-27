@@ -1,7 +1,7 @@
 #!/bin/sh
 
-release=MSYS-1.0.11-20071204-src
-src=$release.tar.bz2
+release=MSYS-1.0.11-20090120-src
+src=$release.tar.gz
 mirror=http://heanet.dl.sourceforge.net/sourceforge/mingw/
 
 mkdir -p build
@@ -14,7 +14,7 @@ fi
 
 test -e $release ||
 (
-tar xjvf $src &&
+tar xzvf $src &&
 cd $release &&
 git init &&
 git config core.autocrlf false &&
