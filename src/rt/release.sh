@@ -4,6 +4,7 @@ release=MSYS-1.0.11-20090120-src
 src=$release.tar.gz
 mirror=http://heanet.dl.sourceforge.net/sourceforge/mingw/
 
+cd "$(dirname "$0")"
 mkdir -p build
 cd build
 
@@ -41,11 +42,8 @@ git am ../../patches/*.patch ||
  strip $DLL &&
  rebase -b 0x30000000 $DLL &&
  mv $DLL /bin/) &&
-cat << EOD
-The new msys-1.0.dll was built successfully and is available as
-
-	$(cd /bin/ && pwd -W)/new-msys-1.0.dll
-
-Please exit all msysGit instances, replace msys-1.0.dll with that file, and
-restart msysGit.
-EOD
+cd / &&
+hash=$(git hash-object -w bin/new-msys-1.0.dll) &&
+git update-index --cacheinfo 100755 $hash bin/msys-1.0.dll &&
+git commit -s -m "Updated msys-1.0.dll to ${release%-src}" &&
+/share/msysGit/post-checkout-hook HEAD^ HEAD 1
