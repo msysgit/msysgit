@@ -35,9 +35,12 @@ git am ../../patches/*.patch ||
 (export MSYSTEM=MSYS &&
  (test -d bld || mkdir bld) &&
  cd bld &&
+ DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
  (test -f Makefile || ../source/configure --prefix=/usr) &&
- (make || test -f i686-pc-msys/winsup/cygwin/new-msys-1.0.dll)) &&
- mv bld/i686-pc-msys/winsup/cygwin/new-msys-1.0.dll /bin/ &&
+ (make || test -f $DLL) &&
+ strip $DLL &&
+ rebase -b 0x30000000 $DLL &&
+ mv $DLL /bin/) &&
 cat << EOD
 The new msys-1.0.dll was built successfully and is available as
 
