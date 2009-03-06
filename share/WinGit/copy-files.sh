@@ -44,7 +44,7 @@ openssl.exe,vim,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ share/git* \
 share/vim/vimrc share/vim/vim72/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/gitcommit.vim,\
-syntax/synload.vim,syntax/syntax.vim,vim.exe}) |
+syntax/synload.vim,syntax/syntax.vim,vim.exe,doc}) |
 tar xf - &&
 rm -rf lib/perl5/5.8.8/Encode/ lib/perl5/5.8.8/msys/auto/Encode/ bin/cvs.exe &&
 (test ! -f /lib/Git.pm || cp -u /lib/Git.pm lib/perl5/site_perl/Git.pm) &&
