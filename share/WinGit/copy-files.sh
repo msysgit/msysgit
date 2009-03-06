@@ -40,11 +40,11 @@ ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,\
 msys-crypto-0.9.8.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
-openssl.exe,vim.exe,wc.exe,which,xargs.exe,start} lib/engines/ \
+openssl.exe,vim,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ share/git* \
-share/vim/vimrc share/vim/vim58/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
+share/vim/vimrc share/vim/vim72/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/gitcommit.vim,\
-syntax/synload.vim,syntax/syntax.vim}) |
+syntax/synload.vim,syntax/syntax.vim,vim.exe}) |
 tar xf - &&
 rm -rf lib/perl5/5.8.8/Encode/ lib/perl5/5.8.8/msys/auto/Encode/ bin/cvs.exe &&
 (test ! -f /lib/Git.pm || cp -u /lib/Git.pm lib/perl5/site_perl/Git.pm) &&
