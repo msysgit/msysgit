@@ -12,6 +12,7 @@ switch -regexp [lindex $argv 0] {
 	puts "	AllUsersStartMenu	create an icon in All Users' start menu"
 	puts "	AllUsersStartMenu2	create an icon in All Users'"
 	puts "					start menu's Programs>msysGit"
+	puts "	EnableQuickEdit	enable the QuickEdit mode in the console"
 	puts ""
 	puts "Short options are q, d, s, s2, a and a2."
 	exit 1
@@ -52,6 +53,17 @@ switch -regexp [lindex $argv 0] {
 	set programs [registry get $key "Common Programs"]
 	file mkdir $programs/$startMenuName
 	set targetDirectory $programs/$startMenuName
+}
+"^(EnableQuickEdit|quickedit)$" {
+	package require registry 1.0
+	regsub "^(.*)/etc/inputrc" $env(INPUTRC) "\\1" msysRoot
+	set sh [string map { "\\" "_" "/" "_" } $msysRoot/bin/sh.exe]
+	set key "HKEY_CURRENT_USER\\Console"
+	registry set $key "QuickEdit" 1 dword
+	registry set $key "HistoryBufferSize" 999 dword
+	registry broadcast $key
+	registry broadcast "Console"
+	exit 0
 }
 default {
 	puts "Unknown argument: [lindex $argv 0]"
