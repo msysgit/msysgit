@@ -83,7 +83,7 @@ get_finished_tests () {
 	REMAINING_TESTS=
 	for t in $CURRENT_TESTS
 	do
-		f=$(grep failed t/test-results/${t%-*}-[1-9]* 2> /dev/null)
+		f=$(grep failed t/test-results/${t%.sh}-[1-9]* 2> /dev/null)
 		if test ! -z "$f"
 		then
 			printf '%70s ' $(cd t && echo $t*.sh)
