@@ -28,7 +28,7 @@ echo "Copying files" &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
-$(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb\|filter-branch') \
+$(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb') \
 bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
