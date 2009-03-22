@@ -1,0 +1,51 @@
+AC_INIT(rtf2html, 0.2.0, vlavrinenko@users.sourceforge.net)
+AM_INIT_AUTOMAKE(dist-bzip2)
+AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_SRCDIR(rtf2html.cpp)
+
+CXXFLAGS=
+
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+AC_HEADER_STDC
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+AC_LANG_CPLUSPLUS
+
+AC_ARG_ENABLE(static,AS_HELP_STRING(--enable-static,link with STLPort statically),,enable_static=no)
+if test "x$enable_static" != "xno"; then
+   AC_DEFINE(_STLP_USE_STATIC_LIB,1,Define to 1 if you link STLPort statically)
+fi
+AC_ARG_ENABLE(debug,AS_HELP_STRING(--enable-debug,compile with debug info),,enable_debug=no)
+if test "x$enable_debug" != "xno"; then
+   AC_MSG_NOTICE(Enabling debugging info...)
+   AC_DEFINE(__DEBUG__,1,Define to 1 for debug version)
+   AC_DEFINE(_DEBUG,1,Define to 1 for debug version)
+   CFLAGS="$CFLAGS -g -Wall -O0"
+   AC_DEFINE(_STLP_DEBUG,1,Define to 1 to use STLPort debug facilities)
+else
+   AC_MSG_NOTICE(Disabling debugging info...)
+   AC_DEFINE(NDEBUG,1,Define to 1 for release version)
+   AC_DEFINE(_NDEBUG,1,Define to 1 for release version)
+   CFLAGS=$(echo $CFLAGS|sed 's/-g//g')
+fi
+
+
+
+AC_LIB_STLPORT(no)
+if test "$ac_stlport_use" == "no"; then
+   AC_CHECK_LIB(stdc++,main,,AC_MSG_ERROR(rtf2html requires either libstdc++ or libstrloprt))
+fi
+
+AC_CHECK_HEADER(string,,AC_MSG_ERROR(STL classes missing ?))
+AC_CHECK_FUNCS(floor strtol,,AC_MSG_ERROR(STDLIB funcs missing))
+AC_CHECK_FUNC(rint,AC_DEFINE(HAVE_RINT,1,Define to 1 if you have rint function))
+
+CXXFLAGS="$CPPFLAGS $CFLAGS"
+                            
+AC_OUTPUT(Makefile)
