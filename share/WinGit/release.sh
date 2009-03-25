@@ -72,4 +72,4 @@ sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
 	< /share/WinGit/install.iss > $TMPDIR/install.iss &&
 echo "Lauching Inno Setup compiler ..." &&
 /share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" /q | grep -Ev "\s*Reading|\s*Compressing" &&
-git tag Git-$1
+(cd / && git tag Git-$1)
