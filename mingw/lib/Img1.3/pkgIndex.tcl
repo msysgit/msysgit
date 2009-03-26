@@ -77,9 +77,8 @@ package ifneeded Img   1.3 {
     package require img::xbm
     package require img::xpm
     package require img::ps
-    package require img::jpeg
-    package require img::png
-    package require img::tiff
+    package require jpegtcl
+    package require tifftcl
     package require img::bmp
     package require img::ppm
     package require img::gif
