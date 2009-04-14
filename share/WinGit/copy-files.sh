@@ -50,7 +50,7 @@ syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/diff.vim,\
 syntax/gitcommit.vim,syntax/syncolor.vim,syntax/synload.vim,syntax/syntax.vim,\
 vim.exe}) |
 tar xf - &&
-rm -rf lib/perl5/5.8.8/Encode/ lib/perl5/5.8.8/msys/auto/Encode/ bin/cvs.exe &&
+rm -rf bin/cvs.exe &&
 (test ! -f /lib/Git.pm || cp -u /lib/Git.pm lib/perl5/site_perl/Git.pm) &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
