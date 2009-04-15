@@ -5,7 +5,7 @@ test -z "$1" && {
 	exit 1
 }
 
-TARGET="$HOME"/PortableGit-$1.exe
+TARGET="$HOME"/PortableGit-$1.7z
 OPTS7="-m0=lzma -mx=9 -md=64M"
 TARGET7=tmp.7z
 TMPDIR=/tmp/WinGit
@@ -29,4 +29,5 @@ exit
  echo 'InstallPath="%PROGRAMFILES%\\Git"' &&
  echo 'OverwriteMode="0"' &&
  echo ';!@InstallEnd@!7z' &&
- cat $TARGET7) > "$TARGET"
+ cat $TARGET7) > "$TARGET" &&
+echo "Created $TARGET"
