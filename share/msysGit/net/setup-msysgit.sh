@@ -59,7 +59,7 @@ git config remote.mob.fetch +refs/heads/mob:refs/remotes/origin/mob &&
 git config remote.mob.push master:mob &&
 
 USE_HTTP=
-git fetch ||
+git fetch || {
 	USE_HTTP=t &&
         git config remote.origin.url $MSYSGIT_REPO_HTTP &&
         git fetch || {
@@ -70,6 +70,7 @@ git fetch ||
 		git fetch
 	} ||
 	error "Could not get msysgit.git"
+}
 
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
