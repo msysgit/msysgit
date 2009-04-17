@@ -12,6 +12,9 @@ TMPDIR=/tmp/WinGit
 
 "$(dirname $0)/copy-files.sh" $TMPDIR &&
 cd "$TMPDIR" &&
+cp /share/WinGit/README.portable ./ &&
+cp /msys.bat ./git-bash.bat &&
+cp /git-cmd.bat ./ &&
 7z a $OPTS7 $TARGET7 * ||
 exit
 
