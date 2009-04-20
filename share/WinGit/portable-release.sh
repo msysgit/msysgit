@@ -10,7 +10,7 @@ OPTS7="-m0=lzma -mx=9 -md=64M"
 TARGET7=tmp.7z
 TMPDIR=/tmp/WinGit
 
-"$(dirname $0)/copy-files.sh" $TMPDIR &&
+DONT_REMOVE_BUILTINS=1 "$(dirname $0)/copy-files.sh" $TMPDIR &&
 cd "$TMPDIR" &&
 cp /share/WinGit/README.portable ./ &&
 cp /msys.bat ./git-bash.bat &&

@@ -55,8 +55,12 @@ rm -rf bin/cvs.exe &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
-md5sum {bin,libexec/git-core}/git-*.exe | sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
-rm $(cat etc/fileList-builtins.txt) &&
+if -z "$DONT_REMOVE_BUILTINS"
+then
+	md5sum {bin,libexec/git-core}/git-*.exe |
+	sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
+	rm $(cat etc/fileList-builtins.txt)
+fi &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl,libiconv}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xf - &&
