@@ -690,7 +690,7 @@ begin
 
     // First, remove the installation directory from PATH in any case.
     for i:=0 to GetArrayLength(EnvPath)-1 do begin
-        if Pos(AppDir,EnvPath[i])=1 then begin
+        if Pos(AppDir+'\',EnvPath[i]+'\')=1 then begin
             EnvPath[i]:='';
         end;
     end;
@@ -896,7 +896,7 @@ begin
     // Remove the installation directory from PATH in any case, even if it
     // was not added by the installer.
     for i:=0 to GetArrayLength(EnvPath)-1 do begin
-        if Pos(AppDir,EnvPath[i])=1 then begin
+        if Pos(AppDir+'\',EnvPath[i]+'\')=1 then begin
             EnvPath[i]:='';
         end;
     end;
