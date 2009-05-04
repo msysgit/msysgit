@@ -18,6 +18,8 @@ cp /git-cmd.bat ./ &&
 7z a $OPTS7 $TARGET7 * ||
 exit
 
+if test -z "$NO_SFX"
+then
 (cat /share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
  echo 'Progress="yes"' &&
@@ -32,5 +34,8 @@ exit
  echo 'InstallPath="%PROGRAMFILES%\\Git"' &&
  echo 'OverwriteMode="0"' &&
  echo ';!@InstallEnd@!7z' &&
- cat $TARGET7) > "$TARGET" &&
+ cat $TARGET7) > "$TARGET"
+else
+ mv $TARGET7 > "$TARGET"
+fi &&
 echo "Created $TARGET"
