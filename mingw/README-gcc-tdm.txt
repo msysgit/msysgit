@@ -32,10 +32,9 @@ to start with a clean slate and install only the MinGW packages which are
 necessary to you. You'll need the following packages for basic Windows
 development:
  * binutils (binutils-2.19.1-mingw32-bin.tar.gz)
- * mingw-runtime (mingwrt-3.15.2-mingw32-dev.tar.gz,
-     mingwrt-3.15.2-mingw32-dll.tar.gz)
+ * mingw-runtime (mingwrt-3.15.2-mingw32-dev.tar.gz)
  * w32api (w32api-3.13-mingw32-dev.tar.gz)
-You might also want to install: 
+You might also want to install:
  * mingw-utils (mingw-utils-0.3.tar.gz)
  * mingw32-make (mingw32-make-3.81-20080326-3.tar.gz)
  * gdb (gdb-6.8-mingw-3.tar.bz2)
@@ -54,6 +53,16 @@ environment variable.
 
 
 >>>>> USAGE NOTES
+
+*** "Graphite" Loop Transformations ***
+
+The TDM release of GCC 4.4.0 includes support for GCC 4.4's Graphite loop
+transformation infrastructure. Because support for these optimizations is
+currently optional, they are not enabled at any of the -O optimization levels.
+If you are interested in using them, the relevant options are
+"-floop-interchange", "-floop-strip-mine", and "-floop-block", and they are
+documented at
+<http://gcc.gnu.org/onlinedocs/gcc-4.4.0/gcc/Optimize-Options.html>
 
 *** Dwarf-2 vs. SJLJ unwinding ***
 
@@ -81,33 +90,30 @@ DW2 exceptions as the default when calling "gcc" (from Makefiles or configury
 systems, for example), you can rename or copy the suffixed executables to their
 original names.
 
-TDM releases from the GCC 4.2 series use the SJLJ unwind method.
-
 *** Exceptions and DLLs ***
 
-The TDM-2 release of GCC 4.3.0 incorporated experimental builds of libgcc and
-libstdc++ as DLLs in order to allow exceptions to be thrown out of DLLs. With
-the more recent releases this has been dropped in favor of a ported version of
-3.4.5's shared memory patch, because of various problems encountered in the DLL
-versions. (Once these problems are solved, the DLL versions will be included
-again.)
+The mingw32 port of GCC is gradually moving toward the generally accepted method
+the rest of the world uses in allowing exceptions to propagate out of shared
+libraries (DLLs) -- that is, reliance on a third DLL to contain state data
+for the exception handling system. For any GCC language that supports exceptions
+(and DLLs), this actually involves two extra DLLs: (1) libgcc_s*.dll, which
+contains common core data, and (2) a language-specific DLL. You will note that
+the first phase of this move (libgcc_s*.dll) finally builds correctly
+out-of-the-box, but NOT THE SECOND PHASE (the language-specific DLLs).
 
-Therefore, you no longer need to add any additional command-line options to
-throw exceptions out of a DLL. You should, however, still add "-mthreads" to the
-command line any time you throw exceptions in a multi-threading context.
+Until such time as the language-specific DLLs build correctly, therefore,
+TDM-GCC will continue to rely on a versioned shared memory region. You do not
+need any additional command-line options to throw exceptions out of DLLs.
 
-The ported exceptions/DLLs patch is experimental and has only received limited
-testing, so please report any bugs you encounter in throwing exceptions that are
-not present in the official MinGW 3.4.5 release.
-
-TDM releases from the GCC 4.2 series cannot yet throw exceptions out of DLLs.
+If you'd like to try out the new libgcc DLL for other reasons, add
+"-shared-libgcc" to the command line, but be warned -- it may *break* inter-DLL
+exceptions.
 
 *** OpenMP and pthreads-w32 ***
 
 The core binary package has been built to allow the use of GCC's "-fopenmp"
 option for generating parallel code as specified by the OpenMP API. (See
-<http://gcc.gnu.org/onlinedocs/gcc-4.3.2/gcc/C-Dialect-Options.html#index-fopenmp-109>
-for details.)
+<http://gcc.gnu.org/onlinedocs/gcc-4.4.0/libgomp/> for details.)
 
 The OpenMP support in the TDM-GCC builds has received very little testing; if
 you find build or packaging problems, please send a bug report (see BUGS above).
@@ -131,7 +137,7 @@ the "bin" subdirectory of this package) can be found by your program. If you
 plan to distribute a program that relies on pthreads-win32, be sure to
 understand and comply with the terms of the LGPL (see COPYING.lib-gcc-tdm.txt).
 
-"libpthread.a" is included in the "lib/gcc/mingw32/4.3.2[-dw2]" subdirectory of
+"libpthread.a" is included in the "lib/gcc/mingw32/4.4.0[-dw2]" subdirectory of
 this package along with two other pthreads library files:
  - "libpthreadGC2-static.a" provides a static version of the pthreads-win32
      library, but it requires some additional non-POSIX-compliant startup code
@@ -146,8 +152,8 @@ this package along with two other pthreads library files:
 
 GCC 4 represents a significant step forward in optimization capabilities, error
 detection, and standards compliance, and this is more true than ever with the
-advent of the 4.3 release series. For you, the end user, this will mean that
-code which used to compile and run without problems will almost certainly
+most recent GCC releases. For you, the end user, this will mean that code which
+compiled and ran without problems on previous GCC releases will almost certainly
 exhibit some warnings and maybe even a few errors.
 
 These meaningful warnings and errors are a very good thing, as they help the
@@ -165,22 +171,11 @@ code is correct and standards-compliant.
 
 >>>>> BUGS AND KNOWN ISSUES
 
- * [4.3 series only] Under rare and as-yet-unidentified circumstances, inclusion
-     of a precompiled header will cause compilation to fail with an error like
-     "error: calling fdopen: bad file descriptor or file name". It seems only to
-     happen when the PCH is double-included by both an #include directive and
-     the -include command-line switch, but this in itself will not trigger the
-     bug.
- * [4.1 and 4.2 series only] Exceptions cannot leave DLLs. Recent TDM
-     releases from the 4.3 series do not have this problem. It only appears in
-     previous releases when a function in a DLL called from outside the DLL
-     throws (or fails to catch) an exception, and results in program termination
-     at that point.
- * [4.2 series only] A miscompilation can occur in very specific situations when
-     -O2 optimization is enabled, if you pass the address of a local pointer
-     variable to a function that modifies it. Use "-O2 -fno-strict-aliasing" as
-     a workaround. This has been fixed as of the 4.3 series. (See
-     <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=32328>.)
+ * Under rare and as-yet-unidentified circumstances, inclusion of a precompiled
+     header will cause compilation to fail with an error like "error: calling
+     fdopen: bad file descriptor or file name". It seems only to happen when the
+     PCH is double-included by both an #include directive and the -include
+     command-line switch, but this in itself will not trigger the bug.
 
 As these builds are provided on the same basis as the source releases, and the
 mingw32 target in GCC tends to receive somewhat less-than-average attention,
@@ -193,30 +188,22 @@ instructions.
 
 >>>>> LOCAL FIXES AND CHANGES
 
- - [4.3 series] Includes a patch ported from the official MinGW 3.4.5 release to
-     propagate exceptions out of DLLs without the need for shared versions of
-     libgcc and libstdc++.
- - [4.3 series] Includes a patch which corrects backslash usage in header paths
-      and fixes path problems when debugging. (See
+ - Includes a patch ported from the official MinGW 3.4.5 release to propagate
+     exceptions out of DLLs without the need for shared versions of libgcc and
+     libstdc++.
+ - Includes a patch which corrects backslash usage in header paths and fixes
+      path problems when debugging. (See
       http://sourceforge.net/tracker2/?func=detail&aid=2145427&group_id=200665&atid=974439)
- - Includes a patch to fix a crash when all temporary directory environment
-      variables are empty.
  - Includes a patch to keep GCC from erroneously using the CWD as the
      installation directory.
  - Configured with "--enable-fully-dynamic-string", which fixes a bug when
      passing empty std::string objects between DLLs and EXEs.
 
-[The following patches are only necessary for the 4.2 series and have been
-applied in the 4.3 sources]
+[The following patches are only necessary for the 4.3 series and have been
+applied in the 4.4 sources]
 
- - Includes a patch which fixes GCC bug #27067. The primary reason for including
-     this patch was to let the wxWidgets GUI library compile successfully
-     out-of-the-box. (See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=27067)
- - Includes a patch to remove a dependency on the runtime for the classic ctype
-     table, moving it to libstdc++ itself. (See
-     http://gcc.gnu.org/ml/gcc-patches/2007-07/msg01413.html)
- - Includes a patch to fix an ICE when compiling gettext (See
-     http://gcc.gnu.org/bugzilla/show_bug.cgi?id=29826)
+ - Includes a patch to fix a crash when all temporary directory environment
+     variables are empty.
 
 
 >>>>> SOURCE CODE
@@ -236,11 +223,11 @@ sources, as well as the set of scripts used to build the binary releases.
 >>>>> LICENSE
 
 The TDM-GCC packages contain binary distributions constituting a work based on
-GCC, which is licensed under the GPL. For further details, refer to the file
-"COPYING-gcc-tdm.txt" within the downloaded package. Additionally, TDM-GCC
-contains binary files constituting works based on libiconv, GMP, MPFR, and
-pthreads-w32, all of which are licensed under the LGPL; COPYING.lib-gcc-tdm.txt
-contains a copy of the LGPL.
+GCC, CLooG, and PPL, all of which are licensed under the GPL. For further
+details, refer to the file "COPYING-gcc-tdm.txt" within the downloaded package.
+Additionally, TDM-GCC contains binary files constituting works based on
+libiconv, GMP, MPFR, and pthreads-w32, all of which are licensed under the LGPL;
+COPYING.lib-gcc-tdm.txt contains a copy of the LGPL.
 
 The TDM-GCC distribution is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the Free

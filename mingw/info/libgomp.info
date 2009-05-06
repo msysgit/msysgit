@@ -1,15 +1,15 @@
 This is libgomp.info, produced by makeinfo version 4.8 from
-../../../gcc-4.3.3/libgomp/libgomp.texi.
+../../../gcc-4.4.0/libgomp/libgomp.texi.
 
-   Copyright (C) 2006 Free Software Foundation, Inc.
+   Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.1 or
+under the terms of the GNU Free Documentation License, Version 1.2 or
 any later version published by the Free Software Foundation; with the
-Invariant Sections being "GNU General Public License" and "Funding Free
-Software", the Front-Cover texts being (a) (see below), and with the
-Back-Cover Texts being (b) (see below).  A copy of the license is
-included in the section entitled "GNU Free Documentation License".
+Invariant Sections being "Funding Free Software", the Front-Cover texts
+being (a) (see below), and with the Back-Cover Texts being (b) (see
+below).  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
    (a) The FSF's Front-Cover Text is:
 
@@ -32,15 +32,15 @@ multi-platform shared-memory parallel programming in C/C++ and Fortran.
    Published by the Free Software Foundation 51 Franklin Street, Fifth
 Floor Boston, MA 02110-1301 USA
 
-   Copyright (C) 2006 Free Software Foundation, Inc.
+   Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.1 or
+under the terms of the GNU Free Documentation License, Version 1.2 or
 any later version published by the Free Software Foundation; with the
-Invariant Sections being "GNU General Public License" and "Funding Free
-Software", the Front-Cover texts being (a) (see below), and with the
-Back-Cover Texts being (b) (see below).  A copy of the license is
-included in the section entitled "GNU Free Documentation License".
+Invariant Sections being "Funding Free Software", the Front-Cover texts
+being (a) (see below), and with the Back-Cover Texts being (b) (see
+below).  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
    (a) The FSF's Front-Cover Text is:
 
@@ -96,7 +96,7 @@ of the OpenMP runtime library (*Note Runtime Library Routines::).
 
    A complete description of all OpenMP directives accepted may be
 found in the OpenMP Application Program Interface
-(http://www.openmp.org) manual, version 2.5.
+(http://www.openmp.org) manual, version 3.0.
 
 
 File: libgomp.info,  Node: Runtime Library Routines,  Next: Environment Variables,  Prev: Enabling OpenMP,  Up: Top
@@ -105,22 +105,32 @@ File: libgomp.info,  Node: Runtime Library Routines,  Next: Environment Variable
 **************************
 
 The runtime routines described here are defined by section 3 of the
-OpenMP specifications in version 2.5.
+OpenMP specifications in version 3.0. The routines are structured in
+following three parts:
 
    Control threads, processors and the parallel environment.
 
 * Menu:
 
-* omp_get_dynamic::          Dynamic teams setting
-* omp_get_max_threads::      Maximum number of threads
-* omp_get_nested::           Nested parallel regions
-* omp_get_num_procs::        Number of processors online
-* omp_get_num_threads::      Size of the active team
-* omp_get_thread_num::       Current thread ID
-* omp_in_parallel::          Whether a parallel region is active
-* omp_set_dynamic::          Enable/disable dynamic teams
-* omp_set_nested::           Enable/disable nested parallel regions
-* omp_set_num_threads::      Set upper team size limit
+* omp_get_active_level::        Number of active parallel regions
+* omp_get_ancestor_thread_num:: Ancestor thread ID
+* omp_get_dynamic::             Dynamic teams setting
+* omp_get_level::               Number of parallel regions
+* omp_get_max_active_levels::   Maximal number of active regions
+* omp_get_max_threads::         Maximal number of threads of parallel region
+* omp_get_nested::              Nested parallel regions
+* omp_get_num_procs::           Number of processors online
+* omp_get_num_threads::         Size of the active team
+* omp_get_schedule::            Obtain the runtime scheduling method
+* omp_get_team_size::           Number of threads in a team
+* omp_get_thread_limit::        Maximal number of threads
+* omp_get_thread_num::          Current thread ID
+* omp_in_parallel::             Whether a parallel region is active
+* omp_set_dynamic::             Enable/disable dynamic teams
+* omp_set_max_active_levels::   Limits the number of active parallel regions
+* omp_set_nested::              Enable/disable nested parallel regions
+* omp_set_num_threads::         Set upper team size limit
+* omp_set_schedule::            Set the runtime scheduling method
 
    Initialize, set, test, unset and destroy simple and nested locks.
 
@@ -145,9 +155,60 @@ OpenMP specifications in version 2.5.
 * omp_get_wtime::            Elapsed wall clock time.
 
 
-File: libgomp.info,  Node: omp_get_dynamic,  Next: omp_get_max_threads,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_get_active_level,  Next: omp_get_ancestor_thread_num,  Up: Runtime Library Routines
 
-2.1 `omp_get_dynamic' - Dynamic teams setting
+2.1 `omp_get_active_level' - Number of parallel regions
+=======================================================
+
+_Description_:
+     This function returns the nesting level for the active parallel
+     blocks, which enclose the calling call.
+
+_C/C++_
+     _Prototype_:  `int omp_get_active_level();'
+
+_Fortran_:
+     _Interface_:  `integer omp_get_active_level()'
+
+_See also_:
+     *Note omp_get_level::, *Note omp_get_max_active_levels::, *Note
+     omp_set_max_active_levels::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.19.
+
+
+File: libgomp.info,  Node: omp_get_ancestor_thread_num,  Next: omp_get_dynamic,  Prev: omp_get_active_level,  Up: Runtime Library Routines
+
+2.2 `omp_get_ancestor_thread_num' - Ancestor thread ID
+======================================================
+
+_Description_:
+     This function returns the thread identification number for the
+     given nesting level of the current thread. For values of LEVEL
+     outside zero to `omp_get_level' -1 is returned; if LEVEL is
+     `omp_get_level' the result is identical to `omp_get_thread_num'.
+
+_C/C++_
+     _Prototype_:  `int omp_get_ancestor_thread_num(int level);'
+
+_Fortran_:
+     _Interface_:  `integer omp_ancestor_thread_num(level)'
+                   `integer level'
+
+_See also_:
+     *Note omp_get_level::, *Note omp_get_thread_num::, *Note
+     omp_get_team_size::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.17.
+
+
+File: libgomp.info,  Node: omp_get_dynamic,  Next: omp_get_level,  Prev: omp_get_ancestor_thread_num,  Up: Runtime Library Routines
+
+2.3 `omp_get_dynamic' - Dynamic teams setting
 =============================================
 
 _Description_:
@@ -169,17 +230,63 @@ _See also_:
      *Note omp_set_dynamic::, *Note OMP_DYNAMIC::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.8.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.8.
 
 
-File: libgomp.info,  Node: omp_get_max_threads,  Next: omp_get_nested,  Prev: omp_get_dynamic,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_get_level,  Next: omp_get_max_active_levels,  Prev: omp_get_dynamic,  Up: Runtime Library Routines
 
-2.2 `omp_get_max_threads' - Maximum number of threads
-=====================================================
+2.4 `omp_get_level' - Obtain the current nesting level
+======================================================
 
 _Description_:
-     Return the maximum number of threads used for parallel regions
-     that do not use the clause `num_threads'.
+     This function returns the nesting level for the parallel blocks,
+     which enclose the calling call.
+
+_C/C++_
+     _Prototype_:  `int omp_get level();'
+
+_Fortran_:
+     _Interface_:  `integer omp_level()'
+
+_See also_:
+     *Note omp_get_active_level::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.16.
+
+
+File: libgomp.info,  Node: omp_get_max_active_levels,  Next: omp_get_max_threads,  Prev: omp_get_level,  Up: Runtime Library Routines
+
+2.5 `omp_set_max_active_levels' - Maximal number of active regions
+==================================================================
+
+_Description_:
+     This function obtains the maximally allowed number of nested,
+     active parallel regions.
+
+_C/C++_
+     _Prototype_:  `int omp_get_max_active_levels();'
+
+_Fortran_:
+     _Interface_:  `int omp_get_max_active_levels()'
+
+_See also_:
+     *Note omp_set_max_active_levels::, *Note omp_get_active_level::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.14.
+
+
+File: libgomp.info,  Node: omp_get_max_threads,  Next: omp_get_nested,  Prev: omp_get_max_active_levels,  Up: Runtime Library Routines
+
+2.6 `omp_get_max_threads' - Maximal number of threads of parallel region
+========================================================================
+
+_Description_:
+     Return the maximal number of threads used for the current parallel
+     region that does not use the clause `num_threads'.
 
 _C/C++_:
      _Prototype_:  `int omp_get_max_threads();'
@@ -188,15 +295,16 @@ _Fortran_:
      _Interface_:  `integer function omp_get_max_threads()'
 
 _See also_:
-     *Note omp_set_num_threads::, *Note omp_set_dynamic::
+     *Note omp_set_num_threads::, *Note omp_set_dynamic::, *Note
+     omp_get_thread_limit::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.3.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.3.
 
 
 File: libgomp.info,  Node: omp_get_nested,  Next: omp_get_num_procs,  Prev: omp_get_max_threads,  Up: Runtime Library Routines
 
-2.3 `omp_get_nested' - Nested parallel regions
+2.7 `omp_get_nested' - Nested parallel regions
 ==============================================
 
 _Description_:
@@ -219,13 +327,13 @@ _See also_:
      *Note omp_set_nested::, *Note OMP_NESTED::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
      3.2.10.
 
 
 File: libgomp.info,  Node: omp_get_num_procs,  Next: omp_get_num_threads,  Prev: omp_get_nested,  Up: Runtime Library Routines
 
-2.4 `omp_get_num_procs' - Number of processors online
+2.8 `omp_get_num_procs' - Number of processors online
 =====================================================
 
 _Description_:
@@ -238,12 +346,12 @@ _Fortran_:
      _Interface_:  `integer function omp_get_num_procs()'
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.5.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.5.
 
 
-File: libgomp.info,  Node: omp_get_num_threads,  Next: omp_get_thread_num,  Prev: omp_get_num_procs,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_get_num_threads,  Next: omp_get_schedule,  Prev: omp_get_num_procs,  Up: Runtime Library Routines
 
-2.5 `omp_get_num_threads' - Size of the active team
+2.9 `omp_get_num_threads' - Size of the active team
 ===================================================
 
 _Description_:
@@ -268,20 +376,97 @@ _See also_:
      OMP_NUM_THREADS::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.2.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.2.
 
 
-File: libgomp.info,  Node: omp_get_thread_num,  Next: omp_in_parallel,  Prev: omp_get_num_threads,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_get_schedule,  Next: omp_get_team_size,  Prev: omp_get_num_threads,  Up: Runtime Library Routines
 
-2.6 `omp_get_thread_num' - Current thread ID
-============================================
+2.10 `omp_get_schedule' - Obtain the runtime scheduling method
+==============================================================
 
 _Description_:
-     Unique thread identification number. In a sequential parts of the
-     program, `omp_get_thread_num' always returns 0. In parallel
-     regions the return value varies from 0 to `omp_get_max_threads'-1
-     inclusive. The return value of the master thread of a team is
-     always 0.
+     Obtain runtime the scheduling method. The KIND argument will be
+     set to the value `omp_sched_static', `omp_sched_dynamic',
+     `opm_sched_guided' or `auto'. The second argument, MODIFIER, is
+     set to the chunk size.
+
+_C/C++_
+     _Prototype_:  `omp_schedule(omp_sched_t * kind, int *modifier);'
+
+_Fortran_:
+     _Interface_:  `subroutine omp_schedule(kind, modifier)'
+                   `integer(kind=omp_sched_kind) kind'
+                   `integer modifier'
+
+_See also_:
+     *Note omp_set_schedule::, *Note OMP_SCHEDULE::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.12.
+
+
+File: libgomp.info,  Node: omp_get_team_size,  Next: omp_get_thread_limit,  Prev: omp_get_schedule,  Up: Runtime Library Routines
+
+2.11 `omp_get_team_size' - Number of threads in a team
+======================================================
+
+_Description_:
+     This function returns the number of threads in a thread team to
+     which either the current thread or its ancestor belongs. For
+     values of LEVEL outside zero to `omp_get_level' -1 is returned; if
+     LEVEL is zero 1 is returned and for `omp_get_level' the result is
+     identical to `omp_get_num_threads'.
+
+_C/C++_:
+     _Prototype_:  `int omp_get_time_size(int level);'
+
+_Fortran_:
+     _Interface_:  `integer function omp_get_team_size(level)'
+                   `integer level'
+
+_See also_:
+     *Note omp_get_num_threads::, *Note omp_get_level::, *Note
+     omp_get_ancestor_thread_num::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.18.
+
+
+File: libgomp.info,  Node: omp_get_thread_limit,  Next: omp_get_thread_num,  Prev: omp_get_team_size,  Up: Runtime Library Routines
+
+2.12 `omp_get_thread_limit' - Maximal number of threads
+=======================================================
+
+_Description_:
+     Return the maximal number of threads of the program.
+
+_C/C++_:
+     _Prototype_:  `int omp_get_thread_limit();'
+
+_Fortran_:
+     _Interface_:  `integer function omp_get_thread_limit()'
+
+_See also_:
+     *Note omp_get_max_threads::, *Note OMP_THREAD_LIMIT::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.13.
+
+
+File: libgomp.info,  Node: omp_get_thread_num,  Next: omp_in_parallel,  Prev: omp_get_thread_limit,  Up: Runtime Library Routines
+
+2.13 `omp_get_thread_num' - Current thread ID
+=============================================
+
+_Description_:
+     Unique thread identification number within the current team.  In a
+     sequential parts of the program, `omp_get_thread_num' always
+     returns 0. In parallel regions the return value varies from 0 to
+     `omp_get_num_threads'-1 inclusive. The return value of the master
+     thread of a team is always 0.
 
 _C/C++_:
      _Prototype_:  `int omp_get_thread_num();'
@@ -290,16 +475,16 @@ _Fortran_:
      _Interface_:  `integer function omp_get_thread_num()'
 
 _See also_:
-     *Note omp_get_max_threads::
+     *Note omp_get_num_threads::, *Note omp_get_ancestor_thread_num::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.4.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.4.
 
 
 File: libgomp.info,  Node: omp_in_parallel,  Next: omp_set_dynamic,  Prev: omp_get_thread_num,  Up: Runtime Library Routines
 
-2.7 `omp_in_parallel' - Whether a parallel region is active
-===========================================================
+2.14 `omp_in_parallel' - Whether a parallel region is active
+============================================================
 
 _Description_:
      This function returns `true' if currently running in parallel,
@@ -313,13 +498,13 @@ _Fortran_:
      _Interface_:  `logical function omp_in_parallel()'
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.6.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.6.
 
 
-File: libgomp.info,  Node: omp_set_dynamic,  Next: omp_set_nested,  Prev: omp_in_parallel,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_set_dynamic,  Next: omp_set_max_active_levels,  Prev: omp_in_parallel,  Up: Runtime Library Routines
 
-2.8 `omp_set_dynamic' - Enable/disable dynamic teams
-====================================================
+2.15 `omp_set_dynamic' - Enable/disable dynamic teams
+=====================================================
 
 _Description_:
      Enable or disable the dynamic adjustment of the number of threads
@@ -338,13 +523,37 @@ _See also_:
      *Note OMP_DYNAMIC::, *Note omp_get_dynamic::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.7.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.7.
 
 
-File: libgomp.info,  Node: omp_set_nested,  Next: omp_set_num_threads,  Prev: omp_set_dynamic,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_set_max_active_levels,  Next: omp_set_nested,  Prev: omp_set_dynamic,  Up: Runtime Library Routines
 
-2.9 `omp_set_nested' - Enable/disable nested parallel regions
-=============================================================
+2.16 `omp_set_max_active_levels' - Limits the number of active parallel regions
+===============================================================================
+
+_Description_:
+     This function limits the maximally allowed number of nested,
+     active parallel regions.
+
+_C/C++_
+     _Prototype_:  `omp_set_max_active_levels(int max_levels);'
+
+_Fortran_:
+     _Interface_:  `omp_max_active_levels(max_levels)'
+                   `integer max_levels'
+
+_See also_:
+     *Note omp_get_max_active_levels::, *Note omp_get_active_level::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.14.
+
+
+File: libgomp.info,  Node: omp_set_nested,  Next: omp_set_num_threads,  Prev: omp_set_max_active_levels,  Up: Runtime Library Routines
+
+2.17 `omp_set_nested' - Enable/disable nested parallel regions
+==============================================================
 
 _Description_:
      Enable or disable nested parallel regions, i.e., whether team
@@ -363,12 +572,12 @@ _See also_:
      *Note OMP_NESTED::, *Note omp_get_nested::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.9.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.9.
 
 
-File: libgomp.info,  Node: omp_set_num_threads,  Next: omp_init_lock,  Prev: omp_set_nested,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_set_num_threads,  Next: omp_set_schedule,  Prev: omp_set_nested,  Up: Runtime Library Routines
 
-2.10 `omp_set_num_threads' - Set upper team size limit
+2.18 `omp_set_num_threads' - Set upper team size limit
 ======================================================
 
 _Description_:
@@ -388,12 +597,41 @@ _See also_:
      omp_get_max_threads::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.2.1.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.2.1.
 
 
-File: libgomp.info,  Node: omp_init_lock,  Next: omp_set_lock,  Prev: omp_set_num_threads,  Up: Runtime Library Routines
+File: libgomp.info,  Node: omp_set_schedule,  Next: omp_init_lock,  Prev: omp_set_num_threads,  Up: Runtime Library Routines
 
-2.11 `omp_init_lock' - Initialize simple lock
+2.19 `omp_set_schedule' - Set the runtime scheduling method
+===========================================================
+
+_Description_:
+     Sets the runtime scheduling method. The KIND argument can have the
+     value `omp_sched_static', `omp_sched_dynamic', `opm_sched_guided'
+     or `omp_sched_auto'. Except for `omp_sched_auto', the chunk size
+     is set to the value of MODIFIER if positive or to the default
+     value if zero or negative.  For `omp_sched_auto' the MODIFIER
+     argument is ignored.
+
+_C/C++_
+     _Prototype_:  `int omp_schedule(omp_sched_t * kind, int *modifier);'
+
+_Fortran_:
+     _Interface_:  `subroutine omp_schedule(kind, modifier)'
+                   `integer(kind=omp_sched_kind) kind'
+                   `integer modifier'
+
+_See also_:
+     *Note omp_get_schedule:: *Note OMP_SCHEDULE::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section
+     3.2.11.
+
+
+File: libgomp.info,  Node: omp_init_lock,  Next: omp_set_lock,  Prev: omp_set_schedule,  Up: Runtime Library Routines
+
+2.20 `omp_init_lock' - Initialize simple lock
 =============================================
 
 _Description_:
@@ -411,12 +649,12 @@ _See also_:
      *Note omp_destroy_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.1.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.1.
 
 
 File: libgomp.info,  Node: omp_set_lock,  Next: omp_test_lock,  Prev: omp_init_lock,  Up: Runtime Library Routines
 
-2.12 `omp_set_lock' - Wait for and set simple lock
+2.21 `omp_set_lock' - Wait for and set simple lock
 ==================================================
 
 _Description_:
@@ -437,19 +675,19 @@ _See also_:
      omp_unset_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.3.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.3.
 
 
 File: libgomp.info,  Node: omp_test_lock,  Next: omp_unset_lock,  Prev: omp_set_lock,  Up: Runtime Library Routines
 
-2.13 `omp_test_lock' - Test and set simple lock if available
+2.22 `omp_test_lock' - Test and set simple lock if available
 ============================================================
 
 _Description_:
      Before setting a simple lock, the lock variable must be
      initialized by `omp_init_lock'. Contrary to `omp_set_lock',
      `omp_test_lock' does not block if the lock is not available. This
-     function returns `true' upon success,`false' otherwise. Here,
+     function returns `true' upon success, `false' otherwise. Here,
      `true' and `false' represent their language-specific counterparts.
 
 _C/C++_:
@@ -464,12 +702,12 @@ _See also_:
      *Note omp_init_lock::, *Note omp_set_lock::, *Note omp_set_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.5.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.5.
 
 
 File: libgomp.info,  Node: omp_unset_lock,  Next: omp_destroy_lock,  Prev: omp_test_lock,  Up: Runtime Library Routines
 
-2.14 `omp_unset_lock' - Unset simple lock
+2.23 `omp_unset_lock' - Unset simple lock
 =========================================
 
 _Description_:
@@ -491,12 +729,12 @@ _See also_:
      *Note omp_set_lock::, *Note omp_test_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.4.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.4.
 
 
 File: libgomp.info,  Node: omp_destroy_lock,  Next: omp_init_nest_lock,  Prev: omp_unset_lock,  Up: Runtime Library Routines
 
-2.15 `omp_destroy_lock' - Destroy simple lock
+2.24 `omp_destroy_lock' - Destroy simple lock
 =============================================
 
 _Description_:
@@ -514,12 +752,12 @@ _See also_:
      *Note omp_init_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.2.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.2.
 
 
 File: libgomp.info,  Node: omp_init_nest_lock,  Next: omp_set_nest_lock,  Prev: omp_destroy_lock,  Up: Runtime Library Routines
 
-2.16 `omp_init_nest_lock' - Initialize nested lock
+2.25 `omp_init_nest_lock' - Initialize nested lock
 ==================================================
 
 _Description_:
@@ -537,12 +775,12 @@ _See also_:
      *Note omp_destroy_nest_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.1.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.1.
 
 
 File: libgomp.info,  Node: omp_set_nest_lock,  Next: omp_test_nest_lock,  Prev: omp_init_nest_lock,  Up: Runtime Library Routines
 
-2.17 `omp_set_nest_lock' - Wait for and set simple lock
+2.26 `omp_set_nest_lock' - Wait for and set simple lock
 =======================================================
 
 _Description_:
@@ -562,12 +800,12 @@ _See also_:
      *Note omp_init_nest_lock::, *Note omp_unset_nest_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.3.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.3.
 
 
 File: libgomp.info,  Node: omp_test_nest_lock,  Next: omp_unset_nest_lock,  Prev: omp_set_nest_lock,  Up: Runtime Library Routines
 
-2.18 `omp_test_nest_lock' - Test and set nested lock if available
+2.27 `omp_test_nest_lock' - Test and set nested lock if available
 =================================================================
 
 _Description_:
@@ -590,12 +828,12 @@ _See also_:
      *Note omp_init_lock::, *Note omp_set_lock::, *Note omp_set_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.5.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.5.
 
 
 File: libgomp.info,  Node: omp_unset_nest_lock,  Next: omp_destroy_nest_lock,  Prev: omp_test_nest_lock,  Up: Runtime Library Routines
 
-2.19 `omp_unset_nest_lock' - Unset nested lock
+2.28 `omp_unset_nest_lock' - Unset nested lock
 ==============================================
 
 _Description_:
@@ -618,12 +856,12 @@ _See also_:
      *Note omp_set_nest_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.4.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.4.
 
 
 File: libgomp.info,  Node: omp_destroy_nest_lock,  Next: omp_get_wtick,  Prev: omp_unset_nest_lock,  Up: Runtime Library Routines
 
-2.20 `omp_destroy_nest_lock' - Destroy nested lock
+2.29 `omp_destroy_nest_lock' - Destroy nested lock
 ==================================================
 
 _Description_:
@@ -642,12 +880,12 @@ _See also_:
      *Note omp_init_lock::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.3.2.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.3.2.
 
 
 File: libgomp.info,  Node: omp_get_wtick,  Next: omp_get_wtime,  Prev: omp_destroy_nest_lock,  Up: Runtime Library Routines
 
-2.21 `omp_get_wtick' - Get timer precision
+2.30 `omp_get_wtick' - Get timer precision
 ==========================================
 
 _Description_:
@@ -664,12 +902,12 @@ _See also_:
      *Note omp_get_wtime::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.4.2.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.4.2.
 
 
 File: libgomp.info,  Node: omp_get_wtime,  Prev: omp_get_wtick,  Up: Runtime Library Routines
 
-2.22 `omp_get_wtime' - Elapsed wall clock time
+2.31 `omp_get_wtime' - Elapsed wall clock time
 ==============================================
 
 _Description_:
@@ -689,7 +927,7 @@ _See also_:
      *Note omp_get_wtick::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 3.4.1.
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 3.4.1.
 
 
 File: libgomp.info,  Node: Environment Variables,  Next: The libgomp ABI,  Prev: Runtime Library Routines,  Up: Top
@@ -697,22 +935,27 @@ File: libgomp.info,  Node: Environment Variables,  Next: The libgomp ABI,  Prev:
 3 Environment Variables
 ***********************
 
-The variables `OMP_DYNAMIC', `OMP_NESTED', `OMP_NUM_THREADS' and
-`OMP_SCHEDULE' are defined by section 4 of the OpenMP specifications in
-version 2.5, while `GOMP_CPU_AFFINITY' and `GOMP_STACKSIZE' are GNU
-extensions.
+The variables `OMP_DYNAMIC', `OMP_MAX_ACTIVE_LEVELS', `OMP_NESTED',
+`OMP_NUM_THREADS', `OMP_SCHEDULE', `OMP_STACKSIZE',`OMP_THREAD_LIMIT'
+and `OMP_WAIT_POLICY' are defined by section 4 of the OpenMP
+specifications in version 3.0, while `GOMP_CPU_AFFINITY' and
+`GOMP_STACKSIZE' are GNU extensions.
 
 * Menu:
 
-* OMP_DYNAMIC::        Dynamic adjustment of threads
-* OMP_NESTED::         Nested parallel regions
-* OMP_NUM_THREADS::    Specifies the number of threads to use
-* OMP_SCHEDULE::       How threads are scheduled
-* GOMP_CPU_AFFINITY::  Bind threads to specific CPUs
-* GOMP_STACKSIZE::     Set default thread stack size
+* OMP_DYNAMIC::           Dynamic adjustment of threads
+* OMP_MAX_ACTIVE_LEVELS:: Set the maximal number of nested parallel regions
+* OMP_NESTED::            Nested parallel regions
+* OMP_NUM_THREADS::       Specifies the number of threads to use
+* OMP_STACKSIZE::         Set default thread stack size
+* OMP_SCHEDULE::          How threads are scheduled
+* OMP_THREAD_LIMIT::      Set the maximal number of threads
+* OMP_WAIT_POLICY::       How waiting threads are handled
+* GOMP_CPU_AFFINITY::     Bind threads to specific CPUs
+* GOMP_STACKSIZE::        Set default thread stack size
 
 
-File: libgomp.info,  Node: OMP_DYNAMIC,  Next: OMP_NESTED,  Up: Environment Variables
+File: libgomp.info,  Node: OMP_DYNAMIC,  Next: OMP_MAX_ACTIVE_LEVELS,  Up: Environment Variables
 
 3.1 `OMP_DYNAMIC' - Dynamic adjustment of threads
 =================================================
@@ -727,12 +970,29 @@ _See also_:
      *Note omp_set_dynamic::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 4.3
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 4.3
 
 
-File: libgomp.info,  Node: OMP_NESTED,  Next: OMP_NUM_THREADS,  Prev: OMP_DYNAMIC,  Up: Environment Variables
+File: libgomp.info,  Node: OMP_MAX_ACTIVE_LEVELS,  Next: OMP_NESTED,  Prev: OMP_DYNAMIC,  Up: Environment Variables
 
-3.2 `OMP_NESTED' - Nested parallel regions
+3.2 `OMP_MAX_ACTIVE_LEVELS' - Set the maximal number of nested parallel regions
+===============================================================================
+
+_Description_:
+     Specifies the initial value for the maximal number of nested
+     parallel regions. The value of this variable shall be positive
+     integer.  If undefined, the number of active levels is unlimited.
+
+_See also_:
+     *Note omp_set_max_active_levels::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 4.7
+
+
+File: libgomp.info,  Node: OMP_NESTED,  Next: OMP_NUM_THREADS,  Prev: OMP_MAX_ACTIVE_LEVELS,  Up: Environment Variables
+
+3.3 `OMP_NESTED' - Nested parallel regions
 ==========================================
 
 _Description_:
@@ -745,12 +1005,12 @@ _See also_:
      *Note omp_set_nested::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 4.4
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 4.4
 
 
-File: libgomp.info,  Node: OMP_NUM_THREADS,  Next: OMP_SCHEDULE,  Prev: OMP_NESTED,  Up: Environment Variables
+File: libgomp.info,  Node: OMP_NUM_THREADS,  Next: OMP_STACKSIZE,  Prev: OMP_NESTED,  Up: Environment Variables
 
-3.3 `OMP_NUM_THREADS' - Specifies the number of threads to use
+3.4 `OMP_NUM_THREADS' - Specifies the number of threads to use
 ==============================================================
 
 _Description_:
@@ -762,29 +1022,83 @@ _See also_:
      *Note omp_set_num_threads::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), section 4.2
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 4.2
 
 
-File: libgomp.info,  Node: OMP_SCHEDULE,  Next: GOMP_CPU_AFFINITY,  Prev: OMP_NUM_THREADS,  Up: Environment Variables
+File: libgomp.info,  Node: OMP_SCHEDULE,  Next: OMP_THREAD_LIMIT,  Prev: OMP_STACKSIZE,  Up: Environment Variables
 
-3.4 `OMP_SCHEDULE' - How threads are scheduled
+3.5 `OMP_SCHEDULE' - How threads are scheduled
 ==============================================
 
 _Description_:
      Allows to specify `schedule type' and `chunk size'.  The value of
      the variable shall have the form: `type[,chunk]' where `type' is
-     one of `static', `dynamic' or `guided'.  The optional `chunk size'
-     shall be a positive integer. If undefined, dynamic scheduling and
-     a chunk size of 1 is used.
+     one of `static', `dynamic', `guided' or `auto' The optional
+     `chunk' size shall be a positive integer. If undefined, dynamic
+     scheduling and a chunk size of 1 is used.
+
+_See also_:
+     *Note omp_set_schedule::
 
 _Reference_:
-     OpenMP specifications v2.5 (http://www.openmp.org/), sections
+     OpenMP specifications v3.0 (http://www.openmp.org/), sections
      2.5.1 and 4.1
 
 
-File: libgomp.info,  Node: GOMP_CPU_AFFINITY,  Next: GOMP_STACKSIZE,  Prev: OMP_SCHEDULE,  Up: Environment Variables
+File: libgomp.info,  Node: OMP_STACKSIZE,  Next: OMP_SCHEDULE,  Prev: OMP_NUM_THREADS,  Up: Environment Variables
 
-3.5 `GOMP_CPU_AFFINITY' - Bind threads to specific CPUs
+3.6 `OMP_STACKSIZE' - Set default thread stack size
+===================================================
+
+_Description_:
+     Set the default thread stack size in kilobytes, unless the number
+     is suffixed by `B', `K', `M' or `G', in which case the size is,
+     respectively, in bytes, kilobytes, megabytes or gigabytes. This is
+     different from `pthread_attr_setstacksize' which gets the number
+     of bytes as an argument. If the stacksize can not be set due to
+     system constraints, an error is reported and the initial stacksize
+     is left unchanged. If undefined, the stack size is system
+     dependent.
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), sections 4.5
+
+
+File: libgomp.info,  Node: OMP_THREAD_LIMIT,  Next: OMP_WAIT_POLICY,  Prev: OMP_SCHEDULE,  Up: Environment Variables
+
+3.7 `OMP_THREAD_LIMIT' - Set the maximal number of threads
+==========================================================
+
+_Description_:
+     Specifies the number of threads to use for the whole program. The
+     value of this variable shall be positive integer. If undefined,
+     the number of threads is not limited.
+
+_See also_:
+     *Note OMP_NUM_THREADS:: *Note omp_get_thread_limit::
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), section 4.8
+
+
+File: libgomp.info,  Node: OMP_WAIT_POLICY,  Next: GOMP_CPU_AFFINITY,  Prev: OMP_THREAD_LIMIT,  Up: Environment Variables
+
+3.8 `OMP_WAIT_POLICY' - How waiting threads are handled
+=======================================================
+
+_Description_:
+     Specifies whether waiting threads should be active or passive. If
+     the value is `PASSIVE', waiting threads should not consume CPU
+     power while waiting; while the value is `ACTIVE' specifies that
+     they should.
+
+_Reference_:
+     OpenMP specifications v3.0 (http://www.openmp.org/), sections 4.6
+
+
+File: libgomp.info,  Node: GOMP_CPU_AFFINITY,  Next: GOMP_STACKSIZE,  Prev: OMP_WAIT_POLICY,  Up: Environment Variables
+
+3.9 `GOMP_CPU_AFFINITY' - Bind threads to specific CPUs
 =======================================================
 
 _Description_:
@@ -813,16 +1127,18 @@ _Description_:
 
 File: libgomp.info,  Node: GOMP_STACKSIZE,  Prev: GOMP_CPU_AFFINITY,  Up: Environment Variables
 
-3.6 `GOMP_STACKSIZE' - Set default thread stack size
-====================================================
+3.10 `GOMP_STACKSIZE' - Set default thread stack size
+=====================================================
 
 _Description_:
-     Set the default thread stack size in kilobytes. This is in
-     opposition to `pthread_attr_setstacksize' which gets the number of
-     bytes as an argument. If the stacksize can not be set due to
-     system constraints, an error is reported and the initial stacksize
-     is left unchanged. If undefined, the stack size is system
-     dependent.
+     Set the default thread stack size in kilobytes. This is different
+     from `pthread_attr_setstacksize' which gets the number of bytes as
+     an argument. If the stacksize can not be set due to system
+     constraints, an error is reported and the initial stacksize is
+     left unchanged. If undefined, the stack size is system dependent.
+
+_See also_:
+     *Note GOMP_STACKSIZE::
 
 _Reference_:
      GCC Patches Mailinglist
@@ -2049,75 +2365,91 @@ Index
  [index ]
 * Menu:
 
-* Environment Variable <1>:              GOMP_STACKSIZE.        (line 6)
-* Environment Variable <2>:              GOMP_CPU_AFFINITY.     (line 6)
-* Environment Variable <3>:              OMP_NESTED.            (line 6)
-* Environment Variable <4>:              OMP_NUM_THREADS.       (line 6)
-* Environment Variable <5>:              OMP_DYNAMIC.           (line 6)
-* Environment Variable:                  OMP_SCHEDULE.          (line 6)
+* Environment Variable <1>:              OMP_NESTED.            (line 6)
+* Environment Variable <2>:              OMP_DYNAMIC.           (line 6)
+* Environment Variable <3>:              GOMP_STACKSIZE.        (line 6)
+* Environment Variable <4>:              GOMP_CPU_AFFINITY.     (line 6)
+* Environment Variable <5>:              OMP_WAIT_POLICY.       (line 6)
+* Environment Variable <6>:              OMP_THREAD_LIMIT.      (line 6)
+* Environment Variable <7>:              OMP_STACKSIZE.         (line 6)
+* Environment Variable <8>:              OMP_MAX_ACTIVE_LEVELS. (line 6)
+* Environment Variable <9>:              OMP_SCHEDULE.          (line 6)
+* Environment Variable:                  OMP_NUM_THREADS.       (line 6)
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
                                                                 (line 6)
-* Implementation specific setting <1>:   OMP_NUM_THREADS.       (line 6)
-* Implementation specific setting <2>:   GOMP_STACKSIZE.        (line 6)
+* Implementation specific setting <1>:   OMP_NESTED.            (line 6)
+* Implementation specific setting <2>:   OMP_NUM_THREADS.       (line 6)
 * Implementation specific setting <3>:   OMP_SCHEDULE.          (line 6)
-* Implementation specific setting <4>:   OMP_NESTED.            (line 6)
-* Implementation specific setting:       OMP_DYNAMIC.           (line 6)
+* Implementation specific setting:       GOMP_STACKSIZE.        (line 6)
 * Introduction:                          Top.                   (line 6)
 
 
 
 Tag Table:
-Node: Top2079
-Node: Enabling OpenMP3273
-Node: Runtime Library Routines4058
-Node: omp_get_dynamic5759
-Node: omp_get_max_threads6603
-Node: omp_get_nested7259
-Node: omp_get_num_procs8167
-Node: omp_get_num_threads8681
-Node: omp_get_thread_num9753
-Node: omp_in_parallel10542
-Node: omp_set_dynamic11186
-Node: omp_set_nested12009
-Node: omp_set_num_threads12874
-Node: omp_init_lock13709
-Node: omp_set_lock14362
-Node: omp_test_lock15211
-Node: omp_unset_lock16237
-Node: omp_destroy_lock17163
-Node: omp_init_nest_lock17833
-Node: omp_set_nest_lock18565
-Node: omp_test_nest_lock19474
-Node: omp_unset_nest_lock20572
-Node: omp_destroy_nest_lock21581
-Node: omp_get_wtick22329
-Node: omp_get_wtime22916
-Node: Environment Variables23699
-Node: OMP_DYNAMIC24412
-Node: OMP_NESTED24969
-Node: OMP_NUM_THREADS25563
-Node: OMP_SCHEDULE26135
-Node: GOMP_CPU_AFFINITY26783
-Node: GOMP_STACKSIZE28264
-Node: The libgomp ABI29038
-Node: Implementing MASTER construct29836
-Node: Implementing CRITICAL construct30249
-Node: Implementing ATOMIC construct30997
-Node: Implementing FLUSH construct31478
-Node: Implementing BARRIER construct31749
-Node: Implementing THREADPRIVATE construct32018
-Node: Implementing PRIVATE clause32670
-Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses33251
-Node: Implementing REDUCTION clause34566
-Node: Implementing PARALLEL construct35122
-Node: Implementing FOR construct36379
-Node: Implementing ORDERED construct38377
-Node: Implementing SECTIONS construct38683
-Node: Implementing SINGLE construct39449
-Node: Reporting Bugs40111
-Node: Copying40419
-Node: GNU Free Documentation License59629
-Node: Funding82040
-Node: Index84557
+Node: Top2037
+Node: Enabling OpenMP3231
+Node: Runtime Library Routines4016
+Node: omp_get_active_level6391
+Node: omp_get_ancestor_thread_num7082
+Node: omp_get_dynamic7996
+Node: omp_get_level8870
+Node: omp_get_max_active_levels9481
+Node: omp_get_max_threads10169
+Node: omp_get_nested10921
+Node: omp_get_num_procs11829
+Node: omp_get_num_threads12343
+Node: omp_get_schedule13413
+Node: omp_get_team_size14320
+Node: omp_get_thread_limit15278
+Node: omp_get_thread_num15897
+Node: omp_in_parallel16751
+Node: omp_set_dynamic17397
+Node: omp_set_max_active_levels18233
+Node: omp_set_nested18995
+Node: omp_set_num_threads19872
+Node: omp_set_schedule20710
+Node: omp_init_lock21754
+Node: omp_set_lock22404
+Node: omp_test_lock23253
+Node: omp_unset_lock24280
+Node: omp_destroy_lock25206
+Node: omp_init_nest_lock25876
+Node: omp_set_nest_lock26608
+Node: omp_test_nest_lock27517
+Node: omp_unset_nest_lock28615
+Node: omp_destroy_nest_lock29624
+Node: omp_get_wtick30372
+Node: omp_get_wtime30959
+Node: Environment Variables31742
+Node: OMP_DYNAMIC32803
+Node: OMP_MAX_ACTIVE_LEVELS33371
+Node: OMP_NESTED34008
+Node: OMP_NUM_THREADS34612
+Node: OMP_SCHEDULE35185
+Node: OMP_STACKSIZE35879
+Node: OMP_THREAD_LIMIT36704
+Node: OMP_WAIT_POLICY37297
+Node: GOMP_CPU_AFFINITY37862
+Node: GOMP_STACKSIZE39346
+Node: The libgomp ABI40156
+Node: Implementing MASTER construct40954
+Node: Implementing CRITICAL construct41367
+Node: Implementing ATOMIC construct42115
+Node: Implementing FLUSH construct42596
+Node: Implementing BARRIER construct42867
+Node: Implementing THREADPRIVATE construct43136
+Node: Implementing PRIVATE clause43788
+Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses44369
+Node: Implementing REDUCTION clause45684
+Node: Implementing PARALLEL construct46240
+Node: Implementing FOR construct47497
+Node: Implementing ORDERED construct49495
+Node: Implementing SECTIONS construct49801
+Node: Implementing SINGLE construct50567
+Node: Reporting Bugs51229
+Node: Copying51537
+Node: GNU Free Documentation License70747
+Node: Funding93158
+Node: Index95675
 
 End Tag Table
