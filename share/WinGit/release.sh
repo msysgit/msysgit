@@ -63,6 +63,7 @@ test -z "$force" && {
 }
 
 TMPDIR=/tmp/WinGit
+unset DONT_REMOVE_BUILTINS
 
 /share/WinGit/copy-files.sh $TMPDIR &&
 sed "s/msysGit/Git (version $version)/" < /etc/motd > $TMPDIR/etc/motd &&
