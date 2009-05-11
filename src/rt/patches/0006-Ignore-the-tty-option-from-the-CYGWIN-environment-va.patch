@@ -1,0 +1,35 @@
+From 423adb2ca25a4b3d62eba06cf2c590171ac28bfa Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Tue, 12 May 2009 00:14:17 +0200
+Subject: [PATCH] Ignore the "tty" option from the CYGWIN environment variable
+
+There is no working pty emulation in MSys, so it makes no sense to
+allow asking for that emulation.  The symptoms are non-working vi,
+looping ssh questions to accept host keys or passwords.
+
+Typically, CYGWIN=tty is set on boxes where CYGWIN is installed, so
+we should not require the user to unset it manually.
+
+This fixes msysGit issue 138, and possibly 96, 192, 227, 243, 246,
+248 and 251.
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ source/winsup/cygwin/environ.cc |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
+
+diff --git a/source/winsup/cygwin/environ.cc b/source/winsup/cygwin/environ.cc
+index 64fcea4..9cf3e80 100644
+--- a/source/winsup/cygwin/environ.cc
++++ b/source/winsup/cygwin/environ.cc
+@@ -542,7 +542,6 @@ static struct parse_thing
+   {"strip_title", {&strip_title_path}, justset, NULL, {{FALSE}, {TRUE}}},
+   {"subauth_id", {func: &subauth_id_init}, isfunc, NULL, {{0}, {0}}},
+   {"title", {&display_title}, justset, NULL, {{FALSE}, {TRUE}}},
+-  {"tty", {NULL}, set_process_state, NULL, {{0}, {PID_USETTY}}},
+   {"winsymlinks", {&allow_winsymlinks}, justset, NULL, {{FALSE}, {TRUE}}},
+   {NULL, {0}, justset, 0, {{0}, {0}}}
+ };
+-- 
+1.6.3.msysgit.0
+
