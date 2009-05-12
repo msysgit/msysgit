@@ -2,7 +2,7 @@
 
 release=MSYS-1.0.11-20090120-src
 src=$release.tar.gz
-mirror=http://heanet.dl.sourceforge.net/sourceforge/mingw/
+mirror=http://heanet.dl.sourceforge.net/sourceforge/mingw
 
 cd "$(dirname "$0")"
 mkdir -p build
