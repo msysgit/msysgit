@@ -1,0 +1,46 @@
+From dafcd879e192bba15c9016e993231bbce48bda6a Mon Sep 17 00:00:00 2001
+From: Heiko Voigt <hvoigt@hvoigt.net>
+Date: Tue, 12 May 2009 16:23:51 +0200
+Subject: [PATCH] only override the variables HOMEPATH and HOMEDRIVE if they are not set
+
+It seems that in old windows systems these variables were quite unreliable.
+So they were overriden by using the information the function NetUserGetInfo
+returned for the current user. As this does not seem to be true anymore
+we do not override them if they exist in the default environment.
+
+Signed-off-by: Heiko Voigt <hvoigt@hvoigt.net>
+---
+ source/winsup/cygwin/uinfo.cc |   10 +++++++---
+ 1 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/source/winsup/cygwin/uinfo.cc b/source/winsup/cygwin/uinfo.cc
+index 7f9b8a1..01f22e9 100644
+--- a/source/winsup/cygwin/uinfo.cc
++++ b/source/winsup/cygwin/uinfo.cc
+@@ -80,7 +80,9 @@ internal_getlogin (cygheap_user &user)
+       WCHAR wlogsrv[INTERNET_MAX_HOST_NAME_LENGTH + 3];
+ 
+       /* HOMEDRIVE and HOMEPATH are wrong most of the time, too,
+-	 after changing user context! */
++	 after changing user context!
++	 As this does not be true anymore we only "correct" them
++	 in case they do not exist. */
+       sys_mbstowcs (wuser, user.name (), UNLEN + 1);
+       wlogsrv[0] = '\0';
+       if (user.logsrv ())
+@@ -88,8 +90,10 @@ internal_getlogin (cygheap_user &user)
+ 	  strcat (strcpy (buf, "\\\\"), user.logsrv ());
+ 	  sys_mbstowcs (wlogsrv, buf, INTERNET_MAX_HOST_NAME_LENGTH + 3);
+ 	}
+-      if (!NetUserGetInfo (NULL, wuser, 3, (LPBYTE *)&ui)
+-	  || (wlogsrv[0] && !NetUserGetInfo (wlogsrv, wuser, 3,(LPBYTE *)&ui)))
++      if (!(getenv ("HOMEPATH") && getenv ("HOMEDRIVE"))
++	  && (!NetUserGetInfo (NULL, wuser, 3, (LPBYTE *)&ui)
++	      || (wlogsrv[0]
++		  && !NetUserGetInfo (wlogsrv, wuser, 3,(LPBYTE *)&ui))))
+ 	{
+ 	  sys_wcstombs (buf, ui->usri3_home_dir, MAX_PATH);
+ 	  if (!buf[0])
+-- 
+1.6.3.GIT
+
