@@ -8,6 +8,12 @@ cd "$(dirname "$0")"
 mkdir -p build
 cd build
 
+debug=
+test "a$1" = "a--debug" && debug=t
+debug_clean=
+test "$debug" = "$(cat debug.txt 2>/dev/null)" || debug_clean=t
+echo "$debug" > debug.txt
+
 if ! test -e $src
 then
 	curl -o $src $mirror/$src
@@ -37,9 +43,12 @@ git am ../../patches/*.patch ||
  (test -d bld || mkdir bld) &&
  cd bld &&
  DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
- (test -f Makefile || ../source/configure --prefix=/usr) &&
+ (test -f Makefile && test -z "$debug_clean" ||
+  ../source/configure --prefix=/usr) &&
+ (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
+ (test -z "$debug_clean" || make clean) &&
  (make || test -f $DLL) &&
- strip $DLL &&
+ (test ! -z "$debug" || strip $DLL) &&
  rebase -b 0x30000000 $DLL &&
  mv $DLL /bin/) &&
 cd / &&
