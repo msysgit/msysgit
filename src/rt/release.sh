@@ -35,8 +35,13 @@ cd $release || {
   exit 1
 }
 
-test 1 -lt $(git rev-list --all | wc -l) ||
-git am ../../patches/*.patch ||
+i=$(git rev-list --all | wc -l) &&
+total=$(ls ../../patches/*.patch | wc -l) &&
+while test $i -le $total
+do
+	git am ../../patches/$(printf "%04d" $i)*.patch || break
+	i=$(($i+1))
+done ||
 { echo "Error: Applying patches failed." ; exit 1 ; }
 
 (export MSYSTEM=MSYS &&
