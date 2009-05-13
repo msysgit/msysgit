@@ -75,6 +75,7 @@ index=$(/share/msysGit/pre-install.sh) &&
 (cd win32 &&
 TMP="$(echo "$TMP" | tr '/' '\\')" ../../$dmakedir/dmake install \
 INST_TOP="$(cd /mingw; pwd -W | tr '/' '\\')") &&
+cp perl*.dll perl*.exe /mingw/bin &&
 /share/msysGit/post-install.sh $index "Install Perl $version" ||
 exit
 
