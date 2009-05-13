@@ -19,6 +19,10 @@ if ! test -d $DIR
 then
 	tar xjvf $TAR
 fi &&
+if ! test -d $DIR/.git
+then
+	(cd $DIR && git init && git add . && git commit -m initial)
+fi &&
 if ! test -f $DIR/Makefile
 then
 	(cd $DIR && ./configure --prefix=/mingw)
