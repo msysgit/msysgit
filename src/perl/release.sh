@@ -65,17 +65,16 @@ test -d .git || {
 #	git am ../patches/* ||
 #	exit
 
+export TMP="$(echo "$TMP" | tr '/' '\\')"
+DMAKE="../../dmake INST_TOP=\"$(cd /mingw; pwd -W)\""
+
 test -f perl.exe || {
-	(cd win32 &&
-	TMP="$(echo "$TMP" | tr '/' '\\')" ../../$dmakedir/dmake.exe) ||
+	(cd win32 && $DMAKE) ||
 	exit
 }
 
 index=$(/share/msysGit/pre-install.sh) &&
-(cd win32 &&
-TMP="$(echo "$TMP" | tr '/' '\\')" ../../$dmakedir/dmake install \
-INST_TOP="$(cd /mingw; pwd -W | tr '/' '\\')") &&
-cp perl*.dll perl*.exe /mingw/bin &&
+(cd win32 && $DMAKE install) &&
 /share/msysGit/post-install.sh $index "Install Perl $version" ||
 exit
 
