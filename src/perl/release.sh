@@ -66,7 +66,7 @@ test -d .git || {
 #	exit
 
 export TMP="$(echo "$TMP" | tr '/' '\\')"
-DMAKE="../../dmake INST_TOP=\"$(cd /mingw; pwd -W)\""
+DMAKE="../../dmake/dmake INST_TOP=\"$(cd /mingw; pwd -W)\""
 
 test -f perl.exe || {
 	(cd win32 && $DMAKE) ||
