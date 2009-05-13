@@ -72,6 +72,7 @@ fi &&
 (cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl,libiconv}* \
 	lib/*{tcl,tk}* libexec/gnupg/) |
 tar xf - &&
+md5sum /bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&

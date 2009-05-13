@@ -21,6 +21,15 @@ else
   export PATH=".:/usr/local/bin:/bin:/mingw/bin:$PATH"
 fi
 
+# check msys-1.0.dll
+if test -f /etc/msys-1.0.dll.md5
+then
+	# if check succeeds, let's avoid checking again
+	test "$(md5sum /bin/msys-1.0.dll)" = "$(cat /etc/msys-1.0.dll.md5)" &&
+	rm -f /etc/msys-1.0.dll.md5 ||
+	printf "\n\033[31mERROR: Your msys-1.0.dll is out-of-date!\033[m\n\n"
+fi
+
 if [ -z "$USERNAME" ]; then
   LOGNAME="`id -un`"
 else
@@ -99,6 +108,7 @@ $MESSAGE
 
 EOF
 }
+
 # when called from "Git Bash Here", there is a "!C:=..." or similar in env
 if ! env | grep -q '^!'
 then
