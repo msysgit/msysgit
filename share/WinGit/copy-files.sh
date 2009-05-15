@@ -10,12 +10,15 @@ test -d /doc/git/html/.git || { echo "Error: html pages in /doc/git/html/.git mi
 if [ "$( cd /doc/git/html/ ; git config core.autocrlf )" != "true" ]
 then
 	echo "Error: documentation must be checked out with core.autocrlf=true."
-	echo "Hint: fix this by"
-	echo "   cd /doc/git/html"
-	echo "   git config core.autocrlf true"
-	echo "   rm -r *.html *.txt howto"
-	echo "   git checkout -f"
-	exit 1
+	echo "If you have changes in the documentation, hit Ctrl-C NOW."
+	sleep 3
+	(cd /doc/git/html &&
+	 git config core.autocrlf true &&
+	 rm -rf *.html *.txt howto &&
+	 git checkout -f) || {
+		echo "Could not fix documentation"
+		exit 1
+	}
 fi
 
 TMPDIR=$1
