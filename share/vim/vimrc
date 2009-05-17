@@ -18,7 +18,12 @@ set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(ex
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
     "Remember the positions in files"
-    autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal g`\"" | endif
+    autocmd BufReadPost *
+      \ if line("'\"") > 0 && line("'\"") <= line("$")
+      \           && expand("%") !~ "COMMIT_EDITMSG"
+      \           && expand("%") !~ "git-rebase-todo" |
+      \   exe "normal g`\"" |
+      \ endif
 endif " has("autocmd")
 " recognize git commit messages
 autocmd BufNewFile,BufRead COMMIT_EDITMSG set filetype=gitcommit
