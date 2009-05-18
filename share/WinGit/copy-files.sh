@@ -5,9 +5,13 @@ test -z "$1" && {
 	exit 1
 }
 
-test -d /doc/git/html/.git || { echo "Error: html pages in /doc/git/html/.git missing"; exit 1; }
+test -d /doc/git/html/.git ||
+(cd / && git submodule update --init doc/git/html) || {
+	echo "Error: html pages in /doc/git/html/.git missing"
+	exit 1
+}
 
-if [ "$( cd /doc/git/html/ ; git config core.autocrlf )" != "true" ]
+if test "$( cd /doc/git/html/ ; git config core.autocrlf )" != "true"
 then
 	echo "Error: documentation must be checked out with core.autocrlf=true."
 	echo "If you have changes in the documentation, hit Ctrl-C NOW."
