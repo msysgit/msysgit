@@ -54,7 +54,7 @@ scripts.vim,\
 autoload/netrw.vim,autoload/netrwFileHandlers.vim,autoload/netrwSettings.vim,\
 plugin/netrwPlugin.vim,\
 syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/diff.vim,\
-syntax/gitcommit.vim,\
+syntax/gitcommit.vim,syntax/gitconfig.vim,syntax/gitrebase.vim,syntax/git.vim,\
 syntax/nosyntax.vim,syntax/syncolor.vim,syntax/synload.vim,syntax/syntax.vim,\
 vim.exe}) |
 tar xf - &&
