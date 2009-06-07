@@ -15,7 +15,7 @@ TARGET="$HOME"/msysGit-netinstall-"$1".exe
 TMPDIR=/tmp/installer-tmp
 OPTS7="-m0=lzma -mx=9 -md=64M"
 TMPPACK=/tmp.7z
-SHARE=/share/msysGit-netinstall
+SHARE=/share/msysGit/net
 
 test ! -d "$TMPDIR" || rm -rf "$TMPDIR" || exit
 mkdir "$TMPDIR" &&
