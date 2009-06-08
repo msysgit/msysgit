@@ -35,8 +35,8 @@ Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: "
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
 
 [Files]
-Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
-Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme
+Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs replacesameversion
+Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme replacesameversion
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
