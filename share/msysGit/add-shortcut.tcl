@@ -79,7 +79,7 @@ exec make
 set binDirectory "$msysRoot/bin"
 set resDirectory "$msysRoot/share/resources"
 
-exec ./create-shortcut.exe --work-dir "$binDirectory" \
+exec ./create-shortcut.exe --work-dir "%HOMEDRIVE%%HOMEPATH%" \
 	--icon-file "$resDirectory/msysgitlogo.ico" \
 	--arguments "--login -i" \
 	"$binDirectory/sh.exe" \
