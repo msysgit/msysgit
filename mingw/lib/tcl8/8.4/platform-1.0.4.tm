@@ -111,6 +111,13 @@ proc ::platform::generic {} {
 	}
 	darwin {
 	    set plat macosx
+	    # Correctly identify the cpu when running as a 64bit
+	    # process on a machine with a 32bit kernel
+	    if {$cpu eq "ix86"} {
+		if {$tcl_platform(wordSize) == 8} {
+		    set cpu x86_64
+		}
+	    }
 	}
 	aix {
 	    set cpu powerpc
@@ -153,6 +160,14 @@ proc ::platform::identify {} {
 	    regsub {^5} $tcl_platform(osVersion) 2 text
 	    append plat $text
 	    return "${plat}-${cpu}"
+	}
+	macosx {
+	    set major [lindex [split $tcl_platform(osVersion) .] 0]
+	    if {$major > 8} {
+		incr major -4
+		append plat 10.$major
+		return "${plat}-${cpu}"
+	    }
 	}
 	linux {
 	    # Look for the libc*.so and determine its version
@@ -238,6 +253,29 @@ proc ::platform::patterns {id} {
 		}
 	    }
 	}
+	macosx*-*    {
+	    # 10.5+ 
+	    if {[regexp {macosx([^-]*)-(.*)} $id -> v cpu]} {
+		if {$v ne ""} {
+		    foreach {major minor} [split $v .] break
+
+		    # Add 10.5 to 10.minor to patterns.
+		    set res {}
+		    for {set j $minor} {$j >= 5} {incr j -1} {
+			lappend res macosx${major}.${j}-${cpu}
+			lappend res macosx${major}.${j}-universal
+		    }
+
+		    # Add unversioned patterns for 10.3/10.4 builds.
+		    lappend res macosx-${cpu}
+		    lappend res macosx-universal
+		} else {
+		    lappend res macosx-universal
+		}
+	    } else {
+		lappend res macosx-universal
+	    }
+	}
 	macosx-powerpc -
 	macosx-ix86    {
 	    lappend res macosx-universal
@@ -251,7 +289,7 @@ proc ::platform::patterns {id} {
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide platform 1.0.3
+package provide platform 1.0.4
 
 # ### ### ### ######### ######### #########
 ## Demo application

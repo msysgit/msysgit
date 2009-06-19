@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 srcdir=$(pwd)
 
 mirror=http://kent.dl.sourceforge.net/sourceforge/tcl/
-version=8.5.5
+version=8.5.7
 
 for p in tcl tk
 do

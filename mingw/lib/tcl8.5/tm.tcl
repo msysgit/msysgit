@@ -254,6 +254,16 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 		    # means something else without the namespace
 		    # specifier.
 
+		    # NOTE. When making changes to the format of the
+		    # provide command generated below CHECK that the
+		    # 'LOCATE' procedure in core file
+		    # 'platform/shell.tcl' still understands it, or,
+		    # if not, update its implementation appropriately.
+		    #
+		    # Right now LOCATE's implementation assumes that
+		    # the path of the package file is the last element
+		    # in the list.
+
 		    package ifneeded $pkgname $pkgversion \
 			"[::list package provide $pkgname $pkgversion];[::list source -encoding utf-8 $file]"
 
