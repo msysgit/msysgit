@@ -4,7 +4,7 @@
 # can be used by non-unix systems that do not have built-in support
 # for shells.
 #
-# RCS: @(#) $Id: console.tcl,v 1.37 2007/12/13 15:26:27 dgp Exp $
+# RCS: @(#) $Id: console.tcl,v 1.37.2.2 2009/04/10 16:29:18 das Exp $
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
@@ -69,10 +69,7 @@ proc ::tk::ConsoleInit {} {
 	    -command {wm withdraw .}
     AmpMenuArgs .menubar.file add command -label [mc "&Clear Console"] \
 	    -command {.console delete 1.0 "promptEnd linestart"}
-    if {[tk windowingsystem] eq "aqua"} {
-	AmpMenuArgs .menubar.file add command \
-		-label [mc &Quit] -command {exit} -accel "Cmd-Q"
-    } else {
+    if {[tk windowingsystem] ne "aqua"} {
 	AmpMenuArgs .menubar.file add command -label [mc E&xit] -command {exit}
     }
 
@@ -106,7 +103,7 @@ proc ::tk::ConsoleInit {} {
     . configure -menu .menubar
 
     # See if we can find a better font than the TkFixedFont
-    font create TkConsoleFont {*}[font configure TkFixedFont]
+    catch {font create TkConsoleFont {*}[font configure TkFixedFont]}
     set families [font families]
     switch -exact -- [tk windowingsystem] {
         aqua { set preferred {Monaco 10} }

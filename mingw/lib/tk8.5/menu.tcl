@@ -4,7 +4,7 @@
 # It also implements keyboard traversal of menus and implements a few
 # other utility procedures related to menus.
 #
-# RCS: @(#) $Id: menu.tcl,v 1.26.2.4 2008/09/09 18:17:08 tmh Exp $
+# RCS: @(#) $Id: menu.tcl,v 1.26.2.5 2009/04/10 16:08:45 das Exp $
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -307,7 +307,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     	    	set x [expr {[winfo rootx $w] - [winfo reqwidth $menu]}]
     	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
     	    	set entry [MenuFindName $menu [$w cget -text]]
-    	    	if {[$w cget -indicatoron]} {
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
 		    	incr y [expr {-([$menu yposition $entry] \
 			    	+ [winfo reqheight $menu])/2}]
@@ -327,7 +327,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     	    	set x [expr {[winfo rootx $w] + [winfo width $w]}]
     	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
     	    	set entry [MenuFindName $menu [$w cget -text]]
-    	    	if {[$w cget -indicatoron]} {
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
 		    	incr y [expr {-([$menu yposition $entry] \
 			    	+ [winfo reqheight $menu])/2}]

@@ -1,5 +1,5 @@
 #
-# $Id: combobox.tcl,v 1.12 2008/02/23 18:41:07 jenglish Exp $
+# $Id: combobox.tcl,v 1.12.2.2 2008/11/22 22:14:50 patthoyts Exp $
 #
 # Combobox bindings.
 #
@@ -391,6 +391,7 @@ proc ttk::combobox::Post {cb} {
 
     # Post the listbox:
     #
+    wm attribute $popdown -topmost 1
     wm deiconify $popdown
     raise $popdown
 }
