@@ -35,8 +35,8 @@ Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: "
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
 
 [Files]
-Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs
-Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme
+Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs replacesameversion
+Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme replacesameversion
 
 [Icons]
 Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: "%USERPROFILE%"; IconFilename: "{app}\etc\git.ico"
@@ -148,27 +148,47 @@ begin
 end;
 
 const
+    TortoiseSVNInstallKey='SOFTWARE\TortoiseSVN';
+    TortoiseCVSUninstallKey='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TortoiseCVS_is1';
     PuTTYUninstallKey='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PuTTY_is1';
     PuTTYPrivateKeyAssoc='PuTTYPrivateKey\shell\open\command';
 
 function GetPuTTYLocation:string;
 begin
-    if RegQueryStringValue(HKEY_LOCAL_MACHINE,PuTTYUninstallKey,'InstallLocation',Result) and DirExists(Result) then begin
-        // C:\Program Files\PuTTY\
+    // Prefer TortoisePlink over vanilla Plink for its GUI dialog to accept host keys.
+    if (IsWin64 and RegQueryStringValue(HKEY_LOCAL_MACHINE_64,TortoiseSVNInstallKey,'Directory',Result))
+    or RegQueryStringValue(HKEY_LOCAL_MACHINE_32,TortoiseSVNInstallKey,'Directory',Result) then begin
+        // C:\Program Files\TortoiseSVN\
+        Result:=Result+'bin\';
+        // C:\Program Files\TortoiseSVN\bin\
+    end else begin
+        if not (IsWin64 and RegQueryStringValue(HKEY_LOCAL_MACHINE_64,TortoiseCVSUninstallKey,'InstallLocation',Result)) then begin
+            RegQueryStringValue(HKEY_LOCAL_MACHINE_32,TortoiseCVSUninstallKey,'InstallLocation',Result);
+        end;
+        // C:\Program Files\TortoiseCVS\
+    end;
+
+    if DirExists(Result) then begin
+        Result:=Result+'TortoisePlink.exe'
         Exit;
     end;
-    if RegQueryStringValue(HKEY_CLASSES_ROOT,PuTTYPrivateKeyAssoc,'',Result) then begin
-        // "C:\Program Files\PuTTY\pageant.exe" "%1"
-        Result:=RemoveQuotes(Result);
-        // C:\Program Files\PuTTY\pageant.exe" "%1
-        Result:=ExtractFilePath(Result);
-        // C:\Program Files\PuTTY\
-        if DirExists(Result) then begin
-            Exit;
+
+    if not RegQueryStringValue(HKEY_LOCAL_MACHINE,PuTTYUninstallKey,'InstallLocation',Result) then begin
+        if RegQueryStringValue(HKEY_CLASSES_ROOT,PuTTYPrivateKeyAssoc,'',Result) then begin
+            // "C:\Program Files\PuTTY\pageant.exe" "%1"
+            Result:=RemoveQuotes(Result);
+            // C:\Program Files\PuTTY\pageant.exe" "%1
+            Result:=ExtractFilePath(Result);
         end;
     end;
-    // Guess something.
-    Result:='C:\Program Files\PuTTY\';
+    // C:\Program Files\PuTTY\
+
+    if not DirExists(Result) then begin
+        // Guess something.
+        Result:='C:\Program Files\PuTTY\';
+    end;
+
+    Result:=Result+'plink.exe'
 end;
 
 const
@@ -179,7 +199,7 @@ const
 
     // Git SSH options.
     GS_OpenSSH        = 1;
-    GS_PLink          = 2;
+    GS_Plink          = 2;
 
     // Git CRLF options.
     GC_LFOnly         = 1;
@@ -193,8 +213,8 @@ var
 
     // Wizard page and variables for the SSH options.
     PuTTYPage:TWizardPage;
-    RdbSSH:array[GS_OpenSSH..GS_PLink] of TRadioButton;
-    EdtPLink:TEdit;
+    RdbSSH:array[GS_OpenSSH..GS_Plink] of TRadioButton;
+    EdtPlink:TEdit;
 
     // Wizard page and variables for the CR/LF options.
     CRLFPage:TWizardPage;
@@ -204,14 +224,16 @@ procedure BrowseForPuTTYFolder(Sender:TObject);
 var
     Path:string;
 begin
-    Path:=ExtractFilePath(EdtPLink.Text);
+    Path:=ExtractFilePath(EdtPlink.Text);
     BrowseForFolder('Please select the PuTTY folder:',Path,False);
-    Path:=Path+'\plink.exe';
-    if FileExists(Path) then begin
-        EdtPLink.Text:=Path;
-        RdbSSH[GS_PLink].Checked:=True;
+    if FileExists(Path+'\TortoisePlink.exe') then begin
+        EdtPlink.Text:=Path+'\TortoisePlink.exe';
+        RdbSSH[GS_Plink].Checked:=True;
+    end else if FileExists(Path+'\plink.exe') then begin
+        EdtPlink.Text:=Path+'\plink.exe';
+        RdbSSH[GS_Plink].Checked:=True;
     end else begin
-        MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
+        MsgBox('Please enter a valid path to "TortoisePlink.exe" or "plink.exe".',mbError,MB_OK);
     end;
 end;
 
@@ -222,9 +244,9 @@ end;
 procedure InitializeWizard;
 var
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
-    LblOpenSSH,LblPLink:TLabel;
+    LblOpenSSH,LblPlink:TLabel;
     LblLFOnly,LblCRLFAlways,LblCRLFCommitAsIs:TLabel;
-    BtnPLink:TButton;
+    BtnPlink:TButton;
     Data:String;
 begin
     // Create a custom page for modifying the environment.
@@ -329,7 +351,7 @@ begin
         RdbPath[GP_CmdTools].Checked:=True;
     end;
 
-    // Create a custom page for using PuTTY's plink instead of ssh.
+    // Create a custom page for using (Tortoise)Plink instead of OpenSSH.
     PuTTYPage:=CreateCustomPage(
         PathPage.ID,
         'Choosing the SSH executable',
@@ -362,10 +384,10 @@ begin
     end;
 
     // 2nd choice
-    RdbSSH[GS_PLink]:=TRadioButton.Create(PuTTYPage);
-    with RdbSSH[GS_PLink] do begin
+    RdbSSH[GS_Plink]:=TRadioButton.Create(PuTTYPage);
+    with RdbSSH[GS_Plink] do begin
       Parent:=PuTTYPage.Surface;
-      Caption:='Use PLink';
+      Caption:='Use (Tortoise)Plink';
       Left:=ScaleX(4);
       Top:=ScaleY(76);
       Width:=ScaleX(281);
@@ -373,22 +395,22 @@ begin
       Font.Style:=[fsBold];
       TabOrder:=1;
     end;
-    LblPLink:=TLabel.Create(PuTTYPage);
-    with LblPLink do begin
+    LblPlink:=TLabel.Create(PuTTYPage);
+    with LblPlink do begin
         Parent:=PuTTYPage.Surface;
         Caption:=
-            'This uses plink.exe from the PuTTY package which needs to be' + #13 +
-            'provided by the user. The GIT_SSH environment variable will be' + #13 +
-            'set to the path to plink.exe as specified below.';
+            'This uses (Tortoise)Plink.exe from the TortoiseSVN/CVS or PuTTY' + #13 +
+            'applications which need to be provided by the user. The GIT_SSH' + #13 +
+            'environment variable will be set to the executable specified below.';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
         Width:=ScaleX(316);
         Height:=ScaleY(39);
     end;
-    EdtPLink:=TEdit.Create(PuTTYPage);
-    with EdtPLink do begin
+    EdtPlink:=TEdit.Create(PuTTYPage);
+    with EdtPlink do begin
         Parent:=PuTTYPage.Surface;
-        Text:=GetPuTTYLocation+'plink.exe';
+        Text:=GetPuTTYLocation;
         if not FileExists(Text) then begin
             Text:='';
         end;
@@ -397,8 +419,8 @@ begin
         Width:=ScaleX(316);
         Height:=ScaleY(13);
     end;
-    BtnPLink:=TButton.Create(PuTTYPage);
-    with BtnPLink do begin
+    BtnPlink:=TButton.Create(PuTTYPage);
+    with BtnPlink do begin
         Parent:=PuTTYPage.Surface;
         Caption:='...';
         OnClick:=@BrowseForPuTTYFolder;
@@ -412,8 +434,8 @@ begin
     Data:=GetPreviousData('SSH Option','OpenSSH');
     if Data='OpenSSH' then begin
         RdbSSH[GS_OpenSSH].Checked:=True;
-    end else if Data='PLink' then begin
-        RdbSSH[GS_PLink].Checked:=True;
+    end else if Data='Plink' then begin
+        RdbSSH[GS_Plink].Checked:=True;
     end;
 
     // Create a custom page for the autoCRLF setting.
@@ -520,10 +542,10 @@ begin
     end;
 
     Result:=RdbSSH[GS_OpenSSH].Checked
-        or (RdbSSH[GS_PLink].Checked and FileExists(EdtPLink.Text));
+        or (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
 
     if not Result then begin
-        MsgBox('Please enter a valid path to plink.exe.',mbError,MB_OK);
+        MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
     end;
 end;
 
@@ -557,9 +579,9 @@ begin
 
         Count:=GetArrayLength(BuiltIns)-1;
 
-        // Delete all scripts as they might have been replaced by built-ins by now.
+        // Delete those scripts from "bin" which have been replaced by built-ins in "libexec\git-core".
         for i:=0 to Count do begin
-            FileName:=ChangeFileExt(AppDir+'\'+BuiltIns[i],'');
+            FileName:=AppDir+'\bin\'+ChangeFileExt(ExtractFileName(BuiltIns[i]),'');
             if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
                 Log('Line {#emit __LINE__}: Unable to delete script "'+FileName+'", ignoring.');
             end;
@@ -664,9 +686,9 @@ begin
         end;
     end;
 
-    if RdbSSH[GS_PLink].Checked then begin
+    if RdbSSH[GS_Plink].Checked then begin
         SetArrayLength(EnvSSH,1);
-        EnvSSH[0]:=EdtPLink.Text;
+        EnvSSH[0]:=EdtPlink.Text;
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#emit __LINE__}: Unable to set the GIT_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
@@ -690,7 +712,7 @@ begin
 
     // First, remove the installation directory from PATH in any case.
     for i:=0 to GetArrayLength(EnvPath)-1 do begin
-        if Pos(AppDir,EnvPath[i])=1 then begin
+        if Pos(AppDir+'\',EnvPath[i]+'\')=1 then begin
             EnvPath[i]:='';
         end;
     end;
@@ -809,8 +831,8 @@ begin
     Data:='';
     if RdbSSH[GS_OpenSSH].Checked then begin
         Data:='OpenSSH';
-    end else if RdbSSH[GS_PLink].Checked then begin
-        Data:='PLink';
+    end else if RdbSSH[GS_Plink].Checked then begin
+        Data:='Plink';
     end;
     SetPreviousData(PreviousDataKey,'SSH Option',Data);
 
@@ -896,7 +918,7 @@ begin
     // Remove the installation directory from PATH in any case, even if it
     // was not added by the installer.
     for i:=0 to GetArrayLength(EnvPath)-1 do begin
-        if Pos(AppDir,EnvPath[i])=1 then begin
+        if Pos(AppDir+'\',EnvPath[i]+'\')=1 then begin
             EnvPath[i]:='';
         end;
     end;

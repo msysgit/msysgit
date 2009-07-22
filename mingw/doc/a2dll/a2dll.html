@@ -1,0 +1,231 @@
+<html>
+<head>
+<title>
+a2dll: An utility (to help) to convert static library into Win32 DLL
+</title>
+</head>
+<body>
+<h1>
+a2dll: An utility (to help) to convert static library into Win32 DLL
+</h1>
+<h2>
+Synopsis
+</h2>
+<p>
+a2dll is shell script (see <a href="#requirements">requirements</a>) to
+automotize process of converting existing static libraries (produced
+by gnu-win32 tools, of course) into DLL. First of all, yes it's possible:
+if you have binary static distribution of some library (i.e. library
+itself and its headers), that's all you need to convert it to DLL and
+use in your programs. Read <a href="static2dll_howto.txt">HOWTO</a> for
+underlying magic. So, you may not waste time if you need DLL: just 
+grab existing static distribution and convert. Also, you may use it to
+build Win32 DLL of your library. Also, until GNU libtool will allow
+seamless building of Win32 DLLs, you may build static lib (what
+libtool of course supports) and then convert it to DLL.
+<blockquote>
+<tt>
+a2dll &lt;static_lib> [-o &lt;dll_name>] [&lt;linker_flags>] [--relink]
+</tt>
+</blockquote>
+where:
+<dl>
+<dt>
+<tt>&lt;static_lib></tt>
+</dt>
+<dd>
+Static library you want to convert
+</dd>
+<dt>
+<tt>-o &lt;dll_name></tt>
+</dt>
+<dd>
+Name of resulting dll. If not given, three first chars of input
+name are stripped and <tt>.a</tt> suffix replaced with <tt>.dll</tt> .
+So, from '<tt>libfoo.a</tt>' you'll get '<tt>foo.dll</tt>'.
+</dd>
+<dt>
+<tt>&lt;linker_flags></tt>
+</dt>
+<dd>
+Linker flags:
+<ul>
+<li>Use '<tt>-s</tt>' to get library without debugging symbols and information.
+<li>Use '<tt>--driver-name=&lt;name></tt>' to link library with specified
+linker (well, compiler, to be precise). For example, for C++ library use
+<tt>--driver-name=g++</tt> .
+<li>You should list all libraries on which your library depends with
+<tt>-l</tt> switches and directories they are reside in with <tt>-L</tt>
+switches. For example, if your library uses PCRE library you just built and
+not yet installed, use something like <tt>-L../pcre -lpcre</tt>
+</ul>
+</dd>
+<dt>
+<tt>--relink</tt>
+</dt>
+<dd>
+Skip exploding library stage (see below). Use this flag to continue
+process after some error occured.
+</dd>
+</dl>
+</p>
+
+<h2>
+Performing
+</h2>
+
+<p>
+a2dll works in following way:
+<ol>
+<li>If you did not specify <tt>--relink</tt> option,
+explodes source library under newly-created <tt>.dll</tt> subdirectory.
+
+<li>Links all resulting objects into DLL with exporting all non-static
+symbols. On this stage, link errors
+(such as underfined symbols) may occur. In such case, a2dll terminates
+and all linker messages are available in '<tt>ld.err</tt>' file. You
+should correct errors (mostly by finding out additional
+dependecies, but sometimes by deleting 'superfluos' objects under .dll)
+and re-run a2dll with all the options you gave it before,
+plus new dependencies, plus <tt>--relink</tt> flag. You may need to
+repeat this several times.
+
+<li>Renames original static library with suffix <tt>.static</tt> .
+
+<li>Creates import library for produced DLL with the name of original
+static library.
+
+<li>Check whether DLL exports data symbols. If no, congratulations,
+you've done. However, if some present, it lists all of them in file
+'<tt>&lt;dll_name>.data</tt>' . Presense of such symbols generally
+means that you should patch library's headers to mark those symbols
+as dll-imported. But don't hurry with that, first, do following:
+<ol>
+<li>Look into <tt>&lt;dll_name>.data</tt> file. If all what you see
+is something like '<tt>internal_counter_of_bogons</tt>' or 
+'<tt>_ksdauso</tt>', don't worry - those symbols are hardly part of
+external interface of the library.
+<li>If all you need is to link your application against that
+library, try it. If it succeeds, congratulation.
+<li>Only if above is failed, or you are going to distribute produced
+library, so you need to be sure that everything is ok, proceed with
+marking symbols in headers. Read <a href="static2dll_howto.txt">Static2DLL
+HOWTO</a> for more information on suggested ways of doing this. Use
+'<tt>grep -f <tt>&lt;dll_name>.data</tt> *.h</tt>' command to find
+out where offending symbols defined in library headers.
+</ol>
+</ol>
+</p>
+
+<h2>
+Examples
+</h2>
+<p>
+Since converting static libraries to DLLs is not fully automated and
+formal process, some experience with it is required. Learing
+by example is known to be one of the efficient way of communicating
+experince, so I would like to provide some realistic examples of
+converting statics to DLLs with the help of a2dll.
+</p>
+
+<h3>
+Zlib
+</h3>
+<p>
+Build libz.a . Now, run '<tt>a2dll libz.a</tt>'. It builds cleanly,
+but warns us about data symbols. Let's look at them:
+<blockquote>
+<pre>
+inflate_mask
+z_errmsg
+</pre>
+</blockquote>
+What they could be. The first one is probably some internal variable,
+while second is probably array of error messages. As we know, zlib
+provides functional way of getting error messages, something like. So
+our hypothesis is that job's done. Let's prove it:
+'<tt>grep -f z.dll.data zlib.h</tt>'. Yes, we're right: no mentioning 
+of those symbols in interface header file.
+</p>
+
+<h3>
+libstdc++
+</h3>
+<p>
+I've got an idea to DLLize libstdc++ coming with my mingw32 distribution.
+'<tt>a2dll "libstdc++.a"</tt>'. Note that we don't use
+<tt>--driver-name=g++</tt> - that option need to be used when we link
+something <i>against</i> libstdc++ . But when we link libstdc++
+<i>itself</i>, we need libc (whatever it is in mingw32), nothing else.
+But, process aborts due to linker errors. <tt>ld.err</tt> tells us:
+<blockquote>
+<pre>
+strerror.o(.text+0x303): undefined reference to `sys_nerr'
+vfork.o(.text+0x7): undefined reference to `fork'
+waitpid.o(.text+0x15): undefined reference to `wait'
+</pre>
+</blockquote>
+Well, strerror, vfork, waitpid are libc functions, what they do in
+libstdc++? Probably, stubs, delete them and
+'<tt>a2dll "libstdc++.a" --relink</tt>'. Of course,
+<tt>stdc++.dll.data</tt> is here. Looking into it, I may tell you
+that everything starting with '<tt>__ti&lt;digit></tt>' is RTTI
+internal data structures and everything starting with
+'<tt>_vt$</tt>' is virtual tables (use c++filt if in doubt),
+you can leave them alone.
+(If so, why I don't filter them? Because "you can leave them alone"
+is hypothesis for now, I haven't linked too much C++ libraries to
+be sure). From the rest, there's stuff starting
+with '<tt>_IO_</tt>'. That's probably some internal variables, let's
+don't do anything about them, unless we'll be forced to. Than, as
+c++filt shows, there're some static members of templated classes. Darkness.
+Forget for now. Than, there's '<tt>io_defs__</tt>'. Does your C++ application
+reference something like that? Mine not. So, what is left? Our four
+happy friends, <tt>cin, cout, cerr,</tt> and <tt>clog</tt>. Do mark them as
+__declspec(dllimport) in <tt>iostream.h</tt>.
+</p>
+
+<h3>
+Some C++ library
+</h3>
+<p>
+Suppose we have following file:
+<pre>
+#include &lt;iostream.h>
+
+void foo()
+{
+  cout&lt;&lt;"hi!"&lt;&lt;endl;
+}
+</pre>
+and want to turn it into DLL. Create static liba.a from it. Now,
+'<tt>a2dll liba.a --driver-name=g++</tt>'. Well, our DLL contains
+single function, why then it complains about data symbols? Oh, it's
+those stupid RTTI structures. Next time, compile with <tt>-fno-rtti</tt> unless
+you really need it, ok? Ditto for <tt>-fno-exceptions</tt> .
+</p>
+
+<h2>
+<a name="requirements">
+Requirements
+</h2>
+<p>
+a2dll requires POSIX shell (<tt>sh</tt>) to run. It is developed and
+tested with <tt>ash</tt> from
+<a href="http://pw32.sourceforge.net">PW32</a> distribution. Additionally,
+a2dll requires following utilities to perform its tasks:
+<ul>
+<li>GNU fileutils: mkdir, mv, rm
+<li>GNU textutils: wc
+<li>GNU grep
+<li>GNU awk
+<li>GNU binutils: dllwrap, dlltool (and the rest of binutils and gcc, of course)
+<li>pexports, an utility to dump symbols exported by dll. You'll need a
+version 0.43 or above, capable of distinguishing between code and data symbols, as one
+from <a href="http://www.is.lg.ua/~paul/devel/binutils.html">here</a>.
+</ul>
+</p>
+<hr noshade>
+<i><a href="mailto:Paul.Sokolovsky@technologist.com">Paul Sokolovsky</a></i>
+</body>
+</html>

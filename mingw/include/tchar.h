@@ -188,6 +188,7 @@ typedef wchar_t _TCHAR;
 #define _tgetenv    _wgetenv
 #define _tputenv    _wputenv
 #define _tsearchenv _wsearchenv
+#define  _tsystem    _wsystem
 #define _tmakepath  _wmakepath
 #define _tsplitpath _wsplitpath
 #define _tfullpath  _wfullpath
@@ -282,6 +283,7 @@ typedef char	_TCHAR;
 #define	_tgetenv	getenv
 #define	_tputenv	_putenv
 #define	_tsearchenv	_searchenv
+#define  _tsystem       system
 #define	_tmakepath	_makepath
 #define	_tsplitpath	_splitpath
 #define	_tfullpath	_fullpath

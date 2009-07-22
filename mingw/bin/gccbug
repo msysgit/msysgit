@@ -1,6 +1,6 @@
 #!/bin/sh
 # Submit a problem report to a GNATS site.
-# Copyright (C) 1993, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+# Copyright (C) 1993, 2000, 2001, 2002, 2003, 2007 Free Software Foundation, Inc.
 # Contributed by Brendan Kehoe (brendan@cygnus.com), based on a
 # version written by Heinz G. Seidl (hgs@cygnus.com).
 #
@@ -8,7 +8,7 @@
 #
 # GNU GNATS is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
+# the Free Software Foundation; either version 3, or (at your option)
 # any later version.
 #
 # GNU GNATS is distributed in the hope that it will be useful,
@@ -17,9 +17,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GNU GNATS; see the file COPYING.  If not, write to
-# the Free Software Foundation, 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+# along with GNU GNATS; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
 
 # The version of this send-pr.
 VERSION=3.113
@@ -31,7 +30,11 @@ SUBMITTER=net
 GNATS_ADDR=gcc-gnats@gcc.gnu.org
 
 # The default release for this host.
-DEFAULT_RELEASE="3.4.5 (mingw special)"
+# We have to guess at what program_transform_name might have done.
+# "sed 1q" because neither "head -1" nor "head -n 1" is universal, argh.
+
+DEFAULT_GCC="`echo $0 | sed -e 's/bug//'`"
+DEFAULT_RELEASE="`$DEFAULT_GCC --version | sed 1q`"
 
 # The default organization.
 DEFAULT_ORGANIZATION=
@@ -198,7 +201,7 @@ EOF
 done
 
 # spam does not need to be listed here
-CATEGORIES="ada bootstrap c++ c debug driver fortran inline-asm java libf2c libgcj libobjc libstdc++ middle-end objc other pch preprocessor rtl-optimization target tree-optimization web"
+CATEGORIES="ada bootstrap c++ c debug driver fortran inline-asm java libgcj libobjc libstdc++ middle-end objc other pch preprocessor rtl-optimization target tree-optimization web"
 
 case "$FORMAT" in
   lisp) echo "$CATEGORIES" | \
@@ -346,7 +349,7 @@ build: i386-pc-mingw32
 target: i386-pc-mingw32
 __EOF__
       cat >> $file << \__EOF__
-configured with: ../gcc-3.4.5/configure --with-gcc --with-gnu-ld --with-gnu-as --host=mingw32 --target=mingw32 --prefix=/mingw --enable-threads --disable-nls --enable-languages=c,c++,f77,ada,objc,java --disable-win32-registry --disable-shared --enable-sjlj-exceptions --enable-libgcj --disable-java-awt --without-x --enable-java-gc=boehm --disable-libgcj-debug --enable-interpreter --enable-hash-synchronization --enable-libstdcxx-debug
+configured with: ../gcc-4.4.0/configure --prefix=/mingw --build=mingw32 --enable-languages=c,ada,c++,fortran,objc,obj-c++ --disable-nls --disable-win32-registry --disable-werror --enable-threads --disable-symvers --enable-cxx-flags='-fno-function-sections -fno-data-sections' --enable-fully-dynamic-string --enable-libgomp --enable-version-specific-runtime-libs --enable-sjlj-exceptions --with-pkgversion='TDM-1 mingw32' --with-bugurl=http://www.tdragon.net/recentgcc/bugs.php
 __EOF__
       cat >> $file << __EOF__
 >Description:

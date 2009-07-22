@@ -1,6 +1,6 @@
 /* Script for -N: mix text and data on same page; don't align data */
 OUTPUT_FORMAT(pei-i386)
-SEARCH_DIR("/mingw/mingw32/lib"); SEARCH_DIR("/mingw/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
+SEARCH_DIR("/usr/local/mingw32/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
 SECTIONS
 {
   /* Make the virtual address and file offset synced if the alignment is
@@ -14,25 +14,15 @@ SECTIONS
     *(SORT(.text$*))
     *(.glue_7t)
     *(.glue_7)
-    	___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
-			LONG (-1);
-			*(EXCLUDE_FILE (*crtend.o) .ctors);
-			*(.ctor);
-			*(SORT(.ctors.*));
-			*(.ctors);
-			LONG (0);
-    	___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
-			LONG (-1);
-			*(EXCLUDE_FILE (*crtend.o) .dtors);
-			*(.dtor);
-			*(SORT(.dtors.*));
-			*(.dtors);
-			LONG (0);
+     ___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
+			LONG (-1);*(.ctors); *(.ctor); *(SORT(.ctors.*));  LONG (0);
+     ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
+			LONG (-1); *(.dtors); *(.dtor); *(SORT(.dtors.*));  LONG (0);
      *(.fini)
     /* ??? Why is .gcc_exc here?  */
      *(.gcc_exc)
     PROVIDE (etext = .);
-    *(.gcc_except_table)
+     *(.gcc_except_table)
   }
   /* The Cygwin32 library uses a section to avoid copying certain data
      on fork.  This used to be named ".data".  The linker used
@@ -52,8 +42,8 @@ SECTIONS
   .rdata BLOCK(__section_alignment__) :
   {
     *(.rdata)
-    *(SORT(.rdata$*))
-    *(.eh_frame)
+             *(SORT(.rdata$*))
+     *(.eh_frame)
     ___RUNTIME_PSEUDO_RELOC_LIST__ = .;
     __RUNTIME_PSEUDO_RELOC_LIST__ = .;
     *(.rdata_runtime_pseudo_reloc)

@@ -358,6 +358,8 @@ extern "C" {
 #define OUT_RASTER_PRECIS	6
 #define OUT_TT_ONLY_PRECIS	7
 #define OUT_OUTLINE_PRECIS	8
+//http://www.pinvoke.net/default.aspx/Structures/LOGFONT.html
+#define OUT_PS_ONLY_PRECIS      10
 #define CLIP_DEFAULT_PRECIS	0
 #define CLIP_CHARACTER_PRECIS	1
 #define CLIP_STROKE_PRECIS	2
@@ -1315,6 +1317,15 @@ extern "C" {
 #define DISPLAY_DEVICE_VGA_COMPATIBLE      0x00000010
 #define DISPLAY_DEVICE_REMOVABLE           0x00000020
 #define DISPLAY_DEVICE_MODESPRUNED         0x08000000
+
+#if (_WIN32_WINNT >= 0x0500)
+#define NTM_NONNEGATIVE_AC  0x00010000
+#define NTM_PS_OPENTYPE     0x00020000
+#define NTM_TT_OPENTYPE     0x00040000
+#define NTM_MULTIPLEMASTER  0x00080000
+#define NTM_TYPE1           0x00100000
+#define NTM_DSIG            0x00200000
+#endif
 
 #if (_WIN32_WINNT >= 0x0500)
 #define GGI_MARK_NONEXISTING_GLYPHS 1

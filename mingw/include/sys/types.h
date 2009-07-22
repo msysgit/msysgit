@@ -115,6 +115,10 @@ typedef long long fpos64_t;
 typedef long long off64_t;
 #endif
 
+#if !defined __NO_ISOCEXT
+typedef unsigned int useconds_t;
+#endif  /* Not __NO_ISOCEXT */
+
 #endif	/* Not RC_INVOKED */
 
 #endif	/* Not _TYPES_H_ */

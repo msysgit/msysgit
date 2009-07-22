@@ -1,3 +1,4 @@
+#ifndef __MINGW_H
 /*
  * _mingw.h
  *
@@ -19,31 +20,58 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-
-#ifndef __MINGW_H
 #define __MINGW_H
 
+#define __MINGW32_VERSION           3.15.2
+#define __MINGW32_MAJOR_VERSION     3
+#define __MINGW32_MINOR_VERSION     15
+#define __MINGW32_PATCHLEVEL        2
+
+#if __GNUC__ >= 3
+#pragma GCC system_header
+#endif
 
 /* These are defined by the user (or the compiler)
    to specify how identifiers are imported from a DLL.
 
-   __DECLSPEC_SUPPORTED    Defined if dllimport attribute is supported.
-   __MINGW_IMPORT          The attribute definition to specify imported
-                           variables/functions.
-   _CRTIMP                 As above.  For MS compatibility.
-   __MINGW32_VERSION       Runtime version.
-   __MINGW32_MAJOR_VERSION Runtime major version.
-   __MINGW32_MINOR_VERSION Runtime minor version.
-   __MINGW32_BUILD_DATE    Runtime build date.
+   __DECLSPEC_SUPPORTED            Defined if dllimport attribute is supported.
+   __MINGW_IMPORT                  The attribute definition to specify imported
+                                   variables/functions.
+   _CRTIMP                         As above.  For MS compatibility.
+   __MINGW32_VERSION               Runtime version.
+   __MINGW32_MAJOR_VERSION         Runtime major version.
+   __MINGW32_MINOR_VERSION         Runtime minor version.
+   __MINGW32_BUILD_DATE            Runtime build date.
+
+   Macros to enable MinGW features which deviate from standard MSVC
+   compatible behaviour; these may be specified directly in user code,
+   activated implicitly, (e.g. by specifying _POSIX_C_SOURCE or such),
+   or by inclusion in __MINGW_FEATURES__:
+
+   __USE_MINGW_ANSI_STDIO          Select a more ANSI C99 compatible
+                                   implementation of printf() and friends.
 
    Other macros:
 
-   __int64                 define to be long long. Using a typedef doesn't
-                           work for "unsigned __int64"
+   __int64                         define to be long long.  Using a typedef
+                                   doesn't work for "unsigned __int64"
 
    All headers should include this first, and then use __DECLSPEC_SUPPORTED
    to choose between the old ``__imp__name'' style or __MINGW_IMPORT
    style declarations.  */
+
+
+/* Manifest definitions identifying the flag bits, controlling activation
+ * of MinGW features, as specified by the user in __MINGW_FEATURES__.
+ */
+#define __MINGW_ANSI_STDIO__		0x0000000000000001ULL
+/*
+ * The following three are not yet formally supported; they are
+ * included here, to document anticipated future usage.
+ */
+#define __MINGW_LC_EXTENSIONS__ 	0x0000000000000050ULL
+#define __MINGW_LC_MESSAGES__		0x0000000000000010ULL
+#define __MINGW_LC_ENVVARS__		0x0000000000000040ULL
 
 /* Try to avoid problems with outdated checks for GCC __attribute__ support.  */
 #undef __attribute__
@@ -79,8 +107,14 @@
 #   define _CRTIMP
 #  endif
 # endif /* __declspec */
-# ifndef __cdecl
-#  define __cdecl __attribute__ ((__cdecl__))
+
+/*
+   The next two defines can cause problems if user code adds the __cdecl attribute
+   like so:
+   void __attribute__ ((__cdecl)) foo(void); 
+*/
+# ifndef __cdecl 
+#  define __cdecl  __attribute__ ((__cdecl__))
 # endif
 # ifndef __stdcall
 #  define __stdcall __attribute__ ((__stdcall__))
@@ -163,14 +197,44 @@
 #else
 #define __MINGW_ATTRIB_DEPRECATED
 #endif /* GNUC >= 3.1 */
+ 
+#if  __MINGW_GNUC_PREREQ (3, 3)
+#define __MINGW_NOTHROW __attribute__ ((__nothrow__))
+#else
+#define __MINGW_NOTHROW
+#endif /* GNUC >= 3.3 */
+
+
+/* TODO: Mark (almost) all CRT functions as __MINGW_NOTHROW.  This will
+allow GCC to optimize away some EH unwind code, at least in DW2 case.  */
 
 #ifndef __MSVCRT_VERSION__
 /*  High byte is the major version, low byte is the minor. */
 # define __MSVCRT_VERSION__ 0x0600
 #endif
 
-#define __MINGW32_VERSION 3.12
-#define __MINGW32_MAJOR_VERSION 3
-#define __MINGW32_MINOR_VERSION 12
+/* Activation of MinGW specific extended features:
+ */
+#ifndef __USE_MINGW_ANSI_STDIO
+/*
+ * If user didn't specify it explicitly...
+ */
+# if   defined __STRICT_ANSI__  ||  defined _ISOC99_SOURCE \
+   ||  defined _POSIX_SOURCE    ||  defined _POSIX_C_SOURCE \
+   ||  defined _XOPEN_SOURCE    ||  defined _XOPEN_SOURCE_EXTENDED \
+   ||  defined _GNU_SOURCE      ||  defined _BSD_SOURCE \
+   ||  defined _SVID_SOURCE
+   /*
+    * but where any of these source code qualifiers are specified,
+    * then assume ANSI I/O standards are preferred over Microsoft's...
+    */
+#  define __USE_MINGW_ANSI_STDIO    1
+# else
+   /*
+    * otherwise use whatever __MINGW_FEATURES__ specifies...
+    */
+#  define __USE_MINGW_ANSI_STDIO    (__MINGW_FEATURES__ & __MINGW_ANSI_STDIO__)
+# endif
+#endif
 
 #endif /* __MINGW_H */

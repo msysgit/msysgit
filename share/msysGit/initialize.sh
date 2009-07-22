@@ -2,19 +2,23 @@
 
 # This script initializes /.git from msysgit.git on repo.or.cz
 
+test -d /git/.git || {
+	cd /git &&
+	git init &&
+	git add . &&
+	git commit -m "Current revision" &&
+	git remote add -f origin mob@repo.or.cz:/srv/git/git/mingw/4msysgit.git
+} ||
+exit
+
+
 test -d /.git || {
 	cd / &&
 	git init &&
-	git add bin doc etc lib mingw msys* share .gitignore &&
-	git add $( (cd git &&
-			git ls-files | grep -v "^\"\?gitweb" &&
-			echo gitweb) |
-		sed "s|^|git/|" ) &&
-	git update-index --add git/config.mak &&
-	git remote add origin git://repo.or.cz/msysgit.git/ &&
-	git fetch &&
-	git gc &&
-	git reset --soft origin/master &&
-	git read-tree -m -u HEAD
+	git ls-files --other --exclude-standard $(sed -n \
+			-e 's/^path = /--exclude=/p' < .gitmodules) -z |
+		git update-index --add --stdin -z &&
+	git commit -m "Current revision" &&
+	git remote add -f origin mob@repo.or.cz:/srv/git/4msysgit.git &&
+	git gc
 }
-

@@ -1,0 +1,76 @@
+  GNU make port to mingw32
+  Version: 3.81 + patches from Eli Zaretskii
+
+This version is compiled with the following:
+
+../make-3.81-patched/configure \
+  --disable-dependency-tracking \
+  --disable-nls \
+  --enable-case-insensitive-file-system \
+  --disable-job-server \
+  --disable-rpath \
+  --program-prefix=mingw32- \
+  --host=i386-pc-mingw32 \
+  --build=i386-pc-mingw32 \
+  --target=i386-pc-mingw32 \
+  --prefix=/mingw
+mv config.h config.orig ; sed -e 's/:/;/' config.orig > config.h
+make CFLAGS="-s -O2 -mms-bitfields -mtune=i686"
+for i in `find . -type f -iname dir`; do rm $i; done
+make prefix=`cd ../dist;pwd` install
+
+Patches:
+
+2008-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* variable.c (do_variable_definition) [WINDOWS32]: If
+	find_and_set_default_shell fails to find the new value of SHELL
+	verbatim, run it thru allocated_variable_expand and try again.
+
+2008-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* variable.c (target_environment): Don't use shell_var if its
+	`value' field is NULL.
+
+2007-09-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32/pathstuff.c (convert_Path_to_windows32): Handle quoted
+	directories in Path.
+
+2007-07-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* function.c (func_shell): Call construct_command_argv with zero
+	value of FLAGS.
+
+	* job.c (construct_command_argv_internal): New argument FLAGS; all
+	callers changed.
+	[WINDOWS32]: If FLAGS has the COMMANDS_RECURSE bit set, ignore
+	just_print_flag.
+
+	* job.h (construct_command_argv_internal): Update prototype.
+
+2006-11-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* main.c (main) [HAVE_DOS_PATHS]: Treat DOS file names with
+	backslashes and drive letters as absolute.
+
+2006-08-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.in (PATH_SEPARATOR_CHAR): Define to the value of
+	$PATH_SEPARATOR.
+
+	* make.h (PATH_SEPARATOR_CHAR): Define only if still undefined.
+	Normally, it is defined in config.h.
+
+	* config/dospaths.m4 <ac_cv_dos_paths>: Define to yes on Cygwin as
+	well.
+
+	* job.c (construct_command_argv_internal) [HAVE_DOS_PATHS]: Define
+	sh_chars_sh for Windows platforms that emulate Unix.
+
+2006-05-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* function.c (func_shell) [WINDOWS32]: Reset just_print_flag
+	around the call to construct_command_argv, so that a temporary
+	batch file _is_ created when needed for $(shell).
+

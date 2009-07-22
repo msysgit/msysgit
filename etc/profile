@@ -21,6 +21,15 @@ else
   export PATH=".:/usr/local/bin:/bin:/mingw/bin:$PATH"
 fi
 
+# check msys-1.0.dll
+if test -f /etc/msys-1.0.dll.md5
+then
+	# if check succeeds, let's avoid checking again
+	test "$(md5sum /bin/msys-1.0.dll)" = "$(cat /etc/msys-1.0.dll.md5)" &&
+	rm -f /etc/msys-1.0.dll.md5 ||
+	printf "\n\033[31mERROR: Your msys-1.0.dll is out-of-date!\033[m\n\n"
+fi
+
 if [ -z "$USERNAME" ]; then
   LOGNAME="`id -un`"
 else
@@ -28,16 +37,16 @@ else
 fi
 
 # Set up USER's home directory
-if [ -z "$HOME" ]; then
-  HOME="$USERPROFILE"
+if [ -z "$HOME" -o ! -d "$HOME" ]; then
+  HOME="$HOMEDRIVE$HOMEPATH"
 fi
 
 if [ ! -d "$HOME" ]; then
-	echo "Error: HOME directory '$HOME' doen't exist!"
-	echo "Please fix this error and restart shell."
-	echo "Press key to quit."
-	read dummy
-	exit 1
+	printf "\n\033[31mERROR: HOME directory '$HOME' doen't exist!\033[m\n\n"
+	echo "This is an error which might be related to msysGit issue 108."
+	echo "You might want to set the environment variable HOME explicitely."
+	printf "\nFalling back to \033[31m/ ($(cd / && pwd -W))\033[m.\n\n"
+	HOME=/
 fi
 
 # normalize HOME to unix path
@@ -66,17 +75,6 @@ for i in /etc/profile.d/*.sh ; do
 done
 
 export MAKE_MODE=unix
-export PS1='\[\033]0;$MSYSTEM:\w\007
-\033[32m\]\u@\h \[\033[33m\w\033[0m\]
-$ '
-
-if [ -e ~/.bashrc ]; then
-    . ~/.bashrc
-elif [ -e ~/.bash_profile ]; then
-    . ~/.bash_profile
-elif [ -e /etc/bash_profile ]; then
-    . /etc/bash_profile
-fi
 
 # Git specific stuff
 test -e /bin/git.exe -o -e /git/git.exe || {
@@ -110,7 +108,18 @@ $MESSAGE
 
 EOF
 }
-cd "$HOME"
+
+# when called from "Git Bash Here", there is a "!C:=..." or similar in env
+if ! env | grep -q '^!'
+then
+	cd "$HOME"
+fi
+
+# let's make sure that the post-checkout hook is installed
+test -d /.git && test ! -x /.git/hooks/post-checkout &&
+test -x /share/msysGit/post-checkout-hook &&
+mkdir -p /.git/hooks &&
+cp /share/msysGit/post-checkout-hook /.git/hooks/post-checkout
 
 test -f /etc/motd && sed "s/\$MESSAGE/$MESSAGE/" < /etc/motd
 
@@ -129,6 +138,20 @@ esac
 
 
 . /git/contrib/completion/git-completion.bash
-PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+PS1='\[\033]0;$MSYSTEM:\w\007
+\033[32m\]\u@\h \[\033[33m\w$(__git_ps1)\033[0m\]
+$ '
 
+# set default options for 'less'
 export LESS=-FRSX
+# set default protocol for 'plink'
+export PLINK_PROTOCOL=ssh
+
+# read user-specific settings, possibly overriding anything above
+if [ -e ~/.bashrc ]; then
+    . ~/.bashrc
+elif [ -e ~/.bash_profile ]; then
+    . ~/.bash_profile
+elif [ -e /etc/bash_profile ]; then
+    . /etc/bash_profile
+fi

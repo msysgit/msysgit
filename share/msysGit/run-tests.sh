@@ -1,45 +1,80 @@
 #!/bin/sh
 
-case "$1" in
--*)
-	COUNT=$(echo "$1" | sed "s/-//")
-	shift
-;;
-*)
-	COUNT=9999
-;;
+# This list was generated after a run of "make test" using generate_skip_list
+
+export GIT_SKIP_TESTS='
+'
+
+#echo "$GIT_SKIP_TESTS" | tr '\n' ' '; exit
+export NO_SVN_TESTS=t
+case " $*" in
+*' -j'*) ;;
+*) PARALLEL_MAKE=-j5;;
 esac
 
-start_test="$1"
+generate_skip_list () {
+	cd /git/t
+	for d in trash*
+	do
+		name=${d#trash directory.}
+		short=${name%%-*}
+		sh $name.sh |
+		sed -n "s/.*FAIL \([0-9]*\).*/$short.\1/p"
+	done
+}
 
-cd /git/t
+test generate_skip_list = "$1" && {
+	generate_skip_list
+	exit
+}
 
-: > /tmp/failed-tests.out
+get_test_name () {
+	echo "$*" | sed 's/.* \(t[0-9].*\)\.sh .*/\1/'
+}
 
-for test in t[0-9]*.sh
-do
-	case $test in
-	$start_test*) start_test=;;
-	*) continue;;
+get_finished_tests () {
+	REMAINING_TESTS=
+	for t in $CURRENT_TESTS
+	do
+		f=$(grep failed t/test-results/${t%.sh}-[1-9]* 2> /dev/null)
+		if test ! -z "$f"
+		then
+			printf '%70s ' $(cd t && echo $t*.sh)
+			if test "failed 0" = "$f"
+			then
+				echo -e '\033[32mok\033[0m'
+			else
+				FAILED_TESTS="$FAILED_TESTS $t"
+				echo -e '\033[31mfailed\033[0m'
+			fi
+		else
+			REMAINING_TESTS="$REMAINING_TESTS $t"
+		fi
+	done
+	CURRENT_TESTS="$REMAINING_TESTS"
+}
+
+cd /git &&
+echo make $PARALLEL_MAKE &&
+(cd t &&
+ rm -rf test-results &&
+ time make $PARALLEL_MAKE -k "$@") 2>&1 |
+(
+ CURRENT_TESTS=
+ FAILED_TESTS=
+ while read line
+ do
+	case "$line" in
+	"*** t"*)
+		TEST_NAME=$(get_test_name "$line")
+		CURRENT_TESTS="$CURRENT_TESTS $TEST_NAME"
+		printf "Currently running $(echo "$CURRENT_TESTS" |
+			sed 's/-[^ ]*//g')\\r"
+		;;
+	'* passed'*)
+		get_finished_tests
+		;;
 	esac
-
-	printf '%70s ' $test
-	if sh -x $test --no-symlinks -v > /tmp/test.out 2>&1
-	then
-		echo -e '\033[32mok\033[0m'
-	else
-		echo "*** $test" >> /tmp/failed-tests.out
-		cat /tmp/test.out >> /tmp/failed-tests.out
-		echo -e '\033[31mfailed\033[0m'
-	fi
-	COUNT=$(($COUNT-1))
-	test $COUNT -gt 0 || break
-done
-
-test -s /tmp/failed-tests.out &&
-echo "Do you want to see the output?" &&
-read answer &&
-case $answer in y*|Y*|j*|J*)
-	less /tmp/failed-tests.out
-esac
-
+ done
+ test -z "$FAILED_TESTS" || echo "These tests failed: $FAILED_TESTS"
+ test -z "$CURRENT_TESTS" || echo "Unfinished tests: $CURRENT_TESTS")

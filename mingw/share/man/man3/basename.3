@@ -1,0 +1,474 @@
+.\" t
+.TH DIRNAME 3 04-Jan-2007 MinGW "Programmer's Reference Manual"
+.
+.SH NAME
+.
+.BR dirname ,\0 basename
+\- parse path name components
+.
+.
+.SH SYNOPSIS
+.
+.B  #include
+.RB < libgen.h >
+.PP
+.B  char *dirname( char
+.BI * path
+.B  );
+.br
+.B  char *basename( char
+.BI * path
+.B  );
+.
+.
+.SH DESCRIPTION
+.
+The
+.B dirname
+and
+.B basename
+functions parse a null\-terminated path name string,
+and split it into its
+.B directory name
+and
+.B file name
+components.
+Splitting is performed on the basis of the location of the
+.B directory separator
+characters,
+which,
+for this MS\-Windows(\(tm) implementation,
+are the characters
+.RB \(dq / \(dq
+and
+.RB \(dq \e \(dq,
+each of which is interpreted as being equivalent.
+Additionally,
+if the
+.I second
+character of
+.I path
+is a colon
+.RB (\(dq : \(dq),
+the first two characters of
+.I path
+are interpreted as an MS\-Windows(\(tm) drive designator,
+which will be included in the
+.B directory name
+component of
+.IR path ,
+but is never considered to form part of the
+.B file name
+component.
+.
+.PP
+In normal usage,
+.B dirname
+returns a pointer to a string representing the path name component of
+.IR path ,
+up to but not including the rightmost directory separator,
+while
+.B basename
+returns a pointer to the component following this separator.
+Any trailing directory separators present in
+.I path
+are disregarded,
+when determining the rightmost separator,
+and, in the case of the return value from
+.BR dirname ,
+any internal sequences of recurring separator characters
+are each reduced to a single such character.
+.
+.PP
+If
+.I path
+contains no MS\-Windows(\(tm) drive designator,
+and no directory separator character,
+then
+.B dirname
+returns the string
+.RB \(dq . \(dq,
+and
+.B basename
+returns a copy of
+.IR path.
+If
+.I path
+does commence with an MS\-Windows(\(tm) drive designator,
+but contains no directory separators,
+then
+.B dirname
+returns the string
+.RB \(dq d:. \(dq,
+where
+.RB \(dq d: \(dq
+represents the drive designator,
+while
+.B basename
+returns a copy of
+.IR path ,
+with its initial two characters,
+(i.e.\ the drive designator),
+deleted.
+.
+.PP
+If
+.I path
+is a NULL pointer,
+or is a pointer to an empty string,
+then both
+.B dirname
+and
+.B basename
+return the string
+.RB \(dq . \(dq.
+.
+.PP
+If
+.I path
+is the string
+.RB \(dq / \(dq,
+or the string
+.RB \(dq \e \(dq,
+both
+.B dirname
+and
+.B basename
+return the string
+.RB \(dq / \(dq,
+or the string
+.RB \(dq \e \(dq,
+respectively.
+.
+.PP
+If
+.I path
+commences with
+.I exactly
+two directory separator characters,
+which must be similar,
+then
+.B dirname
+will preserve these two characters in the returned path name.
+This construct does not affect the string returned by
+.BR basename ,
+neither is this behaviour replicated by
+.BR dirname ,
+if
+.I path
+includes an MS\-Windows(\(tm) drive designator.
+.
+.PP
+In the special case,
+where
+.I path
+is specified as
+.I exactly
+two identical directory separator characters,
+with no MS\-Windows(\(tm) drive designator,
+and no following path name,
+.B dirname
+returns
+.I path
+unchanged;
+.B basename
+normalises the return string to only a single character,
+either
+.RB \(dq / \(dq
+or
+.RB \(dq \e \(dq,
+matching the characters used to specify
+.IR path .
+.
+.PP
+Concatenating the string returned by
+.BR dirname ,
+a
+.RB \(dq / \(dq
+or a
+.RB \(dq \e \(dq,
+and the string returned by
+.B basename
+yields a complete path name.
+.
+.PP
+The
+.B dirname
+and
+.B basename
+functions conform generally to SUSv3,
+extended to accommodate the handling of
+.RB \(dq / \(dq
+and
+.RB \(dq \e \(dq
+as alternative directory separator characters,
+and also to accommodate the likelihood of MS\-Windows(\(tm)
+drive designators appearing in any path name specification.
+The example,
+which follows,
+illustrates the conformance to SUSv3,
+and also the effects of the extended behaviour.
+.
+.
+.SH EXAMPLE
+.
+To verify the behaviour of the
+.B dirname
+and
+.B basename
+functions,
+the test program defines the following function:\(em
+.
+.PP
+.RS
+.nf
+#include <stdio.h>
+#include <string.h>
+#include <libgen.h>
+
+void result( char *path )
+{
+  char *dir = strdup( path );
+  char *file = strdup( path );
+
+  printf( " %-15s%-15s%-12s", path, dirname( dir ),
+          basename( file ) );
+
+  free( dir );
+  free( file );
+}
+.fi
+.RE
+.PP
+This illustrates the correct use of the
+.B dirname
+and the
+.B basename
+functions,
+with copies of the original
+.I path
+string being passed in the function calls.
+Note that the return values from each function are used immediately,
+in the
+.B printf
+call,
+and the temporary copies of
+.I path
+are discarded,
+and the associated memory is freed,
+before these go out of scope.
+.
+.PP
+Calling this example function illustrates the effect of each of the
+.B dirname
+and
+.B basename
+functions,
+for various values of
+.IR path .
+The following,
+taken from SUSv3,
+illustrate general conformance with the standard:\(em
+.RS
+.TS
+tab(!);
+lB      lB      lB
+lw(15n) lw(10n) lw(10n).
+\0path!\0dirname!\0basename
+\_!\_!\_
+\0/usr/lib!\0/usr!\0lib
+\0//usr//lib//!\0//usr!\0lib
+\0///usr//lib//!\0/usr!\0lib
+\0/usr/!\0/!\0usr
+\0usr!\0.!\0usr
+\0//!\0//!\0/
+\0/!\0/!\0/
+\0.!\0.!\0.
+\0..!\0.!\0..
+.TE
+.RE
+.
+.PP
+Similarly,
+for the case where path names are expressed using the MS\-Windows(\(tm)
+.RB \(dq \e \(dq
+directory separator notation,
+calling the example function displays:\(em
+.RS
+.TS
+tab(!);
+lB      lB      lB
+lw(15n) lw(10n) lw(10n).
+\0path!\0dirname!\0basename
+\_!\_!\_
+\0\eusr\elib!\0\eusr!\0lib
+\0\e\eusr\e\elib\e\e!\0\e\eusr!\0lib
+\0\e\e\eusr\e\elib\e\e!\0\eusr!\0lib
+\0\eusr\e!\0\e!\0usr
+\0usr!\0.!\0usr
+\0\e\e!\0\e\e!\0\e
+\0\e!\0\e!\0\e
+\0.!\0.!\0.
+\0..!\0.!\0..
+.TE
+.RE
+.
+.PP
+and,
+when an MS\-Windows(\(tm) drive designator is also specified,
+this becomes:\(em
+.RS
+.TS
+tab(!);
+lB      lB      lB
+lw(15n) lw(10n) lw(10n).
+\0path!\0dirname!\0basename
+\_!\_!\_
+\0d:\eusr\elib!\0d:\eusr!\0lib
+\0d:\e\eusr\e\elib\e\e!\0d:\eusr!\0lib
+\0d:\e\e\eusr\e\elib\e\e!\0d:\eusr!\0lib
+\0d:\eusr\e!\0d:\e!\0usr
+\0d:usr!\0d:.!\0usr
+\0d:\e\e!\0d:\e!\0\e
+\0d:\e!\0d:\e!\0\e
+\0d:.!\0d:.!\0.
+\0d:..!\0d:.!\0..
+.TE
+.RE
+.
+.PP
+Please note,
+in particular,
+the special handling of path names which begin with
+.I exactly
+two directory separator characters,
+and also that this special handling is suppressed
+when these two characters are dissimilar,
+or when an MS\-Windows(\(tm) drive designator is specified:\(em
+.RS
+.TS
+tab(!);
+lB      lB      lB
+lw(15n) lw(10n) lw(10n).
+\0path!\0dirname!\0basename
+\_!\_!\_
+\0//usr//lib//!\0//usr!\0lib
+\0\e\eusr\e\elib\e\e!\0\e\eusr!\0lib
+\0/\eusr\e\elib\e\e!\0/usr!\0lib
+\0\e/usr\e\elib\e\e!\0\eusr!\0lib
+\0d:\e\eusr\e\elib\e\e!\0d:\eusr!\0lib
+\0//!\0//!\0/
+\0\e\e!\0\e\e!\0\e
+\0/\e!\0/!\0/
+\0\e/!\0\e!\0\e
+\0d:\e\e!\0d:\e!\0\e
+.TE
+.RE
+.
+.
+.SH RETURN VALUE
+.
+The
+.B dirname
+function returns a pointer to a null terminated string,
+which represents the directory path component of the passed
+.I path
+string,
+without any trailing directory separator character,
+and with all internal sequences of directory separator characters
+normalised to a single separator at each level of directory nesting.
+.
+.PP
+The
+.B basename
+function
+returns a pointer to a null terminated string,
+which represents the rightmost element of the passed
+.I path
+string,
+with all trailing directory separator characters removed.
+.
+.PP
+If any MS\-Windows(\(tm) drive designator is specified in the input
+.I path
+string,
+it is included in the return value of the
+.B dirname
+function,
+but not in that of the
+.B basename
+function.
+.
+.
+.SH ERROR RETURNS
+.
+None.
+.
+.
+.SH CAVEATS AND BUGS
+.
+The
+.B dirname
+and
+.B basename
+functions may modify the
+.I path
+string passed to them.
+Therefore, it is an error to pass a character constant as the
+.I path
+parameter;
+to do so may result in memory violation errors,
+(segmentation faults),
+and consequent abnormal program termination.
+.PP
+Also note that,
+since the
+.I path
+argument may be modified by the
+.B dirname
+or the
+.B basename
+function call,
+if you wish to preserve the original content of
+.IR path ,
+you should pass a copy to the function.
+Furthermore,
+either function may return its result in a statically allocated buffer,
+which may be overwritten on a subsequent function call.
+.PP
+Although the
+.B dirname
+and
+.B basename
+functions parse path name strings,
+they are basically just
+.I string
+functions.
+The presence of an MS\-Windows(\(tm) drive designator is determined
+by the appearance of a colon
+.RB (\(dq : \(dq)
+as the second character of the
+.I path
+string,
+but neither function performs any check
+to ensure that the first character represents a valid file system device;
+neither is any form of validation performed,
+to ensure that the remainder of the string
+represents a valid path name.
+.
+.
+.SH AUTHOR
+.
+This manpage was written for the MinGW implementation of the
+.B dirname
+and
+.B basename
+functions by Keith\ Marshall,
+<keithmarshall@users.sourceforge.net>.
+It may copied, modified and redistributed,
+without restriction of copyright,
+provided this acknowledgement of contribution by
+the original author remains unchanged.
+.
+.
+.\" EOF
