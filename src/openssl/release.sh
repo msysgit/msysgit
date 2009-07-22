@@ -79,9 +79,18 @@ test grep INSTALLTOP=/mingw $DIR/Makefile > /dev/null 2>&1 || (
 test -f $DIR/openssl.dll || (
 	cd $DIR &&
 	cmd /c ms\\mingw32.bat &&
-	index=$(/share/msysGit/pre-install.sh) &&
-	cp -r outinc/* /mingw/include/ &&
-	cp out/*.a /mingw/lib/ &&
-	cp *.dll /mingw/bin/ &&
-	/share/msysGit/post-install.sh $index "Install $FILE"
+	cd out &&
+	list=$(echo *.dll openssl.exe) &&
+	cp $list /mingw/bin && (
+		cd /mingw/bin &&
+		git add $list &&
+		git commit -s -m "Install OpenSSL $VERSION"
+	) &&
+	cd ../outinc &&
+	cp -r openssl /mingw/include &&
+	(
+		cd /mingw/include &&
+		git add openssl &&
+		git commit -s -m "Install OpenSSL $VERSION header files"
+	)
 ) || die "Could not install $FILE"
