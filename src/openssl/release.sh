@@ -80,6 +80,8 @@ test -f $DIR/openssl.dll || (
 	cd $DIR &&
 	cmd /c ms\\mingw32.bat &&
 	index=$(/share/msysGit/pre-install.sh) &&
-	make install_sw &&
+	cp -r outinc/* /mingw/include/ &&
+	cp out/*.a /mingw/lib/ &&
+	cp *.dll /mingw/bin/ &&
 	/share/msysGit/post-install.sh $index "Install $FILE"
 ) || die "Could not install $FILE"

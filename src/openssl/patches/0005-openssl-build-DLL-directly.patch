@@ -1,0 +1,72 @@
+From 7c70a253a8fc37ac4d34aef0c995a88f8ea82025 Mon Sep 17 00:00:00 2001
+From: Erik Faye-Lund <kusmabite@gmail.com>
+Date: Sun, 19 Jul 2009 23:57:36 +0200
+Subject: [PATCH] openssl: build DLL directly
+
+The mingw build system for OpenSSL links openssl.exe statically with
+the OpenSSL libraries. This increases the size of the msysgit distribution,
+and it would thus be better to only build the library as a DLL. This patch
+uses "gcc -shared" instead of dllwrap to build the DLL directly.
+---
+ ms/mingw32.bat     |    6 ------
+ util/pl/Mingw32.pl |   15 ++++++++++-----
+ 2 files changed, 10 insertions(+), 11 deletions(-)
+
+diff --git a/ms/mingw32.bat b/ms/mingw32.bat
+index f85305e..6ea371b 100644
+--- a/ms/mingw32.bat
++++ b/ms/mingw32.bat
+@@ -82,12 +82,6 @@ echo Building the libraries
+ mingw32-make -f ms/mingw32a.mak SHELL=cmd
+ if errorlevel 1 goto end
+ 
+-echo Generating the DLLs and input libraries
+-dllwrap --dllname libeay32.dll --output-lib out/libeay32.a --def ms/libeay32.def out/libcrypto.a -lwsock32 -lgdi32
+-if errorlevel 1 goto end
+-dllwrap --dllname libssl32.dll --output-lib out/libssl32.a --def ms/ssleay32.def out/libssl.a out/libeay32.a
+-if errorlevel 1 goto end
+-
+ echo Done compiling OpenSSL
+ 
+ :end
+diff --git a/util/pl/Mingw32.pl b/util/pl/Mingw32.pl
+index 8f0483f..87c2ccc 100644
+--- a/util/pl/Mingw32.pl
++++ b/util/pl/Mingw32.pl
+@@ -60,12 +60,12 @@ $exep='';
+ $ex_libs="-lwsock32 -lgdi32";
+ 
+ # static library stuff
+-$mklib='ar r';
++$mklib='gcc -shared -o';
+ $mlflags='';
+ $ranlib='ranlib';
+ $plib='lib';
+-$libp=".a";
+-$shlibp=".a";
++$libp=".dll";
++$shlibp=".dll";
+ $lfile='';
+ 
+ $asm='as';
+@@ -86,10 +86,15 @@ sub do_lib_rule
+ 	$target="$target";
+ 	($Name=$name) =~ tr/a-z/A-Z/;
+ 
++	my $ex = "";
++	if ($target =~ /O_SSL/)
++		{
++		$ex .= " \$(L_CRYPTO)";
++		}
++
+ 	$ret.="$target: \$(${Name}OBJ)\n";
+ 	$ret.="\tif exist $target \$(RM) $target\n";
+-	$ret.="\t\$(MKLIB) $target \$(${Name}OBJ)\n";
+-	$ret.="\t\$(RANLIB) $target\n\n";
++	$ret.="\t\$(MKLIB) $target \$(${Name}OBJ) \$(EX_LIBS) $ex\n\n";
+ 	}
+ 
+ sub do_link_rule
+-- 
+1.6.3.msysgit.0.96.g65deb
+
