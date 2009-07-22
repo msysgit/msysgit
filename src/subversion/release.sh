@@ -48,7 +48,10 @@ pre_install
      make install-swig-pl-lib &&
  cd subversion/bindings/swig/perl/native &&
  perl Makefile.PL &&
- mv ../libsvn_swig_perl/.libs/Makefile* ./ &&
+ if test ! -f Makefile
+ then
+	mv ../libsvn_swig_perl/.libs/Makefile* ./
+ fi &&
  make CCFLAGS=-Dstrtoll=strtol LDLOADLIBS="-L/lib -lsvn_ra_dav-1 -lsvn_ra_svn-1 -lsvn_ra_local-1 -lsvn_repos-1 -lsvn_fs-1 -lsvn_fs_fs-1 -lsvn_delta-1 -lsvn_subr-1 -laprutil-0 -lapr-0 -lneon -lexpat -lsvn_swig_perl-1 -lsvn_diff-1 -lsvn_client-1 -lsvn_ra-1 -lsvn_wc-1 -L/lib/perl5/5.8.8/msys/CORE/ -lperl -L/lib -lz" &&
  make install) || exit
 
