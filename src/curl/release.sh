@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd "$(dirname "$0")"
+
 VERSION=7.19.5
 DIR=curl-$VERSION
 URL=http://curl.haxx.se/download/$DIR.tar.bz2
