@@ -1,4 +1,4 @@
-From 2ab090373ef935cc8b85db7b054a633505ac7d25 Mon Sep 17 00:00:00 2001
+From 556329db96540377b1f6bef5b24f403407b94444 Mon Sep 17 00:00:00 2001
 From: unknown <imaging@.(none)>
 Date: Wed, 16 Jan 2008 19:03:52 +0000
 Subject: [PATCH] Imitate Cygwin
@@ -9,20 +9,20 @@ Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
  apr-util/xml/expat/lib/xmlparse.c                  |    2 +-
  configure                                          |    2 +-
  .../bindings/swig/perl/native/Makefile.PL.in       |    2 +-
- subversion/bindings/swig/perl/native/core.c        |    4 ++--
- subversion/bindings/swig/perl/native/svn_client.c  |    4 ++--
- subversion/bindings/swig/perl/native/svn_delta.c   |    4 ++--
- subversion/bindings/swig/perl/native/svn_fs.c      |    4 ++--
- subversion/bindings/swig/perl/native/svn_ra.c      |    4 ++--
- subversion/bindings/swig/perl/native/svn_repos.c   |    4 ++--
- subversion/bindings/swig/perl/native/svn_wc.c      |    4 ++--
+ subversion/bindings/swig/perl/native/core.c        |    4 +-
+ subversion/bindings/swig/perl/native/svn_client.c  |    4 +-
+ subversion/bindings/swig/perl/native/svn_delta.c   |    4 +-
+ subversion/bindings/swig/perl/native/svn_fs.c      |    4 +-
+ subversion/bindings/swig/perl/native/svn_ra.c      |    4 +-
+ subversion/bindings/swig/perl/native/svn_repos.c   |    4 +-
+ subversion/bindings/swig/perl/native/svn_wc.c      |    4 +-
  subversion/libsvn_ra_local/split_url.c             |    2 +-
- subversion/libsvn_subr/path.c                      |    4 ++--
+ subversion/libsvn_subr/path.c                      |    8 +++---
  subversion/svn/main.c                              |    2 +-
  subversion/svnversion/main.c                       |    2 +-
  subversion/tests/libsvn_ra_local/ra-local-test.c   |    2 +-
- subversion/tests/libsvn_subr/path-test.c           |    2 +-
- 18 files changed, 26 insertions(+), 26 deletions(-)
+ subversion/tests/libsvn_subr/path-test.c           |   22 ++++++++++----------
+ 17 files changed, 37 insertions(+), 37 deletions(-)
 
 diff --git a/apr-util/xml/expat/lib/expat.h.in b/apr-util/xml/expat/lib/expat.h.in
 index 9e440e2..a913bf8 100644
@@ -38,7 +38,7 @@ index 9e440e2..a913bf8 100644
  #  else
  #    define XMLPARSEAPI /* nothing */
 diff --git a/apr-util/xml/expat/lib/xmlparse.c b/apr-util/xml/expat/lib/xmlparse.c
-index 049f06f..9415426 100644
+index 43eb307..59c3f09 100644
 --- a/apr-util/xml/expat/lib/xmlparse.c
 +++ b/apr-util/xml/expat/lib/xmlparse.c
 @@ -18,7 +18,7 @@ static char RCSId[]
@@ -51,23 +51,23 @@ index 049f06f..9415426 100644
  #  define XMLPARSEAPI __declspec(dllexport)
  #endif
 diff --git a/configure b/configure
-index 4511040..7ba59a5 100644
+index 26d62e9..db3c6d7 100644
 --- a/configure
 +++ b/configure
-@@ -19987,7 +19987,7 @@ esac
- echo "$as_me:$LINENO: checking whether to avoid circular linkage at all costs" >&5
- echo $ECHO_N "checking whether to avoid circular linkage at all costs... $ECHO_C" >&6
+@@ -23151,7 +23151,7 @@ esac
+ { $as_echo "$as_me:$LINENO: checking whether to avoid circular linkage at all costs" >&5
+ $as_echo_n "checking whether to avoid circular linkage at all costs... " >&6; }
  case $host in
 -  *-*-cygwin*)
 +  *-*-cygwin*|*-*-msys*)
-     echo "$as_me:$LINENO: result: yes" >&5
- echo "${ECHO_T}yes" >&6
+     { $as_echo "$as_me:$LINENO: result: yes" >&5
+ $as_echo "yes" >&6; }
  
 diff --git a/subversion/bindings/swig/perl/native/Makefile.PL.in b/subversion/bindings/swig/perl/native/Makefile.PL.in
-index 18b6cca..d20c7a8 100644
+index c8a19bc..59c2848 100644
 --- a/subversion/bindings/swig/perl/native/Makefile.PL.in
 +++ b/subversion/bindings/swig/perl/native/Makefile.PL.in
-@@ -32,7 +32,7 @@ my $apu_cflags = '@SVN_APRUTIL_INCLUDES@';
+@@ -36,7 +36,7 @@ my $apu_cflags = '@SVN_APRUTIL_INCLUDES@';
  # According to the log of r7937, the flags guarded by the conditional break
  # the build on FreeBSD if not conditionalized.
  my $apr_ldflags = '@SVN_APR_EXPORT_LIBS@' 
@@ -77,19 +77,19 @@ index 18b6cca..d20c7a8 100644
  chomp $apr_shlib_path_var;
  
 diff --git a/subversion/bindings/swig/perl/native/core.c b/subversion/bindings/swig/perl/native/core.c
-index 57e9274..fadce12 100644
+index fc92a4b..c2ccd86 100644
 --- a/subversion/bindings/swig/perl/native/core.c
 +++ b/subversion/bindings/swig/perl/native/core.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -99,19 +99,19 @@ index 57e9274..fadce12 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_client.c b/subversion/bindings/swig/perl/native/svn_client.c
-index 706df81..dbbe767 100644
+index 725fe9e..1168a27 100644
 --- a/subversion/bindings/swig/perl/native/svn_client.c
 +++ b/subversion/bindings/swig/perl/native/svn_client.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -121,19 +121,19 @@ index 706df81..dbbe767 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_delta.c b/subversion/bindings/swig/perl/native/svn_delta.c
-index be3495d..8a6cedd 100644
+index 2f16bc6..b7b57e5 100644
 --- a/subversion/bindings/swig/perl/native/svn_delta.c
 +++ b/subversion/bindings/swig/perl/native/svn_delta.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -143,19 +143,19 @@ index be3495d..8a6cedd 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_fs.c b/subversion/bindings/swig/perl/native/svn_fs.c
-index 9b669f3..eeddf5b 100644
+index a50a9fe..b305eac 100644
 --- a/subversion/bindings/swig/perl/native/svn_fs.c
 +++ b/subversion/bindings/swig/perl/native/svn_fs.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -165,19 +165,19 @@ index 9b669f3..eeddf5b 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_ra.c b/subversion/bindings/swig/perl/native/svn_ra.c
-index 75d0530..5bbfed1 100644
+index 1350a93..5b6c1e1 100644
 --- a/subversion/bindings/swig/perl/native/svn_ra.c
 +++ b/subversion/bindings/swig/perl/native/svn_ra.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -187,19 +187,19 @@ index 75d0530..5bbfed1 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_repos.c b/subversion/bindings/swig/perl/native/svn_repos.c
-index 0afce7c..3318336 100644
+index 03f51d2..1f80985 100644
 --- a/subversion/bindings/swig/perl/native/svn_repos.c
 +++ b/subversion/bindings/swig/perl/native/svn_repos.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -209,19 +209,19 @@ index 0afce7c..3318336 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/bindings/swig/perl/native/svn_wc.c b/subversion/bindings/swig/perl/native/svn_wc.c
-index 7717f4e..863efae 100644
+index e485c2f..ea64862 100644
 --- a/subversion/bindings/swig/perl/native/svn_wc.c
 +++ b/subversion/bindings/swig/perl/native/svn_wc.c
-@@ -54,7 +54,7 @@
+@@ -84,7 +84,7 @@
+ #endif
  
- /* exporting methods for Windows DLLs */
  #ifndef SWIGEXPORT
 -# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 +# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
  #   if defined(STATIC_LINKED)
  #     define SWIGEXPORT
  #   else
-@@ -67,7 +67,7 @@
+@@ -101,7 +101,7 @@
  
  /* calling conventions for Windows */
  #ifndef SWIGSTDCALL
@@ -231,11 +231,11 @@ index 7717f4e..863efae 100644
  # else
  #   define SWIGSTDCALL
 diff --git a/subversion/libsvn_ra_local/split_url.c b/subversion/libsvn_ra_local/split_url.c
-index 79c8c0d..9653c06 100644
+index 7af30d3..e4b1238 100644
 --- a/subversion/libsvn_ra_local/split_url.c
 +++ b/subversion/libsvn_ra_local/split_url.c
-@@ -67,7 +67,7 @@ svn_ra_local__split_URL(svn_repos_t **repos,
-   
+@@ -75,7 +75,7 @@ svn_ra_local__split_URL(svn_repos_t **repos,
+ 
    /* Duplicate the URL, starting at the top of the path.
       At the same time, we URI-decode the path. */
 -#if defined(WIN32) || defined(__CYGWIN__)
@@ -244,32 +244,50 @@ index 79c8c0d..9653c06 100644
       path starts with a drive letter.  Like most Web browsers, We
       support two variants of this scheme:
 diff --git a/subversion/libsvn_subr/path.c b/subversion/libsvn_subr/path.c
-index 008c150..6d445f4 100644
+index 19cfcae..8f0a0c8 100644
 --- a/subversion/libsvn_subr/path.c
 +++ b/subversion/libsvn_subr/path.c
-@@ -1131,7 +1131,7 @@ svn_path_canonicalize(const char *path, apr_pool_t *pool)
-     {
-       *(dst++) = *(src++);
- 
+@@ -52,7 +52,7 @@
+ const char *
+ svn_path_internal_style(const char *path, apr_pool_t *pool)
+ {
 -#if defined(WIN32) || defined(__CYGWIN__)
 +#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
-       /* On Windows permit two leading separator characters which means an
-        * UNC path.  However, a double slash in a URI after the scheme is never
-        * valid. */
-@@ -1176,7 +1176,7 @@ svn_path_canonicalize(const char *path, apr_pool_t *pool)
-   
-   *dst = '\0';
- 
+   if ((path[0] == '/' || path[0] == '\\') && path[1] == path[0])
+     return svn_dirent_internal_style(path, pool);
+ #endif
+@@ -63,7 +63,7 @@ svn_path_internal_style(const char *path, apr_pool_t *pool)
+ const char *
+ svn_path_local_style(const char *path, apr_pool_t *pool)
+ {
 -#if defined(WIN32) || defined(__CYGWIN__)
 +#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
-   /* Skip leading double slashes when there are less than 2
-    * canon segments. UNC paths *MUST* have two segments. */
-   if (canon_segments < 2 && canon[0] == '/' && canon[1] == '/')
+   if (path[0] == '/' && path[1] == '/')
+     return svn_dirent_local_style(path, pool);
+ #endif
+@@ -1011,7 +1011,7 @@ svn_path_split_if_file(const char *path,
+ const char *
+ svn_path_canonicalize(const char *path, apr_pool_t *pool)
+ {
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   if (path[0] == '/' && path[1] == '/')
+     return svn_dirent_canonicalize(path, pool);
+ #endif
+@@ -1022,7 +1022,7 @@ svn_boolean_t
+ svn_path_is_canonical(const char *path, apr_pool_t *pool)
+ {
+   return svn_uri_is_canonical(path, pool)
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+          || (path[0] == '/' && path[1] == '/' &&
+              svn_dirent_is_canonical(path, pool))
+ #endif
 diff --git a/subversion/svn/main.c b/subversion/svn/main.c
-index d736360..9185170 100644
+index 7c32437..d859463 100644
 --- a/subversion/svn/main.c
 +++ b/subversion/svn/main.c
-@@ -855,7 +855,7 @@ main(int argc, const char *argv[])
+@@ -1126,7 +1126,7 @@ main(int argc, const char *argv[])
    if (err)
      return svn_cmdline_handle_exit_error(err, pool, "svn: ");
  
@@ -279,12 +297,12 @@ index d736360..9185170 100644
    if (getenv("SVN_ASP_DOT_NET_HACK"))
      {
 diff --git a/subversion/svnversion/main.c b/subversion/svnversion/main.c
-index e144e05..1a06c43 100644
+index 3766264..5aa0086 100644
 --- a/subversion/svnversion/main.c
 +++ b/subversion/svnversion/main.c
-@@ -151,7 +151,7 @@ main(int argc, const char *argv[])
-       return EXIT_FAILURE;
-     }
+@@ -148,7 +148,7 @@ main(int argc, const char *argv[])
+   if (err)
+     return svn_cmdline_handle_exit_error(err, pool, "svnversion: ");
  
 -#if defined(WIN32) || defined(__CYGWIN__)
 +#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
@@ -292,10 +310,10 @@ index e144e05..1a06c43 100644
    if (getenv("SVN_ASP_DOT_NET_HACK"))
      {
 diff --git a/subversion/tests/libsvn_ra_local/ra-local-test.c b/subversion/tests/libsvn_ra_local/ra-local-test.c
-index ea1f8a0..b35473b 100644
+index fc74500..35d0f08 100644
 --- a/subversion/tests/libsvn_ra_local/ra-local-test.c
 +++ b/subversion/tests/libsvn_ra_local/ra-local-test.c
-@@ -338,7 +338,7 @@ split_url_test(const char **msg,
+@@ -357,7 +357,7 @@ split_url_test(const char **msg,
  
  /* The test table.  */
  
@@ -305,18 +323,108 @@ index ea1f8a0..b35473b 100644
  #else
  #define HAS_UNC_HOST 0
 diff --git a/subversion/tests/libsvn_subr/path-test.c b/subversion/tests/libsvn_subr/path-test.c
-index fdf7690..89b0c20 100644
+index 179b1e2..1cf1e39 100644
 --- a/subversion/tests/libsvn_subr/path-test.c
 +++ b/subversion/tests/libsvn_subr/path-test.c
-@@ -670,7 +670,7 @@ test_canonicalize(const char **msg,
-     { "http://hst",           "http://hst" },
-     { "http://hst/foo/../bar","http://hst/foo/../bar" },
-     { "http://hst/",          "http://hst" },
+@@ -182,7 +182,7 @@ test_path_is_url(const char **msg,
+     { "file:/",                           FALSE },
+     { "file:",                            FALSE },
+     { "file",                             FALSE },
 -#if defined(WIN32) || defined(__CYGWIN__)
 +#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
-     /* We permit UNC paths on Windows.  By definition UNC
-      * paths must have two components so we should remove the
-      * double slash if there is only one component. */
+     { "X:/foo",        FALSE },
+     { "X:foo",         FALSE },
+     { "X:",            FALSE },
+@@ -487,7 +487,7 @@ test_path_join(const char **msg,
+     { "file:///X:", "bar", "file:///X:/bar" },
+     { "file:///X:foo", "bar", "file:///X:foo/bar" },
+     { "http://svn.dm.net", "repos", "http://svn.dm.net/repos" },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ /* These will fail, see issue #2028
+     { "//srv/shr",     "fld",     "//srv/shr/fld" },
+     { "//srv",         "shr/fld", "//srv/shr/fld" },
+@@ -579,7 +579,7 @@ test_path_join(const char **msg,
+   TEST_MANY((pool, SVN_EMPTY_PATH, "/", SVN_EMPTY_PATH, NULL), "/");
+   TEST_MANY((pool, SVN_EMPTY_PATH, SVN_EMPTY_PATH, "/", NULL), "/");
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ /* These will fail, see issue #2028
+   TEST_MANY((pool, "X:", "def", "ghi", NULL), "X:def/ghi");
+   TEST_MANY((pool, "X:", SVN_EMPTY_PATH, "ghi", NULL), "X:ghi");
+@@ -652,7 +652,7 @@ test_path_basename(const char **msg,
+     { "X:/abc", "abc" },
+     { "X:", "X:" },
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ 
+ /* These will fail, see issue #2028
+     { "X:/", "X:/" },
+@@ -711,7 +711,7 @@ test_path_dirname(const char **msg,
+     { "/", "/" },
+     { SVN_EMPTY_PATH, SVN_EMPTY_PATH },
+     { "X:abc/def", "X:abc" },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "//srv/shr/fld",  "//srv/shr" },
+     { "//srv/shr/fld/subfld", "//srv/shr/fld" },
+ 
+@@ -873,7 +873,7 @@ test_path_canonicalize(const char **msg,
+     { "X:/foo",               "X:/foo" },
+     { "X:",                   "X:" },
+     { "X:foo",                "X:foo" },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "file:///c:/temp/repos", "file:///C:/temp/repos" },
+     { "file:///c:/temp/REPOS", "file:///C:/temp/REPOS" },
+     { "file:///C:/temp/REPOS", "file:///C:/temp/REPOS" },
+@@ -934,7 +934,7 @@ test_path_remove_component(const char **msg,
+     { "foo/bar",              "foo" },
+     { "/foo/bar",             "/foo" },
+     { "/foo",                 "/" },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "X:/foo/bar",           "X:/foo" },
+     { "//srv/shr/fld",        "//srv/shr" },
+     { "//srv/shr/fld/subfld", "//srv/shr/fld" },
+@@ -1067,7 +1067,7 @@ test_path_is_ancestor(const char **msg,
+     { "http://",        "http://test",     FALSE},
+ */
+     { "X:foo",           "X:bar",         FALSE},
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "//srv/shr",       "//srv",         FALSE},
+     { "//srv/shr",       "//srv/shr/fld", TRUE },
+     { "//srv",           "//srv/shr/fld", TRUE },
+@@ -1183,7 +1183,7 @@ test_compare_paths(const char **msg,
+     { "X:foo",        "X:foo",         0},
+     { "X:",           "X:foo",         -1},
+     { "X:foo",        "X:",            1},
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "//srv/shr",    "//srv",         1},
+     { "//srv/shr",    "//srv/shr/fld", -1 },
+     { "//srv/shr/fld", "//srv/shr",    1 },
+@@ -1254,7 +1254,7 @@ test_path_get_longest_ancestor(const char **msg,
+     { "file:///A/C",    "file:///B/D",     ""},
+     { "file:///A/C",    "file:///A/D",     "file:///A"},
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "X:/",            "X:/",             "X:/"},
+     { "X:/foo/bar/A/D/H/psi", "X:/foo/bar/A/B", "X:/foo/bar/A" },
+     { "X:/foo/bar/boo", "X:/foo/bar/baz/boz", "X:/foo/bar"},
+@@ -1489,7 +1489,7 @@ test_path_is_canonical(const char **msg,
+     { "fILe:///Users/jrandom/wc", FALSE },
+     { "fiLE:///",              FALSE },
+     { "fiLE://",               FALSE },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "file:///c:/temp/repos", FALSE },
+     { "file:///c:/temp/REPOS", FALSE },
+     { "file:///C:/temp/REPOS", TRUE },
 -- 
-1.5.3.6.2073.ga1e8
+1.6.3.2.1299.gee46c
 

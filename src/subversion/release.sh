@@ -3,7 +3,7 @@
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
 package=Subversion
-version=1.4.6
+version=1.6.3
 url=http://subversion.tigris.org/downloads
 d=subversion-$version
 tar=$d.tar.bz2
