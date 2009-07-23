@@ -2,8 +2,6 @@
 
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
-check_pristine
-
 package=Subversion
 version=1.4.6
 url=http://subversion.tigris.org/downloads

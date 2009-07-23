@@ -27,20 +27,22 @@ pre_install () {
 	! test -s "$FILELIST" ||
 		cat "$FILELIST" | (cd / && xargs git rm --ignore-unmatch) ||
 		exit
+	INDEX=$(/share/msysGit/pre-install.sh)
 }
 
 # update the index 
 post_install () {
-	(cd / && git add .) || exit
+	/share/msysGit/post-install.sh $INDEX "Install $package $version" ||
+	exit
 
-	git diff --cached --diff-filter=AM --name-only |
-		sed -e "s/^/\//" > "$FILELIST" ||
-		exit
-		
-	git add "$FILELIST" || exit
+	(cd / && 
+	 git show --cached --diff-filter=AM --name-only |
+	 sed -e "s/^/\//" > "$FILELIST" &&
+	 git add "$FILELIST" &&
+	 git commit -C HEAD --amend "$FILELIST") ||
+	exit
 
 	echo "Successfully built and installed $package $version"
-	echo "After checking the result, please commit (possibly with --amend)"
 	echo
 }
 

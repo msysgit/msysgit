@@ -2,8 +2,6 @@
 
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
-check_pristine
-
 package=rxvt
 version=2.7.10
 url=http://puzzle.dl.sourceforge.net/sourceforge/rxvt

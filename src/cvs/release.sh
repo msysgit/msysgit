@@ -2,8 +2,6 @@
 
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
-check_pristine
-
 package=CVS
 version=1.11.22
 url=http://ftp.gnu.org/non-gnu/cvs/source/stable/$version

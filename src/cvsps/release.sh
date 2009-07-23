@@ -10,7 +10,7 @@ d=cvsps-$version
 configure_options=--prefix=
 FILELIST=fileList.txt
 
-check_pristine && {
+{
 	test -d "$d" || git clone $url
 } &&
 setup &&

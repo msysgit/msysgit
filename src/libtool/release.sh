@@ -2,8 +2,6 @@
 
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
-check_pristine
-
 package=libtool
 version=1.5.24
 url=http://ftp.gnu.org/gnu/libtool

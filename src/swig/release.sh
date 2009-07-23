@@ -2,8 +2,6 @@
 
 cd "$(dirname "$0")" && . ../common/update-lib.sh
 
-check_pristine
-
 package=swig
 version=1.3.33
 url=http://superb-west.dl.sourceforge.net/sourceforge/swig
