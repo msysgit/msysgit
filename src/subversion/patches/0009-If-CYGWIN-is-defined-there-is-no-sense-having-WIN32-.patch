@@ -1,0 +1,32 @@
+From 189efac81905d32fc3e32d7e200f7900a32ccb3d Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Sat, 25 Jul 2009 18:51:04 +0200
+Subject: [PATCH] If CYGWIN is defined, there is no sense having WIN32 defined
+
+CYGWIN is technically on Windows, but it pretends to to behave like
+Windows.  Indeed, if you try to mix, say, <sys/socket.h> with <winsock2.h>
+all kinds of breakages occur.
+
+So just #undef WIN32 if CYGWIN is in effect.
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ apr/include/apr.h.in |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/apr/include/apr.h.in b/apr/include/apr.h.in
+index 9f1fb6f..fc26dc2 100644
+--- a/apr/include/apr.h.in
++++ b/apr/include/apr.h.in
+@@ -509,4 +509,8 @@ typedef  int         gid_t;
+ }
+ #endif
+ 
++#ifdef CYGWIN
++#undef WIN32
++#endif
++
+ #endif /* APR_H */
+-- 
+1.6.3.msysgit.0.14.gb078c
+
