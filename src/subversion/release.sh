@@ -33,6 +33,10 @@ done &&
 apply_patches &&
 (cd $d && ./autogen.sh && cd neon && ./autogen.sh) &&
 setup &&
+if test ! -f $d/libtool
+then
+	cp /bin/libtool $d
+fi &&
 perl -i.bak -pe 's/(deplibs_check_method=).*/\1pass_all/' \
 	$(find $d -name libtool) &&
 perl -i.bak -pe 's/(old_library=")(libexpat.a")/\1.libs\/\2/' \
