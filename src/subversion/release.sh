@@ -8,7 +8,7 @@ url=http://subversion.tigris.org/downloads
 d=subversion-$version
 tar=$d.tar.bz2
 tar2=subversion-deps-$version.tar.bz2
-configure_options="--prefix= --disable-static --enable-shared --build=i686-pc-mingw32"
+configure_options="--prefix= --disable-static --enable-shared --build=i686-pc-cygwin"
 
 # check for presence of libz (MSys), perl >= 5.8
 perl -e 'require 5.8.0' || exit
@@ -23,8 +23,13 @@ extract &&
  d=$d/apr &&
  download &&
  extract) &&
-perl -i.bak -pe 's/CYGWIN/MSYS/g;s/cygwin/msys/g' \
-	$(find $d -name config.guess) $(find $d -name config.sub) &&
+for config_sub in $(find $d -name config.sub)
+do
+	if ! grep -i cygwin $config_sub >/dev/null 2>&1
+	then
+		cp $d/build/config.sub $config_sub
+	fi || break
+done &&
 apply_patches &&
 (cd $d && ./autogen.sh && cd neon && ./autogen.sh) &&
 setup &&
