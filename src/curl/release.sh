@@ -25,10 +25,16 @@ test -d $DIR || {
 	)
 } || die "Could not check out cURL"
 
+test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
+(cd $DIR && git am ../patches/*) ||
+die "Could not apply patches"
+
 (cd $DIR &&
 ./configure --prefix=/mingw --with-ssl=/mingw &&
 make &&
 index=$(/share/msysGit/pre-install.sh) &&
 make install &&
+make ca-bundle &&
+cp lib/ca-bundle.crt /mingw/bin/curl-ca-bundle.crt &&
 /share/msysGit/post-install.sh $index "Install $FILE"
 ) || die "Could not install $FILE"

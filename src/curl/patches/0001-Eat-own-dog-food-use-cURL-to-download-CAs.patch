@@ -1,0 +1,52 @@
+From d3c9aec4f963fb70e5d30f4498b76925d3c5b194 Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Sat, 25 Jul 2009 17:36:51 +0200
+Subject: [PATCH] Eat own dog food: use cURL to download CAs
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ lib/mk-ca-bundle.pl |   14 +-------------
+ 1 files changed, 1 insertions(+), 13 deletions(-)
+
+diff --git a/lib/mk-ca-bundle.pl b/lib/mk-ca-bundle.pl
+index c964efe..83fc5ef 100644
+--- a/lib/mk-ca-bundle.pl
++++ b/lib/mk-ca-bundle.pl
+@@ -33,7 +33,6 @@
+ #
+ use Getopt::Std;
+ use MIME::Base64;
+-use LWP::UserAgent;
+ use strict;
+ use vars qw($opt_b $opt_h $opt_i $opt_l $opt_n $opt_q $opt_t $opt_u $opt_v);  
+ 
+@@ -52,8 +51,6 @@ if ($opt_i) {
+   print "Operating System Name     : $^O\n";
+   print "Getopt::Std.pm Version    : ${Getopt::Std::VERSION}\n";
+   print "MIME::Base64.pm Version   : ${MIME::Base64::VERSION}\n";
+-  print "LWP::UserAgent.pm Version : ${LWP::UserAgent::VERSION}\n";
+-  print "LWP.pm Version            : ${LWP::VERSION}\n";
+   print ("=" x 78 . "\n");
+ }
+ 
+@@ -78,16 +75,7 @@ $txt =~ s/\?.*//;
+ 
+ if (!$opt_n || !-e $txt) {
+   print "Downloading '$txt' ...\n" if (!$opt_q);
+-  my $ua  = new LWP::UserAgent(agent => "$0/$version");
+-  my $req = new HTTP::Request('GET', $url);
+-  my $res = $ua->request($req);
+-  if ($res->is_success) {
+-    open(TXT,">$txt") or die "Couldn't open $txt: $!";
+-    print TXT $res->content . "\n";
+-    close(TXT) or die "Couldn't close $txt: $!";
+-  } else {
+-    die $res->status_line;
+-  }
++  `curl $url > $txt`;
+ }
+ 
+ if ($opt_b && -e $crt) {
+-- 
+1.6.3.2.1299.gee46c
+
