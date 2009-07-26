@@ -21,7 +21,15 @@ cd "$(dirname "$(cd /; pwd -W)")"
 # get list
 LIST=list.txt
 
+git --git-dir=/.git rev-parse --verify HEAD > /etc/full-msysgit-sha1 &&
+git --git-dir=/git/.git rev-parse --verify HEAD > /etc/full-git-sha1 || {
+	echo "Could not get the current SHA-1s" >&2
+	exit 1
+}
+
 (cd / &&
+ echo etc/full-msysgit-sha1 &&
+ echo etc/full-git-sha1 &&
  git ls-files | grep -ve "^git$" -e "^doc/git/html$" &&
  (cd doc/git/html && git ls-files | sed 's|^|doc/git/html/|') &&
  cd git && git ls-files | grep -v '^\"\?gitweb' | sed 's|^|git/|' &&
