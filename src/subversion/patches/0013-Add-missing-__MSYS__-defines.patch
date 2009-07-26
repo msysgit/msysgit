@@ -1,0 +1,256 @@
+From 76f09d56424c7e3e26d264ff6129915e326778bc Mon Sep 17 00:00:00 2001
+From: Laurent Boulard <laurent.boulard@gmail.com>
+Date: Sun, 26 Jul 2009 19:34:08 +0200
+Subject: [PATCH] Add missing __MSYS__ defines.
+
+---
+ subversion/bindings/swig/perl/native/svn_diff.c |    4 +-
+ subversion/bindings/swig/perl/native/svn_wc.c   |    2 +-
+ subversion/libsvn_subr/dirent_uri.c             |   36 +++++++++++-----------
+ subversion/tests/libsvn_subr/path-test.c        |    8 ++--
+ 4 files changed, 25 insertions(+), 25 deletions(-)
+
+diff --git a/subversion/bindings/swig/perl/native/svn_diff.c b/subversion/bindings/swig/perl/native/svn_diff.c
+index 68772ad..72c4977 100644
+--- a/subversion/bindings/swig/perl/native/svn_diff.c
++++ b/subversion/bindings/swig/perl/native/svn_diff.c
+@@ -84,7 +84,7 @@
+ #endif
+ 
+ #ifndef SWIGEXPORT
+-# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
++# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
+ #   if defined(STATIC_LINKED)
+ #     define SWIGEXPORT
+ #   else
+@@ -101,7 +101,7 @@
+ 
+ /* calling conventions for Windows */
+ #ifndef SWIGSTDCALL
+-# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
++# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__MSYS__)
+ #   define SWIGSTDCALL __stdcall
+ # else
+ #   define SWIGSTDCALL
+diff --git a/subversion/bindings/swig/perl/native/svn_wc.c b/subversion/bindings/swig/perl/native/svn_wc.c
+index ea64862..69ba6a1 100644
+--- a/subversion/bindings/swig/perl/native/svn_wc.c
++++ b/subversion/bindings/swig/perl/native/svn_wc.c
+@@ -2108,7 +2108,7 @@ static svn_error_t * svn_wc_invoke_relocation_validator(
+ static svn_error_t *
+ svn_wc_swig_init_asp_dot_net_hack (apr_pool_t *pool)
+ {
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined (__MSYS__)
+   if (getenv ("SVN_ASP_DOT_NET_HACK"))
+     SVN_ERR (svn_wc_set_adm_dir("_svn", pool));
+ #endif /* WIN32 */
+diff --git a/subversion/libsvn_subr/dirent_uri.c b/subversion/libsvn_subr/dirent_uri.c
+index eef99ba..514b553 100644
+--- a/subversion/libsvn_subr/dirent_uri.c
++++ b/subversion/libsvn_subr/dirent_uri.c
+@@ -129,7 +129,7 @@ canonicalize_to_lower(char c)
+   else
+     return c - 'A' + 'a';
+ }
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ /* Locale insensitive toupper() for converting parts of dirents and urls
+    while canonicalizing */
+ static char
+@@ -158,7 +158,7 @@ dirent_previous_segment(const char *dirent,
+ 
+   --len;
+   while (len > 0 && dirent[len] != '/'
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+                  && dirent[len] != ':'
+ #endif /* WIN32 or Cygwin */
+         )
+@@ -290,7 +290,7 @@ canonicalize(path_type_t type, const char *path, apr_pool_t *pool)
+         {
+           *(dst++) = *(src++);
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+           /* On Windows permit two leading separator characters which means an
+            * UNC path. */
+           if ((type == type_dirent) && *src == '/')
+@@ -312,7 +312,7 @@ canonicalize(path_type_t type, const char *path, apr_pool_t *pool)
+         {
+           /* Noop segment, so do nothing. */
+         }
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+       /* If this is the first path segment of a file:// URI and it contains a
+          windows drive letter, convert the drive letter to upper case. */
+       else if (url && canon_segments == 1 && seglen == 2 &&
+@@ -356,7 +356,7 @@ canonicalize(path_type_t type, const char *path, apr_pool_t *pool)
+ 
+   *dst = '\0';
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   /* Skip leading double slashes when there are less than 2
+    * canon segments. UNC paths *MUST* have two segments. */
+   if ((type == type_dirent) && canon[0] == '/' && canon[1] == '/')
+@@ -398,7 +398,7 @@ get_longest_ancestor_length(path_type_t types,
+   apr_size_t path1_len, path2_len;
+   apr_size_t i = 0;
+   apr_size_t last_dirsep = 0;
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   svn_boolean_t unc = FALSE;
+ #endif
+ 
+@@ -431,7 +431,7 @@ get_longest_ancestor_length(path_type_t types,
+     return 0;
+ 
+   /* Handle some windows specific cases */
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   if (types == type_dirent)
+     {
+       /* don't count the '//' from UNC paths */
+@@ -474,7 +474,7 @@ get_longest_ancestor_length(path_type_t types,
+     {
+       /* Nothing in common but the root folder '/' or 'X:/' for Windows
+          dirents. */
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+       if (! unc)
+         {
+           /* X:/foo and X:/bar returns X:/ */
+@@ -485,7 +485,7 @@ get_longest_ancestor_length(path_type_t types,
+ #endif
+           if (last_dirsep == 0 && path1[0] == '/' && path2[0] == '/')
+             return 1;
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+         }
+ #endif
+     }
+@@ -563,7 +563,7 @@ is_child(path_type_t type, const char *path1, const char *path2,
+   if (path1[i] == '\0' && path2[i])
+     {
+       if (path1[i - 1] == '/'
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+           || ((type == type_dirent) && path1[i - 1] == ':')
+ #endif /* WIN32 or Cygwin */
+            )
+@@ -620,7 +620,7 @@ is_ancestor(path_type_t type, const char *path1, const char *path2)
+   path1_len = strlen(path1);
+   if (strncmp(path1, path2, path1_len) == 0)
+     return path1[path1_len - 1] == '/'
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+       || ((type == type_dirent) && path1[path1_len - 1] == ':')
+ #endif /* WIN32 or Cygwin */
+       || (path2[path1_len] == '/' || path2[path1_len] == '\0');
+@@ -664,7 +664,7 @@ svn_dirent_is_root(const char *dirent, apr_size_t len)
+   if (len == 1 && dirent[0] == '/')
+     return TRUE;
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   /* On Windows and Cygwin, 'H:' or 'H:/' (where 'H' is any letter)
+      are also root directories */
+   if ((len == 2 || len == 3) &&
+@@ -732,7 +732,7 @@ char *svn_dirent_join(const char *base,
+   /* if last character of base is already a separator, don't add a '/' */
+   add_separator = 1;
+   if (base[blen - 1] == '/'
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+        || base[blen - 1] == ':'
+ #endif /* WIN32 or Cygwin */
+         )
+@@ -770,7 +770,7 @@ char *svn_dirent_join_many(apr_pool_t *pool, const char *base, ...)
+   add_separator = 1;
+   if (total_len == 0
+        || base[total_len - 1] == '/'
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+        || base[total_len - 1] == ':'
+ #endif /* WIN32 or Cygwin */
+         )
+@@ -802,7 +802,7 @@ char *svn_dirent_join_many(apr_pool_t *pool, const char *base, ...)
+           base_arg = nargs;
+           add_separator = 1;
+           if (s[len - 1] == '/'
+-        #if defined(WIN32) || defined(__CYGWIN__)
++        #if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+                || s[len - 1] == ':'
+         #endif /* WIN32 or Cygwin */
+                 )
+@@ -1006,7 +1006,7 @@ svn_dirent_is_absolute(const char *dirent)
+ 
+   /* On Windows, dirent is also absolute when it starts with 'H:' or 'H:/'
+      where 'H' is any letter. */
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   if (((dirent[0] >= 'A' && dirent[0] <= 'Z') ||
+        (dirent[0] >= 'a' && dirent[0] <= 'z')) &&
+       (dirent[1] == ':'))
+@@ -1064,7 +1064,7 @@ svn_dirent_canonicalize(const char *dirent, apr_pool_t *pool)
+ {
+   const char *dst = canonicalize(type_dirent, dirent, pool);;
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   /* Handle a specific case on Windows where path == "X:/". Here we have to
+      append the final '/', as svn_path_canonicalize will chop this of. */
+   if (((dirent[0] >= 'A' && dirent[0] <= 'Z') ||
+@@ -1154,7 +1154,7 @@ svn_uri_is_canonical(const char *uri, apr_pool_t *pool)
+         }
+     }
+ 
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+   if (*ptr == '/')
+     {
+       /* If this is a file url, ptr now points to the third '/' in
+diff --git a/subversion/tests/libsvn_subr/path-test.c b/subversion/tests/libsvn_subr/path-test.c
+index 1cf1e39..7d23455 100644
+--- a/subversion/tests/libsvn_subr/path-test.c
++++ b/subversion/tests/libsvn_subr/path-test.c
+@@ -1541,7 +1541,7 @@ test_path_local_style(const char **msg,
+     { "",                     "." },
+     { ".",                    "." },
+     { "http://host/dir",      "http://host/dir" }, /* Not with local separator */
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "a:/",                 "a:" }, /* Wrong for dirent, but expected for svn_path_*() */
+     { "a:/file",             "a:\\file" },
+     { "dir/file",            "dir\\file" },
+@@ -1555,7 +1555,7 @@ test_path_local_style(const char **msg,
+     { "//server/share/dir",  "/server/share/dir" },
+ #endif
+     { NULL, NULL }
+-  };
++  
+   int i;
+ 
+   *msg = "test svn_path_local_style";
+@@ -1593,7 +1593,7 @@ test_path_internal_style(const char **msg,
+     { "http://host/dir",      "http://host/dir" },
+     { "/",                    "/" },
+     { "a:/",                  "a:" },
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+     { "a:\\",                 "a:" }, /* Wrong for dirent, but expected for svn_path_*() */
+     { "a:\\file",             "a:/file" },
+     { "dir\\file",            "dir/file" },
+@@ -1632,7 +1632,7 @@ test_path_internal_style(const char **msg,
+ 
+ 
+ /* local define to support XFail-ing tests on Windows/Cygwin only */
+-#if defined(WIN32) || defined(__CYGWIN__)
++#if defined(WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+ #define WINDOWS_OR_CYGWIN TRUE
+ #else
+ #define WINDOWS_OR_CYGWIN FALSE
+-- 
+1.6.3.msysgit.0.424.g8520d
+
