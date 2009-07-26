@@ -10,6 +10,10 @@ tar=$d.tar.bz2
 tar2=subversion-deps-$version.tar.bz2
 configure_options="--prefix= --disable-static --enable-shared --build=i686-pc-cygwin"
 
+# Make sure that we're running in MSys mode
+export MSYSTEM=MSYS
+export PATH=/bin:$PATH
+
 # check for presence of libz (MSys), perl >= 5.8
 perl -e 'require 5.8.0' || exit
 test -f /include/zconf.h || {
