@@ -66,7 +66,8 @@ TMPDIR=/tmp/WinGit
 unset DONT_REMOVE_BUILTINS
 
 /share/WinGit/copy-files.sh $TMPDIR &&
-sed "s/msysGit/Git (version $version)/" < /etc/motd > $TMPDIR/etc/motd &&
+sed -e "s/msysGit/Git (version $version)/" \
+	-e '/share\/msysGit/d' < /etc/motd > $TMPDIR/etc/motd &&
 cp /share/resources/gpl-2.0.rtf /share/resources/git.bmp $TMPDIR &&
 homewinpath=$(cd ~ ; pwd -W) &&
 sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
