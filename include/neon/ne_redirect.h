@@ -24,18 +24,19 @@
 
 #include "ne_request.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
-/* Register redirect handling: if a redirection response is given, the
- * request will fail with the NE_REDIRECT code, and the destinsation
- * of the redirect can be retrieved using ne_redirect_location(). */
+/* Register redirect handling for the session: if a valid redirect
+ * (30x) response is given for any request in this session, the
+ * request will fail with the NE_REDIRECT code, and the destination of
+ * the redirect can be retrieved using ne_redirect_location(). */
 void ne_redirect_register(ne_session *sess);
 
-/* Returns location of last redirect.  Will return NULL if no redirect
- * has been encountered for given session, or the last redirect
- * encountered could not be parsed. */
+/* Returns location of last redirect for the session.  Returns NULL if
+ * no redirect has been encountered for given session, or the last
+ * redirect encountered could not be parsed. */
 const ne_uri *ne_redirect_location(ne_session *sess);
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_REDIRECT_H */

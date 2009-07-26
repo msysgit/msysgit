@@ -24,6 +24,8 @@
 
 #include "ne_request.h"
 
+NE_BEGIN_DECLS
+
 typedef struct ne_decompress_s ne_decompress;
 
 /* Call this to register a 'reader' callback which will be passed
@@ -40,5 +42,7 @@ ne_decompress *ne_decompress_reader(ne_request *req, ne_accept_response accpt,
 
 /* Destroys decompression state. */
 void ne_decompress_destroy(ne_decompress *ctx);
+
+NE_END_DECLS
 
 #endif /* NE_COMPRESS_H */

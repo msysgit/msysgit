@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2000-2004, 2008 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,10 +22,9 @@
 #ifndef SVN_MD5_H
 #define SVN_MD5_H
 
-#include <apr_pools.h>
-#include <apr_md5.h>
-#include "svn_error.h"
-#include "svn_pools.h"
+#include <apr_pools.h>  /* for apr_pool_t */
+
+#include "svn_types.h"  /* for svn_boolean_t */
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,31 +32,52 @@ extern "C" {
 
 
 
-/** The MD5 digest for the empty string. */
-const unsigned char *svn_md5_empty_string_digest(void);
+/**
+ * The MD5 digest for the empty string.
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
+ * */
+SVN_DEPRECATED
+const unsigned char *
+svn_md5_empty_string_digest(void);
 
 
-/** Return the hex representation of @a digest, which must be
+/**
+ * Return the hex representation of @a digest, which must be
  * @c APR_MD5_DIGESTSIZE bytes long, allocating the string in @a pool.
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
  */
-const char *svn_md5_digest_to_cstring_display(const unsigned char digest[],
-                                              apr_pool_t *pool);
+SVN_DEPRECATED
+const char *
+svn_md5_digest_to_cstring_display(const unsigned char digest[],
+                                  apr_pool_t *pool);
 
 
-/** Return the hex representation of @a digest, which must be
+/**
+ * Return the hex representation of @a digest, which must be
  * @c APR_MD5_DIGESTSIZE bytes long, allocating the string in @a pool.
  * If @a digest is all zeros, then return NULL.
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
  */
-const char *svn_md5_digest_to_cstring(const unsigned char digest[],
-                                      apr_pool_t *pool);
+SVN_DEPRECATED
+const char *
+svn_md5_digest_to_cstring(const unsigned char digest[],
+                          apr_pool_t *pool);
 
 
-/** Compare digests @a d1 and @a d2, each @c APR_MD5_DIGESTSIZE bytes long.
- * If neither is all zeros, and they do not match, then return false;
- * else return true.
+/**
+ * Compare digests @a d1 and @a d2, each @c APR_MD5_DIGESTSIZE bytes long.
+ * If neither is all zeros, and they do not match, then return FALSE;
+ * else return TRUE.
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
  */
-svn_boolean_t svn_md5_digests_match(const unsigned char d1[],
-                                    const unsigned char d2[]);
+SVN_DEPRECATED
+svn_boolean_t
+svn_md5_digests_match(const unsigned char d1[],
+                      const unsigned char d2[]);
 
 #ifdef __cplusplus
 }

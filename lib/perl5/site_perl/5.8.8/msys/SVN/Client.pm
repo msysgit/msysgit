@@ -5,12 +5,33 @@ use SVN::Core;
 use SVN::Wc;
 
 package SVN::Client;
-use SVN::Base(qw(Client svn_client_ checkout update switch add mkdir delete
-                 commit status log blame diff merge cleanup relocate
-                 revert resolved copy move revprop_set propset
-                 proplist revvprop_list export ls cat import propget
-                 uuid_from_url uuid_from_path url_from_path revprop_get
-                 revprop_list info)); 
+my @_all_fns;
+BEGIN {
+    @_all_fns =
+        qw( version diff_summarize_dup create_context checkout3
+            checkout2 checkout update3 update2 update switch2 switch
+            add4 add3 add2 add mkdir3 mkdir2 mkdir delete3 delete2
+            delete import3 import2 import commit4 commit3 commit2
+            commit status3 status2 status log4 log3 log2 log blame4
+            blame3 blame2 blame diff4 diff3 diff2 diff diff_peg4
+            diff_peg3 diff_peg2 diff_peg diff_summarize2
+            diff_summarize diff_summarize_peg2 diff_summarize_peg
+            merge3 merge2 merge merge_peg3 merge_peg2 merge_peg
+            cleanup relocate revert2 revert resolve resolved copy4
+            copy3 copy2 copy move5 move4 move3 move2 move propset3
+            propset2 propset revprop_set propget3 propget2
+            propget revprop_get proplist3 proplist2 proplist
+            revprop_list export4 export3 export2 export list2 list
+            ls3 ls2 ls cat2 cat add_to_changelist
+            remove_from_changelist lock unlock info2 info
+            url_from_path uuid_from_url uuid_from_path open_ra_session
+            invoke_blame_receiver2 invoke_blame_receiver
+            invoke_diff_summarize_func
+          );
+
+    require SVN::Base;
+    import SVN::Base (qw(Client svn_client_), @_all_fns);
+}
 
 =head1 NAME
 
@@ -25,7 +46,7 @@ SVN::Client - Subversion client functions
               SVN::Client::get_username_provider()]
               );
 
-    $ctx->cat (\*STDOUT, 'http://svn.collab.net/repos/svn/trunk/README', 
+    $ctx->cat (\*STDOUT, 'http://svn.collab.net/repos/svn/trunk/README',
                'HEAD');
 
     sub simple_prompt {
@@ -88,7 +109,7 @@ An SVN::Client object that you get from the constructor.
 
 =item $url
 
-This is a URL to a subversion repository.  
+This is a URL to a subversion repository.
 
 =item $path
 
@@ -158,8 +179,8 @@ methods described below:
                            the subversion config only.
 
     cancel                 undef
-                           
-    config                 Hash containing the config from the 
+
+    config                 Hash containing the config from the
                            default subversion config file location.
 
     log_msg                undef
@@ -193,7 +214,7 @@ sub new
     {
         my $pool_type = ref($args{'pool'});
         if ($pool_type eq 'SVN::Pool' ||
-            $pool_type eq '_p_apr_pool_t') 
+            $pool_type eq '_p_apr_pool_t')
         {
             $self->{'pool'} = $args{'pool'};
         } else {
@@ -227,7 +248,7 @@ sub new
     {
         $self->cancel($args{'cancel'});
     }
-    
+
     return $self;
 }
 
@@ -270,7 +291,7 @@ You can create an svn_error_t object with SVN::Error::create().
 =item $ctx-E<gt>cat(\*FILEHANDLE, $target, $revision, $pool);
 
 Outputs the content of the file identified by $target and $revision to the
-FILEHANDLE.  FILEHANDLE is a reference to a filehandle. 
+FILEHANDLE.  FILEHANDLE is a reference to a filehandle.
 
 If $target is not a local path and if $revision is 'PREV' (or some
 other kind that requires a local path), then an error will be raised,
@@ -279,7 +300,7 @@ because the desired revision can not be determined.
 =item $ctx-E<gt>checkout($url, $path, $revision, $recursive, $pool);
 
 Checkout a working copy of $url at $revision using $path as the root directory
-of the newly checked out working copy.  
+of the newly checked out working copy.
 
 $revision must be a number, 'HEAD', or a date.  If $revision does not
 meet these requirements the $SVN::Error::CLIENT_BAD_REVISION is raised.
@@ -366,7 +387,7 @@ Has no return.
 Produces diff output which describes the delta between $target1 at
 $revision1 and $target2 at $revision2.  They both must represent the same
 node type (i.e. they most both be directories or files).  The revisions
-must not be undef.  
+must not be undef.
 
 Prints the output of the diff to the filename or filehandle passed as
 $outfile, and any errors to the filename or filehandle passed as $errfile.
@@ -382,6 +403,23 @@ files.
 $diff_options is a reference to an array of additional arguments to pass to
 diff process invoked to compare files.  You'll usually just want to use [] to
 pass an empty array to return a unified context diff (like `diff -u`).
+
+Has no return.
+
+=item $ctx-E<gt>diff_summarize($target1, $revision1, $target2, $revision2, $recursive, $ignore_ancestry, \&summarize_func, $pool);
+
+Produce a diff summary which lists the changed items between $target1
+at $revision1 and $target2 at $revision2 without creating text deltas.
+$target1 and $target2 can be either working-copy paths or URLs.
+
+The function may report false positives if $ignore_ancestry is false,
+since a file might have been modified between two revisions, but still
+have the same contents.
+
+Calls \&summarize_func with with a svn_client_diff_summarize_t structure
+describing the difference.
+
+See diff() for a description of the other parameters.
 
 Has no return.
 
@@ -413,7 +451,7 @@ If some components of $url do not exist then create parent directories
 as necessary.
 
 If $path is a directory, the contents of that directory are imported
-directly into the directory identified by $url.  Note that the directory 
+directly into the directory identified by $url.  Note that the directory
 $path itself is not imported; that is, the basename of $path is not part
 of the import.
 
@@ -431,7 +469,7 @@ into any subdirectories they may have.
 Uses the log_msg callback to determine the log message for the commit when
 one is needed.
 
-Returns a svn_client_commit_info_t object.  
+Returns a svn_client_commit_info_t object.
 
 =item $ctx-E<gt>log($targets, $start, $end, $discover_changed_paths, $strict_node_history, \&log_receiver, $pool);
 
@@ -474,7 +512,7 @@ on $date by $author.  $author, $date or $message may be undef.
 
 If $changed_paths is defined it references a hash with the keys
 every path committed in $revision; the values are svn_log_changed_path_t
-objects.  
+objects.
 
 =item $ctx-E<gt>ls($target, $revision, $recursive, $pool);
 
@@ -487,7 +525,7 @@ If $target is a file only return an entry for the file.
 
 If $target is non-existent, raises the $SVN::Error::FS_NOT_FOUND
 error.
- 
+
 =item $ctx-E<gt>merge($src1, $rev1, $src2, $rev2, $target_wcpath, $recursive, $ignore_ancestry, $force, $dry_run, $pool);
 
 Merge changes from $src1/$rev1 to $src2/$rev2 into the working-copy path
@@ -544,14 +582,14 @@ called for items added to the working copy.
 
 Move $src_path to $dst_path.
 
-$src_path must be a file or directory under version control, or the URL 
+$src_path must be a file or directory under version control, or the URL
 of a versioned item in the repository.
 
 If $src_path is a repository URL:
 
 * $dst_path must also be a repository URL (existent or not).
 
-* $src_revision is used to choose the revision from which to copy the 
+* $src_revision is used to choose the revision from which to copy the
 $src_path.
 
 * The log_msg callback will be called for the commit log message.
@@ -595,7 +633,7 @@ the name relative to the same base as $target.
 
 If $revision is undef, then get properties from the working copy, if
 $target is a working copy, or from the repository head if $target is a URL.
-Else get the properties as of $revision. 
+Else get the properties as of $revision.
 
 If $recursive is false, or $target is a file, the returned array will only
 contain a single element.  Otherwise, it will contain one entry for each
@@ -639,10 +677,10 @@ If $path is not in a state of conflict to begin with, do nothing.
 If $path's conflict state is removed, call the notify callback with the
 $path.
 
-=item $ctx-E<gt>revert($paths, $recursive, $pool); 
+=item $ctx-E<gt>revert($paths, $recursive, $pool);
 
 Restore the pristine version of a working copy $paths, effectively undoing
-any local mods.  
+any local mods.
 
 For each path in $paths, if it is a directory and $recursive
 is true, this will be a recursive operation.
@@ -758,7 +796,7 @@ operation, invoking $receiver on each child.
 
 Switch working tree $path to $url at $revision.
 
-$revision must be a number, 'HEAD', or a date, otherwise it raises the 
+$revision must be a number, 'HEAD', or a date, otherwise it raises the
 $SVN::Error::CLIENT_BAD_REVISION error.
 
 Calls the notify callback on paths affected by the switch.  Also invokes
@@ -771,14 +809,14 @@ an existing working directory is more efficient than checking out $url from
 scratch.
 
 Returns the value of the revision to which the working copy was actually
-switched. 
+switched.
 
 =item $ctx-E<gt>update($path, $revision, $recursive, $pool)
 
 Update a working copy $path to $revision.
 
 $revision must be a revision number, 'HEAD', or a date or this method will
-raise the $SVN::Error::CLIENT_BAD_REVISION error. 
+raise the $SVN::Error::CLIENT_BAD_REVISION error.
 
 Calls the notify callback for each item handled by the update, and
 also for files restored from the text-base.
@@ -820,13 +858,7 @@ Return repository uuid for url.
 
 # import methods into our name space and wrap them in a closure
 # to support method calling style $ctx->log()
-foreach my $function (qw(checkout update switch add mkdir delete commit
-                       status log blame diff merge cleanup relocate
-                       revert resolved copy move revprop_set propset
-                       proplist revvprop_list export ls cat import
-                       propget uuid_from_url uuid_from_path
-                       url_from_path revprop_get revprop_list
-                       info))
+foreach my $function (@_all_fns)
 {
     no strict 'refs';
     my $real_function = \&{"SVN::_Client::svn_client_$function"};
@@ -834,9 +866,9 @@ foreach my $function (qw(checkout update switch add mkdir delete commit
     {
         my ($self, $ctx);
         my @args;
-    
+
         # Don't shift the first param if it isn't a SVN::Client
-        # object.  This lets the old style interface still work.  
+        # object.  This lets the old style interface still work.
         # And is useful for functions like url_from_path which
         # don't take a ctx param, but might be called in method
         # invocation style or as a normal function.
@@ -883,7 +915,7 @@ foreach my $function (qw(checkout update switch add mkdir delete commit
             {
                 push @args,$ctx;
             }
-            if (defined($self->{'pool'}) && 
+            if (defined($self->{'pool'}) &&
                 (ref($self->{'pool'}) eq '_p_apr_pool_t' ||
                  ref($self->{'pool'}) eq 'SVN::Pool'))
             {
@@ -967,7 +999,7 @@ for a list of the possible states.  The 6th and final parameter is the numeric
 revision number of the changed file.  The revision number will be -1 except
 when the action is $SVN::Wc::Notify::Action::update_completed.
 
-=cut 
+=cut
 
 sub notify {
     my $self = shift;
@@ -989,9 +1021,9 @@ It receives 4 parameters.  The first parameter is a reference to a scalar
 value in which the callback should place the log_msg.  If you wish to cancel
 the commit you can set this scalar to undef.  The 2nd value is a path to a
 temporary file which might be holding that log message, or undef if no such
-field exists (though, if log_msg is undef, this value is undefined).  The 
+field exists (though, if log_msg is undef, this value is undefined).  The
 log message B<MUST> be a UTF8 string with LF line separators.  The 3rd parameter
-is a reference to an array of svn_client_commit_item_t objects, which may
+is a reference to an array of svn_client_commit_item3_t objects, which may
 be fully or only partially filled-in, depending on the type of commit
 operation.  The 4th and last parameter will be a pool.
 
@@ -1005,7 +1037,7 @@ sub log_msg {
     my $self = shift;
 
     if (scalar(@_) == 1) {
-        $self->{'log_msg_callback'} = $self->{'ctx'}->log_msg_baton(shift);
+        $self->{'log_msg_callback'} = $self->{'ctx'}->log_msg_baton3(shift);
     }
     return ${$self->{'log_msg_callback'}};
 }
@@ -1180,15 +1212,15 @@ $SVN::Auth::SSL::CNMISMATCH
 $SVN::Auth::SSL::UNKNOWNCA
 $SVN::Auth::SSL::OTHER
 
-You reply by setting the accepted_failures of the cred object with an integer 
+You reply by setting the accepted_failures of the cred object with an integer
 of the values for what you want to accept bitwise AND'd together.
 
-=item SVN::Client::get_ssl_cert_file_provider
+=item SVN::Client::get_ssl_client_cert_file_provider
 
 Returns a client certificate provider that returns information from previously
 cached sessions.  Takes no parameters or optionally a pool parameter.
 
-=item SVN::Client::get_ssl_cert_prompt_provider
+=item SVN::Client::get_ssl_client_cert_prompt_provider
 
 Returns a client certificate provider that prompts the user via a callback.
 Takes two or three parameters: the first is the callback subroutine, the 2nd is
@@ -1198,13 +1230,13 @@ svn_auth_cred_ssl_client_cert object, a realm string, may_save, and a pool.
 The svn_auth_cred_ssl_client_cert the following members: cert_file and
 may_save.
 
-=item SVN::Client::get_ssl_cert_pw_file_provider
+=item SVN::Client::get_ssl_client_cert_pw_file_provider
 
 Returns a client certificate password provider that returns information from
 previously cached sessions.  Takes no parameters or optionally a pool
 parameter.
 
-=item SVN::Client::get_ssl_cert_pw_prompt_provider
+=item SVN::Client::get_ssl_client_cert_pw_prompt_provider
 
 Returns a client certificate password provider that prompts the user via a
 callback. Takes two or three parameters, the first is the callback subroutine,
@@ -1214,13 +1246,13 @@ svn_auth_cred_ssl_client_cert_pw object, a realm string, may_save, and a pool.
 The svn_auth_cred_ssl_client_cert_pw has the following members: password and
 may_save.
 
-=back 
+=back
 
 =head1 OBJECTS
 
 These are some of the object types that are returned from the methods
 and functions.  Others are documented in L<SVN::Core> and L<SVN::Wc>.
-If an object is not documented, it is more than likely opaque and 
+If an object is not documented, it is more than likely opaque and
 not something you can do anything with, except pass to other functions
 that require such objects.
 
@@ -1301,12 +1333,14 @@ also only useful when working with a WC.
 
 =item $info->prejfile()
 
+=back
+
 =cut
 
 package _p_svn_client_commit_info_t;
 use SVN::Base qw(Client svn_client_commit_info_t_);
 
-=head2 svn_client_commit_item_t
+=head2 svn_client_commit_item3_t
 
 =over 8
 
@@ -1344,17 +1378,23 @@ $SVN::Client::COMMIT_ITEM_TEXT_MODS
 $SVN::Client::COMMIT_ITEM_PROP_MODS
 $SVN::Client::COMMIT_ITEM_IS_COPY
 
-=item $citem>wcprop_changes()
+=item $citem>incoming_prop_changes()
 
-A reference to an array of svn_prop_t objects represent changes
-to wc properties.
+A reference to an array of svn_prop_t objects representing changes to
+WC properties.
+
+=item $citem>outgoing_prop_changes()
+
+A reference to an array of svn_prop_t objects representing extra
+changes to properties in the repository (which are not necessarily
+reflected by the WC).
 
 =back
 
 =cut
 
-package _p_svn_client_commit_item_t;
-use SVN::Base qw(Client svn_client_commit_item_t_);
+package _p_svn_client_commit_item3_t;
+use SVN::Base qw(Client svn_client_commit_item3_t_);
 
 =head2 svn_client_commit_info_t
 
@@ -1396,11 +1436,53 @@ A reference to a hash of property names and values.
 
 =back
 
+=cut
+
+package SVN::Client::Summarize;
+use SVN::Base qw(Client svn_client_diff_summarize_kind_);
+
+=head2 svn_client_diff_summarize_kind_t - SVN::Summarize
+
+An enum of the following constants:
+
+$SVN::Client::Summarize::normal, $SVN::Client::Summarize::added,
+$SVN::Client::Summarize::modified, $SVN::Client::Summarize::deleted.
+
+=back
+
+=cut
+
+package _p_svn_client_diff_summarize_t;
+use SVN::Base qw(Client svn_client_diff_summarize_t_);
+
+=head2 svn_client_diff_summarize_t
+
+=over 8
+
+=item $diff_summarize-E<gt>path()
+
+Path relative to the target.  If the target is a file, path is the
+empty string.
+
+=item $diff_summarize-E<gt>summarize_kind()
+
+Change kind.
+
+=item $diff_summarize-E<gt>prop_changed()
+
+Properties changed?
+
+=item $diff_summarize-E<gt>node_kind()
+
+File or dir?
+
+=back
+
 =head1 TODO
 
 * Better support for the config.
 
-* Unit tests for cleanup, diff, export, merge, move, relocate, resolved 
+* Unit tests for cleanup, diff, export, merge, move, relocate, resolved
 and switch.  This may reveal problems for using these methods as I haven't
 tested them yet that require deeper fixes.
 

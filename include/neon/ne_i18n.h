@@ -1,6 +1,6 @@
 /* 
    Internationalization of neon
-   Copyright (C) 1999-2002, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 2005-2006, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,19 +19,37 @@
 
 */
 
-#ifndef NEON_I18N_H
-#define NEON_I18N_H
+#ifndef NE_I18N_H
+#define NE_I18N_H
 
-#undef _
-#ifdef ENABLE_NLS
-#include <libintl.h>
-#define _(str) gettext(str)
-#else
-#define _(str) (str)
-#endif /* ENABLE_NLS */
-#define N_(str) (str)
+#include "ne_defs.h"
 
-/* Initialize i18n in neon */
-void neon_i18n_init(void);
+NE_BEGIN_DECLS
 
-#endif /* NEON_I18N_H */
+/* Initialize translated error messages within neon.  If 'encoding' is
+ * non-NULL, it specifies the character encoding for the generated
+ * translated strings.  If it is NULL, the appropriate character
+ * encoding for the locale will be used.
+ *
+ * This call is only strictly necessary if either:
+ *
+ * a) neon has been installed into a different prefix than the
+ * gettext() implementation on which it depends for i18n purposes, or
+ *
+ * b) the caller requires that translated messages are in a particular
+ * character encoding.
+ *
+ * If ne_i18n_init() is never called, the message catalogs will not be
+ * found if case (a) applies (and so English error messages will be
+ * used), and will use the default character encoding specified by the
+ * process locale.  The library will otherwise operate correctly.
+ *
+ * Note that the encoding used is a process-global setting and so
+ * results may be unexpected if other users of neon within the process
+ * call ne_i18n_init() with a different encoding parameter.
+ */
+void ne_i18n_init(const char *encoding);
+
+NE_END_DECLS
+
+#endif /* NE_I18N_H */

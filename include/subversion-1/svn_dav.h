@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2000-2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -88,7 +88,7 @@ extern "C" {
  * These headers are for client and server to verify that the base
  * and the result of a change transmission are the same on both
  * sides, regardless of what transformations (svndiff deltification,
- * gzipping, etc) the data may have gone through in between.  
+ * gzipping, etc) the data may have gone through in between.
  *
  * The result md5 is always used whenever file contents are
  * transferred, because every transmission has a resulting text.
@@ -113,7 +113,7 @@ extern "C" {
 
 /** The svn-specific object that is placed within a <D:error> response.
  *
- * @defgroup svn_dav_error svn_dav errors
+ * @defgroup svn_dav_error Errors in svn_dav
  * @{ */
 
 /** The error object's namespace */
@@ -128,7 +128,7 @@ extern "C" {
 /** General property (xml) namespaces that will be used by both ra_dav
  * and mod_dav_svn for marshalling properties.
  *
- * @defgroup svn_dav_property_xml_namespaces dav property namespaces
+ * @defgroup svn_dav_property_xml_namespaces DAV property namespaces
  * @{
  */
 
@@ -148,6 +148,41 @@ extern "C" {
  * seen by either fs or wc.
  */
 #define SVN_DAV_PROP_NS_DAV "http://subversion.tigris.org/xmlns/dav/"
+
+
+/**
+ * @name Custom (extension) values for the DAV header.
+ * Note that although these share the SVN_DAV_PROP_NS_DAV namespace
+ * prefix, they are not properties; they are header values.
+ *
+ * @{ **/
+
+/** Presence of this in a DAV header in an OPTIONS request or response
+ * indicates that the transmitter supports @c svn_depth_t. */
+#define SVN_DAV_NS_DAV_SVN_DEPTH SVN_DAV_PROP_NS_DAV "svn/depth"
+
+/** Presence of this in a DAV header in an OPTIONS request or response
+ * indicates that the server knows how to handle merge-tracking
+ * information.
+ *
+ * Note that this says nothing about whether the repository can handle
+ * mergeinfo, only whether the server does.  For more information, see
+ * mod_dav_svn/version.c:get_vsn_options().
+ */
+#define SVN_DAV_NS_DAV_SVN_MERGEINFO SVN_DAV_PROP_NS_DAV "svn/mergeinfo"
+
+/** Presence of this in a DAV header in an OPTIONS response indicates
+ * that the transmitter (in this case, the server) knows how to send
+ * custom revprops in log responses. */
+#define SVN_DAV_NS_DAV_SVN_LOG_REVPROPS SVN_DAV_PROP_NS_DAV "svn/log-revprops"
+
+/** Presence of this in a DAV header in an OPTIONS response indicates
+ * that the transmitter (in this case, the server) knows how to handle
+ * a replay of a directory in the repository (not root). */
+#define SVN_DAV_NS_DAV_SVN_PARTIAL_REPLAY\
+            SVN_DAV_PROP_NS_DAV "svn/partial-replay"
+
+/** @} */
 
 /** @} */
 

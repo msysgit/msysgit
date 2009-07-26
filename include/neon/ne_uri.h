@@ -1,6 +1,6 @@
 /* 
    URI manipulation routines.
-   Copyright (C) 1999-2005, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 1999-2008, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -24,7 +24,7 @@
 
 #include "ne_defs.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 /* Return a copy of a path string with anything other than
  * "unreserved" and the forward-slash character percent-encoded
@@ -57,33 +57,47 @@ unsigned int ne_uri_defaultport(const char *scheme);
 
 typedef struct {
     char *scheme;
-    char *host;
+    char *host, *userinfo;
     unsigned int port;
-    char *path;
-    char *authinfo;
+    char *path, *query, *fragment;
 } ne_uri;
 
-/* Parse absoluteURI 'uri' and place parsed segments in *parsed.
+/* Parse a URI-reference 'uri' and place parsed components in *parsed.
  * Returns zero on success, non-zero on parse error.  On successful or
  * error return, all the 'char *' fields of *parsed are either set to
- * NULL, or point to malloc-allocated NUL-terminated strings.
- * ne_uri_free can be used to free the structure after use.*/
+ * NULL, or point to malloc-allocated NUL-terminated strings;
+ * ne_uri_free can be used to free any set fields.  On success,
+ * parsed->path is guaranteed to be non-NULL. */
 int ne_uri_parse(const char *uri, ne_uri *parsed);
 
-/* Turns a URI structure back into a string.  String is
+/* Turns a URI structure back into a string.  The returned string is
  * malloc-allocated, and must be freed by the caller. */
 char *ne_uri_unparse(const ne_uri *uri);
+
+/* Resolve a relative URI 'relative', with respect to base URI 'base',
+ * placing the resultant URI in '*result'.  At least both base->path
+ * and relative->path must be non-NULL.  On return, all the 'char *'
+ * fields of *result are either set to NULL or point to
+ * malloc-allocated NUL-terminated strings.  result->path is
+ * guaranteed to be non-NULL.  ne_uri_free can be used to free the
+ * result structure after use.  Returns 'result'. */
+ne_uri *ne_uri_resolve(const ne_uri *base, const ne_uri *relative,
+                       ne_uri *result);
 
 /* Compares URIs u1 and u2, returns non-zero if they are found to be
  * non-equal.  The sign of the return value is <0 if 'u1' is less than
  * 'u2', or >0 if 'u2' is greater than 'u1'. */
 int ne_uri_cmp(const ne_uri *u1, const ne_uri *u2);
 
+/* Copy components of URI 'src' to destination 'dest'.  Returns
+ * 'dest'. */
+ne_uri *ne_uri_copy(ne_uri *dest, const ne_uri *src);
+
 /* Frees any non-NULL fields of parsed URI structure *parsed.  All
  * fields are then zero-initialized. */
 void ne_uri_free(ne_uri *parsed);
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_URI_H */
 

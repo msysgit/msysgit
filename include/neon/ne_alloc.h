@@ -22,15 +22,15 @@
 #ifndef NE_ALLOC_H
 #define NE_ALLOC_H
 
-#ifdef WIN32
 #include <stdlib.h>
-#else
+
+#ifndef WIN32
 #include <sys/types.h>
 #endif
 
 #include "ne_defs.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 typedef void (*ne_oom_callback_fn)(void);
 
@@ -45,16 +45,12 @@ void ne_oom_callback(ne_oom_callback_fn callback);
  * operating system does not use optimistic memory allocation. */
 void *ne_malloc(size_t size) ne_attribute_malloc;
 void *ne_calloc(size_t size) ne_attribute_malloc;
-void *ne_realloc(void *ptr, size_t s) ne_attribute_malloc;
+void *ne_realloc(void *ptr, size_t s);
 char *ne_strdup(const char *s) ne_attribute_malloc;
 char *ne_strndup(const char *s, size_t n) ne_attribute_malloc;
 #define ne_free free
 #endif
 
-/* Handy macro to free things: takes an lvalue, and sets to NULL
- * afterwards. */
-#define NE_FREE(x) do { if ((x) != NULL) ne_free((x)); (x) = NULL; } while (0)
-
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_ALLOC_H */

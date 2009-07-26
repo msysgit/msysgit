@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2000-2004, 2008 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,15 +24,21 @@
 #ifndef SVN_PROPS_H
 #define SVN_PROPS_H
 
-#include <apr_pools.h>
-#include <apr_tables.h>
+#include <apr_pools.h>   /* for apr_pool_t */
+#include <apr_tables.h>  /* for apr_array_header_t */
+#include <apr_hash.h>    /* for apr_hash_t */
 
-#include "svn_string.h"
+#include "svn_types.h"   /* for svn_boolean_t, svn_error_t */
+#include "svn_string.h"  /* for svn_string_t */
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
+/**
+ * @defgroup svn_props_support Properties management utilities
+ * @{
+ */
 
 
 
@@ -59,7 +65,9 @@ typedef struct svn_prop_t
  *
  * @since New in 1.3.
  */
-svn_prop_t *svn_prop_dup(const svn_prop_t *prop, apr_pool_t *pool);
+svn_prop_t *
+svn_prop_dup(const svn_prop_t *prop,
+             apr_pool_t *pool);
 
 
 /**
@@ -68,15 +76,37 @@ svn_prop_t *svn_prop_dup(const svn_prop_t *prop, apr_pool_t *pool);
  * @since New in 1.3.
  */
 apr_array_header_t *
-svn_prop_array_dup(const apr_array_header_t *array, apr_pool_t *pool);
+svn_prop_array_dup(const apr_array_header_t *array,
+                   apr_pool_t *pool);
 
+
+/**
+ * Given a hash (keys <tt>const char *</tt> and values <tt>const
+ * svn_string_t</tt>) of properties, returns an array of svn_prop_t
+ * items using @a pool.
+ *
+ * @since New in 1.5.
+ */
+apr_array_header_t *
+svn_prop_hash_to_array(apr_hash_t *hash,
+                       apr_pool_t *pool);
+
+/**
+ * Creates a deep copy of @a hash (keys <tt>const char *</tt> and
+ * values <tt>const svn_string_t</tt>) in @a pool.
+ *
+ * @since New in 1.6.
+ */
+apr_hash_t *
+svn_prop_hash_dup(apr_hash_t *hash,
+                  apr_pool_t *pool);
 
 /**
  * Subversion distinguishes among several kinds of properties,
  * particularly on the client-side.  There is no "unknown" kind; if
  * there's nothing special about a property name, the default category
  * is @c svn_prop_regular_kind.
- */ 
+ */
 typedef enum svn_prop_kind
 {
   /** In .svn/entries, i.e., author, date, etc. */
@@ -85,34 +115,54 @@ typedef enum svn_prop_kind
   /** Client-side only, stored by specific RA layer. */
   svn_prop_wc_kind,
 
-  /** Seen if user does "svn proplist"; note that this includes some "svn:" 
+  /** Seen if user does "svn proplist"; note that this includes some "svn:"
    * props and all user props, i.e. ones stored in the repository fs.
    */
-  svn_prop_regular_kind 
+  svn_prop_regular_kind
 } svn_prop_kind_t;
 
-/** Return the prop kind of a property named @a name, and (if @a prefix_len
- * is non-@c NULL) set @a *prefix_len to the length of the prefix of @a name
- * that was sufficient to distinguish its kind.
+/** Return the prop kind of a property named @a prop_name, and
+ * (if @a prefix_len is non-@c NULL) set @a *prefix_len to the length of
+ * the prefix of @a prop_name that was sufficient to distinguish its kind.
  */
-svn_prop_kind_t svn_property_kind(int *prefix_len,
-                                  const char *prop_name);
+svn_prop_kind_t
+svn_property_kind(int *prefix_len,
+                  const char *prop_name);
 
 
 /** Return @c TRUE iff @a prop_name represents the name of a Subversion
  * property.
  */
-svn_boolean_t svn_prop_is_svn_prop(const char *prop_name);
+svn_boolean_t
+svn_prop_is_svn_prop(const char *prop_name);
 
 
-/** If @a propname requires that its value be stored as UTF8/LF in the
+/** Return @c TRUE iff @a props has at least one property whose name
+ * represents the name of a Subversion property.
+ *
+ * @since New in 1.5.
+ */
+svn_boolean_t
+svn_prop_has_svn_prop(const apr_hash_t *props,
+                      apr_pool_t *pool);
+
+/** Return @c TRUE iff @a prop_name is a Subversion property whose
+ * value is interpreted as a boolean.
+ *
+ * @since New in 1.5
+ */
+svn_boolean_t
+svn_prop_is_boolean(const char *prop_name);
+
+/** If @a prop_name requires that its value be stored as UTF8/LF in the
  * repository, then return @c TRUE.  Else return @c FALSE.  This is for
  * users of libsvn_client or libsvn_fs, since it their responsibility
  * to do this translation in both directions.  (See
  * svn_subst_translate_string()/svn_subst_detranslate_string() for
  * help with this task.)
  */
-svn_boolean_t svn_prop_needs_translation(const char *propname);
+svn_boolean_t
+svn_prop_needs_translation(const char *prop_name);
 
 
 /** Given a @a proplist array of @c svn_prop_t structures, allocate
@@ -129,33 +179,54 @@ svn_boolean_t svn_prop_needs_translation(const char *propname);
  * ### Hmmm, maybe a better future interface is to return an array of
  *     arrays, where the index into the array represents the index
  *     into @c svn_prop_kind_t.  That way we can add more prop kinds
- *     in the future without changing this interface... 
+ *     in the future without changing this interface...
  */
-svn_error_t *svn_categorize_props(const apr_array_header_t *proplist,
-                                  apr_array_header_t **entry_props,
-                                  apr_array_header_t **wc_props,
-                                  apr_array_header_t **regular_props,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_categorize_props(const apr_array_header_t *proplist,
+                     apr_array_header_t **entry_props,
+                     apr_array_header_t **wc_props,
+                     apr_array_header_t **regular_props,
+                     apr_pool_t *pool);
 
 
-/** Given two property hashes (<tt>const char *name</tt> -> <tt>const 
- * svn_string_t *value</tt>), deduce the differences between them (from 
- * @a source_props -> @c target_props).  Return these changes as a series of 
- * @c svn_prop_t structures stored in @a propdiffs, allocated from @a pool.
+/** Given two property hashes (<tt>const char *name</tt> -> <tt>const
+ * svn_string_t *value</tt>), deduce the differences between them (from
+ * @a source_props -> @c target_props).  Set @a propdiffs to a new array of
+ * @c svn_prop_t structures, with one entry for each property that differs,
+ * including properties that exist in @a source_props or @a target_props but
+ * not both. The @c value field of each entry is that property's value from
+ * @a target_props or NULL if that property only exists in @a source_props.
+ *
+ * Allocate the array from @a pool. Allocate the contents of the array from
+ * @a pool or by reference to the storage of the input hashes or both.
  *
  * For note, here's a quick little table describing the logic of this
  * routine:
  *
- *<pre> basehash        localhash         event
- * --------        ---------         -----
- * value = foo     value = NULL      Deletion occurred.
- * value = foo     value = bar       Set occurred (modification)
- * value = NULL    value = baz       Set occurred (creation)</pre>
+ * @verbatim
+   source_props    target_props      event
+   ------------    ------------      -----
+   value = foo     value = NULL      Deletion occurred.
+   value = foo     value = bar       Set occurred (modification)
+   value = NULL    value = baz       Set occurred (creation) @endverbatim
  */
-svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
-                            apr_hash_t *target_props,
-                            apr_hash_t *source_props,
-                            apr_pool_t *pool);
+svn_error_t *
+svn_prop_diffs(apr_array_header_t **propdiffs,
+               apr_hash_t *target_props,
+               apr_hash_t *source_props,
+               apr_pool_t *pool);
+
+
+/**
+ * Return @c TRUE iff @a prop_name is a valid property name.
+ *
+ * For now, "valid" means the ASCII subset of an XML "Name".
+ * XML "Name" is defined at http://www.w3.org/TR/REC-xml#sec-common-syn
+ *
+ * @since New in 1.5.
+ */
+svn_boolean_t
+svn_prop_name_is_valid(const char *prop_name);
 
 
 
@@ -175,12 +246,20 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
  * LF line-endings.  It is the burden of svn library users to enforce
  * this.  Use svn_prop_needs_translation() to discover if a
  * certain property needs translation, and you can use
- * svn_subst_translate_string()/svn_subst_detranslate_string() 
+ * svn_subst_translate_string()/svn_subst_detranslate_string()
  * to do the translation.
  *
  * @defgroup svn_prop_visible_props Visible properties
  * @{
  */
+
+/* Properties whose values are interpreted as booleans (such as
+ * svn:executable, svn:needs_lock, and svn:special) always fold their
+ * value to this.
+ *
+ * @since New in 1.5.
+ */
+#define SVN_PROP_BOOLEAN_TRUE "*"
 
 /** The mime-type of a given file. */
 #define SVN_PROP_MIME_TYPE  SVN_PROP_PREFIX "mime-type"
@@ -197,37 +276,107 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
 /** Set to either TRUE or FALSE if we want a file to be executable or not. */
 #define SVN_PROP_EXECUTABLE  SVN_PROP_PREFIX "executable"
 
-/** The value to force the executable property to when set */
-#define SVN_PROP_EXECUTABLE_VALUE "*"
+/** The value to force the executable property to when set.
+ *
+ * @deprecated Provided for backward compatibility with the 1.4 API.
+ * Use @c SVN_PROP_BOOLEAN_TRUE instead.
+ */
+#define SVN_PROP_EXECUTABLE_VALUE SVN_PROP_BOOLEAN_TRUE
 
 /** Set to TRUE ('*') if we want a file to be set to read-only when
  * not locked.  FALSE is indicated by deleting the property. */
 #define SVN_PROP_NEEDS_LOCK  SVN_PROP_PREFIX "needs-lock"
 
-/** The value to force the needs-lock property to when set */
-#define SVN_PROP_NEEDS_LOCK_VALUE "*"
+/** The value to force the needs-lock property to when set.
+ *
+ * @deprecated Provided for backward compatibility with the 1.4 API.
+ * Use @c SVN_PROP_BOOLEAN_TRUE instead.
+ */
+#define SVN_PROP_NEEDS_LOCK_VALUE SVN_PROP_BOOLEAN_TRUE
 
 /** Set if the file should be treated as a special file. */
 #define SVN_PROP_SPECIAL  SVN_PROP_PREFIX "special"
 
-/** The value to force the special property to when set. */
-#define SVN_PROP_SPECIAL_VALUE "*"
+/** The value to force the special property to when set.
+ *
+ * @deprecated Provided for backward compatibility with the 1.4 API.
+ * Use @c SVN_PROP_BOOLEAN_TRUE instead.
+ */
+#define SVN_PROP_SPECIAL_VALUE SVN_PROP_BOOLEAN_TRUE
 
-/** Describes external items to check out into this directory. 
+/** Describes external items to check out into this directory.
  *
  * The format is a series of lines, such as:
  *
- *<pre>   localdir1           http://url.for.external.source/etc/
- *   localdir1/foo       http://url.for.external.source/foo
- *   localdir1/bar       http://blah.blah.blah/repositories/theirproj
- *   localdir1/bar/baz   http://blorg.blorg.blorg/basement/code
- *   localdir2           http://another.url/blah/blah/blah
- *   localdir3           http://and.so.on/and/so/forth</pre>
+ *@verbatim
+     localdir1           http://url.for.external.source/etc/
+     localdir1/foo       http://url.for.external.source/foo
+     localdir1/bar       http://blah.blah.blah/repositories/theirproj
+     localdir1/bar/baz   http://blorg.blorg.blorg/basement/code
+     localdir2           http://another.url/blah/blah/blah
+     localdir3           http://and.so.on/and/so/forth @endverbatim
  *
  * The subdir names on the left side are relative to the directory on
  * which this property is set.
  */
 #define SVN_PROP_EXTERNALS  SVN_PROP_PREFIX "externals"
+
+/** Merge info property used to record a resource's merge history.
+ *
+ * The format is a series of lines containing merge paths and revision
+ * ranges, such as:
+ *
+ * @verbatim
+     /trunk: 1-6,9,37-38
+     /trunk/foo: 10 @endverbatim
+ */
+#define SVN_PROP_MERGEINFO SVN_PROP_PREFIX "mergeinfo"
+
+
+/** Meta-data properties.
+ *
+ * ====================================================================
+ * They are documented here to avoid name reuse in other branches;
+ * the "plain" subversion doesn't use them (yet?).
+ * ====================================================================
+ *
+ * The following properties are used for storing meta-data about
+ * individual entries in the meta-data branches of subversion,
+ * see issue #1256 or browseable at
+ * http://svn.collab.net/viewvc/svn/branches/meta-data-versioning/ .
+ * Furthermore @c svntar (http://svn.borg.ch/svntar/) and @c FSVS
+ * (http://fsvs.tigris.org/) use these, too.
+ *
+ * Please note that these formats are very UNIX-centric currently;
+ * a bit of discussion about Windows can be read at
+ * http://article.gmane.org/gmane.comp.version-control.subversion.devel/103991
+ *
+ * @defgroup svn_prop_meta_data Meta-data properties
+ * @{ */
+
+/** The files' last modification time.
+ * This is stored as string in the form @c "2008-08-07T07:38:51.008782Z", to
+ * be converted by the functions @c svn_time_to_cstring() and
+ * @c svn_time_from_cstring(). */
+#define SVN_PROP_TEXT_TIME  SVN_PROP_PREFIX "text-time"
+
+/** The files' owner.
+ * Stored as numeric ID, optionally followed by whitespace and the string:
+ * @c "1000 pmarek". Parsers @b should accept any number of whitespace,
+ * and writers @b should put exactly a single space. */
+#define SVN_PROP_OWNER SVN_PROP_PREFIX "owner"
+
+/** The files' group.
+ * The same format as for @c SVN_PROP_OWNER, the owner-property. */
+#define SVN_PROP_GROUP  SVN_PROP_PREFIX "group"
+
+/** The files' unix-mode.
+ * Stored in octal, with a leading @c 0; may have 5 digits if any of @c setuid,
+ * @c setgid or @c sticky are set; an example is @c "0644". */
+#define SVN_PROP_UNIX_MODE  SVN_PROP_PREFIX "unix-mode"
+
+/** @} */ /* Meta-data properties */
+
 
 /** @} */
 
@@ -238,13 +387,14 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
  * @{
  */
 
-/** The propname *prefix* that makes a propname a "WC property". 
+/** The property name *prefix* that makes a property a "WC property".
  *
- * For example, ra_dav might store a versioned-resource url as a WC
+ * For example, WebDAV RA implementations might store a versioned-resource url as a WC
  * prop like this:
  *
- *<pre>    name = svn:wc:dav_url
- *    val  = http://www.lyra.org/repos/452348/e.289</pre>
+ * @verbatim
+      name = svn:wc:dav_url
+      val  = http://www.lyra.org/repos/452348/e.289 @endverbatim
  *
  * The client will try to protect WC props by warning users against
  * changing them.  The client will also send them back to the RA layer
@@ -253,7 +403,7 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
 #define SVN_PROP_WC_PREFIX     SVN_PROP_PREFIX "wc:"
 
 /** Another type of non-user-visible property.  "Entry properties" are
- * stored as fields with the administrative 'entries' file.  
+ * stored as fields with the administrative 'entries' file.
  */
 #define SVN_PROP_ENTRY_PREFIX  SVN_PROP_PREFIX "entry:"
 
@@ -283,7 +433,7 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
 /**
  * These are reserved properties attached to a "revision" object in
  * the repository filesystem.  They can be queried by using
- * svn_fs_revision_prop().  They are invisible to svn clients.
+ * svn_fs_revision_prop().
  *
  * @defgroup svn_props_revision_props Revision properties
  * @{
@@ -307,7 +457,7 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
  * happen, for instance, when the revision represents a commit to a
  * foreign version control system, or possibly when two Subversion
  * repositories are combined. This property can be used to record the
- * true, original date of the commit.
+ * TRUE, original date of the commit.
  */
 #define SVN_PROP_REVISION_ORIG_DATE  SVN_PROP_PREFIX "original-date"
 
@@ -345,7 +495,7 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
 
 /**
  * This is a list of all revision properties.
- */ 
+ */
 #define SVN_PROP_REVISION_ALL_PROPS SVN_PROP_REVISION_AUTHOR, \
                                     SVN_PROP_REVISION_LOG, \
                                     SVN_PROP_REVISION_DATE, \
@@ -356,6 +506,8 @@ svn_error_t *svn_prop_diffs(apr_array_header_t **propdiffs,
                                     SVNSYNC_PROP_FROM_UUID, \
                                     SVNSYNC_PROP_LAST_MERGED_REV, \
                                     SVNSYNC_PROP_CURRENTLY_COPYING,
+
+/** @} */
 
 /** @} */
 

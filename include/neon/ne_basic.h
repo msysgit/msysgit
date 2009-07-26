@@ -1,6 +1,6 @@
 /* 
    HTTP/1.1 methods
-   Copyright (C) 1999-2005, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 1999-2008, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -26,7 +26,7 @@
 
 #include "ne_request.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 /* Perform a GET request on resource at 'path', writing the entity
  * body which is returned to 'fd'. */
@@ -67,8 +67,10 @@ int ne_mkcol(ne_session *sess, const char *path);
 /* Adds a Depth: header to a request */
 void ne_add_depth_header(ne_request *req, int depth);
 
-/* Retrieve modification time of resource at location 'path', place in
- * *modtime.  (uses HEAD) */
+/* Retrieve modification time of resource at location 'path', using
+ * the HEAD method, placing parsed time in *modtime.  *modtime is set
+ * to -1 if no Last-Modified response header was given, or the date
+ * given could not be parsed. */
 int ne_getmodtime(ne_session *sess, const char *path, time_t *modtime);
 
 typedef struct {
@@ -83,7 +85,7 @@ typedef struct {
  * Returns non-zero on error, in which case *ctype is not altered. */
 int ne_get_content_type(ne_request *req, ne_content_type *ctype);
 
-/* Server capabilities: */
+/* DEPRECATED: Server capabilities. */
 typedef struct {
     unsigned int dav_class1; /* True if Class 1 WebDAV server */
     unsigned int dav_class2; /* True if Class 2 WebDAV server */
@@ -91,16 +93,37 @@ typedef struct {
 				  * property a. la. mod_dav */
 } ne_server_capabilities;
 
-/* Determines server capabilities (using OPTIONS).  Pass 'path' as "*"
- * to determine proxy server capabilities if using a proxy server. */
+/* DEPRECATED: Determines server capabilities (using OPTIONS). */
 int ne_options(ne_session *sess, const char *path,
-	       ne_server_capabilities *caps);
+               ne_server_capabilities *caps);
+
+#define NE_CAP_DAV_CLASS1    (0x0001) /* Class 1 WebDAV (RFC 2518) */
+#define NE_CAP_DAV_CLASS2    (0x0002) /* Class 2 WebDAV (RFC 2518) */
+#define NE_CAP_DAV_CLASS3    (0x0004) /* Class 3 WebDAV (RFC 4918) */
+#define NE_CAP_MODDAV_EXEC   (0x0008) /* mod_dav "executable" property */
+#define NE_CAP_DAV_ACL       (0x0010) /* WebDAV ACL (RFC 3744) */
+#define NE_CAP_VER_CONTROL   (0x0020) /* DeltaV version-control */
+#define NE_CAP_CO_IN_PLACE   (0x0040) /* DeltaV checkout-in-place */
+#define NE_CAP_VER_HISTORY   (0x0080) /* DeltaV version-history */
+#define NE_CAP_WORKSPACE     (0x0100) /* DeltaV workspace */
+#define NE_CAP_UPDATE        (0x0200) /* DeltaV update */
+#define NE_CAP_LABEL         (0x0400) /* DeltaV label */
+#define NE_CAP_WORK_RESOURCE (0x0800) /* DeltaV working-resouce */
+#define NE_CAP_MERGE         (0x1000) /* DeltaV merge */
+#define NE_CAP_BASELINE      (0x2000) /* DeltaV baseline */
+#define NE_CAP_ACTIVITY      (0x4000) /* DeltaV activity */
+#define NE_CAP_VC_COLLECTION (0x8000) /* DeltaV version-controlled-collection */
+
+/* Determines resource capailities, using an OPTIONS request.  On
+ * return, *caps is set to a bit-mask of the above NE_CAP_* constants
+ * describing the advertised resource capabilities. */
+int ne_options2(ne_session *sess, const char *path, unsigned int *caps);
 
 /* Defines a range of bytes, starting at 'start' and ending
  * at 'end'.  'total' is the number of bytes in the range.
  */
 typedef struct {
-    off_t start, end, total;
+    ne_off_t start, end, total;
 } ne_content_range;
 
 /* Partial GET. range->start must be >= 0. range->total is ignored.
@@ -123,6 +146,6 @@ int ne_get_range(ne_session *sess, const char *path,
 /* Post using buffer as request-body: stream response into f */
 int ne_post(ne_session *sess, const char *path, int fd, const char *buffer);
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_BASIC_H */

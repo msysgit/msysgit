@@ -1,6 +1,6 @@
 /*
    Access control
-   Copyright (C) 2001, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 2001-2006, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -24,7 +24,7 @@
 
 #include "ne_session.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 typedef struct
 {
@@ -49,8 +49,8 @@ typedef struct
 
 /* Set the ACL for the given resource to the list of ACL entries. */
 int ne_acl_set(ne_session *sess, const char *uri,
-	       ne_acl_entry entries[], int numentries);
+	       const ne_acl_entry entries[], int numentries);
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_ACL_H */

@@ -50,7 +50,8 @@ BEGIN {
     SVN::_Core::apr_initialize();
 }
 
-our $gpool = SVN::Pool->new_default;
+my $gpool = SVN::Pool->new_default;
+sub gpool { $gpool } # holding the reference to gpool
 SVN::Core::utf_initialize($gpool);
 
 END {
@@ -61,10 +62,10 @@ END {
 
 Takes a reference to an array of authentication providers
 and returns an auth_baton.  If you use prompt providers
-you can not use this function, but need to use the 
+you can not use this function, but need to use the
 auth_open_helper.
 
-=item SVN::Core::auth_open_helper([auth provider array);
+=item SVN::Core::auth_open_helper([auth provider array]);
 
 Prompt providers return two values instead of one.  The
 2nd parameter is a reference to whatever was passed into
@@ -117,10 +118,11 @@ svn_stream_t in subversion functions. Returned svn_stream_t are also
 translated into perl io handles, so you could access them with regular
 print, read, etc.
 
-Note that some functions take a stream to read or write, while it
-does not close it but still hold the reference to the handle. In this case
-the handle won't be destroyed properly. You should always use correct
-default pool before calling such functions.
+Note that some functions take a stream to read from or write to, but do not
+close the stream while still holding the reference to the io handle.
+In this case the handle won't be destroyed properly.
+You should always set up the correct default pool before calling
+such functions.
 
 =cut
 
@@ -294,20 +296,19 @@ sub DESTROY {
 }
 
 package SVN::Pool;
-use SVN::Base qw/Core svn_pool_/;
+use SVN::Base qw(Core svn_pool_);
 
 =head2 svn_pool_t - SVN::Pool
 
-The perl bindings significantly simplify the usage of pools, while 
+The perl bindings significantly simplify the usage of pools, while
 still being manually adjustable.
 
-Functions requiring pool as the last argument (which are, almost all
-of the subversion functions), the pool is optionally. The default pool
-is used if it is omitted. If default pool is not set, a new root pool
-will be created and set as default automatically when the first
-function requiring a default pool is called.
+For functions requiring a pool as the last argument (which are, almost all
+of the subversion functions), the pool argument is optional. The default pool
+is used if it is omitted. When C<SVN::Core> is loaded, it creates a
+new default pool, which is also available from C<SVN::Core-E<gt>gpool>.
 
-For callback functions providing pool to your subroutine, you could
+For callback functions providing a pool to your subroutine, you could
 also use $pool-E<gt>default to make it the default pool in the scope.
 
 =head3 Methods
@@ -332,10 +333,10 @@ resulting pool as new default pool.
 
 Clear the pool.
 
-=item destroy
+=item DESTROY
 
-Destroy the pool. If the pool is the default pool, restore the
-previous default pool as default. This is normally called
+Destroy the pool. If the pool was the default pool, restore the
+previous default pool. This is normally called
 automatically when the SVN::Pool object is no longer used and
 destroyed by the perl garbage collector.
 
@@ -404,11 +405,15 @@ sub _wrap {
     $npool;
 }
 
+use Scalar::Util 'reftype';
+
 sub DESTROY {
     return if $globaldestroy;
     my $self = shift;
+    # for some reason, REF becomes SCALAR in perl -c or after apr_terminate
+    return if reftype($self) eq 'SCALAR';
     if ($$self eq $SVN::_Core::current_pool) {
-	$SVN::_Core::current_pool = pop @POOLSTACK;
+        $SVN::_Core::current_pool = pop @POOLSTACK;
     }
     if (exists $WRAPPOOL{$self}) {
         delete $WRAPPOOL{$self};
@@ -460,7 +465,7 @@ our @CARP_NOT = qw(SVN::Base SVN::Client SVN::Core SVN::Delta
 By default the perl bindings handle exceptions for you.  The default handler
 automatically croaks with an appropriate error message.  This is likely
 sufficient for simple scripts, but more complex usage may demand handling of
-errors.  
+errors.
 
 You can override the default exception handler by changing the
 $SVN::Error::handler variable.  This variable holds a reference to a perl sub
@@ -477,7 +482,7 @@ be an svn_error_t object if an error occurs and a svn_client_commit_info object
 otherwise.  If you leave the parenthesis off around $ci (scalar context) it
 will be the commit_info object, which in the case of an error will be undef.
 
-If you plan on using this exception handling, understanding the exception
+If you plan on using explicit exception handling, understanding the exception
 handling system the C API uses is helpful.  You can find information on it in
 the HACKING file and the API documentation.  Looking at the implementation of
 SVN::Error::croak_on_error and SVN::Error::expanded_message may be helpful as
@@ -581,13 +586,13 @@ sub expanded_message {
 		}
 		return $error_message;
 }
-		
-		
+
+
 =item SVN::Error::is_error($value)
 
-Returns true if the value is an svn_error type return.  Returns false if the
-value is anything else or undefined.  This is useful for seeing if a call has
-returned an error.
+Returns true if value is of type svn_error.  Returns false if value is
+anything else or undefined.  This is useful for seeing if a call has returned
+an error.
 
 =cut
 
@@ -595,17 +600,17 @@ sub is_error {
 		 return (ref($_[$[]) eq '_p_svn_error_t');
 }
 
-=item SVN::Error::croak_on_error 
+=item SVN::Error::croak_on_error
 
 Default error handler.  It takes an svn_error_t and extracts the error messages
 from it and croaks with those messages.
 
-It can be used two ways.  The first is detailed above as setting it as the
-automatic exception handler via setting $SVN::Error::handler. 
+It can be used in two ways.  The first is detailed above as setting it as the
+automatic exception handler via setting $SVN::Error::handler.
 
-The 2nd is if you have $SVN::Error::handler set to undef as a wrapper for calls
-you want to croak on when there is an error but don't want to have to write an
-explicit error handler for example:
+The second is if you have $SVN::Error::handler set to undef as a wrapper for
+calls you want to croak on when there is an error, but you don't want to write
+an explicit error handler. For example:
 
 my $result_rev=SVN::Error::croak_on_error($ctx-E<gt>checkout($url,$path,'HEAD',1));
 
@@ -618,10 +623,10 @@ sub croak_on_error {
 		unless (is_error($_[$[])) {
 			return @_;
 		}
-    my $svn_error = shift;		
-    
+    my $svn_error = shift;
+
 		my $error_message = $svn_error->expanded_message();
-		
+
 		$svn_error->clear();
 
 		croak($error_message);
@@ -629,9 +634,9 @@ sub croak_on_error {
 
 =item SVN::Error::confess_on_error
 
-The same as croak_on_error except it will give a more detailed stack backtrace.
-Including showing internal calls within the implementations of the perl
-bindings.  This is useful if you're working on developing the bindings.
+The same as croak_on_error except it will give a more detailed stack backtrace,
+including internal calls within the implementation of the perl bindings.
+This is useful when you are doing development work on the bindings themselves.
 
 =cut
 
@@ -639,10 +644,10 @@ sub confess_on_error {
 		unless (is_error($_[$[])) {
 				return @_;
 		}
-    my $svn_error = shift;		
-    
+    my $svn_error = shift;
+
 		my $error_message = $svn_error->expanded_message();
-		
+
 		$svn_error->clear();
 
 		confess($error_message);
@@ -676,15 +681,17 @@ use SVN::Base qw(Core svn_log_changed_path_t_);
 
 =item $lcp-E<gt>action()
 
-'A'dd, 'D'elete, 'R'eplace, 'M'odify 
+'A'dd, 'D'elete, 'R'eplace, 'M'odify
 
 =item $lcp-E<gt>copyfrom_path()
 
-Source path of copy (if any).
+Source path of copy, or C<undef> if there isn't any previous revision
+history.
 
 =item $lcp-E<gt>copyfrom_rev()
 
-Source revision of copy (if any).
+Source revision of copy, or C<$SVN::Core::INVALID_REVNUM> if there is
+no previous history.
 
 =back
 
@@ -730,7 +737,7 @@ use SVN::Base qw(Core svn_dirent_t_);
 
 =item $dirent-E<gt>kind()
 
-Node kind.  One of these constants:
+Node kind.  A number which matches one of these constants:
 $SVN::Node::none, $SVN::Node::file,
 $SVN::Node::dir, $SVN::Node::unknown.
 
@@ -740,11 +747,11 @@ Length of file text, or 0 for directories.
 
 =item $dirent-E<gt>has_props()
 
-Does the node have props?
+Does the node have properties?
 
 =item $dirent-E<gt>created_rev()
 
-Last rev in which this node changed.
+Last revision in which this node changed.
 
 =item $dirent-E<gt>time()
 
@@ -908,11 +915,11 @@ Certificate has expired.
 
 =item $SVN::Auth::SSL::CNMISMATCH
 
-Certificate's CN (hostname) does not match the remote hostname. 
+Certificate's CN (hostname) does not match the remote hostname.
 
 =item $SVN::Auth::SSL::UNKNOWNCA
 
-Certificate authority is unknown (i.e. not trusted). 
+Certificate authority is unknown (i.e. not trusted).
 
 =item $SVN::Auth::SSL::OTHER
 
@@ -928,6 +935,47 @@ use SVN::Base qw(Core SVN_AUTH_SSL_);
 
 package _p_svn_lock_t;
 use SVN::Base qw(Core svn_lock_t_);
+
+=head2 _p_svn_lock_t
+
+Objects of this class contain information about locks placed on files
+in a repository.  It has the following accessor methods:
+
+=over
+
+=item path
+
+The full path to the file which is locked, starting with a forward slash (C</>).
+
+=item token
+
+A string containing the lock token, which is a unique URI.
+
+=item owner
+
+The username of whoever owns the lock.
+
+=item comment
+
+A comment associated with the lock, or undef if there isn't one.
+
+=item is_dav_comment
+
+True if the comment was made by a generic DAV client.
+
+=item creation_date
+
+Time at which the lock was created, as the number of microseconds since
+00:00:00 S<January 1>, 1970 UTC.  Divide it by 1_000_000 to get a Unix
+time_t value.
+
+=item expiration_date
+
+When the lock will expire.  Has the value '0' if the lock will never expire.
+
+=back
+
+=cut
 
 package SVN::MD5;
 use overload

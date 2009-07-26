@@ -1,6 +1,6 @@
 /* 
    neon XML parser interface
-   Copyright (C) 1999-2004, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 1999-2007, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -26,7 +26,7 @@
 
 #include "ne_defs.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 /* The neon XML interface filters a streamed XML tree through a stack
  * of SAX "handlers".  A handler is made up of three callbacks
@@ -88,20 +88,18 @@ void ne_xml_push_handler(ne_xml_parser *p,
 
 /* ne_xml_failed returns non-zero if there was an error during
  * parsing, or zero if the parse completed successfully.  The return
- * value is equal to that of the last ne_xml_parse call for this
- * parser. */
+ * value is equal to that of the last ne_xml_parse() call for this
+ * parser object. */
 int ne_xml_failed(ne_xml_parser *p);
 
-/* Set error string for parser: the string may be truncated. */
+/* Set error string for parser.  (The string may be truncated
+ * internally). */
 void ne_xml_set_error(ne_xml_parser *p, const char *msg);
 
-/* Return the error string (never NULL).  After ne_xml_failed returns
- * >0, this will describe the parse error.  Otherwise it will be a
- * default error string. */
+/* Return the error string (and never NULL).  After ne_xml_failed
+ * returns >0, this will describe the parse error.  Otherwise it will
+ * be a default error string. */
 const char *ne_xml_get_error(ne_xml_parser *p);
-
-/* Destroy the parser object. */
-void ne_xml_destroy(ne_xml_parser *p);
 
 /* Parse the given block of input of length len.  Parser must be
  * called with len=0 to signify the end of the document (for that
@@ -111,24 +109,40 @@ void ne_xml_destroy(ne_xml_parser *p);
  * callback's return value is returned. */
 int ne_xml_parse(ne_xml_parser *p, const char *block, size_t len);
 
-/* As above, casting (ne_xml_parser *)userdata internally.
+/* As ne_xml_parse, casting (ne_xml_parser *)userdata internally.
  * (This function can be passed to ne_add_response_body_reader) */
 int ne_xml_parse_v(void *userdata, const char *block, size_t len);
 
-/* Return current parse line for errors */
+/* Return current line of document during parsing or after parsing is
+ * complete. */
 int ne_xml_currentline(ne_xml_parser *p);
 
 /* From a start_element callback which was passed 'attrs' using given
  * parser, return attribute of given name and namespace.  If nspace is
- * NULL, no namespace resolution is performed. */
+ * NULL, no namespace resolution is performed.  Note that this call is
+ * context-specific; if called outside a start_element callback,
+ * behaviour is undefined. */
 const char *ne_xml_get_attr(ne_xml_parser *parser,
 			    const char **attrs, const char *nspace, 
 			    const char *name);
+
+/* From a start_element callback, resolve a given XML Namespace
+ * prefix, if defined.  Given a non-NULL prefix, returns the namespace
+ * URI which corresponds to the prefix 'prefix' (of length 'length'),
+ * or NULL if no such namespace prefix is defined.  Given a NULL
+ * prefix, returns the default namespace URI or the empty string if
+ * none is defined.  Note that this call is context-specific; if
+ * called outside a start_element callback, behaviour is undefined. */
+const char *ne_xml_resolve_nspace(ne_xml_parser *parser, 
+                                  const char *prefix, size_t length);
 
 /* Return the encoding of the document being parsed.  May return NULL
  * if no encoding is defined or if the XML declaration has not yet
  * been parsed. */
 const char *ne_xml_doc_encoding(const ne_xml_parser *p);
+
+/* Destroy the parser object. */
+void ne_xml_destroy(ne_xml_parser *p);
 
 /* A utility interface for mapping {nspace, name} onto an integer. */
 struct ne_xml_idmap {
@@ -146,6 +160,6 @@ int ne_xml_mapid(const struct ne_xml_idmap map[], size_t maplen,
 /* media type, appropriate for adding to a Content-Type header */
 #define NE_XML_MEDIA_TYPE "application/xml"
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_XML_H */

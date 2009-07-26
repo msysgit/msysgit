@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2000-2005 CollabNet.  All rights reserved.
+ * Copyright (c) 2000-2005, 2008 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,7 +41,8 @@ extern "C" {
  *
  * @since New in 1.3.
  */
-svn_error_t *svn_nls_init(void);
+svn_error_t *
+svn_nls_init(void);
 
 #ifdef __cplusplus
 }

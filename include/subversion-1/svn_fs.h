@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2000-2008 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,17 +19,21 @@
  * @brief Interface to the Subversion filesystem.
  */
 
-
 #ifndef SVN_FS_H
 #define SVN_FS_H
 
+#include <apr.h>
 #include <apr_pools.h>
 #include <apr_hash.h>
 #include <apr_tables.h>
+#include <apr_time.h>    /* for apr_time_t */
+
 #include "svn_types.h"
-#include "svn_error.h"
+#include "svn_string.h"
 #include "svn_delta.h"
 #include "svn_io.h"
+#include "svn_mergeinfo.h"
+#include "svn_checksum.h"
 
 
 #ifdef __cplusplus
@@ -42,8 +46,13 @@ extern "C" {
  *
  * @since New in 1.1.
  */
-const svn_version_t *svn_fs_version(void);
+const svn_version_t *
+svn_fs_version(void);
 
+/**
+ * @defgroup fs_handling Filesystem interaction subsystem
+ * @{
+ */
 
 /* Opening and creating filesystems.  */
 
@@ -69,10 +78,24 @@ typedef struct svn_fs_t svn_fs_t;
 
 /** Create repository format compatible with Subversion versions
  * earlier than 1.4.
- * 
- *  @since New in 1.4. 
+ *
+ *  @since New in 1.4.
  */
 #define SVN_FS_CONFIG_PRE_1_4_COMPATIBLE        "pre-1.4-compatible"
+
+/** Create repository format compatible with Subversion versions
+ * earlier than 1.5.
+ *
+ * @since New in 1.5.
+ */
+#define SVN_FS_CONFIG_PRE_1_5_COMPATIBLE        "pre-1.5-compatible"
+
+/** Create repository format compatible with Subversion versions
+ * earlier than 1.6.
+ *
+ * @since New in 1.6.
+ */
+#define SVN_FS_CONFIG_PRE_1_6_COMPATIBLE        "pre-1.6-compatible"
 /** @} */
 
 
@@ -87,7 +110,10 @@ typedef struct svn_fs_t svn_fs_t;
  * effort to bootstrap a mutex for protecting data common to FS
  * objects; however, there is a small window of failure.  Also, a
  * small amount of data will be leaked if the Subversion FS library is
- * dynamically unloaded.
+ * dynamically unloaded, and using the bdb FS can potentially segfault
+ * or invoke other undefined behavior if this function is not called
+ * with an appropriate pool (such as the pool the module was loaded into)
+ * when loaded dynamically.
  *
  * If this function is called multiple times before the pool passed to
  * the first call is destroyed or cleared, the later calls will have
@@ -95,7 +121,8 @@ typedef struct svn_fs_t svn_fs_t;
  *
  * @since New in 1.2.
  */
-svn_error_t *svn_fs_initialize(apr_pool_t *pool);
+svn_error_t *
+svn_fs_initialize(apr_pool_t *pool);
 
 
 /** The type of a warning callback function.  @a baton is the value specified
@@ -108,18 +135,19 @@ svn_error_t *svn_fs_initialize(apr_pool_t *pool);
 typedef void (*svn_fs_warning_callback_t)(void *baton, svn_error_t *err);
 
 
-/** Provide a callback function, @a warning, that @a fs should use to 
+/** Provide a callback function, @a warning, that @a fs should use to
  * report (non-fatal) errors.  To print an error, the filesystem will call
  * @a warning, passing it @a warning_baton and the error.
  *
  * By default, this is set to a function that will crash the process.
- * Dumping to @c stderr or <tt>/dev/tty</tt> is not acceptable default 
+ * Dumping to @c stderr or <tt>/dev/tty</tt> is not acceptable default
  * behavior for server processes, since those may both be equivalent to
  * <tt>/dev/null</tt>.
  */
-void svn_fs_set_warning_func(svn_fs_t *fs,
-                             svn_fs_warning_callback_t warning,
-                             void *warning_baton);
+void
+svn_fs_set_warning_func(svn_fs_t *fs,
+                        svn_fs_warning_callback_t warning,
+                        void *warning_baton);
 
 
 
@@ -151,8 +179,11 @@ void svn_fs_set_warning_func(svn_fs_t *fs,
  *
  * @since New in 1.1.
  */
-svn_error_t *svn_fs_create(svn_fs_t **fs_p, const char *path,
-                           apr_hash_t *fs_config, apr_pool_t *pool);
+svn_error_t *
+svn_fs_create(svn_fs_t **fs_p,
+              const char *path,
+              apr_hash_t *fs_config,
+              apr_pool_t *pool);
 
 /**
  * Open a Subversion filesystem located in the directory @a path, and
@@ -172,11 +203,30 @@ svn_error_t *svn_fs_create(svn_fs_t **fs_p, const char *path,
  *
  * @note You probably don't want to use this directly.  Take a look at
  * svn_repos_open() instead.
- * 
+ *
  * @since New in 1.1.
  */
-svn_error_t *svn_fs_open(svn_fs_t **fs_p, const char *path,
-                         apr_hash_t *config, apr_pool_t *pool);
+svn_error_t *
+svn_fs_open(svn_fs_t **fs_p,
+            const char *path,
+            apr_hash_t *fs_config,
+            apr_pool_t *pool);
+
+/**
+ * Upgrade the Subversion filesystem located in the directory @a path
+ * to the latest version supported by this library.  Return @c
+ * SVN_ERR_FS_UNSUPPORTED_UPGRADE and make no changes to the
+ * filesystem if the requested upgrade is not supported.  Use @a pool
+ * for necessary allocations.
+ *
+ * @note You probably don't want to use this directly.  Take a look at
+ * svn_repos_upgrade() instead.
+ *
+ * @since New in 1.5.
+ */
+svn_error_t *
+svn_fs_upgrade(const char *path,
+               apr_pool_t *pool);
 
 /**
  * Return, in @a *fs_type, a string identifying the back-end type of
@@ -193,24 +243,30 @@ svn_error_t *svn_fs_open(svn_fs_t **fs_p, const char *path,
  *
  * @since New in 1.3.
  */
-svn_error_t *svn_fs_type(const char **fs_type, const char *path,
-                         apr_pool_t *pool);
+svn_error_t *
+svn_fs_type(const char **fs_type,
+            const char *path,
+            apr_pool_t *pool);
 
 /**
  * Return the path to @a fs's repository, allocated in @a pool.
  * @note This is just what was passed to svn_fs_create() or
  * svn_fs_open() -- might be absolute, might not.
- * 
+ *
  * @since New in 1.1.
  */
-const char *svn_fs_path(svn_fs_t *fs, apr_pool_t *pool);
+const char *
+svn_fs_path(svn_fs_t *fs,
+            apr_pool_t *pool);
 
 /**
  * Delete the filesystem at @a path.
  *
  * @since New in 1.1.
  */
-svn_error_t *svn_fs_delete_fs(const char *path, apr_pool_t *pool);
+svn_error_t *
+svn_fs_delete_fs(const char *path,
+                 apr_pool_t *pool);
 
 /**
  * Copy a possibly live Subversion filesystem from @a src_path to
@@ -218,17 +274,62 @@ svn_error_t *svn_fs_delete_fs(const char *path, apr_pool_t *pool);
  * source filesystem as part of the copy operation; currently, this
  * means deleting copied, unused logfiles for a Berkeley DB source
  * filesystem.
- * 
+ *
  * @since New in 1.1.
  */
-svn_error_t *svn_fs_hotcopy(const char *src_path, const char *dest_path,
-                            svn_boolean_t clean, apr_pool_t *pool);
+svn_error_t *
+svn_fs_hotcopy(const char *src_path,
+               const char *dest_path,
+               svn_boolean_t clean,
+               apr_pool_t *pool);
+
+/** Perform any necessary non-catastrophic recovery on the Subversion
+ * filesystem located at @a path.
+ *
+ * If @a cancel_func is not @c NULL, it is called periodically with
+ * @a cancel_baton as argument to see if the client wishes to cancel
+ * recovery.  BDB filesystems do not currently support cancellation.
+ *
+ * Do any necessary allocation within @a pool.
+ *
+ * For FSFS filesystems, recovery is currently limited to recreating
+ * the db/current file, and does not require exclusive access.
+ *
+ * For BDB filesystems, recovery requires exclusive access, and is
+ * described in detail below.
+ *
+ * After an unexpected server exit, due to a server crash or a system
+ * crash, a Subversion filesystem based on Berkeley DB needs to run
+ * recovery procedures to bring the database back into a consistent
+ * state and release any locks that were held by the deceased process.
+ * The recovery procedures require exclusive access to the database
+ * --- while they execute, no other process or thread may access the
+ * database.
+ *
+ * In a server with multiple worker processes, like Apache, if a
+ * worker process accessing the filesystem dies, you must stop the
+ * other worker processes, and run recovery.  Then, the other worker
+ * processes can re-open the database and resume work.
+ *
+ * If the server exited cleanly, there is no need to run recovery, but
+ * there is no harm in it, either, and it take very little time.  So
+ * it's a fine idea to run recovery when the server process starts,
+ * before it begins handling any requests.
+ *
+ * @since New in 1.5.
+ */
+svn_error_t *
+svn_fs_recover(const char *path,
+               svn_cancel_func_t cancel_func,
+               void *cancel_baton,
+               apr_pool_t *pool);
+
 
 /** Subversion filesystems based on Berkeley DB.
  *
  * The following functions are specific to Berkeley DB filesystems.
  *
- * @defgroup svn_fs_bdb berkeley db filesystems
+ * @defgroup svn_fs_bdb Berkeley DB filesystems
  * @{
  */
 
@@ -258,35 +359,11 @@ svn_error_t *svn_fs_hotcopy(const char *src_path, const char *dest_path,
  * callback is registered with Berkeley DB, and will forward notifications to
  * a user provided callback after performing its own processing.
  */
-svn_error_t *svn_fs_set_berkeley_errcall(svn_fs_t *fs, 
-                                         void (*handler)(const char *errpfx,
-                                                         char *msg));
-
-/** Perform any necessary non-catastrophic recovery on a Berkeley
- * DB-based Subversion filesystem, stored in the environment @a path.
- * Do any necessary allocation within @a pool.
- *
- * After an unexpected server exit, due to a server crash or a system
- * crash, a Subversion filesystem based on Berkeley DB needs to run
- * recovery procedures to bring the database back into a consistent
- * state and release any locks that were held by the deceased process.
- * The recovery procedures require exclusive access to the database
- * --- while they execute, no other process or thread may access the
- * database.
- *
- * In a server with multiple worker processes, like Apache, if a
- * worker process accessing the filesystem dies, you must stop the
- * other worker processes, and run recovery.  Then, the other worker
- * processes can re-open the database and resume work.
- *
- * If the server exited cleanly, there is no need to run recovery, but
- * there is no harm in it, either, and it take very little time.  So
- * it's a fine idea to run recovery when the server process starts,
- * before it begins handling any requests.
- */
-svn_error_t *svn_fs_berkeley_recover(const char *path,
-                                     apr_pool_t *pool);
-
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_set_berkeley_errcall(svn_fs_t *fs,
+                            void (*handler)(const char *errpfx,
+                                            char *msg));
 
 /** Set @a *logfiles to an array of <tt>const char *</tt> log file names
  * of Berkeley DB-based Subversion filesystem.
@@ -295,16 +372,17 @@ svn_error_t *svn_fs_berkeley_recover(const char *path,
  * contains only the names of Berkeley DB log files no longer in use
  * by the filesystem.  Otherwise, all log files (used and unused) are
  * returned.
- 
+
  * This function wraps the Berkeley DB 'log_archive' function
  * called by the db_archive binary.  Repository administrators may
  * want to run this function periodically and delete the unused log
  * files, as a way of reclaiming disk space.
  */
-svn_error_t *svn_fs_berkeley_logfiles(apr_array_header_t **logfiles,
-                                      const char *path,
-                                      svn_boolean_t only_unused,
-                                      apr_pool_t *pool);
+svn_error_t *
+svn_fs_berkeley_logfiles(apr_array_header_t **logfiles,
+                         const char *path,
+                         svn_boolean_t only_unused,
+                         apr_pool_t *pool);
 
 
 /**
@@ -312,32 +390,56 @@ svn_error_t *svn_fs_berkeley_logfiles(apr_array_header_t **logfiles,
  *
  * In Subversion 1.2 and earlier, they only work on Berkeley DB filesystems.
  * In Subversion 1.3 and later, they perform largely as aliases for their
- * generic counterparts.
+ * generic counterparts (with the exception of recover, which only gained
+ * a generic counterpart in 1.5).
  *
- * @defgroup svn_fs_bdb_deprecated berkeley db filesystem compatibility
+ * @defgroup svn_fs_bdb_deprecated Berkeley DB filesystem compatibility
  * @{
  */
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-svn_fs_t *svn_fs_new(apr_hash_t *fs_config, apr_pool_t *pool);
+SVN_DEPRECATED
+svn_fs_t *
+svn_fs_new(apr_hash_t *fs_config,
+           apr_pool_t *pool);
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-svn_error_t *svn_fs_create_berkeley(svn_fs_t *fs, const char *path);
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_create_berkeley(svn_fs_t *fs,
+                       const char *path);
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-svn_error_t *svn_fs_open_berkeley(svn_fs_t *fs, const char *path);
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_open_berkeley(svn_fs_t *fs,
+                     const char *path);
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-const char *svn_fs_berkeley_path(svn_fs_t *fs, apr_pool_t *pool);
+SVN_DEPRECATED
+const char *
+svn_fs_berkeley_path(svn_fs_t *fs,
+                     apr_pool_t *pool);
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-svn_error_t *svn_fs_delete_berkeley(const char *path, apr_pool_t *pool);
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_delete_berkeley(const char *path,
+                       apr_pool_t *pool);
 
 /** @deprecated Provided for backward compatibility with the 1.0 API. */
-svn_error_t *svn_fs_hotcopy_berkeley(const char *src_path, 
-                                     const char *dest_path, 
-                                     svn_boolean_t clean_logs,
-                                     apr_pool_t *pool);
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_hotcopy_berkeley(const char *src_path,
+                        const char *dest_path,
+                        svn_boolean_t clean_logs,
+                        apr_pool_t *pool);
+
+/** @deprecated Provided for backward compatibility with the 1.4 API. */
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_berkeley_recover(const char *path,
+                        apr_pool_t *pool);
 /** @} */
 
 /** @} */
@@ -356,7 +458,7 @@ svn_error_t *svn_fs_hotcopy_berkeley(const char *src_path,
  * Whenever a filesystem function requires information, it can pull
  * things out of the context as needed.
  *
- * @defgroup svn_fs_access_ctx filesystem access contexts
+ * @defgroup svn_fs_access_ctx Filesystem access contexts
  * @{
  */
 
@@ -367,10 +469,13 @@ typedef struct svn_fs_access_t svn_fs_access_t;
 /** Set @a *access_ctx to a new @c svn_fs_access_t object representing
  *  @a username, allocated in @a pool.  @a username is presumed to
  *  have been authenticated by the caller.
+ *
+ *  Make a deep copy of @a username.
  */
-svn_error_t *svn_fs_create_access(svn_fs_access_t **access_ctx,
-                                  const char *username,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_create_access(svn_fs_access_t **access_ctx,
+                     const char *username,
+                     apr_pool_t *pool);
 
 
 /** Associate @a access_ctx with an open @a fs.
@@ -381,31 +486,48 @@ svn_error_t *svn_fs_create_access(svn_fs_access_t **access_ctx,
  * access_ctx to disassociate the current access context from the
  * filesystem.
  */
-svn_error_t *svn_fs_set_access(svn_fs_t *fs,
-                               svn_fs_access_t *access_ctx);
+svn_error_t *
+svn_fs_set_access(svn_fs_t *fs,
+                  svn_fs_access_t *access_ctx);
 
 
 /** Set @a *access_ctx to the current @a fs access context, or NULL if
  * there is no current fs access context.
  */
-svn_error_t *svn_fs_get_access(svn_fs_access_t **access_ctx,
-                               svn_fs_t *fs);
+svn_error_t *
+svn_fs_get_access(svn_fs_access_t **access_ctx,
+                  svn_fs_t *fs);
 
 
 /** Accessors for the access context: */
 
 /** Set @a *username to the name represented by @a access_ctx. */
-svn_error_t *svn_fs_access_get_username(const char **username,
-                                        svn_fs_access_t *access_ctx);
+svn_error_t *
+svn_fs_access_get_username(const char **username,
+                           svn_fs_access_t *access_ctx);
 
 
-/** Push a lock-token @a token into the context @a access_ctx.  The
- * context remembers all tokens it receives, and makes them available
- * to fs functions.  The token is not duplicated into @a access_ctx's
- * pool;  make sure the token's lifetime is at least as long as @a
- * access_ctx. */
-svn_error_t *svn_fs_access_add_lock_token(svn_fs_access_t *access_ctx,
-                                          const char *token);
+/** Push a lock-token @a token associated with path @a path into the
+ * context @a access_ctx.  The context remembers all tokens it
+ * receives, and makes them available to fs functions.  The token and
+ * path are not duplicated into @a access_ctx's pool; make sure the
+ * token's lifetime is at least as long as @a access_ctx.
+ *
+ * @since New in 1.6. */
+svn_error_t *
+svn_fs_access_add_lock_token2(svn_fs_access_t *access_ctx,
+                              const char *path,
+                              const char *token);
+/**
+ * Same as svn_fs_access_add_lock_token2(), but with @a path set to value 1.
+ *
+ * @deprecated Provided for backward compatibility with the 1.1 API.
+ */
+
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_access_add_lock_token(svn_fs_access_t *access_ctx,
+                             const char *token);
 
 /** @} */
 
@@ -435,7 +557,7 @@ svn_error_t *svn_fs_access_add_lock_token(svn_fs_access_t *access_ctx,
  * the filesystem.  Instead, we just remove the reference to the node
  * from the directory.
  *
- * @defgroup svn_fs_nodes filesystem nodes
+ * @defgroup svn_fs_nodes Filesystem nodes
  * @{
  */
 
@@ -446,15 +568,18 @@ typedef struct svn_fs_id_t svn_fs_id_t;
 /** Return -1, 0, or 1 if node revisions @a a and @a b are unrelated,
  * equivalent, or otherwise related (respectively).
  */
-int svn_fs_compare_ids(const svn_fs_id_t *a, const svn_fs_id_t *b);
+int
+svn_fs_compare_ids(const svn_fs_id_t *a,
+                   const svn_fs_id_t *b);
 
 
 
 /** Return non-zero IFF the nodes associated with @a id1 and @a id2 are
- * related, else return zero.  
+ * related, else return zero.
  */
-svn_boolean_t svn_fs_check_related(const svn_fs_id_t *id1,
-                                   const svn_fs_id_t *id2);
+svn_boolean_t
+svn_fs_check_related(const svn_fs_id_t *id1,
+                     const svn_fs_id_t *id2);
 
 
 /**
@@ -464,17 +589,20 @@ svn_boolean_t svn_fs_check_related(const svn_fs_id_t *id1,
  *
  * @deprecated Provided for backward compatibility with the 1.0 API.
  */
-svn_fs_id_t *svn_fs_parse_id(const char *data, 
-                             apr_size_t len,
-                             apr_pool_t *pool);
+SVN_DEPRECATED
+svn_fs_id_t *
+svn_fs_parse_id(const char *data,
+                apr_size_t len,
+                apr_pool_t *pool);
 
 
 /** Return a Subversion string containing the unparsed form of the
  * node or node revision id @a id.  Allocate the string containing the
  * unparsed form in @a pool.
  */
-svn_string_t *svn_fs_unparse_id(const svn_fs_id_t *id, 
-                                apr_pool_t *pool);
+svn_string_t *
+svn_fs_unparse_id(const svn_fs_id_t *id,
+                  apr_pool_t *pool);
 
 /** @} */
 
@@ -546,11 +674,31 @@ svn_string_t *svn_fs_unparse_id(const svn_fs_id_t *id,
  * transaction you already have open.  You can also list all the
  * transactions currently present in the database.
  *
+ * You may assign properties to transactions; these are name/value
+ * pairs.  When you commit a transaction, all of its properties become
+ * unversioned revision properties of the new revision.  (There is one
+ * exception: the svn:date property will be automatically set on new
+ * transactions to the date that the transaction was created, and will
+ * be overwritten when the transaction is committed by the current
+ * time; changes to a transaction's svn:date property will not affect
+ * its committed value.)
+ *
  * Transaction names are guaranteed to contain only letters (upper-
  * and lower-case), digits, `-', and `.', from the ASCII character
  * set.
  *
- * @defgroup svn_fs_txns filesystem transactions
+ * The Subversion filesystem will make a best effort to not reuse
+ * transaction names.  The Berkeley DB backend generates transaction
+ * names using a sequence, or a counter, which is stored in the BDB
+ * database.  Each new transaction increments the counter.  The
+ * current value of the counter is not serialized into a filesystem
+ * dump file, so dumping and restoring the repository will reset the
+ * sequence and reuse transaction names.  The FSFS backend generates a
+ * transaction name using the hostname, process ID and current time in
+ * microseconds since 00:00:00 January 1, 1970 UTC.  So it is
+ * extremely unlikely that a transaction name will be reused.
+ *
+ * @defgroup svn_fs_txns Filesystem transactions
  * @{
  */
 
@@ -564,9 +712,9 @@ typedef struct svn_fs_txn_t svn_fs_txn_t;
 
 /** Do on-the-fly out-of-dateness checks.  That is, an fs routine may
  * throw error if a caller tries to edit an out-of-date item in the
- * transaction.  
- * 
- * @warning ### Not yet implemented. 
+ * transaction.
+ *
+ * @warning ### Not yet implemented.
  */
 #define SVN_FS_TXN_CHECK_OOD                     0x00001
 
@@ -594,11 +742,12 @@ typedef struct svn_fs_txn_t svn_fs_txn_t;
  *
  * @since New in 1.2.
  */
-svn_error_t *svn_fs_begin_txn2(svn_fs_txn_t **txn_p,
-                               svn_fs_t *fs,
-                               svn_revnum_t rev,
-                               apr_uint32_t flags,
-                               apr_pool_t *pool);
+svn_error_t *
+svn_fs_begin_txn2(svn_fs_txn_t **txn_p,
+                  svn_fs_t *fs,
+                  svn_revnum_t rev,
+                  apr_uint32_t flags,
+                  apr_pool_t *pool);
 
 
 /**
@@ -606,10 +755,12 @@ svn_error_t *svn_fs_begin_txn2(svn_fs_txn_t **txn_p,
  *
  * @deprecated Provided for backward compatibility with the 1.1 API.
  */
-svn_error_t *svn_fs_begin_txn(svn_fs_txn_t **txn_p,
-                              svn_fs_t *fs,
-                              svn_revnum_t rev,
-                              apr_pool_t *pool);
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_begin_txn(svn_fs_txn_t **txn_p,
+                 svn_fs_t *fs,
+                 svn_revnum_t rev,
+                 apr_pool_t *pool);
 
 
 
@@ -628,7 +779,7 @@ svn_error_t *svn_fs_begin_txn(svn_fs_txn_t **txn_p,
  * conflicts encountered merging @a txn with the most recent committed
  * revisions.  If a conflict occurs, set @a *conflict_p to the path of
  * the conflict in @a txn, with the same lifetime as @a txn;
- * otherwise, set @a *conflict_p to null.
+ * otherwise, set @a *conflict_p to NULL.
  *
  * If the commit succeeds, @a txn is invalid.
  *
@@ -642,10 +793,11 @@ svn_error_t *svn_fs_begin_txn(svn_fs_txn_t **txn_p,
  * even though a non-@c NULL function return value may indicate that
  * something else went wrong.
  */
-svn_error_t *svn_fs_commit_txn(const char **conflict_p,
-                               svn_revnum_t *new_rev,
-                               svn_fs_txn_t *txn,
-                               apr_pool_t *pool);
+svn_error_t *
+svn_fs_commit_txn(const char **conflict_p,
+                  svn_revnum_t *new_rev,
+                  svn_fs_txn_t *txn,
+                  apr_pool_t *pool);
 
 
 /** Abort the transaction @a txn.  Any changes made in @a txn are
@@ -658,8 +810,9 @@ svn_error_t *svn_fs_commit_txn(const char **conflict_p,
  * of its data may remain in the database after this function returns.
  * Use svn_fs_purge_txn() to retry the transaction cleanup.
  */
-svn_error_t *svn_fs_abort_txn(svn_fs_txn_t *txn,
-                              apr_pool_t *pool);
+svn_error_t *
+svn_fs_abort_txn(svn_fs_txn_t *txn,
+                 apr_pool_t *pool);
 
 
 /** Cleanup the dead transaction in @a fs whose ID is @a txn_id.  Use
@@ -668,24 +821,27 @@ svn_error_t *svn_fs_abort_txn(svn_fs_txn_t *txn,
  * caller probably forgot to abort the transaction, or the cleanup
  * step of that abort failed for some reason.)
  */
-svn_error_t *svn_fs_purge_txn(svn_fs_t *fs,
-                              const char *txn_id,
-                              apr_pool_t *pool);
+svn_error_t *
+svn_fs_purge_txn(svn_fs_t *fs,
+                 const char *txn_id,
+                 apr_pool_t *pool);
 
 
 /** Set @a *name_p to the name of the transaction @a txn, as a
- * null-terminated string.  Allocate the name in @a pool.
+ * NULL-terminated string.  Allocate the name in @a pool.
  */
-svn_error_t *svn_fs_txn_name(const char **name_p,
-                             svn_fs_txn_t *txn,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_txn_name(const char **name_p,
+                svn_fs_txn_t *txn,
+                apr_pool_t *pool);
 
 /** Return @a txn's base revision. */
-svn_revnum_t svn_fs_txn_base_revision(svn_fs_txn_t *txn);
+svn_revnum_t
+svn_fs_txn_base_revision(svn_fs_txn_t *txn);
 
 
 
-/** Open the transaction named @a name in the filesystem @a fs.  Set @a *txn 
+/** Open the transaction named @a name in the filesystem @a fs.  Set @a *txn
  * to the transaction.
  *
  * If there is no such transaction, @c SVN_ERR_FS_NO_SUCH_TRANSACTION is
@@ -694,51 +850,71 @@ svn_revnum_t svn_fs_txn_base_revision(svn_fs_txn_t *txn);
  * Allocate the new transaction in @a pool; when @a pool is freed, the new
  * transaction will be closed (neither committed nor aborted).
  */
-svn_error_t *svn_fs_open_txn(svn_fs_txn_t **txn,
-                             svn_fs_t *fs,
-                             const char *name,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_open_txn(svn_fs_txn_t **txn,
+                svn_fs_t *fs,
+                const char *name,
+                apr_pool_t *pool);
 
 
 /** Set @a *names_p to an array of <tt>const char *</tt> ids which are the
  * names of all the currently active transactions in the filesystem @a fs.
  * Allocate the array in @a pool.
  */
-svn_error_t *svn_fs_list_transactions(apr_array_header_t **names_p,
-                                      svn_fs_t *fs,
-                                      apr_pool_t *pool);
+svn_error_t *
+svn_fs_list_transactions(apr_array_header_t **names_p,
+                         svn_fs_t *fs,
+                         apr_pool_t *pool);
 
 /* Transaction properties */
 
 /** Set @a *value_p to the value of the property named @a propname on
- * transaction @a txn.  If @a txn has no property by that name, set 
+ * transaction @a txn.  If @a txn has no property by that name, set
  * @a *value_p to zero.  Allocate the result in @a pool.
  */
-svn_error_t *svn_fs_txn_prop(svn_string_t **value_p,
-                             svn_fs_txn_t *txn,
-                             const char *propname,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_txn_prop(svn_string_t **value_p,
+                svn_fs_txn_t *txn,
+                const char *propname,
+                apr_pool_t *pool);
 
 
-/** Set @a *table_p to the entire property list of transaction @a txn in
- * filesystem @a fs, as an APR hash table allocated in @a pool.  The
- * resulting table maps property names to pointers to @c svn_string_t
- * objects containing the property value.
+/** Set @a *table_p to the entire property list of transaction @a txn, as
+ * an APR hash table allocated in @a pool.  The resulting table maps property
+ * names to pointers to @c svn_string_t objects containing the property value.
  */
-svn_error_t *svn_fs_txn_proplist(apr_hash_t **table_p,
-                                 svn_fs_txn_t *txn,
-                                 apr_pool_t *pool);
+svn_error_t *
+svn_fs_txn_proplist(apr_hash_t **table_p,
+                    svn_fs_txn_t *txn,
+                    apr_pool_t *pool);
 
 
 /** Change a transactions @a txn's property's value, or add/delete a
- * property.  @a name is the name of the property to change, and @a value 
+ * property.  @a name is the name of the property to change, and @a value
  * is the new value of the property, or zero if the property should be
  * removed altogether.  Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_change_txn_prop(svn_fs_txn_t *txn,
-                                    const char *name,
-                                    const svn_string_t *value,
-                                    apr_pool_t *pool);
+svn_error_t *
+svn_fs_change_txn_prop(svn_fs_txn_t *txn,
+                       const char *name,
+                       const svn_string_t *value,
+                       apr_pool_t *pool);
+
+
+/** Change, add, and/or delete transaction property values in
+ * transaction @a txn.  @a props is an array of <tt>svn_prop_t</tt>
+ * elements.  This is equivalent to calling svn_fs_change_txp_prop
+ * multiple times with the @c name and @c value fields of each
+ * successive <tt>svn_prop_t</tt>, but may be more efficient.
+ * (Properties not mentioned are left alone.)  Do any necessary
+ * temporary allocation in @a pool.
+ *
+ * @since New in 1.5.
+ */
+svn_error_t *
+svn_fs_change_txn_props(svn_fs_txn_t *txn,
+                        apr_array_header_t *props,
+                        apr_pool_t *pool);
 
 /** @} */
 
@@ -749,7 +925,7 @@ svn_error_t *svn_fs_change_txn_prop(svn_fs_txn_t *txn,
  * revision or transaction in a filesystem.  To refer to particular
  * node, you provide a root, and a directory path relative that root.
  *
- * @defgroup svn_fs_roots filesystem roots
+ * @defgroup svn_fs_roots Filesystem roots
  * @{
  */
 
@@ -757,52 +933,68 @@ svn_error_t *svn_fs_change_txn_prop(svn_fs_txn_t *txn,
 typedef struct svn_fs_root_t svn_fs_root_t;
 
 
-/** Set @a *root_p to the root directory of revision @a rev in filesystem 
+/** Set @a *root_p to the root directory of revision @a rev in filesystem
  * @a fs.  Allocate @a *root_p in @a pool.
  */
-svn_error_t *svn_fs_revision_root(svn_fs_root_t **root_p,
-                                  svn_fs_t *fs,
-                                  svn_revnum_t rev,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_revision_root(svn_fs_root_t **root_p,
+                     svn_fs_t *fs,
+                     svn_revnum_t rev,
+                     apr_pool_t *pool);
 
 
-/** Set @a *root_p to the root directory of @a txn.  Allocate @a *root_p in 
+/** Set @a *root_p to the root directory of @a txn.  Allocate @a *root_p in
  * @a pool.
  */
-svn_error_t *svn_fs_txn_root(svn_fs_root_t **root_p,
-                             svn_fs_txn_t *txn,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_txn_root(svn_fs_root_t **root_p,
+                svn_fs_txn_t *txn,
+                apr_pool_t *pool);
 
 
 /** Free the root directory @a root.  Simply clearing or destroying the
  * pool @a root was allocated in will have the same effect as calling
  * this function.
  */
-void svn_fs_close_root(svn_fs_root_t *root);
+void
+svn_fs_close_root(svn_fs_root_t *root);
 
 
 /** Return the filesystem to which @a root belongs.  */
-svn_fs_t *svn_fs_root_fs(svn_fs_root_t *root);
+svn_fs_t *
+svn_fs_root_fs(svn_fs_root_t *root);
 
 
 /** Return @c TRUE iff @a root is a transaction root.  */
-svn_boolean_t svn_fs_is_txn_root(svn_fs_root_t *root);
+svn_boolean_t
+svn_fs_is_txn_root(svn_fs_root_t *root);
 
 /** Return @c TRUE iff @a root is a revision root.  */
-svn_boolean_t svn_fs_is_revision_root(svn_fs_root_t *root);
+svn_boolean_t
+svn_fs_is_revision_root(svn_fs_root_t *root);
 
 
 /** If @a root is the root of a transaction, return the name of the
- * transaction, allocated in @a pool; otherwise, return null.
+ * transaction, allocated in @a pool; otherwise, return NULL.
  */
-const char *svn_fs_txn_root_name(svn_fs_root_t *root,
-                                 apr_pool_t *pool);
+const char *
+svn_fs_txn_root_name(svn_fs_root_t *root,
+                     apr_pool_t *pool);
 
+/** If @a root is the root of a transaction, return the number of the
+ * revision on which is was based when created.  Otherwise, return @c
+ * SVN_INVALID_REVNUM.
+ *
+ * @since New in 1.5.
+ */
+svn_revnum_t
+svn_fs_txn_root_base_revision(svn_fs_root_t *root);
 
 /** If @a root is the root of a revision, return the revision number.
  * Otherwise, return @c SVN_INVALID_REVNUM.
  */
-svn_revnum_t svn_fs_revision_root_revision(svn_fs_root_t *root);
+svn_revnum_t
+svn_fs_revision_root_revision(svn_fs_root_t *root);
 
 /** @} */
 
@@ -812,7 +1004,7 @@ svn_revnum_t svn_fs_revision_root_revision(svn_fs_root_t *root);
  * Here are the rules for directory entry names, and directory paths:
  *
  * A directory entry name is a Unicode string encoded in UTF-8, and
- * may not contain the null character (U+0000).  The name should be in
+ * may not contain the NULL character (U+0000).  The name should be in
  * Unicode canonical decomposition and ordering.  No directory entry
  * may be named '.', '..', or the empty string.  Given a directory
  * entry name which fails to meet these requirements, a filesystem
@@ -829,7 +1021,7 @@ svn_revnum_t svn_fs_revision_root_revision(svn_fs_root_t *root);
  * A path consisting of the empty string, or a string containing only
  * slashes, refers to the root directory.
  *
- * @defgroup svn_fs_directories filesystem directories
+ * @defgroup svn_fs_directories Filesystem directories
  * @{
  */
 
@@ -838,7 +1030,7 @@ svn_revnum_t svn_fs_revision_root_revision(svn_fs_root_t *root);
 /** The kind of change that occurred on the path. */
 typedef enum
 {
-  /** default value */
+  /** path modified in txn */
   svn_fs_path_change_modify = 0,
 
   /** path added in txn */
@@ -855,7 +1047,48 @@ typedef enum
 
 } svn_fs_path_change_kind_t;
 
-/** Change descriptor. */
+/** Change descriptor.
+ *
+ * @note Fields may be added to the end of this structure in future
+ * versions.  Therefore, to preserve binary compatibility, users
+ * should not directly allocate structures of this type.
+ *
+ * @since New in 1.6. */
+typedef struct svn_fs_path_change2_t
+{
+  /** node revision id of changed path */
+  const svn_fs_id_t *node_rev_id;
+
+  /** kind of change */
+  svn_fs_path_change_kind_t change_kind;
+
+  /** were there text mods? */
+  svn_boolean_t text_mod;
+
+  /** were there property mods? */
+  svn_boolean_t prop_mod;
+
+  /** what node kind is the path?
+      (Note: it is legal for this to be @c svn_node_unknown.) */
+  svn_node_kind_t node_kind;
+
+  /** Copyfrom revision and path; this is only valid if copyfrom_known
+   * is true. */
+  svn_boolean_t copyfrom_known;
+  svn_revnum_t copyfrom_rev;
+  const char *copyfrom_path;
+
+  /* NOTE! Please update svn_fs_path_change2_create() when adding new
+     fields here. */
+} svn_fs_path_change2_t;
+
+
+/** Similar to @c svn_fs_path_change2_t, but without kind and copyfrom
+ * information.
+ *
+ * @deprecated Provided for backwards compatibility with the 1.5 API.
+ */
+
 typedef struct svn_fs_path_change_t
 {
   /** node revision id of changed path */
@@ -872,17 +1105,53 @@ typedef struct svn_fs_path_change_t
 
 } svn_fs_path_change_t;
 
+/**
+ * Allocate an @c svn_fs_path_change2_t structure in @a pool, initialize and
+ * return it.
+ *
+ * Set the @c node_rev_id field of the created struct to @a node_rev_id, and
+ * @c change_kind to @a change_kind.  Set all other fields to their
+ * @c _unknown, @c NULL or invalid value, respectively.
+ *
+ * @since New in 1.6.
+ */
+svn_fs_path_change2_t *
+svn_fs_path_change2_create(const svn_fs_id_t *node_rev_id,
+                           svn_fs_path_change_kind_t change_kind,
+                           apr_pool_t *pool);
 
 /** Determine what has changed under a @a root.
  *
  * Allocate and return a hash @a *changed_paths_p containing descriptions
- * of the paths changed under @a root.  The hash is keyed with 
- * <tt>const char *</tt> paths, and has @c svn_fs_path_change_t * values.  
+ * of the paths changed under @a root.  The hash is keyed with
+ * <tt>const char *</tt> paths, and has @c svn_fs_path_change2_t * values.
+ *
+ * Callers can assume that this function takes time proportional to
+ * the amount of data output, and does not need to do tree crawls;
+ * however, it is possible that some of the @c node_kind fields in the
+ * @c svn_fs_path_change2_t * values will be @c svn_node_unknown or
+ * that and some of the @c copyfrom_known fields will be FALSE.
+ *
  * Use @c pool for all allocations, including the hash and its values.
+ *
+ * @since New in 1.6.
  */
-svn_error_t *svn_fs_paths_changed(apr_hash_t **changed_paths_p,
-                                  svn_fs_root_t *root,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_paths_changed2(apr_hash_t **changed_paths_p,
+                      svn_fs_root_t *root,
+                      apr_pool_t *pool);
+
+
+/** Same as svn_fs_paths_changed2(), only with @c svn_fs_path_change_t * values
+ * in the hash (and thus no kind or copyfrom data).
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
+ */
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_paths_changed(apr_hash_t **changed_paths_p,
+                     svn_fs_root_t *root,
+                     apr_pool_t *pool);
 
 /** @} */
 
@@ -890,13 +1159,14 @@ svn_error_t *svn_fs_paths_changed(apr_hash_t **changed_paths_p,
 /* Operations appropriate to all kinds of nodes.  */
 
 /** Set @a *kind_p to the type of node present at @a path under @a
- * root.  If @a path does not exist under @a root, set @a *kind to @c
+ * root.  If @a path does not exist under @a root, set @a *kind_p to @c
  * svn_node_none.  Use @a pool for temporary allocation.
  */
-svn_error_t *svn_fs_check_path(svn_node_kind_t *kind_p,
-                               svn_fs_root_t *root,
-                               const char *path,
-                               apr_pool_t *pool);
+svn_error_t *
+svn_fs_check_path(svn_node_kind_t *kind_p,
+                  svn_fs_root_t *root,
+                  const char *path,
+                  apr_pool_t *pool);
 
 
 /** An opaque node history object. */
@@ -907,18 +1177,19 @@ typedef struct svn_fs_history_t svn_fs_history_t;
  * represents @a path under @a root.  @a root must be a revision root.
  * Use @a pool for all allocations.
  */
-svn_error_t *svn_fs_node_history(svn_fs_history_t **history_p,
-                                 svn_fs_root_t *root,
-                                 const char *path,
-                                 apr_pool_t *pool);
+svn_error_t *
+svn_fs_node_history(svn_fs_history_t **history_p,
+                    svn_fs_root_t *root,
+                    const char *path,
+                    apr_pool_t *pool);
 
 
-/** Set @a *prev_history_t to an opaque node history object which
+/** Set @a *prev_history_p to an opaque node history object which
  * represents the previous (or "next oldest") interesting history
  * location for the filesystem node represented by @a history, or @c
  * NULL if no such previous history exists.  If @a cross_copies is @c
  * FALSE, also return @c NULL if stepping backwards in history to @a
- * prev_history_t would cross a filesystem copy operation.  
+ * *prev_history_p would cross a filesystem copy operation.
  *
  * @note If this is the first call to svn_fs_history_prev() for the @a
  * history object, it could return a history object whose location is
@@ -932,103 +1203,129 @@ svn_error_t *svn_fs_node_history(svn_fs_history_t **history_p,
  * @note This function uses node-id ancestry alone to determine
  * modifiedness, and therefore does NOT claim that in any of the
  * returned revisions file contents changed, properties changed,
- * directory entries lists changed, etc.  
+ * directory entries lists changed, etc.
  *
  * @note The revisions returned for @a path will be older than or
  * the same age as the revision of that path in @a root.  That is, if
  * @a root is a revision root based on revision X, and @a path was
  * modified in some revision(s) younger than X, those revisions
  * younger than X will not be included for @a path.  */
-svn_error_t *svn_fs_history_prev(svn_fs_history_t **prev_history_p,
-                                 svn_fs_history_t *history,
-                                 svn_boolean_t cross_copies,
-                                 apr_pool_t *pool);
+svn_error_t *
+svn_fs_history_prev(svn_fs_history_t **prev_history_p,
+                    svn_fs_history_t *history,
+                    svn_boolean_t cross_copies,
+                    apr_pool_t *pool);
 
 
 /** Set @a *path and @a *revision to the path and revision,
  * respectively, of the @a history object.  Use @a pool for all
- * allocations. 
+ * allocations.
  */
-svn_error_t *svn_fs_history_location(const char **path,
-                                     svn_revnum_t *revision,
-                                     svn_fs_history_t *history,
-                                     apr_pool_t *pool);
-                                      
+svn_error_t *
+svn_fs_history_location(const char **path,
+                        svn_revnum_t *revision,
+                        svn_fs_history_t *history,
+                        apr_pool_t *pool);
+
 
 /** Set @a *is_dir to @c TRUE iff @a path in @a root is a directory.
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_is_dir(svn_boolean_t *is_dir,
-                           svn_fs_root_t *root,
-                           const char *path,
-                           apr_pool_t *pool);
+svn_error_t *
+svn_fs_is_dir(svn_boolean_t *is_dir,
+              svn_fs_root_t *root,
+              const char *path,
+              apr_pool_t *pool);
 
 
 /** Set @a *is_file to @c TRUE iff @a path in @a root is a file.
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_is_file(svn_boolean_t *is_file,
-                            svn_fs_root_t *root,
-                            const char *path,
-                            apr_pool_t *pool);
+svn_error_t *
+svn_fs_is_file(svn_boolean_t *is_file,
+               svn_fs_root_t *root,
+               const char *path,
+               apr_pool_t *pool);
 
 
 /** Get the id of a node.
  *
- * Set @a *id_p to the node revision ID of @a path in @a root, allocated in 
+ * Set @a *id_p to the node revision ID of @a path in @a root, allocated in
  * @a pool.
  *
  * If @a root is the root of a transaction, keep in mind that other
  * changes to the transaction can change which node @a path refers to,
  * and even whether the path exists at all.
  */
-svn_error_t *svn_fs_node_id(const svn_fs_id_t **id_p,
-                            svn_fs_root_t *root,
-                            const char *path,
-                            apr_pool_t *pool);
+svn_error_t *
+svn_fs_node_id(const svn_fs_id_t **id_p,
+               svn_fs_root_t *root,
+               const char *path,
+               apr_pool_t *pool);
 
-/** Set @a *revision to the revision in which @a path under @a root was 
- * created.  Use @a pool for any temporary allocations.  @a *revision will 
- * be set to @c SVN_INVALID_REVNUM for uncommitted nodes (i.e. modified nodes 
- * under a transaction root).
+/** Set @a *revision to the revision in which @a path under @a root was
+ * created.  Use @a pool for any temporary allocations.  @a *revision will
+ * be set to @c SVN_INVALID_REVNUM for uncommitted nodes (i.e. modified nodes
+ * under a transaction root).  Note that the root of an unmodified transaction
+ * is not itself considered to be modified; in that case, return the revision
+ * upon which the transaction was based.
  */
-svn_error_t *svn_fs_node_created_rev(svn_revnum_t *revision,
-                                     svn_fs_root_t *root,
-                                     const char *path,
-                                     apr_pool_t *pool);
+svn_error_t *
+svn_fs_node_created_rev(svn_revnum_t *revision,
+                        svn_fs_root_t *root,
+                        const char *path,
+                        apr_pool_t *pool);
+
+/** Set @a *revision to the revision in which the line of history
+ * represented by @a path under @a root originated.  Use @a pool for
+ * any temporary allocations.  If @a root is a transaction root, @a
+ * *revision will be set to @c SVN_INVALID_REVNUM for any nodes newly
+ * added in that transaction (brand new files or directories created
+ * using @c svn_fs_make_dir or @c svn_fs_make_file).
+ *
+ * @since New in 1.5.
+ */
+svn_error_t *
+svn_fs_node_origin_rev(svn_revnum_t *revision,
+                       svn_fs_root_t *root,
+                       const char *path,
+                       apr_pool_t *pool);
 
 /** Set @a *created_path to the path at which @a path under @a root was
  * created.  Use @a pool for all allocations.  Callers may use this
- * function in conjunction with svn_fs_node_created_rev() perform a
+ * function in conjunction with svn_fs_node_created_rev() to perform a
  * reverse lookup of the mapping of (path, revision) -> node-id that
  * svn_fs_node_id() performs.
  */
-svn_error_t *svn_fs_node_created_path(const char **created_path,
-                                      svn_fs_root_t *root,
-                                      const char *path,
-                                      apr_pool_t *pool);
+svn_error_t *
+svn_fs_node_created_path(const char **created_path,
+                         svn_fs_root_t *root,
+                         const char *path,
+                         apr_pool_t *pool);
 
 
-/** Set @a *value_p to the value of the property named @a propname of 
- * @a path in @a root.  If the node has no property by that name, set 
+/** Set @a *value_p to the value of the property named @a propname of
+ * @a path in @a root.  If the node has no property by that name, set
  * @a *value_p to zero.  Allocate the result in @a pool.
  */
-svn_error_t *svn_fs_node_prop(svn_string_t **value_p,
-                              svn_fs_root_t *root,
-                              const char *path,
-                              const char *propname,
-                              apr_pool_t *pool);
-   
+svn_error_t *
+svn_fs_node_prop(svn_string_t **value_p,
+                 svn_fs_root_t *root,
+                 const char *path,
+                 const char *propname,
+                 apr_pool_t *pool);
 
-/** Set @a *table_p to the entire property list of @a path in @a root, 
- * as an APR hash table allocated in @a pool.  The resulting table maps 
- * property names to pointers to @c svn_string_t objects containing the 
+
+/** Set @a *table_p to the entire property list of @a path in @a root,
+ * as an APR hash table allocated in @a pool.  The resulting table maps
+ * property names to pointers to @c svn_string_t objects containing the
  * property value.
  */
-svn_error_t *svn_fs_node_proplist(apr_hash_t **table_p,
-                                  svn_fs_root_t *root,
-                                  const char *path,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_node_proplist(apr_hash_t **table_p,
+                     svn_fs_root_t *root,
+                     const char *path,
+                     apr_pool_t *pool);
 
 
 /** Change a node's property's value, or add/delete a property.
@@ -1040,11 +1337,12 @@ svn_error_t *svn_fs_node_proplist(apr_hash_t **table_p,
  *   be removed altogether.
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_change_node_prop(svn_fs_root_t *root,
-                                     const char *path,
-                                     const char *name,
-                                     const svn_string_t *value,
-                                     apr_pool_t *pool);
+svn_error_t *
+svn_fs_change_node_prop(svn_fs_root_t *root,
+                        const char *path,
+                        const char *name,
+                        const svn_string_t *value,
+                        apr_pool_t *pool);
 
 
 /** Determine if the properties of two path/root combinations are different.
@@ -1054,12 +1352,13 @@ svn_error_t *svn_fs_change_node_prop(svn_fs_root_t *root,
  * same.  Both paths must exist under their respective roots, and both
  * roots must be in the same filesystem.
  */
-svn_error_t *svn_fs_props_changed(svn_boolean_t *changed_p,
-                                  svn_fs_root_t *root1,
-                                  const char *path1,
-                                  svn_fs_root_t *root2,
-                                  const char *path2,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_props_changed(svn_boolean_t *changed_p,
+                     svn_fs_root_t *root1,
+                     const char *path1,
+                     svn_fs_root_t *root2,
+                     const char *path2,
+                     apr_pool_t *pool);
 
 
 /** Discover a node's copy ancestry, if any.
@@ -1069,7 +1368,7 @@ svn_error_t *svn_fs_props_changed(svn_boolean_t *changed_p,
  * allocating @a *path_p in @a pool.
  *
  * Else if there is no copy ancestry for the node, set @a *rev_p to
- * @c SVN_INVALID_REVNUM and @a *path_p to null.
+ * @c SVN_INVALID_REVNUM and @a *path_p to NULL.
  *
  * If an error is returned, the values of @a *rev_p and @a *path_p are
  * undefined, but otherwise, if one of them is set as described above,
@@ -1095,7 +1394,7 @@ svn_error_t *svn_fs_props_changed(svn_boolean_t *changed_p,
  *      a copy-under-a-copy scenario.  If X's revision-of-origin is
  *      the same as A's, then it was copied under A during the same
  *      transaction that created A.  (X's revision-of-origin cannot be
- *      greater than A's, if X has copy history.)  ### todo: See how
+ *      greater than A's, if X has copy history.)  @todo See how
  *      people like this, it can always be hidden behind the curtain
  *      if necessary.
  *
@@ -1105,17 +1404,18 @@ svn_error_t *svn_fs_props_changed(svn_boolean_t *changed_p,
  *      change to bar right after that results in a new revision of
  *      bar without copy ancestry.
  */
-svn_error_t *svn_fs_copied_from(svn_revnum_t *rev_p,
-                                const char **path_p,
-                                svn_fs_root_t *root,
-                                const char *path,
-                                apr_pool_t *pool);
+svn_error_t *
+svn_fs_copied_from(svn_revnum_t *rev_p,
+                   const char **path_p,
+                   svn_fs_root_t *root,
+                   const char *path,
+                   apr_pool_t *pool);
 
 
 /** Set @a *root_p and @a *path_p to the revision root and path of the
  * destination of the most recent copy event that caused @a path to
- * exist where it does in @a root, or to null if no such copy exists.
- * When non-null, allocate @a *root_p and @a *path_p in @a pool.
+ * exist where it does in @a root, or to NULL if no such copy exists.
+ * When non-NULL, allocate @a *root_p and @a *path_p in @a pool.
  *
  * @a *path_p might be a parent of @a path, rather than @a path
  * itself.  However, it will always be the deepest relevant path.
@@ -1125,12 +1425,44 @@ svn_error_t *svn_fs_copied_from(svn_revnum_t *rev_p,
  *
  * @since New in 1.3.
  */
-svn_error_t *svn_fs_closest_copy(svn_fs_root_t **root_p,
-                                 const char **path_p,
-                                 svn_fs_root_t *root,
-                                 const char *path,
-                                 apr_pool_t *pool);
+svn_error_t *
+svn_fs_closest_copy(svn_fs_root_t **root_p,
+                    const char **path_p,
+                    svn_fs_root_t *root,
+                    const char *path,
+                    apr_pool_t *pool);
 
+
+/** Retrieve mergeinfo for multiple nodes.
+ *
+ * @a *catalog is a catalog for @a paths.  It will never be @c NULL,
+ * but may be empty.
+ *
+ * @a root is revision root to use when looking up paths.
+ *
+ * @a paths are the paths you are requesting information for.
+ *
+ * @a inherit indicates whether to retrieve explicit,
+ * explicit-or-inherited, or only inherited mergeinfo.
+ *
+ * If @a include_descendants is TRUE, then additionally return the
+ * mergeinfo for any descendant of any element of @a paths which has
+ * the @c SVN_PROP_MERGEINFO property explicitly set on it.  (Note
+ * that inheritance is only taken into account for the elements in @a
+ * paths; descendants of the elements in @a paths which get their
+ * mergeinfo via inheritance are not included in @a *mergeoutput.)
+ *
+ * Do any necessary temporary allocation in @a pool.
+ *
+ * @since New in 1.5.
+ */
+svn_error_t *
+svn_fs_get_mergeinfo(svn_mergeinfo_catalog_t *catalog,
+                     svn_fs_root_t *root,
+                     const apr_array_header_t *paths,
+                     svn_mergeinfo_inheritance_t inherit,
+                     svn_boolean_t include_descendants,
+                     apr_pool_t *pool);
 
 /** Merge changes between two nodes into a third node.
  *
@@ -1153,20 +1485,21 @@ svn_error_t *svn_fs_closest_copy(svn_fs_root_t **root_p,
  * If an error is returned (whether for conflict or otherwise), @a target
  * is left unaffected.
  *
- * If @a conflict_p is non-null, then: a conflict error sets @a *conflict_p
+ * If @a conflict_p is non-NULL, then: a conflict error sets @a *conflict_p
  * to the name of the node in @a target which couldn't be merged,
- * otherwise, success sets @a *conflict_p to null.
+ * otherwise, success sets @a *conflict_p to NULL.
  *
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_merge(const char **conflict_p,
-                          svn_fs_root_t *source_root,
-                          const char *source_path,
-                          svn_fs_root_t *target_root,
-                          const char *target_path,
-                          svn_fs_root_t *ancestor_root,
-                          const char *ancestor_path,
-                          apr_pool_t *pool);
+svn_error_t *
+svn_fs_merge(const char **conflict_p,
+             svn_fs_root_t *source_root,
+             const char *source_path,
+             svn_fs_root_t *target_root,
+             const char *target_path,
+             svn_fs_root_t *ancestor_root,
+             const char *ancestor_path,
+             apr_pool_t *pool);
 
 
 
@@ -1191,26 +1524,28 @@ typedef struct svn_fs_dirent_t
 
 /** Set @a *entries_p to a newly allocated APR hash table containing the
  * entries of the directory at @a path in @a root.  The keys of the table
- * are entry names, as byte strings, excluding the final null
+ * are entry names, as byte strings, excluding the final NULL
  * character; the table's values are pointers to @c svn_fs_dirent_t
  * structures.  Allocate the table and its contents in @a pool.
  */
-svn_error_t *svn_fs_dir_entries(apr_hash_t **entries_p,
-                                svn_fs_root_t *root,
-                                const char *path,
-                                apr_pool_t *pool);
+svn_error_t *
+svn_fs_dir_entries(apr_hash_t **entries_p,
+                   svn_fs_root_t *root,
+                   const char *path,
+                   apr_pool_t *pool);
 
 
 /** Create a new directory named @a path in @a root.  The new directory has
- * no entries, and no properties.  @a root must be the root of a transaction, 
+ * no entries, and no properties.  @a root must be the root of a transaction,
  * not a revision.
  *
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_make_dir(svn_fs_root_t *root,
-                             const char *path,
-                             apr_pool_t *pool);
-                              
+svn_error_t *
+svn_fs_make_dir(svn_fs_root_t *root,
+                const char *path,
+                apr_pool_t *pool);
+
 
 /** Delete the node named @a path in @a root.  If the node being deleted is
  * a directory, its contents will be deleted recursively.  @a root must be
@@ -1231,20 +1566,21 @@ svn_error_t *svn_fs_make_dir(svn_fs_root_t *root,
  * Attempting to remove the root dir also results in an error,
  * @c SVN_ERR_FS_ROOT_DIR, even if the dir is empty.
  */
-svn_error_t *svn_fs_delete(svn_fs_root_t *root,
-                           const char *path,
-                           apr_pool_t *pool);
+svn_error_t *
+svn_fs_delete(svn_fs_root_t *root,
+              const char *path,
+              apr_pool_t *pool);
 
 
-/** Create a copy of @a from_path in @a from_root named @a to_path in 
- * @a to_root.  If @a from_path in @a from_root is a directory, copy the 
+/** Create a copy of @a from_path in @a from_root named @a to_path in
+ * @a to_root.  If @a from_path in @a from_root is a directory, copy the
  * tree it refers to recursively.
  *
  * The copy will remember its source; use svn_fs_copied_from() to
  * access this information.
  *
- * @a to_root must be the root of a transaction; @a from_path must be the
- * root of a revision.  (Requiring @a from_path to be the root of a
+ * @a to_root must be the root of a transaction; @a from_root must be the
+ * root of a revision.  (Requiring @a from_root to be the root of a
  * revision makes the implementation trivial: there is no detectable
  * difference (modulo node revision ID's) between copying @a from and
  * simply adding a reference to it.  So the operation takes place in
@@ -1257,11 +1593,12 @@ svn_error_t *svn_fs_delete(svn_fs_root_t *root,
  *
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_copy(svn_fs_root_t *from_root,
-                         const char *from_path,
-                         svn_fs_root_t *to_root,
-                         const char *to_path,
-                         apr_pool_t *pool);
+svn_error_t *
+svn_fs_copy(svn_fs_root_t *from_root,
+            const char *from_path,
+            svn_fs_root_t *to_root,
+            const char *to_path,
+            apr_pool_t *pool);
 
 
 /** Like svn_fs_copy(), but doesn't record copy history, and preserves
@@ -1272,30 +1609,32 @@ svn_error_t *svn_fs_copy(svn_fs_root_t *from_root,
  * about the copy history, and where @a to_path and @a from_path are
  * the same, because it is cheaper than svn_fs_copy().
  */
-svn_error_t *svn_fs_revision_link(svn_fs_root_t *from_root,
-                                  svn_fs_root_t *to_root,
-                                  const char *path,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_revision_link(svn_fs_root_t *from_root,
+                     svn_fs_root_t *to_root,
+                     const char *path,
+                     apr_pool_t *pool);
 
 /* Files.  */
 
-/** Set @a *length_p to the length of the file @a path in @a root, in bytes. 
+/** Set @a *length_p to the length of the file @a path in @a root, in bytes.
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_file_length(svn_filesize_t *length_p,
-                                svn_fs_root_t *root,
-                                const char *path,
-                                apr_pool_t *pool);
+svn_error_t *
+svn_fs_file_length(svn_filesize_t *length_p,
+                   svn_fs_root_t *root,
+                   const char *path,
+                   apr_pool_t *pool);
 
 
-/** Put the MD5 checksum of file @a path into @a digest, which points
- * to @c APR_MD5_DIGESTSIZE bytes of storage.  Use @a pool only for temporary
- * allocations.
+/** Set @a *checksum to the checksum of type @a kind for the file @a path.
+ * @a *checksum will be allocated out of @a pool, which will also be used
+ * for temporary allocations.
  *
- * If the filesystem does not have a prerecorded checksum for @a path,
- * do not calculate a checksum dynamically, just put all 0's into @a
- * digest.  (By convention, the all-zero checksum is considered to
- * match any checksum.)
+ * If the filesystem does not have a prerecorded checksum of @a kind for
+ * @a path, and @a force is not TRUE, do not calculate a checksum
+ * dynamically, just put NULL into @a checksum.  (By convention, the NULL
+ * checksum is considered to match any checksum.)
  *
  * Notes:
  *
@@ -1318,32 +1657,52 @@ svn_error_t *svn_fs_file_length(svn_filesize_t *length_p,
  * Internally, of course, the filesystem checksums everything, because
  * it has access to the lowest level storage forms: strings behind
  * representations.
+ *
+ * @since New in 1.6.
  */
-svn_error_t *svn_fs_file_md5_checksum(unsigned char digest[],
-                                      svn_fs_root_t *root,
-                                      const char *path,
-                                      apr_pool_t *pool);
+svn_error_t *
+svn_fs_file_checksum(svn_checksum_t **checksum,
+                     svn_checksum_kind_t kind,
+                     svn_fs_root_t *root,
+                     const char *path,
+                     svn_boolean_t force,
+                     apr_pool_t *pool);
+
+/**
+ * Same as svn_fs_file_checksum(), only always put the MD5 checksum of file
+ * @a path into @a digest, which should point to @c APR_MD5_DIGESTSIZE bytes
+ * of storage.  If the checksum doesn't exist, put all 0's into @a digest.
+ *
+ * @deprecated Provided for backward compatibility with the 1.5 API.
+ */
+SVN_DEPRECATED
+svn_error_t *
+svn_fs_file_md5_checksum(unsigned char digest[],
+                         svn_fs_root_t *root,
+                         const char *path,
+                         apr_pool_t *pool);
 
 
 /** Set @a *contents to a readable generic stream that will yield the
- * contents of the file @a path in @a root.  Allocate the stream in 
+ * contents of the file @a path in @a root.  Allocate the stream in
  * @a pool.  You can only use @a *contents for as long as the underlying
- * filesystem is open.  If @a path is not a file, return 
+ * filesystem is open.  If @a path is not a file, return
  * @c SVN_ERR_FS_NOT_FILE.
  *
  * If @a root is the root of a transaction, it is possible that the
  * contents of the file @a path will change between calls to
  * svn_fs_file_contents().  In that case, the result of reading from
- * @a *contents is undefined.  
+ * @a *contents is undefined.
  *
- * ### kff todo: I am worried about lifetime issues with this pool vs
+ * ### @todo kff: I am worried about lifetime issues with this pool vs
  * the trail created farther down the call stack.  Trace this function
  * to investigate...
  */
-svn_error_t *svn_fs_file_contents(svn_stream_t **contents,
-                                  svn_fs_root_t *root,
-                                  const char *path,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_file_contents(svn_stream_t **contents,
+                     svn_fs_root_t *root,
+                     const char *path,
+                     apr_pool_t *pool);
 
 
 /** Create a new file named @a path in @a root.  The file's initial contents
@@ -1352,12 +1711,13 @@ svn_error_t *svn_fs_file_contents(svn_stream_t **contents,
  *
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_make_file(svn_fs_root_t *root,
-                              const char *path,
-                              apr_pool_t *pool);
+svn_error_t *
+svn_fs_make_file(svn_fs_root_t *root,
+                 const char *path,
+                 apr_pool_t *pool);
 
 
-/** Apply a text delta to the file @a path in @a root.  @a root must be the 
+/** Apply a text delta to the file @a path in @a root.  @a root must be the
  * root of a transaction, not a revision.
  *
  * Set @a *contents_p to a function ready to receive text delta windows
@@ -1370,18 +1730,18 @@ svn_error_t *svn_fs_make_file(svn_fs_root_t *root,
  * an empty file first.)
  *
  * @a base_checksum is the hex MD5 digest for the base text against
- * which the delta is to be applied; it is ignored if null, and may be
- * ignored even if not null.  If it is not ignored, it must match the
+ * which the delta is to be applied; it is ignored if NULL, and may be
+ * ignored even if not NULL.  If it is not ignored, it must match the
  * checksum of the base text against which svndiff data is being
  * applied; if not, svn_fs_apply_textdelta() or the @a *contents_p call
  * which detects the mismatch will return the error
  * @c SVN_ERR_CHECKSUM_MISMATCH (if there is no base text, there may
- * still be an error if @a base_checksum is neither null nor the
+ * still be an error if @a base_checksum is neither NULL nor the
  * checksum of the empty string).
  *
  * @a result_checksum is the hex MD5 digest for the fulltext that
- * results from this delta application.  It is ignored if null, but if
- * not null, it must match the checksum of the result; if it does not,
+ * results from this delta application.  It is ignored if NULL, but if
+ * not NULL, it must match the checksum of the result; if it does not,
  * then the @a *contents_p call which detects the mismatch will return
  * the error @c SVN_ERR_CHECKSUM_MISMATCH.
  *
@@ -1391,13 +1751,14 @@ svn_error_t *svn_fs_make_file(svn_fs_root_t *root,
  *
  * Do temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_apply_textdelta(svn_txdelta_window_handler_t *contents_p,
-                                    void **contents_baton_p,
-                                    svn_fs_root_t *root,
-                                    const char *path,
-                                    const char *base_checksum,
-                                    const char *result_checksum,
-                                    apr_pool_t *pool);
+svn_error_t *
+svn_fs_apply_textdelta(svn_txdelta_window_handler_t *contents_p,
+                       void **contents_baton_p,
+                       svn_fs_root_t *root,
+                       const char *path,
+                       const char *base_checksum,
+                       const char *result_checksum,
+                       apr_pool_t *pool);
 
 
 /** Write data directly to the file @a path in @a root.  @a root must be the
@@ -1413,7 +1774,7 @@ svn_error_t *svn_fs_apply_textdelta(svn_txdelta_window_handler_t *contents_p,
  * an empty file first.)
  *
  * @a result_checksum is the hex MD5 digest for the final fulltext
- * written to the stream.  It is ignored if null, but if not null, it
+ * written to the stream.  It is ignored if NULL, but if not null, it
  * must match the checksum of the result; if it does not, then the @a
  * *contents_p call which detects the mismatch will return the error
  * @c SVN_ERR_CHECKSUM_MISMATCH.
@@ -1426,11 +1787,12 @@ svn_error_t *svn_fs_apply_textdelta(svn_txdelta_window_handler_t *contents_p,
  * would come from an (optional) header in the dump file.  See
  * http://subversion.tigris.org/issues/show_bug.cgi?id=1102 for more.
  */
-svn_error_t *svn_fs_apply_text(svn_stream_t **contents_p,
-                               svn_fs_root_t *root,
-                               const char *path,
-                               const char *result_checksum,
-                               apr_pool_t *pool);
+svn_error_t *
+svn_fs_apply_text(svn_stream_t **contents_p,
+                  svn_fs_root_t *root,
+                  const char *path,
+                  const char *result_checksum,
+                  apr_pool_t *pool);
 
 
 /** Check if the contents of two root/path combos have changed.
@@ -1438,51 +1800,56 @@ svn_error_t *svn_fs_apply_text(svn_stream_t **contents_p,
  * Set @a *changed_p to 1 if the contents at @a path1 under @a root1 differ
  * from those at @a path2 under @a root2, or set it to 0 if they are the
  * same.  Both paths must exist under their respective roots, and both
- * roots must be in the same filesystem. 
+ * roots must be in the same filesystem.
  */
-svn_error_t *svn_fs_contents_changed(svn_boolean_t *changed_p,
-                                     svn_fs_root_t *root1,
-                                     const char *path1,
-                                     svn_fs_root_t *root2,
-                                     const char *path2,
-                                     apr_pool_t *pool);
+svn_error_t *
+svn_fs_contents_changed(svn_boolean_t *changed_p,
+                        svn_fs_root_t *root1,
+                        const char *path1,
+                        svn_fs_root_t *root2,
+                        const char *path2,
+                        apr_pool_t *pool);
 
 
 
 /* Filesystem revisions.  */
 
 
-/** Set @a *youngest_p to the number of the youngest revision in filesystem 
+/** Set @a *youngest_p to the number of the youngest revision in filesystem
  * @a fs.  Use @a pool for all temporary allocation.
  *
  * The oldest revision in any filesystem is numbered zero.
  */
-svn_error_t *svn_fs_youngest_rev(svn_revnum_t *youngest_p,
-                                 svn_fs_t *fs,
-                                 apr_pool_t *pool);
+svn_error_t *
+svn_fs_youngest_rev(svn_revnum_t *youngest_p,
+                    svn_fs_t *fs,
+                    apr_pool_t *pool);
 
 
-/** Deltify predecessors of paths modified in @a revision in
- * filesystem @a fs.  Use @a pool for all allocations. 
- * 
+/** Provide filesystem @a fs the opportunity to compress storage relating to
+ * associated with  @a revision in filesystem @a fs.  Use @a pool for all
+ * allocations.
+ *
  * @note This can be a time-consuming process, depending the breadth
  * of the changes made in @a revision, and the depth of the history of
- * those changed paths. 
+ * those changed paths.  This may also be a no op.
  */
-svn_error_t *svn_fs_deltify_revision(svn_fs_t *fs,
-                                     svn_revnum_t revision,
-                                     apr_pool_t *pool);
+svn_error_t *
+svn_fs_deltify_revision(svn_fs_t *fs,
+                        svn_revnum_t revision,
+                        apr_pool_t *pool);
 
 
 /** Set @a *value_p to the value of the property named @a propname on
- * revision @a rev in the filesystem @a fs.  If @a rev has no property by 
+ * revision @a rev in the filesystem @a fs.  If @a rev has no property by
  * that name, set @a *value_p to zero.  Allocate the result in @a pool.
  */
-svn_error_t *svn_fs_revision_prop(svn_string_t **value_p,
-                                  svn_fs_t *fs,
-                                  svn_revnum_t rev,
-                                  const char *propname,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_revision_prop(svn_string_t **value_p,
+                     svn_fs_t *fs,
+                     svn_revnum_t rev,
+                     const char *propname,
+                     apr_pool_t *pool);
 
 
 /** Set @a *table_p to the entire property list of revision @a rev in
@@ -1490,10 +1857,11 @@ svn_error_t *svn_fs_revision_prop(svn_string_t **value_p,
  * maps <tt>char *</tt> property names to @c svn_string_t * values; the names
  * and values are allocated in @a pool.
  */
-svn_error_t *svn_fs_revision_proplist(apr_hash_t **table_p,
-                                      svn_fs_t *fs,
-                                      svn_revnum_t rev,
-                                      apr_pool_t *pool);
+svn_error_t *
+svn_fs_revision_proplist(apr_hash_t **table_p,
+                         svn_fs_t *fs,
+                         svn_revnum_t rev,
+                         apr_pool_t *pool);
 
 
 /** Change a revision's property's value, or add/delete a property.
@@ -1510,11 +1878,12 @@ svn_error_t *svn_fs_revision_proplist(apr_hash_t **table_p,
  *
  * Do any necessary temporary allocation in @a pool.
  */
-svn_error_t *svn_fs_change_rev_prop(svn_fs_t *fs,
-                                    svn_revnum_t rev,
-                                    const char *name,
-                                    const svn_string_t *value,
-                                    apr_pool_t *pool);
+svn_error_t *
+svn_fs_change_rev_prop(svn_fs_t *fs,
+                       svn_revnum_t rev,
+                       const char *name,
+                       const svn_string_t *value,
+                       apr_pool_t *pool);
 
 
 
@@ -1530,12 +1899,13 @@ svn_error_t *svn_fs_change_rev_prop(svn_fs_t *fs,
  * Allocate @a *stream_p, and do any necessary temporary allocation, in
  * @a pool.
  */
-svn_error_t *svn_fs_get_file_delta_stream(svn_txdelta_stream_t **stream_p,
-                                          svn_fs_root_t *source_root,
-                                          const char *source_path,
-                                          svn_fs_root_t *target_root,
-                                          const char *target_path,
-                                          apr_pool_t *pool);
+svn_error_t *
+svn_fs_get_file_delta_stream(svn_txdelta_stream_t **stream_p,
+                             svn_fs_root_t *source_root,
+                             const char *source_path,
+                             svn_fs_root_t *target_root,
+                             const char *target_path,
+                             apr_pool_t *pool);
 
 
 
@@ -1543,15 +1913,20 @@ svn_error_t *svn_fs_get_file_delta_stream(svn_txdelta_stream_t **stream_p,
 
 /** Populate @a *uuid with the UUID associated with @a fs.  Allocate
     @a *uuid in @a pool.  */
-svn_error_t *svn_fs_get_uuid(svn_fs_t *fs,
-                             const char **uuid,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_get_uuid(svn_fs_t *fs,
+                const char **uuid,
+                apr_pool_t *pool);
 
 
-/** Associate @a *uuid with @a fs.  Use @a pool for any scratchwork. */
-svn_error_t *svn_fs_set_uuid(svn_fs_t *fs,
-                             const char *uuid,
-                             apr_pool_t *pool);
+/** If not @c NULL, associate @a *uuid with @a fs.  Otherwise (if @a
+ * uuid is @c NULL), generate a new UUID for @a fs.  Use @a pool for
+ * any scratchwork.
+ */
+svn_error_t *
+svn_fs_set_uuid(svn_fs_t *fs,
+                const char *uuid,
+                apr_pool_t *pool);
 
 
 /* Non-historical properties.  */
@@ -1560,8 +1935,8 @@ svn_error_t *svn_fs_set_uuid(svn_fs_t *fs,
 
 
 
-/** @defgroup svn_fs_locks filesystem locks
- * @{ 
+/** @defgroup svn_fs_locks Filesystem locks
+ * @{
  * @since New in 1.2. */
 
 /** A lock represents one user's exclusive right to modify a path in a
@@ -1574,7 +1949,8 @@ svn_error_t *svn_fs_set_uuid(svn_fs_t *fs,
  * string by the client), and is required to make further use of the
  * lock (including removal of the lock.)  A lock-token can also be
  * queried to return a svn_lock_t structure that describes the details
- * of the lock.
+ * of the lock.  lock-tokens must not contain any newline character,
+ * mainly due to the serialization for tokens for pre-commit hook.
  *
  * Locks are not secret; anyone can view existing locks in a
  * filesystem.  Locks are not omnipotent: they can broken and stolen
@@ -1599,14 +1975,14 @@ svn_error_t *svn_fs_set_uuid(svn_fs_t *fs,
  * 'owner' field in the new lock to the fs username.
  *
  * @a comment is optional: it's either an xml-escapable UTF8 string
- * which describes the lock, or it is @c NULL. 
+ * which describes the lock, or it is @c NULL.
  *
  * @a is_dav_comment describes whether the comment was created by a
  * generic DAV client; only mod_dav_svn's autoversioning feature needs
  * to use it.  If in doubt, pass 0.
  *
  * If path is already locked, then return @c SVN_ERR_FS_PATH_ALREADY_LOCKED,
- * unless @a steal_lock is true, in which case "steal" the existing
+ * unless @a steal_lock is TRUE, in which case "steal" the existing
  * lock, even if the FS access-context's username does not match the
  * current lock's owner: delete the existing lock on @a path, and
  * create a new one.
@@ -1628,16 +2004,17 @@ svn_error_t *svn_fs_set_uuid(svn_fs_t *fs,
  *
  * @note At this time, only files can be locked.
  */
-svn_error_t *svn_fs_lock(svn_lock_t **lock,
-                         svn_fs_t *fs,
-                         const char *path,
-                         const char *token,
-                         const char *comment,
-                         svn_boolean_t is_dav_comment,
-                         apr_time_t expiration_date,
-                         svn_revnum_t current_rev,
-                         svn_boolean_t steal_lock,
-                         apr_pool_t *pool);
+svn_error_t *
+svn_fs_lock(svn_lock_t **lock,
+            svn_fs_t *fs,
+            const char *path,
+            const char *token,
+            const char *comment,
+            svn_boolean_t is_dav_comment,
+            apr_time_t expiration_date,
+            svn_revnum_t current_rev,
+            svn_boolean_t steal_lock,
+            apr_pool_t *pool);
 
 
 /** Generate a unique lock-token using @a fs. Return in @a *token,
@@ -1646,9 +2023,10 @@ svn_error_t *svn_fs_lock(svn_lock_t **lock,
  * This can be used in to populate lock->token before calling
  * svn_fs_attach_lock().
  */
-svn_error_t *svn_fs_generate_lock_token(const char **token,
-                                        svn_fs_t *fs,
-                                        apr_pool_t *pool);
+svn_error_t *
+svn_fs_generate_lock_token(const char **token,
+                           svn_fs_t *fs,
+                           apr_pool_t *pool);
 
 
 /** Remove the lock on @a path represented by @a token in @a fs.
@@ -1660,28 +2038,30 @@ svn_error_t *svn_fs_generate_lock_token(const char **token,
  *
  * If @a token points to a lock, but the username of @a fs's access
  * context doesn't match the lock's owner, return @c
- * SVN_ERR_FS_LOCK_OWNER_MISMATCH.  If @a break_lock is true, however, don't
+ * SVN_ERR_FS_LOCK_OWNER_MISMATCH.  If @a break_lock is TRUE, however, don't
  * return error;  allow the lock to be "broken" in any case.  In the latter
  * case, @a token shall be @c NULL.
  *
  * Use @a pool for temporary allocations.
  */
-svn_error_t *svn_fs_unlock(svn_fs_t *fs,
-                           const char *path,
-                           const char *token,
-                           svn_boolean_t break_lock,
-                           apr_pool_t *pool);
+svn_error_t *
+svn_fs_unlock(svn_fs_t *fs,
+              const char *path,
+              const char *token,
+              svn_boolean_t break_lock,
+              apr_pool_t *pool);
 
 
 /** If @a path is locked in @a fs, set @a *lock to an svn_lock_t which
  *  represents the lock, allocated in @a pool.
- *  
+ *
  * If @a path is not locked, set @a *lock to NULL.
  */
-svn_error_t *svn_fs_get_lock(svn_lock_t **lock,
-                             svn_fs_t *fs,
-                             const char *path,
-                             apr_pool_t *pool);
+svn_error_t *
+svn_fs_get_lock(svn_lock_t **lock,
+                svn_fs_t *fs,
+                const char *path,
+                apr_pool_t *pool);
 
 
 /** The type of a lock discovery callback function.  @a baton is the
@@ -1703,11 +2083,12 @@ typedef svn_error_t *(*svn_fs_get_locks_callback_t)(void *baton,
  * lock iteration will terminate and that error will be returned by
  * this function.
  */
-svn_error_t *svn_fs_get_locks(svn_fs_t *fs,
-                              const char *path,
-                              svn_fs_get_locks_callback_t get_locks_func,
-                              void *get_locks_baton,
-                              apr_pool_t *pool);
+svn_error_t *
+svn_fs_get_locks(svn_fs_t *fs,
+                 const char *path,
+                 svn_fs_get_locks_callback_t get_locks_func,
+                 void *get_locks_baton,
+                 apr_pool_t *pool);
 
 /** @} */
 
@@ -1717,8 +2098,48 @@ svn_error_t *svn_fs_get_locks(svn_fs_t *fs,
  *
  * @since New in 1.2.
  */
-svn_error_t *svn_fs_print_modules(svn_stringbuf_t *output,
-                                  apr_pool_t *pool);
+svn_error_t *
+svn_fs_print_modules(svn_stringbuf_t *output,
+                     apr_pool_t *pool);
+
+
+/** The kind of action being taken by 'pack'. */
+typedef enum
+{
+  /** packing of the shard has commenced */
+  svn_fs_pack_notify_start = 0,
+
+  /** packing of the shard is completed */
+  svn_fs_pack_notify_end
+
+} svn_fs_pack_notify_action_t;
+
+/** The type of a pack notification function.  @a shard is the shard being
+ * acted upon; @a action is the type of action being performed.  @a baton is
+ * the corresponding baton for the notification function, and @a pool can
+ * be used for temporary allocations, but will be cleared between invocations.
+ */
+typedef svn_error_t *(*svn_fs_pack_notify_t)(void *baton,
+                                             apr_int64_t shard,
+                                             svn_fs_pack_notify_action_t action,
+                                             apr_pool_t *pool);
+
+/**
+ * Possibly update the filesystem located in the directory @a path
+ * to use disk space more efficiently.
+ *
+ * @since New in 1.6.
+ */
+svn_error_t *
+svn_fs_pack(const char *db_path,
+            svn_fs_pack_notify_t notify_func,
+            void *notify_baton,
+            svn_cancel_func_t cancel_func,
+            void *cancel_baton,
+            apr_pool_t *pool);
+
+
+/** @} */
 
 #ifdef __cplusplus
 }

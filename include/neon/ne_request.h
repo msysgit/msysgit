@@ -1,6 +1,6 @@
 /* 
    HTTP Request Handling
-   Copyright (C) 1999-2005, Joe Orton <joe@manyfish.co.uk>
+   Copyright (C) 1999-2006, 2008, Joe Orton <joe@manyfish.co.uk>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -26,7 +26,7 @@
 #include "ne_string.h" /* For ne_buffer */
 #include "ne_session.h"
 
-BEGIN_NEON_DECLS
+NE_BEGIN_DECLS
 
 #define NE_OK (0) /* Success */
 #define NE_ERROR (1) /* Generic error; use ne_get_error(session) for message */
@@ -57,14 +57,7 @@ void ne_set_request_body_buffer(ne_request *req, const char *buffer,
 /* The request body will be taken from 'length' bytes read from the
  * file descriptor 'fd', starting from file offset 'offset'. */
 void ne_set_request_body_fd(ne_request *req, int fd,
-                            off_t offset, off_t length);
-
-#ifdef NE_LFS
-/* Alternate version of ne_set_request_body_fd taking off64_t 
- * offset type for systems supporting _LARGEFILE64_SOURCE. */
-void ne_set_request_body_fd64(ne_request *req, int fd,
-                              off64_t offset, off64_t length);
-#endif
+                            ne_off_t offset, ne_off_t length);
 
 /* "Pull"-based request body provider: a callback which is invoked to
  * provide blocks of request body on demand.
@@ -86,15 +79,8 @@ typedef ssize_t (*ne_provide_body)(void *userdata,
  * request body, a block at a time.  The total size of the request
  * body is 'length'; the callback must ensure that it returns no more
  * than 'length' bytes in total. */
-void ne_set_request_body_provider(ne_request *req, off_t length,
+void ne_set_request_body_provider(ne_request *req, ne_off_t length,
 				  ne_provide_body provider, void *userdata);
-
-#ifdef NE_LFS
-/* Duplicate version of ne_set_request_body_provider, taking an off64_t
- * offset. */
-void ne_set_request_body_provider64(ne_request *req, off64_t length,
-                                    ne_provide_body provider, void *userdata);
-#endif
 
 /* Handling response bodies; two callbacks must be provided:
  *
@@ -223,31 +209,55 @@ int ne_discard_response(ne_request *req);
  * given file descriptor.  Returns NE_ERROR on error. */
 int ne_read_response_to_fd(ne_request *req, int fd);
 
-/* If 'flag' is non-zer, enable the HTTP/1.1 "Expect: 100-continue"
- * feature for the request, which allows the server to send an error
- * response before the request body is sent.  This should only be used
- * if the server is known to support the feature (not all HTTP/1.1
- * servers do); the request will time out and fail otherwise. */
-void ne_set_request_expect100(ne_request *req, int flag);
+/* Defined request flags: */
+typedef enum ne_request_flag_e {
+    NE_REQFLAG_EXPECT100 = 0, /* enable this flag to enable use of the
+                               * "Expect: 100-continue" for the
+                               * request. */
+
+    NE_REQFLAG_IDEMPOTENT, /* disable this flag if the request uses a
+                            * non-idempotent method such as POST. */
+
+    NE_REQFLAG_LAST /* enum sentinel value */
+} ne_request_flag;
+
+/* Set a new value for a particular request flag. */
+void ne_set_request_flag(ne_request *req, ne_request_flag flag, int value);
+
+/* Return 0 if the given flag is not set, >0 it is set, or -1 if the
+ * flag is not supported. */
+int ne_get_request_flag(ne_request *req, ne_request_flag flag);
 
 /**** Request hooks handling *****/
 
 typedef void (*ne_free_hooks)(void *cookie);
 
-/* Hook called when a create is created; passed the request method,
- * and the string used as the Request-URI (which may be an abs_path,
- * or an absoluteURI, depending on whether an HTTP proxy is in
- * use).  */
+/* Hook called when a request is created; passed the request method,
+ * and the string used as the Request-URI (note that this may be a
+ * absolute URI if a proxy is in use, an absolute path, a "*", etc).
+ * A create_request hook is called exactly once per request. */
 typedef void (*ne_create_request_fn)(ne_request *req, void *userdata,
 				     const char *method, const char *requri);
 void ne_hook_create_request(ne_session *sess, 
 			    ne_create_request_fn fn, void *userdata);
 
 /* Hook called before the request is sent.  'header' is the raw HTTP
- * header before the trailing CRLF is added: add in more here. */
+ * header before the trailing CRLF is added; more headers can be added
+ * here.  A pre_send hook may be called >1 time per request if the
+ * request is retried due to a post_send hook returning NE_RETRY. */
 typedef void (*ne_pre_send_fn)(ne_request *req, void *userdata, 
 			       ne_buffer *header);
 void ne_hook_pre_send(ne_session *sess, ne_pre_send_fn fn, void *userdata);
+
+/* Hook called directly after the response headers have been read, but
+ * before the resposnse body has been read.  'status' is the response
+ * status-code.  A post_header hook may be called >1 time per request
+ * if the request is retried due to a post_send hook returning
+ * NE_RETRY. */
+typedef void (*ne_post_headers_fn)(ne_request *req, void *userdata,
+                                   const ne_status *status);
+void ne_hook_post_headers(ne_session *sess, 
+                          ne_post_headers_fn fn, void *userdata);
 
 /* Hook called after the request is dispatched (request sent, and
  * the entire response read).  If an error occurred reading the response,
@@ -268,15 +278,39 @@ void ne_hook_destroy_request(ne_session *sess,
 			     ne_destroy_req_fn fn, void *userdata);
 
 typedef void (*ne_destroy_sess_fn)(void *userdata);
-/* Hook called when the session is destroyed. */
+/* Hook called when the session is about to be destroyed. */
 void ne_hook_destroy_session(ne_session *sess,
 			     ne_destroy_sess_fn fn, void *userdata);
+
+typedef void (*ne_close_conn_fn)(void *userdata);
+/* Hook called when the connection is closed; note that this hook
+ * may be called *AFTER* the destroy_session hook. */
+void ne_hook_close_conn(ne_session *sess, ne_close_conn_fn fn, void *userdata);
+
+/* The ne_unhook_* functions remove a hook registered with the given
+ * session.  If a hook is found which was registered with a given
+ * function 'fn', and userdata pointer 'userdata', then it will be
+ * removed from the hooks list.
+ *
+ * It is unsafe to use any of these functions from a hook function to
+ * unregister itself, except for ne_unhook_destroy_request. */
+void ne_unhook_create_request(ne_session *sess, 
+                              ne_create_request_fn fn, void *userdata);
+void ne_unhook_pre_send(ne_session *sess, ne_pre_send_fn fn, void *userdata);
+void ne_unhook_post_headers(ne_session *sess, ne_post_headers_fn fn, void *userdata);
+void ne_unhook_post_send(ne_session *sess, ne_post_send_fn fn, void *userdata);
+void ne_unhook_destroy_request(ne_session *sess,
+                               ne_destroy_req_fn fn, void *userdata);
+void ne_unhook_destroy_session(ne_session *sess,
+                               ne_destroy_sess_fn fn, void *userdata);
+void ne_unhook_close_conn(ne_session *sess, 
+                          ne_close_conn_fn fn, void *userdata);
 
 /* Store an opaque context for the request, 'priv' is returned by a
  * call to ne_request_get_private with the same ID. */
 void ne_set_request_private(ne_request *req, const char *id, void *priv);
 void *ne_get_request_private(ne_request *req, const char *id);
 
-END_NEON_DECLS
+NE_END_DECLS
 
 #endif /* NE_REQUEST_H */
