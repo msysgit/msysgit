@@ -54,6 +54,9 @@ pre_install
 
 (cd $d && make install) || exit
 
+# avoid address clash
+/bin/rebase -b 0x679f0000 msys-crypto-*.dll || exit
+
 (cd $d && 
    make swig-pl-lib LDFLAGS="-no-undefined -Wl,-enable-auto-import -L/lib" LIBS="-L/lib/perl5/5.8.8/msys/CORE -lperl" && 
      make install-swig-pl-lib &&
