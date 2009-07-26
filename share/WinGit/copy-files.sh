@@ -69,7 +69,8 @@ then
 	sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
-(cd /mingw && tar cf - bin/*{tcl,tk,wish,gpg,curl.exe,libcurl,libiconv}* \
+(cd /mingw && tar cf - \
+	bin/*{tcl,tk,wish,gpg,curl.exe,curl-ca-bundle.crt,libcurl,libiconv}* \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
 md5sum /bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
