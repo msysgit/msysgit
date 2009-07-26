@@ -35,6 +35,14 @@ make &&
 index=$(/share/msysGit/pre-install.sh) &&
 make install &&
 make ca-bundle &&
+ls ../certs/*.pem 2>/dev/null |
+while read pem
+do
+	name=${pem%.pem}
+	name=${name##*/}
+	(printf "\n%s\n%s\n" "$name" "$(echo "$name" | sed 's/./=/g')"  &&
+	 cat $pem) >> lib/ca-bundle.crt || break
+done &&
 cp lib/ca-bundle.crt /mingw/bin/curl-ca-bundle.crt &&
 /share/msysGit/post-install.sh $index "Install $FILE"
 ) || die "Could not install $FILE"
