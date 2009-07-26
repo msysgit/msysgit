@@ -21,7 +21,6 @@ test -d /.git || {
 			-e 's/^path = /--exclude=/p' < .gitmodules) -z |
 		git update-index --add -z --stdin &&
 	git commit -m "Current revision" &&
-	git remote add -f origin \
-		mob@repo.or.cz:/srv/git/git/mingw/4msysgit.git &&
+	git remote add -f origin mob@repo.or.cz:/srv/git/msysgit.git &&
 	git gc
 }
