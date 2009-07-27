@@ -88,6 +88,12 @@ test -f $DIR/openssl.dll || (
 		git add $list &&
 		git commit -s -m "Install OpenSSL $VERSION"
 	) &&
+	list=$(echo *.dll.a) &&
+	cp $list /mingw/lib && (
+		cd /mingw/lib &&
+		git add $list &&
+		git commit -s -m "Install OpenSSL $VERSION import libs"
+	) &&
 	cd ../outinc &&
 	cp -r openssl /mingw/include &&
 	(
