@@ -8,7 +8,7 @@ url=http://subversion.tigris.org/downloads
 d=subversion-$version
 tar=$d.tar.bz2
 tar2=subversion-deps-$version.tar.bz2
-configure_options="--prefix= --disable-static --enable-shared --with-ssl=openssl --build=i686-pc-cygwin"
+configure_options="--prefix= --disable-static --enable-shared --with-ssl=openssl --with-sqlite=sqlite-amalgamation/sqlite3.c --build=i686-pc-cygwin"
 
 # Make sure that we're running in MSys mode
 export MSYSTEM=MSYS
