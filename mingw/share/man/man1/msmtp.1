@@ -1,0 +1,659 @@
+.\" -*-nroff-*-
+.\"
+.\" msmtp version 1.4.17
+.\"
+.\" Copyright (C) 2005, 2006, 2007, 2008  Martin Lambers
+.\"
+.\" Permission is granted to copy, distribute and/or modify this document
+.\" under the terms of the GNU Free Documentation License, Version 1.2 or
+.\" any later version published by the Free Software Foundation; with no
+.\" Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+.TH MSMTP 1 2008-07
+.SH NAME
+msmtp \- An SMTP client 
+.SH SYNOPSIS
+.IP "Sendmail mode (default):"
+.B msmtp
+[option...] [--] recipient...
+.br
+.B msmtp
+[option...] -t [--] [recipient...]
+.IP "Server information mode:"
+.B msmtp
+[option...] --serverinfo
+.IP "Remote Message Queue Starting mode:"
+.B msmtp
+[option...] --rmqs=\fIhost\fP|\fI@domain\fP|\fI#queue\fP
+.SH DESCRIPTION
+In the default sendmail mode, msmtp reads a mail from standard input and sends
+it to an SMTP server for delivery.
+.br
+In server information mode, msmtp prints information about an SMTP server.
+.br
+In Remote Message Queue Starting mode, msmtp sends a Remote Message Queue
+Starting request for a host, domain, or queue to an SMTP server.
+.SH EXIT STATUS
+The standard sendmail exit status codes are used, as defined in sysexits.h.
+.SH OPTIONS
+Options override configuration file settings.
+.br
+They are compatible with sendmail where appropriate.
+.IP "\fBGeneral options\fP"
+.RS
+.IP "--version"
+Print version information. This includes information about the library used for
+TLS/SSL support (if any), the library used for authentication, the
+authentication mechanisms supported by this library, and the default locations
+of the system and user configuration files.
+.IP "--help"
+Print help.
+.IP "-P, --pretend"
+Print the configuration settings that would be used, but do not take further
+action.  An asterisk ('*') will be printed instead of your password.
+.IP "-d, --debug"
+Print lots of debugging information, including the whole conversation with the
+SMTP server. Be careful with this option: the (potentially dangerous) output
+will not be sanitized, and your password may get printed in an easily decodable
+format!
+.RE
+.IP "\fBChanging the mode of operation\fP"
+.RS
+.IP "-S, --serverinfo"
+Print information about the SMTP server and exit. This includes information
+about supported features (mail size limit, authentication, TLS, DSN, ...) and
+about the TLS certificate (if TLS is active).
+.IP "--rmqs=(\fIhost\fP|\fI@domain\fP|\fI#queue\fP)"
+Send a Remote Message Queue Starting request for the given host, domain, or
+queue to the SMTP server and exit.
+.RE
+.IP "\fBConfiguration options\fP"
+.RS
+.IP "-C, --file=\fIfilename\fP"
+Use the given file instead of ~/.msmtprc as the user configuration file.
+.IP "-a, --account=\fIaccount_name\fP"
+Use the given account instead of the account named "default". The settings of
+this account may be changed with command line options. This option cannot be
+used together with the \fB--host\fP option.
+.IP "--host=\fIhostname\fP"
+Use this SMTP server with settings from the command line; do not use any
+configuration file data. This option cannot be used together with the
+\fB--account\fP option.
+.IP "--port=\fInumber\fP"
+Set the port number to connect to. See the \fBport\fP command below.
+.IP "--timeout=(\fIoff\fP|\fIseconds\fP)"
+Set a network timeout. See the \fBtimeout\fP command below. For compatibility 
+with older versions, --connect-timeout is accepted as an alias for this option.
+.IP "--protocol=(\fIsmtp\fP|\fIlmtp\fP)
+Set the protocol to use. See the \fBprotocol\fP command below.
+.IP "--auth[=(\fIon\fP|\fIoff\fP|\fImethod\fP)]"
+Enable or disable authentication. You can optionally choose the method. See
+the \fBauth\fP command below.
+.IP "--user=\fI[username]\fP"
+Set or unset the user name for authentication. See the \fBuser\fP command
+below.
+.IP "--tls[=(\fIon\fP|\fIoff\fP)]"
+Enable or disable TLS/SSL encryption. See the \fBtls\fP command below.
+.IP "--tls-starttls[=(\fIon\fP|\fIoff\fP)]"
+Enable or disable STARTTLS for TLS encryption. See the \fBtls_starttls\fP
+command below.
+.IP "--tls-trust-file=[\fIfile\fP]"
+Set or unset a trust file for TLS encryption. See the \fBtls_trust_file\fP
+command below.
+.IP "--tls-crl-file=[\fIfile\fP]"
+Set or unset a certificate revocation list (CRL) file for TLS. See the
+\fBtls_crl_file\fP command below.
+.IP "--tls-key-file=[\fIfile\fP]"
+Set or unset a key file for TLS encryption. See the \fBtls_key_file\fP command
+below.
+.IP "--tls-cert-file=[\fIfile\fP]"
+Set or unset a cert file for TLS encryption. See the \fBtls_cert_file\fP
+command below.
+.IP "--tls-certcheck[=(\fIon\fP|\fIoff\fP)]"
+Enable or disable server certificate checks for TLS encryption. See the
+\fBtls_certcheck\fP command below.
+.IP "--tls-force-sslv3[=(\fIon\fP|\fIoff\fP)]"
+Force TLS/SSL version SSLv3. See the \fBtls_force_sslv3\fP command below.
+.IP "--tls-min-dh-prime-bits=[\fIbits\fP]"
+Set or unset minimum bit size of the Diffie-Hellman (DH) prime. See the
+\fBtls_min_dh_prime_bits\fP command below.
+.IP "--tls-priorities=[\fIpriorities\fP]"
+Set or unset TLS priorities. See the \fBtls_priorities\fP command below.
+.IP "--domain=[\fIstring\fP]"
+Set the argument of the SMTP EHLO (or LMTP LHLO) command. See the \fBdomain\fP
+command below.
+.RE
+.IP "\fBOptions specific to sendmail mode\fP"
+.RS
+.IP "--auto-from[=(\fIon\fP|\fIoff\fP)]"
+Enable or disable automatic envelope-from addresses. The default is off. 
+See the \fBauto_from\fP command below.
+.IP "-f, --from=\fIaddress\fI"
+Set the envelope-from address. It is only used when \fIauto_from\fP is off.
+.br
+If no account was chosen yet (with \fB--account\fP or \fB--host\fP), this 
+option will choose the first account that has the given envelope-from address
+(set with the \fBfrom\fP command). If no such account is found, "default" is 
+used.
+.IP "--maildomain=[\fIdomain\fP]"
+Set the domain part for generated envelope-from addresses. It is only used when
+\fIauto_from\fP is on. See the \fBmaildomain\fP command below.
+.IP "-N, --dsn-notify=(\fIoff\fP|\fIcond\fP)"
+Set or unset DSN notification conditions. See the \fBdsn_notify\fP command
+below.
+.IP "-R, --dsn-return=(\fIoff\fP|\fIret\fP)"
+Set or unset the DSN notification amount. See the \fBdsn_return\fP command
+below.
+Note that \fIhdrs\fP is accepted as an alias for \fIheaders\fP to be
+compatible with sendmail.
+.IP "--keepbcc[=(\fIon\fP|\fIoff\fP)]"
+Enable or disable the preservation of the Bcc header. See the \fBkeepbcc\fP
+command below.
+.IP "-X, --logfile=[\fIfile\fP]"
+Set or unset the log file. See the \fBlogfile\fP command below.
+.IP "--syslog[=(\fIon\fP|\fIoff\fP|\fIfacility\fP)]"
+Enable or disable syslog logging. See the \fBsyslog\fP command below.
+.IP "-t, --read-recipients"
+Read recipient addresses from the To, Cc, and Bcc headers of the mail in
+addition to the recipients given on the command line.
+If any Resent- headers are present, then the addresses from any Resent-To,
+Resent-Cc, and Resent-Bcc headers in the first block of Resent- headers are
+used instead.
+.IP "--read-envelope-from"
+Read the envelope from address from the From header of the mail.
+.IP "--"
+This marks the end of options. All following arguments will be treated as
+recipient addresses, even if they start with a '-'.
+.RE
+.PP
+The following options are accepted but ignored for sendmail compatibility:
+.br
+-B\fItype\fP, -bm, -F\fIname\fP, -G, -h\fIN\fP, -i, -L \fItag\fP, -m, -n, -O
+\fIoption=value\fP, -o\fIx\fP \fIvalue\fP, -v
+.SH USAGE
+Normally, a system wide configuration file and/or a user configuration file
+contain information about which SMTP server to use (and how to use it), but
+almost all settings can also be configured on the command line.
+.PP
+Information about SMTP servers is organized in \fIaccounts\fP. Each account
+describes one SMTP server: host name, authentication settings, TLS settings,
+and so on.  Each configuration file can define multiple accounts.
+.PP
+In sendmail mode, an envelope-from address is necessary to send mail. This is
+the mail address that will be presented to the SMTP server as the originator 
+of the mail.
+Envelope-from addresses can be generated automatically (when \fIauto_from\fP
+is enabled) or set explicitly with the \fBfrom\fP command or \fB--from\fP 
+option. When \fIauto_from\fP is enabled, an envelope-from address of the form
+user@domain will be generated.  The local part will be set to \fBUSER\fP or,
+if that fails, to \fBLOGNAME\fP or, if that fails, to the login name of the
+current user.  The domain part can be set with the \fBmaildomain\fP command.
+If the maildomain is empty, the envelope-from address will only consist of 
+the user name and not have a domain part.
+.PP
+The user can choose which account to use in one of three ways:
+.IP "--account=\fIid\fP"
+Use the given account. Command line settings override configuration file 
+settings.
+.IP "--host=\fIhostname\fP
+Use only the settings from the command line; do not use any configuration file
+data.
+.IP "--from=\fIaddress\fP or --read-envelope-from"
+Choose the first account from the system or user configuration file that has
+a matching envelope-from address as specified by a \fBfrom\fP command. This
+works only when neither \fB--account\fP nor \fB--host\fP is used.
+.PP
+If none of the above options is used (or if no account has a matching
+\fBfrom\fP command), then the account "default" is used.
+.PP
+Skip to the EXAMPLES section for a quick start.
+.SH CONFIGURATION FILES
+If it exists and is readable, a system wide configuration file
+SYSCONFDIR/msmtprc will be loaded, where SYSCONFDIR depends on your platform.
+Use \fB--version\fP to find out which directory is used.
+.br
+If it exists and is readable, a user configuration file will be loaded
+(~/.msmtprc by default). Accounts defined in the user configuration file 
+override accounts from the system configuration file.
+The user configuration file must have no more permissions than user read/write.
+Configuration data from either file can be changed by command line options.
+.PP
+A configuration file is a simple text file.  Empty lines and comment lines
+(whose first non-blank character is '#') are ignored.
+.br
+Every other line must contain a command and may contain an argument to that
+command.
+.br
+The argument may be enclosed in double quotes ("), for example if its first or
+last character is a blank.
+.br 
+If the first character of a filename is the tilde (~), this tilde will be
+replaced by HOME.
+If a command accepts the argument \fIon\fP, it also accepts an empty argument
+and treats that as if it was \fIon\fP.
+.br
+Commands form groups. Each group begins with the \fBaccount\fP command and 
+defines the settings for one SMTP server.
+.PP
+Skip to the EXAMPLES section for a quick start.
+.PP
+Commands are as follows:
+.IP "defaults"
+Set defaults. The following configuration commands will set default values for
+all following account definitions in the current configuration file.
+.IP "account \fIname\fP [:\fIaccount\fP[,...]]"
+Start a new account definition with the given name. The current default values
+are filled in.
+.br
+If a colon and a list of previously defined accounts is given after the account
+name, the new account, with the filled in default values, will inherit all
+settings from the accounts in the list.
+.IP "host \fIhostname\fP"
+The SMTP server to send the mail to. 
+The argument may be a host name or a network address.
+Every account definition must contain this command.
+.IP "port \fInumber\fP"
+The port that the SMTP server listens on. 
+The default port will be acquired from your operating system's service database:
+for SMTP, the service is "smtp" (default port 25), unless TLS 
+without STARTTLS is used, in which case it is "ssmtp" (465). For LMTP, it is 
+"lmtp".
+.IP "timeout (\fIoff\fP|\fIseconds\fP)"
+Set or unset a network timeout, in seconds. The argument \fIoff\fP means that no
+timeout will be set, which means that the operating system default will be used.
+.br
+For compatibility with older versions, \fBconnect_timeout\fP is accepted as an
+alias for this command.
+.IP "protocol (\fIsmtp\fP|\fIlmtp\fP)"
+Set the protocol to use. Currently only SMTP and LMTP are supported. SMTP is
+the default. See the \fBport\fP command above for default ports.
+.IP "auto_from [(\fIon\fP|\fIoff\fP)]
+Enable or disable automatic envelope-from addresses. The default is off.
+When enabled, an envelope-from address of the form user@domain will be
+generated.  The local part will be set to \fBUSER\fP or, if that fails, to
+\fBLOGNAME\fP or, if that fails, to the login name of the current user.  The
+domain part can be set with the \fBmaildomain\fP command.  If the maildomain 
+is empty, the envelope-from address will only consist of the user name and not
+have a domain part. When auto_from is disabled, the envelope-from address must
+be set explicitly.
+.IP "from \fIenvelope_from\fP"
+Set the envelope-from address. This address will only be used when 
+\fIauto_from\fP is off.
+.IP "maildomain [\fIdomain\fP]"
+Set a domain part for the generation of an envelope-from address. This is only 
+used when \fIauto_from\fP is on. The domain may be empty.
+.IP "auth [(\fIon\fP|\fIoff\fP|\fImethod\fP)]"
+This command enables or disables SMTP authentication. You should not need to
+set the method yourself; with the argument \fIon\fP, msmtp will choose the best
+one available for you (see below).
+.br
+You probably need to set a username (with \fBuser\fP) and password (with 
+\fBpassword\fP). 
+If no password is set but one is needed during authentication, msmtp will try to
+find it in ~/.netrc. If that fails, it will try to find it in SYSCONFDIR/netrc
+(use \fB--version\fP to find out what SYSCONFDIR is on your platform). If that
+fails, it will try to get it from a system specific keychain (if available). If
+that fails but a controlling terminal is available, msmtp will prompt you for
+it.
+.br
+Currently supported keychains are the GNOME keychain and the Mac OS X keychain.
+See the EXAMPLES section below.
+.br
+Available methods are \fIplain\fP, \fIcram-md5\fP, \fIdigest-md5\fP,
+\fIgssapi\fP, \fIexternal\fP, \fIlogin\fP, and \fIntlm\fP.  Note that one or 
+more of these methods may be unavailable due to lack of support in the
+underlying authentication library. Use the \fB--version\fP option to find out
+which methods are supported.
+.br
+The \fIplain\fP and \fIlogin\fP methods send your authentication data in
+cleartext over the net, and the \fIntlm\fP method may be vulnerable to attacks.
+These methods should therefore only be used together with the \fBtls\fP command.
+.br
+If you don't choose the method yourself, msmtp chooses the best secure method
+that the SMTP server supports. Secure means that your authentication data will
+not be sent in cleartext over the net. For TLS encrypted connections, every
+authentication method is secure in this sense. If TLS is not active, only
+gssapi, digest-md5, and cram-md5 are secure in this sense.
+.br
+The \fIexternal\fP is special: the actual authentication happens outside of the
+SMTP protocol, typically by sending a TLS client certificate (see the
+\fBtls_cert_file\fP command). The \fIexternal\fP method merely confirms that
+this authentication succeeded for the given user (or, if no user name is given,
+confirms that authentication succeeded). This authentication method is not
+chosen automatically; you have to request it manually.
+.IP "user [\fIusername\fP]"
+Set your user name for SMTP authentication. An empty argument unsets the user
+name. Authentication must be activated with the \fBauth\fP command.
+.IP "password [\fIsecret\fP]"
+Set your password for SMTP authentication. An empty argument unsets the
+password. Authentication must be activated with the \fBauth\fP command.
+If no password is set but one is needed during authentication, msmtp will try to
+find it in ~/.netrc. If that fails, it will try to find it in SYSCONFDIR/netrc
+(use \fB--version\fP to find out what SYSCONFDIR is on your platform). If that
+fails, it will try to get it from a system specific keychain (if available). If
+that fails but a controlling terminal is available, msmtp will prompt you for
+it.
+.IP "ntlmdomain [\fIdomain\fP]"
+Set a domain for the \fIntlm\fP authentication method. The default is to use no
+domain (equivalent to an empty argument), but some servers seem to require one,
+even if it is an arbitrary string.
+.IP "tls [(\fIon\fP|\fIoff\fP)]"
+This command enables or disables TLS (also known as SSL) encrypted connections 
+to the SMTP server. Not every server supports TLS.
+.br
+With TLS/SSL, the connection with the SMTP server will be protected against
+eavesdroppers and man-in-the-middle attacks. To use TLS/SSL, it is required to 
+either use the \fBtls_trust_file\fP command (highly recommended) or to disable 
+\fBtls_certcheck\fP.
+.IP "tls_starttls [(\fIon\fP|\fIoff\fP)]"
+By default, TLS encryption is activated using the STARTTLS SMTP command.  By
+disabling this, TLS encryption is immediately started instead (this is known as
+SMTP tunneled through TLS/SSL). The default port is set to 465 for this mode of
+operation.
+.br
+For compatibility with older versions, \fBtls_nostarttls\fP is accepted as an
+alias for \fBtls_starttls off\fP.
+.IP "tls_trust_file [\fIfile\fP]"
+This command activates strict server certificate verification.
+.br
+The filename must be the absolute path name of a file in PEM format containing
+one or more certificates of trusted Certification Authorities (CAs).
+.br
+On Debian based systems, you can install the \fBca-certificates\fP package and
+use the file \fB/etc/ssl/certs/ca-certificates.crt\fP.
+.IP "tls_crl_file [\fIfile\fP]"
+This command sets or unsets a certificate revocation list (CRL) file for TLS,
+to be used during strict server certificate verification as enabled by the
+\fBtls_trust_file\fP command. This allows the verification procedure to detect
+revoked certificates.
+.IP "tls_key_file [\fIfile\fP]"
+This command (together with the \fBtls_cert_file\fP command) enables msmtp to
+send a client certificate to the SMTP server if requested.
+The file must contain the private key of a certificate in PEM format.
+An empty argument disables this feature.
+.IP "tls_cert_file [\fIfile\fP]"
+This command (together with the \fBtls_key_file\fP command) enables msmtp to
+send a client certificate to the SMTP server if requested.
+The file must contain a certificate in PEM format.
+An empty argument disables this feature.
+.IP "tls_certcheck [(\fIon\fP|\fIoff\fP)]"
+This command enables or disables checks for the server certificate.
+.br
+\fBWARNING\fP: When the checks are disabled, TLS/SSL sessions will be vulnerable
+to man-in-the-middle attacks!
+.br
+For compatibility with older versions, \fBtls_nocertcheck\fP is accepted as an
+alias for \fBtls_certcheck off\fP.
+.IP "tls_force_sslv3 [(\fIon\fP|\fIoff\fP)]"
+Force TLS/SSL version SSLv3. This might be needed to use SSL with some old and 
+broken servers. Do not use this unless you have to.
+.IP "tls_min_dh_prime_bits [\fIbits\fP]"
+Set or unset the minimum number of Diffie-Hellman (DH) prime bits that msmtp
+will accept for TLS sessions.  The default is set by the TLS library and can be
+selected by using an empty argument to this command.  Only lower the default
+(for example to 512 bits) if there is no other way to make TLS work with the
+remote server.
+.IP "tls_priorities [\fIpriorities\fP]"
+Set the priorities for TLS sessions.  The default is set by the TLS library and
+can be selected by using an empty argument to this command.  Currently this 
+command only works with sufficiently recent GnuTLS releases. See the GnuTLS
+documentation of the \fBgnutls_priority_init\fP function for a description of 
+the \fIpriorities\fP string.
+.IP "dsn_notify (\fIoff\fP|\fIcondition\fP)"
+This command sets the condition(s) under which the mail system should send DSN
+(Delivery Status Notification) messages. The argument \fIoff\fP disables
+explicit DSN requests, which means the mail system decides when to send DSN
+messages. This is the default.
+The \fIcondition\fP must be \fInever\fP, to never request notification, or a
+comma separated list (no spaces!) of one or more of the following:
+\fIfailure\fP, to request notification on transmission failure, \fIdelay\fP, to
+be notified of message delays, \fIsuccess\fP, to be notified of successful
+transmission. The SMTP server must support the DSN extension.
+.IP "dsn_return (\fIoff\fP|\fIamount\fP)"
+This command controls how much of a mail should be returned in DSN (Delivery
+Status Notification) messages. The argument \fIoff\fP disables explicit DSN
+requests, which means the mail system decides how much of a mail it returns in
+DSN messages. This is the default.
+The \fIamount\fP must be \fIheaders\fP, to just return the message headers, or
+\fIfull\fP, to return the full mail.  The SMTP server must support the DSN
+extension.
+.IP "domain \fIargument\fP"
+Use this command to set the argument of the SMTP EHLO (or LMTP LHLO) command. 
+The default is \fIlocalhost\fP (stupid, but working). Possible choices are the
+domain part of your mail address (provider.example for joe@provider.example) or
+the fully qualified domain name of your host (if available).
+.IP "keepbcc [(\fIon\fP|\fIoff\fP)]"
+This command controls whether to remove or keep the Bcc header when sending a 
+mail. The default is to remove it.
+.IP "logfile [\fIfile\fP]"
+An empty argument disables logging (this is the default).
+.br
+When logging is enabled by choosing a log file, msmtp will append one line to
+the log file for each mail it tries to send via the account that this log file
+was chosen for.
+.br 
+The line will include the following information: date and time, host name of the
+SMTP server, whether TLS was used, whether authentication was used,
+authentication user name (only if authentication is used), envelope-from
+address, recipient addresses, size of the mail as transferred to the server
+(only if the delivery succeeded), SMTP status code and SMTP error message (only
+in case of failure and only if available), error message (only in case of
+failure and only if available), exit code (from sysexits.h; EX_OK indicates
+success).
+.br
+If the filename is a dash (-), msmtp prints the log line to the standard output.
+.IP "syslog [(\fIon\fP|\fIoff\fP|\fIfacility\fP)]"
+Enable or disable syslog logging. The facility can be one of LOG_USER, LOG_MAIL,
+LOG_LOCAL0, ..., LOG_LOCAL7. The default is LOG_USER.
+.br
+Each time msmtp tries to send a mail via the account that contains this syslog 
+command, it will log one entry to the syslog service with the chosen facility.
+.br 
+The line will include the following information: host name of the SMTP server,
+whether TLS was used, whether authentication was used, envelope-from address,
+recipient addresses, size of the mail as transferred to the server (only if the
+delivery succeeded), SMTP status code and SMTP error message (only in case of
+failure and only if available), error message (only in case of failure and only
+if available), exit code (from sysexits.h; EX_OK indicates success).
+.SH EXAMPLES
+.br
+.B Configuration file
+.PP
+# Set default values for all following accounts.
+.br
+defaults
+.br
+tls on
+.br
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+.br
+logfile ~/.msmtp.log
+.br
+
+.br
+# A freemail service
+.br
+account freemail
+.br
+host smtp.freemail.example
+.br
+from joe_smith@freemail.example
+.br
+auth on
+.br
+user joe.smith
+.br
+password secret
+.br
+
+.br
+# A second mail address at the same freemail service
+.br
+account freemail2 : freemail
+.br
+from joey@freemail.example
+.br
+
+.br
+# The SMTP server of the provider.
+.br
+account provider
+.br
+host mail.provider.example
+.br
+from smithjoe@provider.example
+.br
+auth on
+.br
+user 123456789
+.br
+password my_password
+.br
+
+.br
+# Set a default account
+.br
+account default : provider
+.br
+
+.PP
+.B Manually finding the right CA certificate for \fBtls_trust_file\fP
+.PP
+The following example works as of 2007-04-18.
+.br
+For the Gmail SMTP server, you first issue the following command:
+.br
+.B msmtp --serverinfo --host=smtp.gmail.com --tls=on --port=587
+.B   --tls-certcheck=off
+.br
+The option \fI--port=587\fP is specific to Gmail and should not be used with
+other servers. The option \fI--tls-certcheck=off\fP allows msmtp to accept any
+certificate, so that it can print some information about it.
+.br
+According to the output of this command, the common name of the server
+certificate issuer is "Thawte Premium Server CA". This means that you have to
+trust the Thawte CA to use full TLS security. You can download the Thawte CA 
+certificate bundle from http://thawte.com/roots. You get a ZIP file with
+different certificates. The one you need for the \fBtls_trust_file\fP command is
+\fIThawte Server Roots/ThawtePremiumServerCA_b64.txt\fP.
+.br
+The following command should now succeed:
+.br
+.B msmtp --serverinfo --host=smtp.gmail.com --tls=on --port=587 
+.B   --tls-trust-file="Thawte Server Roots/ThawtePremiumServerCA_b64.txt"
+
+.PP
+.B Using msmtp with Mutt
+.PP
+Create a configuration file for msmtp and add the following lines to your 
+Mutt configuration file:
+.br
+.B set sendmail="/path/to/msmtp"
+.br
+.B set use_from=yes
+.br
+.B set realname="Your Name"
+.br
+.B set from=you@example.com
+.br
+.B set envelope_from=yes
+.br
+The envelope_from=yes option lets Mutt use the 
+.BR -f 
+option of msmtp. Therefore msmtp chooses the first account that matches 
+the from address you@example.com.
+.br
+Alternatively, you can use the
+.BR -a
+option:
+.br
+.B set sendmail="/path/to/msmtp -a my-account"
+.br
+Or set everything from the command line:
+.br
+.B set sendmail="/path/to/msmtp --host=mailhub -f me@example.com --tls"
+.PP
+If you have multiple mail accounts in your msmtp configuration file
+and let Mutt use the
+.BR -f
+option to choose the right one, you can easily switch accounts in Mutt with
+the following Mutt configuration lines:
+.br
+.B macro generic\ "<esc>1"\ ":set from=you@example.com"
+.br
+.B macro generic\ "<esc>2"\ ":set from=you@your-employer.example"
+.br
+.B macro generic\ "<esc>3"\ ":set from=you@some-other-provider.example"
+
+.PP
+.B Using msmtp with mail
+.PP
+Define a default account, and put the following in your ~/.mailrc:
+.br
+.B set sendmail="/path/to/msmtp"
+
+.PP
+.B Using the Mac OS X Keychain
+.PP
+A Mac OS X user can store a password in a keychain item using the Keychain
+Access GUI application. The \fIaccount name\fP is simply the value of the
+msmtp \fBuser\fP argument. However, the \fIkeychain item name\fP is 
+\fBsmtp://<hostname>\fP where \fB<hostname>\fP matches the msmtp \fBhost\fP
+argument. Using \fBsmtp://\fP is needed so that the item is created of kind
+\fIinternet password\fP.  For example, selecting \fIFile->Get Info\fP on a
+keychain item that corresponds to \fBhost smtp.freemail.example\fP and
+\fBuser joe.smith\fP will show:
+.br
+Name: smtp.freemail.example
+.br
+Kind: Internet password
+.br
+Account: joe.smith
+.br
+Where: smtp://smtp.freemail.example
+.SH FILES
+.IP "SYSCONFDIR/msmtprc"
+System configuration file. Use
+.B --version
+to find out what SYSCONFDIR is on your platform.
+.IP "~/.msmtprc"
+User configuration file.
+.IP "~/.netrc and SYSCONFDIR/netrc"
+The netrc file contains login information. If a password is not found in the
+configuration file, msmtp will search it in ~/.netrc and SYSCONFDIR/netrc before
+prompting the user for it. The syntax of netrc files is described in 
+.BR netrc (5)
+or 
+.BR ftp (1).
+.SH ENVIRONMENT
+.IP "USER, LOGNAME"
+These variables override the user's login name when constructing an 
+envelope-from address. LOGNAME is only used if USER is unset.
+.IP "TMPDIR"
+Directory to create temporary files in. If this is unset, a system specific
+default directory is used.
+.br
+A temporary file is only created when the
+.BR -t/--read-recipients
+or
+.BR --read-envelope-from
+option is used. The file is then used to buffer the headers of the mail (but not
+the body, so the file won't get very large).
+.IP "EMAIL, SMTPSERVER"
+These environment variables are used only if neither \fB--host\fP nor
+\fB--account\fP is used and there is no default account defined in the
+configuration files. In this case, the host name is taken from SMTPSERVER, and
+the envelope from address is taken from EMAIL, unless overridden by
+\fB--from\fP or \fB--read-envelope-from\fP. Currently SMTPSERVER must contain a
+plain host name (no URL), and EMAIL must contain a plain address (no names or
+additional information).
+.SH AUTHORS
+msmtp was written by Martin Lambers <marlam@marlam.de>.
+.br
+Other authors are listed in the AUTHORS file in the source distribution.
+.SH SEE ALSO
+.BR mutt (1), 
+.BR mail (1),
+.BR sendmail (8), 
+.BR netrc (5)
+or
+.BR ftp (1)
