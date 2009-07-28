@@ -6,7 +6,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 2001 - 2007, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 2001 - 2009, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -19,12 +19,9 @@
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
 #
-# $Id: curl-config.in,v 1.28 2007-02-17 17:55:19 danf Exp $
+# $Id: curl-config.in,v 1.36 2009-03-20 12:42:29 bagder Exp $
 ###########################################################################
-#
-# The idea to this kind of setup info script was stolen from numerous
-# other packages, such as neon, libxml and gnome.
-#
+
 prefix=/mingw
 exec_prefix=${prefix}
 includedir=${prefix}/include
@@ -41,10 +38,11 @@ Available values for OPTION include:
   --cflags    pre-processor and compiler flags
   --checkfor [version] check for (lib)curl of the specified version
   --features  newline separated list of enabled features
-  --protocols newline separated list of enabled protocols
   --help      display this help and exit
   --libs      library linking information
   --prefix    curl install prefix
+  --protocols newline separated list of enabled protocols
+  --static-libs static libcurl library linking information
   --version   output version information
   --vernum    output the version information as a number (hexadecimal)
 EOF
@@ -79,67 +77,18 @@ while test $# -gt 0; do
 	;;
 
     --feature|--features)
-	if test "" = "1"; then
-          echo "SSL"
-          NTLM=1 # OpenSSL implies NTLM
-        elif test -n ""; then
-          echo "SSL"
-        fi
-	if test "" = "1"; then
-          echo "KRB4"
-        fi
-	if test "" = "1"; then
-          echo "IPv6"
-        fi
-	if test "1" = "1"; then
-          echo "libz"
-        fi
-	if test "" = "1"; then
-          echo "AsynchDNS"
-        fi
-	if test "" = "1"; then
-          echo "IDN"
-        fi
-	if test "" = "1"; then
-          echo "SSPI"
-          NTLM=1
-        fi
-	if test "$NTLM" = "1"; then
-          echo "NTLM"
-        fi
+        for feature in  SSL libz NTLM ""; do
+            test -n "$feature" && echo "$feature"
+        done
 	;;
 
     --protocols)
-	if test "" != "1"; then
-          echo "HTTP"
-	  if test "" = "1"; then
-            echo "HTTPS"
-          fi
-        fi
-	if test "" != "1"; then
-          echo "FTP"
-	  if test "" = "1"; then
-            echo "FTPS"
-          fi
-        fi
-	if test "" != "1"; then
-          echo "FILE"
-        fi
-	if test "" != "1"; then
-          echo "TELNET"
-        fi
-	if test "" != "1"; then
-          echo "LDAP"
-        fi
-	if test "" != "1"; then
-          echo "DICT"
-        fi
-	if test "" != "1"; then
-          echo "TFTP"
-        fi
+        for protocol in  HTTP HTTPS FTP FTPS FILE TELNET LDAP DICT TFTP; do
+            echo "$protocol"
+        done
 	;;
     --version)
-	echo libcurl 7.16.4
+	echo libcurl 7.19.5
 	exit 0
 	;;
 
@@ -151,20 +100,20 @@ while test $# -gt 0; do
 	# dash as that's used for things like version 1.2.3-CVS
 	cpatch=`echo $checkfor | cut -d. -f3 | cut -d- -f1`
         checknum=`echo "$cmajor*256*256 + $cminor*256 + ${cpatch:-0}" | bc`
-        numuppercase=`echo 071004 | tr 'a-f' 'A-F'`
+        numuppercase=`echo 071305 | tr 'a-f' 'A-F'`
         nownum=`echo "obase=10; ibase=16; $numuppercase" | bc`
 
 	if test "$nownum" -ge "$checknum"; then
 	  # silent success
 	  exit 0
 	else
-	  echo "requested version $checkfor is newer than existing 7.16.4"
+	  echo "requested version $checkfor is newer than existing 7.19.5"
 	  exit 1
 	fi
 	;;
 
     --vernum)
-	echo 071004
+	echo 071305
 	exit 0
 	;;
 
@@ -181,16 +130,20 @@ while test $# -gt 0; do
        	;;
 
     --libs)
-	if test "X${exec_prefix}/lib" != "X/usr/lib"; then
+	if test "X${exec_prefix}/lib" != "X/usr/lib" -a "X${exec_prefix}/lib" != "X/usr/lib64"; then
 	   CURLLIBDIR="-L${exec_prefix}/lib "
 	else
 	   CURLLIBDIR=""
 	fi
 	if test "Xyes" = "Xyes"; then
-	  echo ${CURLLIBDIR}-lcurl  -lwinmm -lws2_32  -lz -lws2_32 
+	  echo ${CURLLIBDIR}-lcurl -L/mingw/lib -lssl -lcrypto -lgdi32 -lwldap32 -lws2_32 -lz -lws2_32 
 	else
-	  echo ${CURLLIBDIR}-lcurl  
+	  echo ${CURLLIBDIR}-lcurl -L/mingw/lib 
 	fi
+	;;
+
+    --static-libs)
+	echo ${exec_prefix}/lib/libcurl.a -L/mingw/lib -lssl -lcrypto -lgdi32 -lwldap32 -lws2_32 -lz -lws2_32 
 	;;
 
     *)

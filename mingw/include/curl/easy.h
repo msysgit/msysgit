@@ -7,7 +7,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2004, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2008, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: easy.h,v 1.13 2004/11/09 14:02:58 giva Exp $
+ * $Id: easy.h,v 1.14 2008-05-12 21:43:28 bagder Exp $
  ***************************************************************************/
 #ifdef  __cplusplus
 extern "C" {
@@ -73,6 +73,28 @@ CURL_EXTERN CURL* curl_easy_duphandle(CURL *curl);
  * cookies.
  */
 CURL_EXTERN void curl_easy_reset(CURL *curl);
+
+/*
+ * NAME curl_easy_recv()
+ *
+ * DESCRIPTION
+ *
+ * Receives data from the connected socket. Use after successful
+ * curl_easy_perform() with CURLOPT_CONNECT_ONLY option.
+ */
+CURL_EXTERN CURLcode curl_easy_recv(CURL *curl, void *buffer, size_t buflen,
+                                    size_t *n);
+
+/*
+ * NAME curl_easy_send()
+ *
+ * DESCRIPTION
+ *
+ * Sends data over the connected socket. Use after successful
+ * curl_easy_perform() with CURLOPT_CONNECT_ONLY option.
+ */
+CURL_EXTERN CURLcode curl_easy_send(CURL *curl, const void *buffer,
+                                    size_t buflen, size_t *n);
 
 #ifdef  __cplusplus
 }
