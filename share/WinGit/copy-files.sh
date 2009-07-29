@@ -79,7 +79,7 @@ strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/inputrc etc/ &&
-cp /etc/gitconfig etc/ &&
+sed 's/sslCAinfo = \/mingw/sslCAinfo = /' < /etc/gitconfig > etc/gitconfig &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
