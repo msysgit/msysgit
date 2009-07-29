@@ -35,7 +35,7 @@ echo "Copying files" &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
-$(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|send-email\|shell\|archimport\|instaweb') \
+$(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
 bin/{awk,basename.exe,bash.exe,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,gawk.exe,grep.exe,\
@@ -70,8 +70,8 @@ then
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
 (cd /mingw && tar cf - \
-	bin/*{tcl,tk,wish,gpg,curl.exe,*.crt}* \
-	bin/*{libcurl,libcrypto,libssl,libiconv}* \
+	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* \
+	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
 md5sum /bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
@@ -79,7 +79,7 @@ strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/inputrc etc/ &&
-sed 's/sslCAinfo = \/mingw/sslCAinfo = /' < /etc/gitconfig > etc/gitconfig &&
+sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
