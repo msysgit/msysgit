@@ -631,7 +631,7 @@ begin
             repeat
                 if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY)=0 then begin
                     FileName:=AppDir+'\bin\'+FindRec.name;
-                    if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
+                    if ((not Pos(FindRec.name,'git.exe')=1) and FileExists(FileName) and (not DeleteFile(FileName))) then begin
                         Log('Line {#emit __LINE__}: Unable to delete dupe "'+FileName+'", ignoring.');
                     end;
                 end;
