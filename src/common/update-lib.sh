@@ -79,6 +79,7 @@ apply_patches () {
 	patchdir="$(pwd)"/patches
 	(cd "$d" &&
 	 git init &&
+	 git config core.autocrlf false &&
 	 git add . &&
 	 git commit -m initial &&
 	 for p in "$patchdir"/*.patch
