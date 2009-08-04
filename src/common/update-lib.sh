@@ -36,7 +36,7 @@ post_install () {
 	exit
 
 	(cd / && 
-	 git show --cached --diff-filter=AM --name-only |
+	 git show --diff-filter=AM --name-only |
 	 sed -e "s/^/\//" > "$FILELIST" &&
 	 git add "$FILELIST" &&
 	 git commit -C HEAD --amend "$FILELIST") ||
