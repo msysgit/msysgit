@@ -131,16 +131,16 @@ begin
     if AllUsers then begin
         KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
         if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=(not RegValueExists(HKEY_LOCAL_MACHINE,KeyName,VarName))
-                      or RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
+            Result:=(not RegValueExists(HKEY_LOCAL_MACHINE,KeyName,VarName)) or
+                         RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
         end else begin
             Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
         end;
     end else begin
         KeyName:='Environment';
         if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName))
-                      or RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
+            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName)) or
+                         RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
         end else begin
             Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
         end;
@@ -156,8 +156,8 @@ const
 function GetPuTTYLocation:string;
 begin
     // Prefer TortoisePlink over vanilla Plink for its GUI dialog to accept host keys.
-    if (IsWin64 and RegQueryStringValue(HKEY_LOCAL_MACHINE_64,TortoiseSVNInstallKey,'Directory',Result))
-    or RegQueryStringValue(HKEY_LOCAL_MACHINE_32,TortoiseSVNInstallKey,'Directory',Result) then begin
+    if (IsWin64 and RegQueryStringValue(HKEY_LOCAL_MACHINE_64,TortoiseSVNInstallKey,'Directory',Result)) or
+                    RegQueryStringValue(HKEY_LOCAL_MACHINE_32,TortoiseSVNInstallKey,'Directory',Result) then begin
         // C:\Program Files\TortoiseSVN\
         Result:=Result+'bin\';
         // C:\Program Files\TortoiseSVN\bin\
@@ -541,8 +541,8 @@ begin
         Exit;
     end;
 
-    Result:=RdbSSH[GS_OpenSSH].Checked
-        or (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
+    Result:=RdbSSH[GS_OpenSSH].Checked or
+           (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
 
     if not Result then begin
         MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
@@ -582,7 +582,7 @@ begin
         // Delete those scripts from "bin" which have been replaced by built-ins in "libexec\git-core".
         for i:=0 to Count do begin
             FileName:=AppDir+'\bin\'+ChangeFileExt(ExtractFileName(BuiltIns[i]),'');
-            if (FileExists(FileName) and (not DeleteFile(FileName))) then begin
+            if FileExists(FileName) and (not DeleteFile(FileName)) then begin
                 Log('Line {#emit __LINE__}: Unable to delete script "'+FileName+'", ignoring.');
             end;
         end;
@@ -595,8 +595,8 @@ begin
                 FileName:=AppDir+'\'+BuiltIns[i];
 
                 // On non-NTFS partitions, create hard links.
-                if (FileExists(FileName) and (not DeleteFile(FileName)))
-                or (not CreateHardLink(FileName,AppDir+'\bin\git.exe',0)) then begin
+                if (FileExists(FileName) and (not DeleteFile(FileName))) or
+                   (not CreateHardLink(FileName,AppDir+'\bin\git.exe',0)) then begin
                     Log('Line {#emit __LINE__}: Unable to create hard link "'+FileName+'", will try to copy files.');
                     IsNTFS:=False;
                     Break;
@@ -631,7 +631,7 @@ begin
             repeat
                 if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY)=0 then begin
                     FileName:=AppDir+'\bin\'+FindRec.name;
-                    if ((not Pos(FindRec.name,'git.exe')=1) and FileExists(FileName) and (not DeleteFile(FileName))) then begin
+                    if (Pos(FindRec.name,'git.exe')<>1) and FileExists(FileName) and (not DeleteFile(FileName)) then begin
                         Log('Line {#emit __LINE__}: Unable to delete dupe "'+FileName+'", ignoring.');
                     end;
                 end;
@@ -790,8 +790,8 @@ begin
 
     if IsTaskSelected('shellextension') then begin
         Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here'))
-        or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
@@ -801,8 +801,8 @@ begin
     end;
 
     if IsTaskSelected('guiextension') then begin
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here'))
-        or (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
@@ -945,7 +945,7 @@ begin
         end;
     end;
 
-    if (FileExists(Command) and (not DeleteFile(Command))) then begin
+    if FileExists(Command) and (not DeleteFile(Command)) then begin
         Msg:='Line {#emit __LINE__}: Unable to delete file "'+Command+'".';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
