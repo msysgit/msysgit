@@ -29,21 +29,21 @@ SetupIconFile=etc\git.ico
 WizardSmallImageFile=git.bmp
 
 [Tasks]
-Name: quicklaunchicon; Description: "Create a &Quick Launch icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
-Name: desktopicon; Description: "Create a &Desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
-Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
-Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: "Windows Explorer integration:"; Flags: checkedonce
+Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; Flags: checkedonce
+Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
+Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
+Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
 
 [Files]
-Source: "*"; DestDir: "{app}"; Excludes: "\*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*"; Flags: recursesubdirs replacesameversion
-Source: ReleaseNotes.rtf; DestDir: "{app}"; Flags: isreadme replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
+Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]
-Name: "{group}\Git GUI"; Filename: "{app}\bin\wish.exe"; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: "%HOMEDRIVE%%HOMEPATH%"; IconFilename: "{app}\etc\git.ico"
-Name: "{group}\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%HOMEDRIVE%%HOMEPATH%"; IconFilename: "{app}\etc\git.ico"
-Name: "{group}\Uninstall Git"; Filename: "{uninstallexe}"
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%HOMEDRIVE%%HOMEPATH%"; IconFilename: "{app}\etc\git.ico"; Tasks: quicklaunchicon
-Name: "{code:GetShellFolder|desktop}\Git Bash"; Filename: "{syswow64}\cmd.exe"; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: "%HOMEDRIVE%%HOMEPATH%"; IconFilename: "{app}\etc\git.ico"; Tasks: desktopicon
+Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
+Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
+Name: {group}\Uninstall Git; Filename: {uninstallexe}
+Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: quicklaunchicon
+Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: desktopicon
 
 [Messages]
 BeveledLabel={#emit APP_URL}
@@ -51,10 +51,10 @@ SetupAppTitle={#emit APP_NAME} Setup
 SetupWindowTitle={#emit APP_NAME} Setup
 
 [UninstallDelete]
-Type: files; Name: "{app}\bin\git-*.exe"
-Type: files; Name: "{app}\libexec\git-core\git-*.exe"
-Type: dirifempty; Name: "{app}\home\{username}"
-Type: dirifempty; Name: "{app}\home"
+Type: files; Name: {app}\bin\git-*.exe
+Type: files; Name: {app}\libexec\git-core\git-*.exe
+Type: dirifempty; Name: {app}\home\{username}
+Type: dirifempty; Name: {app}\home
 
 [Code]
 {
