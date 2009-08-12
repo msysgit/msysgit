@@ -375,8 +375,8 @@ begin
     with LblOpenSSH do begin
         Parent:=PuTTYPage.Surface;
         Caption:=
-            'This uses ssh.exe that comes with Git. The GIT_SSH environment' + #13 +
-            'variable will not be modified.';
+            'This uses ssh.exe that comes with Git. The GIT_SSH and SVN_SSH' + #13 +
+            'environment variables will not be modified.';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
         Width:=ScaleX(324);
@@ -400,11 +400,11 @@ begin
         Parent:=PuTTYPage.Surface;
         Caption:=
             'This uses (Tortoise)Plink.exe from the TortoiseSVN/CVS or PuTTY' + #13 +
-            'applications which need to be provided by the user. The GIT_SSH' + #13 +
-            'environment variable will be set to the executable specified below.';
+            'applications which need to be provided by the user. The GIT_SSH and' + #13 +
+            'SVN_SSH environment variables will point to the below executable:';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
-        Width:=ScaleX(316);
+        Width:=ScaleX(340);
         Height:=ScaleY(39);
     end;
     EdtPlink:=TEdit.Create(PuTTYPage);
@@ -673,7 +673,7 @@ begin
 
     FileName:=AppDir+'\setup.ini';
 
-    // Delete GIT_SSH if a previous installation modified it.
+    // Delete GIT_SSH and SVN_SSH if a previous installation set them (this is required for the GS_OpenSSH case).
     EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
@@ -686,9 +686,23 @@ begin
         end;
     end;
 
+    EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
+    if (GetArrayLength(EnvSSH)=1) and
+       (CompareStr(EnvSSH[0],GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
+        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
+            Msg:='Line {#emit __LINE__}: Unable to reset SVN_SSH prior to install.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
     if RdbSSH[GS_Plink].Checked then begin
         SetArrayLength(EnvSSH,1);
         EnvSSH[0]:=EdtPlink.Text;
+
+        // Set GIT_SSH as specified by the user.
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#emit __LINE__}: Unable to set the GIT_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
@@ -697,8 +711,29 @@ begin
             // so we continue.
         end;
 
-        // Mark that we have changed GIT_SSH.
+        // Mark that we have changed GIT_SSH by writing its value to a file.
         if not SetIniString('Environment','GIT_SSH',EnvSSH[0],FileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
+            // so we continue.
+        end;
+
+        // Set SVN_SSH as specified by the user, but with escaped backslashes and quotes.
+        StringChangeEx(EnvSSH[0],'\','\\',True);
+        EnvSSH[0]:=AddQuotes(EnvSSH[0]);
+
+        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
+            Msg:='Line {#emit __LINE__}: Unable to set the SVN_SSH environment variable.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+
+        // Mark that we have changed SVN_SSH by writing its value to a file.
+        if not SetIniString('Environment','SVN_SSH',EnvSSH[0],FileName) then begin
             Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
@@ -899,12 +934,24 @@ begin
     AppDir:=ExpandConstant('{app}');
     Command:=AppDir+'\setup.ini';
 
-    // Reset the current user's GIT_SSH if we modified it.
+    // Delete the current user's GIT_SSH and SVN_SSH if we set it.
     EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',Command))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to GIT_SSH.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
+    EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
+    if (GetArrayLength(EnvSSH)=1) and
+       (CompareStr(EnvSSH[0],GetIniString('Environment','SVN_SSH','',Command))=0) then begin
+        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
+            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to SVN_SSH.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
