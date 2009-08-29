@@ -29,7 +29,7 @@ SetupIconFile=etc\git.ico
 WizardImageBackColor=clWhite
 WizardImageStretch=no
 WizardImageFile=git.bmp
-WizardSmallImageFile=git.bmp
+WizardSmallImageFile=gitsmall.bmp
 
 [Tasks]
 Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; Flags: checkedonce
