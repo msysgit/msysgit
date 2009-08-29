@@ -2,13 +2,14 @@
 //
 // Inno Setup Preprocessor 5
 //
-// Copyright (C) 2001-2002 Alex Yackimoff. All Rights Reserved.
+// Copyright (C) 2001-2004 Alex Yackimoff. All Rights Reserved.
+// Portions by Martijn Laan.
 // http://ispp.sourceforge.net
 //
-// Inno Setup (C) 1997-2005 Jordan Russell. All Rights Reserved.
+// Inno Setup (C) 1997-2009 Jordan Russell. All Rights Reserved.
 // Portions by Martijn Laan.
 //
-// $Id: Builtins.iss,v 1.9 2007/02/20 13:01:59 mlaan Exp $
+// $Id: Builtins.iss,v 1.10 2009/08/03 14:18:14 mlaan Exp $
 //
 #if defined(ISPP_INVOKED) && !defined(_BUILTINS_ISS_)
 //
@@ -225,7 +226,7 @@
 // Returns index of the line (of translation) following either [Code] section
 // header, or "program" keyword, if any.
 //
-# define FindCode() \
+#define FindCode() \
     Local[1] = FindSection("Code"), \
     Local[0] = Find(Local[1] - 1, "program", FIND_BEGINS, ";", FIND_ENDS | FIND_AND), \
     (Local[0] < 0 ? Local[1] : Local[0] + 1)
@@ -348,3 +349,4 @@ AboutSetupNote=Inno Setup Preprocessor home page:%nhttp://ispp.sourceforge.net/
 #endif
 #endif
 ; END BUILTINS.ISS
+
