@@ -26,6 +26,9 @@ UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
+WizardImageBackColor=clWhite
+WizardImageStretch=no
+WizardImageFile=git.bmp
 WizardSmallImageFile=git.bmp
 
 [Tasks]
