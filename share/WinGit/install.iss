@@ -188,7 +188,7 @@ begin
 
     if not DirExists(Result) then begin
         // Guess something.
-        Result:='C:\Program Files\PuTTY\';
+        Result:=ExpandConstant('{pf}\PuTTY\');
     end;
 
     Result:=Result+'plink.exe'
@@ -572,7 +572,7 @@ begin
     }
 
     // Load the built-ins from a text file.
-    FileName:=ExpandConstant('{app}\'+'{#emit APP_BUILTINS}');
+    FileName:=ExpandConstant('{app}\{#emit APP_BUILTINS}');
     if LoadStringsFromFile(FileName,BuiltIns) then begin
         // Check if we are running on NTFS.
         IsNTFS:=False;
@@ -894,7 +894,7 @@ function InitializeUninstall:Boolean;
 var
     FileName,NewName,Msg:string;
 begin
-    FileName:=ExpandConstant('{app}')+'\bin\ssh-agent.exe';
+    FileName:=ExpandConstant('{app}\bin\ssh-agent.exe');
     if FileExists(FileName) then begin
         // Create a temporary copy of the file we try to delete.
         NewName:=FileName+'.'+IntToStr(1000+Random(9000));
