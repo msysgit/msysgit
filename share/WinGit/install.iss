@@ -262,15 +262,15 @@ begin
     // 1st choice
     RdbPath[GP_BashOnly]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_BashOnly] do begin
-      Parent:=PathPage.Surface;
-      Caption:='Use Git Bash only';
-      Left:=ScaleX(4);
-      Top:=ScaleY(8);
-      Width:=ScaleX(129);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=0;
-      Checked:=True;
+        Parent:=PathPage.Surface;
+        Caption:='Use Git Bash only';
+        Left:=ScaleX(4);
+        Top:=ScaleY(8);
+        Width:=ScaleX(129);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=0;
+        Checked:=True;
     end;
     LblGitBash:=TLabel.Create(PathPage);
     with LblGitBash do begin
@@ -287,14 +287,14 @@ begin
     // 2nd choice
     RdbPath[GP_Cmd]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_Cmd] do begin
-      Parent:=PathPage.Surface;
-      Caption:='Run Git from the Windows Command Prompt';
-      Left:=ScaleX(4);
-      Top:=ScaleY(76);
-      Width:=ScaleX(281);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=1;
+        Parent:=PathPage.Surface;
+        Caption:='Run Git from the Windows Command Prompt';
+        Left:=ScaleX(4);
+        Top:=ScaleY(76);
+        Width:=ScaleX(281);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=1;
     end;
     LblGitCmd:=TLabel.Create(PathPage);
     with LblGitCmd do begin
@@ -312,14 +312,14 @@ begin
     // 3rd choice
     RdbPath[GP_CmdTools]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_CmdTools] do begin
-      Parent:=PathPage.Surface;
-      Caption:='Run Git and included Unix tools from the Windows Command Prompt';
-      Left:=ScaleX(4);
-      Top:=ScaleY(152);
-      Width:=ScaleX(405);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=2;
+        Parent:=PathPage.Surface;
+        Caption:='Run Git and included Unix tools from the Windows Command Prompt';
+        Left:=ScaleX(4);
+        Top:=ScaleY(152);
+        Width:=ScaleX(405);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=2;
     end;
     LblGitCmdTools:=TLabel.Create(PathPage);
     with LblGitCmdTools do begin
@@ -364,15 +364,15 @@ begin
     // 1st choice
     RdbSSH[GS_OpenSSH]:=TRadioButton.Create(PuTTYPage);
     with RdbSSH[GS_OpenSSH] do begin
-      Parent:=PuTTYPage.Surface;
-      Caption:='Use OpenSSH';
-      Left:=ScaleX(4);
-      Top:=ScaleY(8);
-      Width:=ScaleX(129);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=0;
-      Checked:=True;
+        Parent:=PuTTYPage.Surface;
+        Caption:='Use OpenSSH';
+        Left:=ScaleX(4);
+        Top:=ScaleY(8);
+        Width:=ScaleX(129);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=0;
+        Checked:=True;
     end;
     LblOpenSSH:=TLabel.Create(PuTTYPage);
     with LblOpenSSH do begin
@@ -389,14 +389,14 @@ begin
     // 2nd choice
     RdbSSH[GS_Plink]:=TRadioButton.Create(PuTTYPage);
     with RdbSSH[GS_Plink] do begin
-      Parent:=PuTTYPage.Surface;
-      Caption:='Use (Tortoise)Plink';
-      Left:=ScaleX(4);
-      Top:=ScaleY(76);
-      Width:=ScaleX(281);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=1;
+        Parent:=PuTTYPage.Surface;
+        Caption:='Use (Tortoise)Plink';
+        Left:=ScaleX(4);
+        Top:=ScaleY(76);
+        Width:=ScaleX(281);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=1;
     end;
     LblPlink:=TLabel.Create(PuTTYPage);
     with LblPlink do begin
@@ -451,15 +451,15 @@ begin
     // 1st choice
     RdbCRLF[GC_LFOnly]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_LFOnly] do begin
-      Parent:=CRLFPage.Surface;
-      Caption:='Use Unix style line endings';
-      Left:=ScaleX(4);
-      Top:=ScaleY(8);
-      Width:=ScaleX(329);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=0;
-      Checked:=False;
+        Parent:=CRLFPage.Surface;
+        Caption:='Use Unix style line endings';
+        Left:=ScaleX(4);
+        Top:=ScaleY(8);
+        Width:=ScaleX(329);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=0;
+        Checked:=False;
     end;
     LblLFOnly:=TLabel.Create(CRLFPage);
     with LblLFOnly do begin
@@ -477,15 +477,15 @@ begin
     // 2nd choice
     RdbCRLF[GC_CRLFAlways]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_CRLFAlways] do begin
-      Parent:=CRLFPage.Surface;
-      Caption:='Use Windows style line endings';
-      Left:=ScaleX(4);
-      Top:=ScaleY(76);
-      Width:=ScaleX(329);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=1;
-      Checked:=True;
+        Parent:=CRLFPage.Surface;
+        Caption:='Use Windows style line endings';
+        Left:=ScaleX(4);
+        Top:=ScaleY(76);
+        Width:=ScaleX(329);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=1;
+        Checked:=True;
     end;
     LblCRLFAlways:=TLabel.Create(CRLFPage);
     with LblCRLFAlways do begin
@@ -503,15 +503,15 @@ begin
     // 3rd choice
     RdbCRLF[GC_CRLFCommitAsIs]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_CRLFCommitAsIs] do begin
-      Parent:=CRLFPage.Surface;
-      Caption:='Commit line endings as they are';
-      Left:=ScaleX(4);
-      Top:=ScaleY(152);
-      Width:=ScaleX(329);
-      Height:=ScaleY(17);
-      Font.Style:=[fsBold];
-      TabOrder:=2;
-      Checked:=False;
+        Parent:=CRLFPage.Surface;
+        Caption:='Commit line endings as they are';
+        Left:=ScaleX(4);
+        Top:=ScaleY(152);
+        Width:=ScaleX(329);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=2;
+        Checked:=False;
     end;
     LblCRLFCommitAsIs:=TLabel.Create(CRLFPage);
     with LblCRLFCommitAsIs do begin
