@@ -246,18 +246,26 @@ end;
 
 procedure InitializeWizard;
 var
+    PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
+    PuTTYSessions:TArrayOfString;
     LblLFOnly,LblCRLFAlways,LblCRLFCommitAsIs:TLabel;
     BtnPlink:TButton;
     Data:String;
 begin
-    // Create a custom page for modifying the environment.
+    PrevPageID:=wpSelectTasks;
+
+    (*
+     * Create a custom page for modifying the environment.
+     *)
+
     PathPage:=CreateCustomPage(
-        wpSelectTasks,
+        PrevPageID,
         'Adjusting your PATH environment',
         'How would you like to use Git from the command line?'
     );
+    PrevPageID:=PathPage.ID;
 
     // 1st choice
     RdbPath[GP_BashOnly]:=TRadioButton.Create(PathPage);
@@ -354,99 +362,113 @@ begin
         RdbPath[GP_CmdTools].Checked:=True;
     end;
 
-    // Create a custom page for using (Tortoise)Plink instead of OpenSSH.
-    PuTTYPage:=CreateCustomPage(
-        PathPage.ID,
-        'Choosing the SSH executable',
-        'Which Secure Shell client program would you like Git to use?'
-    );
+    (*
+     * Create a custom page for using (Tortoise)Plink instead of OpenSSH
+     * if at least one PuTTY session is found in the Registry.
+     *)
 
-    // 1st choice
-    RdbSSH[GS_OpenSSH]:=TRadioButton.Create(PuTTYPage);
-    with RdbSSH[GS_OpenSSH] do begin
-        Parent:=PuTTYPage.Surface;
-        Caption:='Use OpenSSH';
-        Left:=ScaleX(4);
-        Top:=ScaleY(8);
-        Width:=ScaleX(129);
-        Height:=ScaleY(17);
-        Font.Style:=[fsBold];
-        TabOrder:=0;
-        Checked:=True;
-    end;
-    LblOpenSSH:=TLabel.Create(PuTTYPage);
-    with LblOpenSSH do begin
-        Parent:=PuTTYPage.Surface;
-        Caption:=
-            'This uses ssh.exe that comes with Git. The GIT_SSH and SVN_SSH' + #13 +
-            'environment variables will not be modified.';
-        Left:=ScaleX(28);
-        Top:=ScaleY(32);
-        Width:=ScaleX(324);
-        Height:=ScaleY(26);
-    end;
+    if RegGetSubkeyNames(HKEY_CURRENT_USER,'Software\SimonTatham\PuTTY\Sessions',PuTTYSessions) and (GetArrayLength(PuTTYSessions)>0) then begin
+        PuTTYPage:=CreateCustomPage(
+            PrevPageID,
+            'Choosing the SSH executable',
+            'Which Secure Shell client program would you like Git to use?'
+        );
+        PrevPageID:=PuTTYPage.ID;
 
-    // 2nd choice
-    RdbSSH[GS_Plink]:=TRadioButton.Create(PuTTYPage);
-    with RdbSSH[GS_Plink] do begin
-        Parent:=PuTTYPage.Surface;
-        Caption:='Use (Tortoise)Plink';
-        Left:=ScaleX(4);
-        Top:=ScaleY(76);
-        Width:=ScaleX(281);
-        Height:=ScaleY(17);
-        Font.Style:=[fsBold];
-        TabOrder:=1;
-    end;
-    LblPlink:=TLabel.Create(PuTTYPage);
-    with LblPlink do begin
-        Parent:=PuTTYPage.Surface;
-        Caption:=
-            'This uses (Tortoise)Plink.exe from the TortoiseSVN/CVS or PuTTY' + #13 +
-            'applications which need to be provided by the user. The GIT_SSH and' + #13 +
-            'SVN_SSH environment variables will point to the below executable:';
-        Left:=ScaleX(28);
-        Top:=ScaleY(100);
-        Width:=ScaleX(340);
-        Height:=ScaleY(39);
-    end;
-    EdtPlink:=TEdit.Create(PuTTYPage);
-    with EdtPlink do begin
-        Parent:=PuTTYPage.Surface;
-        Text:=GetPuTTYLocation;
-        if not FileExists(Text) then begin
-            Text:='';
+        // 1st choice
+        RdbSSH[GS_OpenSSH]:=TRadioButton.Create(PuTTYPage);
+        with RdbSSH[GS_OpenSSH] do begin
+            Parent:=PuTTYPage.Surface;
+            Caption:='Use OpenSSH';
+            Left:=ScaleX(4);
+            Top:=ScaleY(8);
+            Width:=ScaleX(129);
+            Height:=ScaleY(17);
+            Font.Style:=[fsBold];
+            TabOrder:=0;
+            Checked:=True;
         end;
-        Left:=ScaleX(28);
-        Top:=ScaleY(148);
-        Width:=ScaleX(316);
-        Height:=ScaleY(13);
-    end;
-    BtnPlink:=TButton.Create(PuTTYPage);
-    with BtnPlink do begin
-        Parent:=PuTTYPage.Surface;
-        Caption:='...';
-        OnClick:=@BrowseForPuTTYFolder;
-        Left:=ScaleX(348);
-        Top:=ScaleY(148);
-        Width:=ScaleX(21);
-        Height:=ScaleY(21);
+        LblOpenSSH:=TLabel.Create(PuTTYPage);
+        with LblOpenSSH do begin
+            Parent:=PuTTYPage.Surface;
+            Caption:=
+                'This uses ssh.exe that comes with Git. The GIT_SSH and SVN_SSH' + #13 +
+                'environment variables will not be modified.';
+            Left:=ScaleX(28);
+            Top:=ScaleY(32);
+            Width:=ScaleX(324);
+            Height:=ScaleY(26);
+        end;
+
+        // 2nd choice
+        RdbSSH[GS_Plink]:=TRadioButton.Create(PuTTYPage);
+        with RdbSSH[GS_Plink] do begin
+            Parent:=PuTTYPage.Surface;
+            Caption:='Use (Tortoise)Plink';
+            Left:=ScaleX(4);
+            Top:=ScaleY(76);
+            Width:=ScaleX(281);
+            Height:=ScaleY(17);
+            Font.Style:=[fsBold];
+            TabOrder:=1;
+        end;
+        LblPlink:=TLabel.Create(PuTTYPage);
+        with LblPlink do begin
+            Parent:=PuTTYPage.Surface;
+            Caption:=
+                'PuTTY sessions were found in your Registry. You may specify the path' + #13 +
+                'to an existing copy of (Tortoise)Plink.exe from the TortoiseSVN/CVS' + #13 +
+                'or PuTTY applications. The GIT_SSH and SVN_SSH environment' + #13 +
+                'variables will be adjusted to point to the following executable:';
+            Left:=ScaleX(28);
+            Top:=ScaleY(100);
+            Width:=ScaleX(340);
+            Height:=ScaleY(52);
+        end;
+        EdtPlink:=TEdit.Create(PuTTYPage);
+        with EdtPlink do begin
+            Parent:=PuTTYPage.Surface;
+            Text:=GetPuTTYLocation;
+            if not FileExists(Text) then begin
+                Text:='';
+            end;
+            Left:=ScaleX(28);
+            Top:=ScaleY(161);
+            Width:=ScaleX(316);
+            Height:=ScaleY(13);
+        end;
+        BtnPlink:=TButton.Create(PuTTYPage);
+        with BtnPlink do begin
+            Parent:=PuTTYPage.Surface;
+            Caption:='...';
+            OnClick:=@BrowseForPuTTYFolder;
+            Left:=ScaleX(348);
+            Top:=ScaleY(161);
+            Width:=ScaleX(21);
+            Height:=ScaleY(21);
+        end;
+
+        // Restore the setting chosen during a previous install.
+        Data:=GetPreviousData('SSH Option','OpenSSH');
+        if Data='OpenSSH' then begin
+            RdbSSH[GS_OpenSSH].Checked:=True;
+        end else if Data='Plink' then begin
+            RdbSSH[GS_Plink].Checked:=True;
+        end;
+    end else begin
+        PuTTYPage:=NIL;
     end;
 
-    // Restore the setting chosen during a previous install.
-    Data:=GetPreviousData('SSH Option','OpenSSH');
-    if Data='OpenSSH' then begin
-        RdbSSH[GS_OpenSSH].Checked:=True;
-    end else if Data='Plink' then begin
-        RdbSSH[GS_Plink].Checked:=True;
-    end;
+    (*
+     * Create a custom page for the autoCRLF setting.
+     *)
 
-    // Create a custom page for the autoCRLF setting.
     CRLFPage:=CreateCustomPage(
-        PuTTYPage.ID,
+        PrevPageID,
         'Choosing CR/LF behavior',
         'Which CR/LF behavior would you like Git to have?'
     );
+    PrevPageID:=CRLFPage.ID;
 
     // 1st choice
     RdbCRLF[GC_LFOnly]:=TRadioButton.Create(CRLFPage);
@@ -539,7 +561,7 @@ end;
 
 function NextButtonClick(CurPageID:Integer):Boolean;
 begin
-    if CurPageID<>PuTTYPage.ID then begin
+    if (PuTTYPage=NIL) or (CurPageID<>PuTTYPage.ID) then begin
         Result:=True;
         Exit;
     end;
@@ -701,7 +723,7 @@ begin
         end;
     end;
 
-    if RdbSSH[GS_Plink].Checked then begin
+    if (PuTTYPage<>NIL) and RdbSSH[GS_Plink].Checked then begin
         SetArrayLength(EnvSSH,1);
         EnvSSH[0]:=EdtPlink.Text;
 
@@ -867,7 +889,7 @@ begin
 
     // Git SSH options.
     Data:='';
-    if RdbSSH[GS_OpenSSH].Checked then begin
+    if (PuTTYPage=NIL) or RdbSSH[GS_OpenSSH].Checked then begin
         Data:='OpenSSH';
     end else if RdbSSH[GS_Plink].Checked then begin
         Data:='Plink';
