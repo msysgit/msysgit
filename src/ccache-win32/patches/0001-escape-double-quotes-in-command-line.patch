@@ -1,0 +1,84 @@
+From b37f1f229dcbd009a0c5cdbd969bc3e79b064f18 Mon Sep 17 00:00:00 2001
+From: Erik Faye-Lund <kusmabite@gmail.com>
+Date: Wed, 14 Oct 2009 16:59:43 +0200
+Subject: [PATCH] escape double quotes in command line
+
+Original patch:
+http://code.google.com/p/ccache-win32/issues/detail?id=4
+---
+ execute.c |   48 +++++++++++++++++++++++++++++++++++++++++++-----
+ 1 files changed, 43 insertions(+), 5 deletions(-)
+
+diff --git a/execute.c b/execute.c
+index 7d876b3..4059f4b 100644
+--- a/execute.c
++++ b/execute.c
+@@ -19,13 +19,29 @@
+ #include "ccache.h"
+ 
+ #ifdef _WIN32
+-static char *argvtos(char **argv)
++char *argvtos(char **argv)
+ {
+-	int i, len;
++	int i, j, len;
++	int bs_count = 0;
+ 	char *ptr, *str;
+ 
+ 	for (i = 0, len = 0; argv[i]; i++) {
+-		len += strlen(argv[i]) + 3;
++		len += 1;
++		for (j = 0; argv[i][j]; j++) {
++			char c = argv[i][j];
++			if (c == '\\') {
++				bs_count++;
++			} else if (c == '"') {
++				len += 2 * bs_count + 2;
++				bs_count = 0;
++			} else {
++				len += bs_count + 1;
++				bs_count = 0;
++			}
++		}
++		len += bs_count * 2;
++		bs_count = 0;
++		len += 2;
+ 	}
+ 
+ 	str = ptr = (char *)malloc(len + 1);
+@@ -35,8 +51,30 @@ static char *argvtos(char **argv)
+ 	for (i = 0; argv[i]; i++) {
+ 		len = strlen(argv[i]);
+ 		*ptr++ = '"';
+-		memcpy(ptr, argv[i], len);
+-		ptr += len;
++
++		for (j = 0; argv[i][j]; j++) {
++			char c = argv[i][j];
++			if (c == '\\') {
++				bs_count++;
++			} else if (c == '"') {
++				for (; bs_count > 0; bs_count--) {
++					*ptr++ = '\\';
++					*ptr++ = '\\';
++				}
++				*ptr++ = '\\';
++				*ptr++ = '"';
++			} else {
++				for (; bs_count > 0; bs_count--) {
++					*ptr++ = '\\';
++				}
++				*ptr++ = c;
++			}
++		}
++		for (; bs_count > 0; bs_count--) {
++			*ptr++ = '\\';
++			*ptr++ = '\\';
++		}
++
+ 		*ptr++ = '"';
+ 		*ptr++ = ' ';
+ 	}
+-- 
+1.6.4.msysgit.0
+
