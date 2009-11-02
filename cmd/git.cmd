@@ -6,7 +6,9 @@
 @if "%1"=="gui" @goto gui
 :default
 @git.exe %*
-@exit /b %ErrorLevel%
+@goto quit 
 :gui
 @if "%2"=="citool" @goto default
 @start wish.exe "%git_install_root%\libexec\git-core\git-gui" -- %2 %3 %4 %5 %6 %7 %8 %9
+:quit
+@%COMSPEC% /c exit /b %ErrorLevel%
