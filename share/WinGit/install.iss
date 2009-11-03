@@ -1,6 +1,6 @@
 #define APP_NAME     'Git'
 #define APP_VERSION  '%APPVERSION%'
-#define APP_URL      'http://code.google.com/p/msysgit/'
+#define APP_URL      'http://msysgit.googlecode.com/'
 #define APP_BUILTINS 'etc\fileList-builtins.txt'
 
 [Setup]
