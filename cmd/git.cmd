@@ -12,7 +12,15 @@
 @if "%1"=="gui" @goto gui
 
 :default
+@rem Get the current console ("OEM") codepage.
+@for /f "tokens=4" %%i in ('chcp') do @set cp_oem=%%i
+@rem Get the current GUI ("ANSI") codepage.
+@for /f "skip=2 tokens=3" %%i in ('reg query HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage /v ACP') do @set cp_ansi=%%i
+@rem Set the console codepage to match the GUI codepage.
+@chcp %cp_ansi% > nul
 @git.exe %*
+@rem Restore the original console codepage.
+@chcp %cp_oem% > nul
 @goto quit 
 
 :gui
