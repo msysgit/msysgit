@@ -36,6 +36,7 @@ Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescriptio
 Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
 Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
+Name: consolefont; Description: Use TrueType font (required for proper character encoding); GroupDescription: Console properties:; Flags: checkedonce
 
 [Files]
 Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
@@ -55,6 +56,17 @@ Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bi
 BeveledLabel={#emit APP_URL}
 SetupAppTitle={#emit APP_NAME} Setup
 SetupWindowTitle={#emit APP_NAME} Setup
+
+[Registry]
+Root: HKCU; Subkey: Console; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Tasks: consolefont
+
+Root: HKCU; Subkey: Console\Git Bash; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Flags: createvalueifdoesntexist
 
 [UninstallDelete]
 Type: files; Name: {app}\bin\git-*.exe
