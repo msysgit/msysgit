@@ -3,7 +3,7 @@
 # This demonstration illustrates how Tcl/Tk can be used to construct
 # simulations of physical systems.
 #
-# RCS: @(#) $Id: pendulum.tcl,v 1.3 2006/10/17 05:52:40 das Exp $
+# RCS: @(#) $Id: pendulum.tcl,v 1.3.4.1 2009/08/08 08:28:40 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -35,10 +35,10 @@ $w.p add [labelframe $w.p.l2 -text "Phase Space"]
 canvas $w.c -width 320 -height 200 -background white -bd 2 -relief sunken
 $w.c create text 5 5 -anchor nw -text "Click to Adjust Bob Start Position"
 # Coordinates of these items don't matter; they will be set properly below
-$w.c create line 0 25 320 25 -width 2 -fill grey50 -tags plate
-$w.c create line 1 1 1 1 -tags pendulumRod -width 3 -fill black
-$w.c create oval 1 1 2 2 -tags pendulumBob -fill yellow -outline black
-$w.c create oval 155 20 165 30 -fill grey50 -outline {}
+$w.c create line 0 25 320 25   -tags plate -fill grey50 -width 2
+$w.c create oval 155 20 165 30 -tags pivot -fill grey50 -outline {}
+$w.c create line 1 1 1 1       -tags rod   -fill black  -width 3
+$w.c create oval 1 1 2 2       -tags bob   -fill yellow -outline black
 pack $w.c -in $w.p.l1 -fill both -expand true
 
 # Create the canvas containing the phase space graph; this consists of
@@ -62,6 +62,7 @@ set Theta   45.0
 set dTheta   0.0
 set pi       3.1415926535897933
 set length 150
+set home   160
 
 # This procedure makes the pendulum appear at the correct place on the
 # canvas. If the additional arguments "at $x $y" are passed (the 'at'
@@ -70,20 +71,20 @@ set length 150
 # length and angle are computed in reverse from the given location
 # (which is taken to be the centre of the pendulum bob.)
 proc showPendulum {canvas {at {}} {x {}} {y {}}} {
-    global Theta dTheta pi length
-    if {$at eq "at" && ($x!=160 || $y!=25)} {
+    global Theta dTheta pi length home
+    if {$at eq "at" && ($x!=$home || $y!=25)} {
 	set dTheta 0.0
-	set x2 [expr {$x-160}]
-	set y2 [expr {$y-25}]
-	set length [expr {hypot($x2,$y2)}]
-	set Theta [expr {atan2($x2,$y2)*180/$pi}]
+	set x2 [expr {$x - $home}]
+	set y2 [expr {$y - 25}]
+	set length [expr {hypot($x2, $y2)}]
+	set Theta  [expr {atan2($x2, $y2) * 180/$pi}]
     } else {
 	set angle [expr {$Theta * $pi/180}]
-	set x [expr {160+$length*sin($angle)}]
-	set y [expr {25+$length*cos($angle)}]
+	set x [expr {$home + $length*sin($angle)}]
+	set y [expr {25    + $length*cos($angle)}]
     }
-    $canvas coords pendulumRod 160 25 $x $y
-    $canvas coords pendulumBob \
+    $canvas coords rod $home 25 $x $y
+    $canvas coords bob \
 	    [expr {$x-15}] [expr {$y-15}] [expr {$x+15}] [expr {$y+15}]
 }
 showPendulum $w.c
@@ -127,6 +128,8 @@ bind $w.c <ButtonRelease-1> {
 }
 bind $w.c <Configure> {
     %W coords plate 0 25 %w 25
+    set home [expr %w/2]
+    %W coords pivot [expr $home-5] 20 [expr $home+5] 30
 }
 bind $w.k <Configure> {
     set psh [expr %h/2]

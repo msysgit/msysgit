@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tcl.h,v 1.254.2.9 2009/04/10 16:54:51 dgp Exp $
+ * RCS: @(#) $Id: tcl.h,v 1.254.2.13 2009/11/03 19:21:37 dgp Exp $
  */
 
 #ifndef _TCL
@@ -60,10 +60,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  7
+#define TCL_RELEASE_SERIAL  8
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.7"
+#define TCL_PATCH_LEVEL	    "8.5.8"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -2179,14 +2179,10 @@ typedef void (Tcl_LimitHandlerProc) _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp));
 typedef void (Tcl_LimitHandlerDeleteProc) _ANSI_ARGS_((ClientData clientData));
 
-#ifndef MP_INT_DECLARED
 typedef struct mp_int mp_int;
 #define MP_INT_DECLARED
-#endif
-#ifndef MP_DIGIT_DECLARED
-typedef unsigned long mp_digit;
+typedef unsigned int mp_digit;
 #define MP_DIGIT_DECLARED
-#endif
 
 /*
  * The following constant is used to test for older versions of Tcl in the

@@ -11,7 +11,7 @@
 #	files by clicking on the file icons or by entering a filename
 #	in the "Filename:" entry.
 #
-# RCS: @(#) $Id: tkfbox.tcl,v 1.68.2.1 2008/08/25 17:22:40 tmh Exp $
+# RCS: @(#) $Id: tkfbox.tcl,v 1.68.2.3 2009/10/22 10:27:58 dkf Exp $
 #
 # Copyright (c) 1994-1998 Sun Microsystems, Inc.
 #
@@ -227,7 +227,7 @@ proc ::tk::IconList_Create {w} {
     upvar ::tk::$w data
 
     ttk::frame $w
-    ttk::entry $w.cHull -takefocus 0
+    ttk::entry $w.cHull -takefocus 0 -cursor {}
     set data(sbar)   [ttk::scrollbar $w.cHull.sbar -orient horizontal -takefocus 0]
     catch {$data(sbar) configure -highlightthickness 0}
     set data(canvas) [canvas $w.cHull.canvas -highlightthick 0 \
@@ -888,9 +888,11 @@ proc ::tk::dialog::file:: {type args} {
 	# Default type and name to first entry
 	set initialtype     [lindex $data(-filetypes) 0]
 	set initialTypeName [lindex $initialtype 0]
-	if {($data(-typevariable) ne "")
-	    && [uplevel 2 [list info exists $data(-typevariable)]]} {
-	    set initialTypeName [uplevel 2 [list set $data(-typevariable)]]
+	if {$data(-typevariable) ne ""} {
+	    upvar #0 $data(-typevariable) typeVariable
+	    if {[info exists typeVariable]} {
+		set initialTypeName $typeVariable
+	    }
 	}
 	foreach type $data(-filetypes) {
 	    set title  [lindex $type 0]
@@ -1867,10 +1869,10 @@ proc ::tk::dialog::file::Done {w {selectFilePath ""}} {
 	    }
 	}
 	if {[info exists data(-typevariable)] && $data(-typevariable) ne ""
-	    && [info exists data(-filetypes)] && [llength $data(-filetypes)]
-	    && [info exists data(filterType)] && $data(filterType) ne ""} {
-	    upvar 4 $data(-typevariable) initialTypeName
-	    set initialTypeName [lindex $data(filterType) 0]
+		&& [info exists data(-filetypes)] && [llength $data(-filetypes)]
+		&& [info exists data(filterType)] && $data(filterType) ne ""} {
+	    upvar #0 $data(-typevariable) typeVariable
+	    set typeVariable [lindex $data(filterType) 0]
 	}
     }
     bind $data(okBtn) <Destroy> {}
