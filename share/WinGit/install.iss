@@ -486,42 +486,16 @@ begin
     PrevPageID:=CRLFPage.ID;
 
     // 1st choice
-    RdbCRLF[GC_LFOnly]:=TRadioButton.Create(CRLFPage);
-    with RdbCRLF[GC_LFOnly] do begin
+    RdbCRLF[GC_CRLFAlways]:=TRadioButton.Create(CRLFPage);
+    with RdbCRLF[GC_CRLFAlways] do begin
         Parent:=CRLFPage.Surface;
-        Caption:='Checkout as-is, commit Unix-style line endings';
+        Caption:='Checkout Windows-style, commit Unix-style line endings';
         Left:=ScaleX(4);
         Top:=ScaleY(8);
         Width:=ScaleX(340);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=0;
-        Checked:=False;
-    end;
-    LblLFOnly:=TLabel.Create(CRLFPage);
-    with LblLFOnly do begin
-        Parent:=CRLFPage.Surface;
-        Caption:=
-            'Git will not perform any conversion when checking out text files. When' + #13 +
-            'committing text files, CRLF will be converted to LF. For cross-platform projects,' + #13 +
-            'this is the recommended setting on Unix ("core.autocrlf" is set to "input").';
-        Left:=ScaleX(28);
-        Top:=ScaleY(32);
-        Width:=ScaleX(372);
-        Height:=ScaleY(47);
-    end;
-
-    // 2nd choice
-    RdbCRLF[GC_CRLFAlways]:=TRadioButton.Create(CRLFPage);
-    with RdbCRLF[GC_CRLFAlways] do begin
-        Parent:=CRLFPage.Surface;
-        Caption:='Checkout Windows-style, commit Unix-style line endings';
-        Left:=ScaleX(4);
-        Top:=ScaleY(76);
-        Width:=ScaleX(340);
-        Height:=ScaleY(17);
-        Font.Style:=[fsBold];
-        TabOrder:=1;
         Checked:=True;
     end;
     LblCRLFAlways:=TLabel.Create(CRLFPage);
@@ -532,7 +506,33 @@ begin
             'text files, CRLF will be converted to LF. For cross-platform projects,' + #13 +
             'this is the recommended setting on Windows ("core.autocrlf" is set to "true").';
         Left:=ScaleX(28);
-        Top:=ScaleY(100);
+        Top:=ScaleY(32);
+        Width:=ScaleX(372);
+        Height:=ScaleY(47);
+    end;
+
+    // 2nd choice
+    RdbCRLF[GC_LFOnly]:=TRadioButton.Create(CRLFPage);
+    with RdbCRLF[GC_LFOnly] do begin
+        Parent:=CRLFPage.Surface;
+        Caption:='Checkout as-is, commit Unix-style line endings';
+        Left:=ScaleX(4);
+        Top:=ScaleY(80);
+        Width:=ScaleX(340);
+        Height:=ScaleY(17);
+        Font.Style:=[fsBold];
+        TabOrder:=1;
+        Checked:=False;
+    end;
+    LblLFOnly:=TLabel.Create(CRLFPage);
+    with LblLFOnly do begin
+        Parent:=CRLFPage.Surface;
+        Caption:=
+            'Git will not perform any conversion when checking out text files. When' + #13 +
+            'committing text files, CRLF will be converted to LF. For cross-platform projects,' + #13 +
+            'this is the recommended setting on Unix ("core.autocrlf" is set to "input").';
+        Left:=ScaleX(28);
+        Top:=ScaleY(104);
         Width:=ScaleX(372);
         Height:=ScaleY(47);
     end;
