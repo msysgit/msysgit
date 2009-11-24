@@ -219,7 +219,7 @@ const
     GS_OpenSSH        = 1;
     GS_Plink          = 2;
 
-    // Git CRLF options.
+    // Git line ending conversion options.
     GC_LFOnly         = 1;
     GC_CRLFAlways     = 2;
     GC_CRLFCommitAsIs = 3;
@@ -234,7 +234,7 @@ var
     RdbSSH:array[GS_OpenSSH..GS_Plink] of TRadioButton;
     EdtPlink:TEdit;
 
-    // Wizard page and variables for the CR/LF options.
+    // Wizard page and variables for the line ending conversion options.
     CRLFPage:TWizardPage;
     RdbCRLF:array[GC_LFOnly..GC_CRLFCommitAsIs] of TRadioButton;
 
@@ -475,13 +475,13 @@ begin
     end;
 
     (*
-     * Create a custom page for the autoCRLF setting.
+     * Create a custom page for the core.autocrlf setting.
      *)
 
     CRLFPage:=CreateCustomPage(
         PrevPageID,
-        'Choosing CR/LF behavior',
-        'Which CR/LF behavior would you like Git to have?'
+        'Configuring the line ending conversions',
+        'How should Git treat line endings in text files?'
     );
     PrevPageID:=CRLFPage.ID;
 
@@ -489,10 +489,10 @@ begin
     RdbCRLF[GC_LFOnly]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_LFOnly] do begin
         Parent:=CRLFPage.Surface;
-        Caption:='Use Unix style line endings';
+        Caption:='Checkout as-is, commit Unix-style line endings';
         Left:=ScaleX(4);
         Top:=ScaleY(8);
-        Width:=ScaleX(329);
+        Width:=ScaleX(340);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=0;
@@ -502,12 +502,12 @@ begin
     with LblLFOnly do begin
         Parent:=CRLFPage.Surface;
         Caption:=
-            'Choose this if a single Line Feed character ends your lines. Most Windows' + #13 +
-            'programs can cope with these line endings. However, some editors, like' + #13 +
-            'Notepad, will show everything in one line with this mode.';
+            'Git will not perform any conversion when checking out text files. When' + #13 +
+            'committing text files, CRLF will be converted to LF. For cross-platform projects,' + #13 +
+            'this is the recommended setting on Unix ("core.autocrlf" is set to "input").';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
-        Width:=ScaleX(364);
+        Width:=ScaleX(372);
         Height:=ScaleY(47);
     end;
 
@@ -515,10 +515,10 @@ begin
     RdbCRLF[GC_CRLFAlways]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_CRLFAlways] do begin
         Parent:=CRLFPage.Surface;
-        Caption:='Use Windows style line endings';
+        Caption:='Checkout Windows-style, commit Unix-style line endings';
         Left:=ScaleX(4);
         Top:=ScaleY(76);
-        Width:=ScaleX(329);
+        Width:=ScaleX(340);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=1;
@@ -528,12 +528,12 @@ begin
     with LblCRLFAlways do begin
         Parent:=CRLFPage.Surface;
         Caption:=
-            'Choose this if your source code uses a Carriage Return and a Line Feed' + #13 +
-            'character to end lines. This is the DOS convention; your checked-out files' + #13 +
-            'might not be handled gracefully by MSYS / Cygwin command line utilities.';
+            'Git will convert LF to CRLF when checking out text files. When committing' + #13 +
+            'text files, CRLF will be converted to LF. For cross-platform projects,' + #13 +
+            'this is the recommended setting on Windows ("core.autocrlf" is set to "true").';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
-        Width:=ScaleX(364);
+        Width:=ScaleX(372);
         Height:=ScaleY(47);
     end;
 
@@ -541,10 +541,10 @@ begin
     RdbCRLF[GC_CRLFCommitAsIs]:=TRadioButton.Create(CRLFPage);
     with RdbCRLF[GC_CRLFCommitAsIs] do begin
         Parent:=CRLFPage.Surface;
-        Caption:='Commit line endings as they are';
+        Caption:='Checkout as-is, commit as-is';
         Left:=ScaleX(4);
         Top:=ScaleY(152);
-        Width:=ScaleX(329);
+        Width:=ScaleX(340);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=2;
@@ -554,12 +554,12 @@ begin
     with LblCRLFCommitAsIs do begin
         Parent:=CRLFPage.Surface;
         Caption:=
-            'Choose this if you know what you are doing and want to track the files with' + #13 +
-            'the line endings exactly as they appear in the files. This option might' + #13 +
-            'cause your projects to be hard to use on other platforms.';
+            'Git will not perform any conversions when checking out or committing' + #13 +
+            'text files. Choosing this option is not recommended for cross-platform' + #13 +
+            'projects ("core.autocrlf" is set to "false").';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
-        Width:=ScaleX(364);
+        Width:=ScaleX(372);
         Height:=ScaleY(47);
     end;
 
@@ -691,15 +691,15 @@ begin
     }
 
     if RdbCRLF[GC_LFOnly].checked then begin
-        Cmd:='core.autoCRLF input';
+        Cmd:='core.autocrlf input';
     end else if RdbCRLF[GC_CRLFAlways].checked then begin
-        Cmd:='core.autoCRLF true';
+        Cmd:='core.autocrlf true';
     end else begin
-        Cmd:='core.autoCRLF false';
+        Cmd:='core.autocrlf false';
     end;
     if not Exec(AppDir + '\bin\git.exe', 'config -f gitconfig ' + Cmd,
             AppDir + '\etc', SW_HIDE, ewWaitUntilTerminated, i) then begin
-        Msg:='Could not set CR/LF behavior: ' + Cmd;
+        Msg:='Unable to configure the line ending conversion: ' + Cmd;
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
     end;
@@ -910,7 +910,7 @@ begin
     end;
     SetPreviousData(PreviousDataKey,'SSH Option',Data);
 
-    // Git CR/LF options.
+    // Line ending conversion options.
     Data:='';
     if RdbCRLF[GC_LFOnly].Checked then begin
         Data:='LFOnly';
