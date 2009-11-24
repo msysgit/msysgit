@@ -8,6 +8,7 @@
 
 @if "%HOME%"=="" @set HOME=%USERPROFILE%
 @set PLINK_PROTOCOL=ssh
+@if "%LESSCHARSET%"=="" @set LESSCHARSET=latin1
 
 @if "%1"=="gui" @goto gui
 
