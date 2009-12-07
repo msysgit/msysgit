@@ -1,0 +1,37 @@
+From 048a484b313ddd7054c8d3dcb9b9dc508bc1689b Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Mon, 7 Dec 2009 17:21:52 +0100
+Subject: [PATCH 3/6] On Windows, we do not have fork()
+
+Unfortunately, that means that we cannot easily uncompress if it is
+not covered by libz.
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ src/compress.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/src/compress.c b/src/compress.c
+index b220d2e..d17c18b 100644
+--- a/src/compress.c
++++ b/src/compress.c
+@@ -380,6 +380,10 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
+ 	if (method == 2)
+ 		return uncompressgzipped(ms, old, newch, n);
+ #endif
++#ifdef WIN32
++	file_printf(ms, "Cannot uncompress (fork) on Windows");
++	return NODATA;
++#else
+ 	(void)fflush(stdout);
+ 	(void)fflush(stderr);
+ 
+@@ -493,4 +497,5 @@ err:
+ 	    
+ 		return n;
+ 	}
++#endif /* WIN32 */
+ }
+-- 
+1.6.5.1.1371.g1abf3
+
