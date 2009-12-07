@@ -1,6 +1,6 @@
 #define APP_NAME     'Git'
 #define APP_VERSION  '%APPVERSION%'
-#define APP_URL      'http://code.google.com/p/msysgit/'
+#define APP_URL      'http://msysgit.googlecode.com/'
 #define APP_BUILTINS 'etc\fileList-builtins.txt'
 
 [Setup]
@@ -36,6 +36,7 @@ Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescriptio
 Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
 Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
 Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
+Name: consolefont; Description: Use TrueType font (required for proper character encoding); GroupDescription: Console properties:; Flags: checkedonce
 
 [Files]
 Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
@@ -48,10 +49,24 @@ Name: {group}\Uninstall Git; Filename: {uninstallexe}
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: quicklaunchicon
 Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: desktopicon
 
+; Create a special shortcut that does not set a working directory. This is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
+Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; IconFilename: {app}\etc\git.ico; Tasks: shellextension
+
 [Messages]
 BeveledLabel={#emit APP_URL}
 SetupAppTitle={#emit APP_NAME} Setup
 SetupWindowTitle={#emit APP_NAME} Setup
+
+[Registry]
+Root: HKCU; Subkey: Console; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Tasks: consolefont
+
+Root: HKCU; Subkey: Console\Git Bash; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Flags: createvalueifdoesntexist
 
 [UninstallDelete]
 Type: files; Name: {app}\bin\git-*.exe
@@ -849,9 +864,8 @@ begin
     end;
 
     if IsTaskSelected('shellextension') then begin
-        Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','wscript "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);

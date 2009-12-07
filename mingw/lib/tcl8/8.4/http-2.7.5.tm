@@ -8,12 +8,12 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: http.tcl,v 1.67.2.6 2009/04/09 17:05:39 dgp Exp $
+# RCS: @(#) $Id: http.tcl,v 1.67.2.9 2009/11/11 16:14:43 dgp Exp $
 
 package require Tcl 8.4
 # Keep this in sync with pkgIndex.tcl and with the install directories in
 # Makefiles
-package provide http 2.7.3
+package provide http 2.7.5
 
 namespace eval http {
     # Allow resourcing to not clobber existing data
@@ -433,7 +433,7 @@ proc http::geturl {url args} {
 	    ( [^/:\#?]+ )		# <host part of authority>
 	    (?: : (\d+) )?		# <port part of authority>
 	)?
-	( / [^\#?]* (?: \? [^\#?]* )?)?	# <path> (including query)
+	( / [^\#]*)?			# <path> (including query)
 	(?: \# (.*) )?			# <fragment>
 	$
     }
@@ -1033,8 +1033,14 @@ proc http::Event {sock token} {
 		    content-type {
 			set state(type) [string trim [string tolower $value]]
 			# grab the optional charset information
-			regexp -nocase {charset\s*=\s*(\S+?);?} \
-			    $state(type) -> state(charset)
+			if {[regexp -nocase \
+				 {charset\s*=\s*\"((?:[^""]|\\\")*)\"} \
+				 $state(type) -> cs]} {
+			    set state(charset) [string map {{\"} \"} $cs]
+			} else {
+			    regexp -nocase {charset\s*=\s*(\S+?);?} \
+				$state(type) -> state(charset)
+			}
 		    }
 		    content-length {
 			set state(totalsize) [string trim $value]

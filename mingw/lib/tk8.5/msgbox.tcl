@@ -3,7 +3,7 @@
 #	Implements messageboxes for platforms that do not have native
 #	messagebox support.
 #
-# RCS: @(#) $Id: msgbox.tcl,v 1.36.2.1 2009/04/10 16:45:46 das Exp $
+# RCS: @(#) $Id: msgbox.tcl,v 1.36.2.2 2009/08/24 21:19:35 dkf Exp $
 #
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 #
@@ -396,12 +396,12 @@ proc ::tk::MessageBox {args} {
 
     if {$data(-default) ne ""} {
 	bind $w <FocusIn> {
-	    if {[winfo class %W] eq "Button"} {
+	    if {[winfo class %W] in "Button TButton"} {
 		%W configure -default active
 	    }
 	}
 	bind $w <FocusOut> {
-	    if {[winfo class %W] eq "Button"} {
+	    if {[winfo class %W] in "Button TButton"} {
 		%W configure -default normal
 	    }
 	}
@@ -410,7 +410,7 @@ proc ::tk::MessageBox {args} {
     # 6. Create bindings for <Return>, <Escape> and <Destroy> on the dialog
 
     bind $w <Return> {
-	if {[winfo class %W] eq "Button"} {
+	if {[winfo class %W] in "Button TButton"} {
 	    %W invoke
 	}
     }

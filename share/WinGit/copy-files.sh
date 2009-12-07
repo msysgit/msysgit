@@ -80,6 +80,7 @@ cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
+cp /share/WinGit/Git\ Bash.vbs . &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&

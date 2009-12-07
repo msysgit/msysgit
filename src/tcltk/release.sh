@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 srcdir=$(pwd)
 
 mirror=http://kent.dl.sourceforge.net/sourceforge/tcl/
-version=8.5.7
+version=8.5.8
 
 for p in tcl tk
 do
@@ -43,7 +43,7 @@ do
 
 		# Remove old Tcl/Tk files stored in fileList.txt
 		list=$srcdir/fileList-$p.txt
-		cat "$list" | (cd / && xargs git rm) &&
+		cat "$list" | grep -v 'release\.sh$' | (cd / && xargs git rm) &&
 
 		make install &&
 

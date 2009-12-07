@@ -3,7 +3,7 @@
 # This demonstration script creates a canvas widget with a text
 # item that can be edited and reconfigured in various ways.
 #
-# RCS: @(#) $Id: ctext.tcl,v 1.5 2004/12/21 11:56:35 dkf Exp $
+# RCS: @(#) $Id: ctext.tcl,v 1.5.4.1 2009/10/27 14:02:58 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -42,7 +42,7 @@ $c create rectangle 245 195 255 205 -outline black -fill red
 
 # First, create the text item and give it bindings so it can be edited.
 
-$c addtag text withtag [$c create text 250 200 -text "This is just a string of text to demonstrate the text facilities of canvas widgets. Bindings have been been defined to support editing (see above)." -width 440 -anchor n -font {Helvetica 24} -justify left]
+$c addtag text withtag [$c create text 250 200 -text "This is just a string of text to demonstrate the text facilities of canvas widgets. Bindings have been been defined to support editing (see above)." -width 440 -anchor n -font $textFont -justify left]
 $c bind text <1> "textB1Press $c %x %y"
 $c bind text <B1-Motion> "textB1Move $c %x %y"
 $c bind text <Shift-1> "$c select adjust current @%x,%y"

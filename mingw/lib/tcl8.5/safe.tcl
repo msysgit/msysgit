@@ -12,7 +12,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: safe.tcl,v 1.16.4.1 2008/06/25 16:42:05 andreas_kupries Exp $
+# RCS: @(#) $Id: safe.tcl,v 1.16.4.2 2009/11/04 04:47:59 dgp Exp $
 
 #
 # The implementation is based on namespaces. These naming conventions
@@ -373,13 +373,33 @@ namespace eval ::safe {
 	# Modules. We safe the virtual form separately as well, as
 	# syncing it with the slave has to be defered until the
 	# necessary commands are present for setup.
-	foreach dir [::tcl::tm::list] {
+
+	set morepaths [::tcl::tm::list]
+	while {[llength $morepaths]} {
+	    set addpaths $morepaths
+	    set morepaths {}
+
+	    foreach dir $addpaths {
 	    lappend access_path $dir
 	    Set [PathToken $i $slave] $dir
 	    lappend slave_auto_path "\$[PathToken $i]"
 	    lappend slave_tm_path   "\$[PathToken $i]"
 	    incr i
+
+		# [Bug 2854929]
+		# Recursively find deeper paths which may contain
+		# modules. Required to handle modules with names like
+		# 'platform::shell', which translate into
+		# 'platform/shell-X.tm', i.e arbitrarily deep
+		# subdirectories. The catch prevents complaints when
+		# no paths are added. Do nothing gracefully is 8.6+.
+
+		catch {
+		    lappend morepaths {*}[glob -nocomplain -directory $dir -type d *]
 	}
+	    }
+	}
+
 	Set [TmPathListName      $slave] $slave_tm_path
 	Set $nname $i
 	Set [PathListName        $slave] $access_path
