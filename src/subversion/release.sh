@@ -15,6 +15,11 @@ export MSYSTEM=MSYS
 export PATH=/bin:$PATH
 
 # check for presence of libz (MSys), perl >= 5.8
+test -f /src/perl/perl-5.8.8/perlld || {
+	echo "You need to build Perl first"
+	exit 1
+}
+
 perl -e 'require 5.8.0' || exit
 test -f /include/zconf.h || {
 	echo "MSys version of libz required."
