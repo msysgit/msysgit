@@ -13,9 +13,9 @@
 /*
  * Package name      : perl5
  * Source directory  : .
- * Configuration time: Wed Jan 16 13:15:16 GMTST 2008
- * Configured by     : unknown
- * Target system     : msys_nt-5.1 chomsky 1.0.11(0.4632) 2007-07-29 17:16 i686 unknown 
+ * Configuration time: Tue Dec  8 12:28:53 GMT 2009
+ * Configured by     : felix-maschine\johannes
+ * Target system     : msys_nt-6.0 felix-maschine 1.0.11(0.4632) 2009-05-12 18:47 i686 unknown 
  */
 
 #ifndef _config_h_
@@ -1564,7 +1564,7 @@
 #define HAS_UNAME		/**/
 /*#define HAS_PHOSTNAME	/ **/
 #ifdef HAS_PHOSTNAME
-#define PHOSTNAME "/c/WINDOWS/system32/hostname"	/* How to get the host name */
+#define PHOSTNAME "/c/Windows/system32/hostname"	/* How to get the host name */
 #endif
 
 /* HAS_GETHOST_PROTOS:

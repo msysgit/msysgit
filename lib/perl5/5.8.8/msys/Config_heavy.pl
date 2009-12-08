@@ -14,9 +14,9 @@ use strict;
 #
 ## Package name      : perl5
 ## Source directory  : .
-## Configuration time: Wed Jan 16 13:15:16 GMTST 2008
-## Configured by     : unknown
-## Target system     : msys_nt-5.1 chomsky 1.0.11(0.4632) 2007-07-29 17:16 i686 unknown 
+## Configuration time: Tue Dec  8 12:28:53 GMT 2009
+## Configured by     : felix-maschine\johannes
+## Target system     : msys_nt-6.0 felix-maschine 1.0.11(0.4632) 2009-05-12 18:47 i686 unknown 
 #
 ## Configure command line arguments.
 #PERL_PATCHLEVEL=
@@ -93,7 +93,7 @@ afs='false'
 afsroot='/afs'
 alignbytes='8'
 ansi2knr=''
-aphostname='/c/WINDOWS/system32/hostname'
+aphostname='/c/Windows/system32/hostname'
 api_revision='5'
 api_subversion='0'
 api_version='8'
@@ -125,9 +125,9 @@ ccflags_uselargefiles=''
 ccname='gcc'
 ccsymbols='_X86_=1 __GNUC_MINOR__=95 __cdecl=__attribute__((__cdecl__)) __declspec(x)=__attribute__((x)) __i386=1 __i386__=1 __i686=1 __i686__=1 __pentiumpro=1 __pentiumpro__=1 __stdcall=__attribute__((__stdcall__)) __unix=1 __unix__=1 _cdecl=__attribute__((__cdecl__)) _stdcall=__attribute__((__stdcall__)) _unix=1 cpu=i386 i686=1 machine=i386 pentiumpro=1 system=winnt'
 ccversion=''
-cf_by='unknown'
-cf_email='unknown@chomsky.nonet'
-cf_time='Wed Jan 16 13:15:16 GMTST 2008'
+cf_by='felix-maschine\johannes'
+cf_email='felix-maschine\johannes@felix-maschine.nonet'
+cf_time='Tue Dec  8 12:28:53 GMT 2009'
 charsize='1'
 chgrp=''
 chmod='chmod'
@@ -135,7 +135,7 @@ chown=''
 clocktype='clock_t'
 comm='comm'
 compress=''
-config_arg0='./Configure'
+config_arg0='./configure'
 config_arg1='-de'
 config_argc='1'
 config_args='-de'
@@ -843,8 +843,8 @@ multiarch='undef'
 mv=''
 myarchname='i686-msys'
 mydomain='.nonet'
-myhostname='chomsky'
-myuname='msys_nt-5.1 chomsky 1.0.11(0.4632) 2007-07-29 17:16 i686 unknown '
+myhostname='felix-maschine'
+myuname='msys_nt-6.0 felix-maschine 1.0.11(0.4632) 2009-05-12 18:47 i686 unknown '
 n=''
 need_va_copy='undef'
 netdb_hlen_type='int'
@@ -878,10 +878,10 @@ pager='/bin/less'
 passcat=''
 patchlevel='8'
 path_sep=':'
-perl5='/c/Perl/bin//perl'
+perl5='/usr/bin/perl'
 perl=''
 perl_patchlevel=''
-perladmin='unknown@chomsky.nonet'
+perladmin='felix-maschine\johannes@felix-maschine.nonet'
 perllibs=''
 perlpath='/usr/bin/perl'
 pg='pg'
