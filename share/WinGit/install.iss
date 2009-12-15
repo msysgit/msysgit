@@ -574,6 +574,12 @@ begin
     end;
 end;
 
+// AfterInstall
+//
+// Even though the name of this procedure suggests otherwise most of the
+// code below is only executed once after the regular installation code
+// is finished. This happens because of the if-guard right in the
+// beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,FileName,Cmd,Msg:string;
@@ -938,6 +944,12 @@ begin
     end;
 end;
 
+// PreUninstall
+//
+// Even though the name of this function suggests otherwise most of the
+// code below is only executed right before the actual uninstallation.
+// This happens because of the if-guard right in the beginning of this
+// function.
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
     AppDir,Command,Msg:string;
