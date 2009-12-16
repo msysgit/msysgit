@@ -17,7 +17,7 @@ cd "$(dirname "$0")"
 
 cat fileList.txt | (cd / && xargs git rm) || exit
 
-url=ftp://ftp.funet.fi/pub/CPAN/src/
+url=ftp://ftp.funet.fi/pub/CPAN/src/5.0
 version=5.8.8
 md5='b8c118d4360846829beb30b02a6b91a7'
 
