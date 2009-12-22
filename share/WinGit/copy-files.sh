@@ -80,6 +80,8 @@ cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
+mkdir git-cheetah &&
+cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&

@@ -34,6 +34,7 @@ WizardSmallImageFile=gitsmall.bmp
 [Tasks]
 Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; Flags: checkedonce
 Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
+Name: shellextension; Description: "Install Explorer extension (git-cheetah)"; GroupDescription: Windows Explorer integration:;
 
 [Files]
 Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
@@ -242,6 +243,13 @@ end;
     Installer code
 }
 
+var
+    CanInstallGitCheetah:Boolean;
+    NeedsRestart:Boolean;
+    OldCheetahFile:String;
+const
+    GitUninstallKey='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1';
+
 procedure InitializeWizard;
 var
     PrevPageID:Integer;
@@ -252,6 +260,13 @@ var
     BtnPlink:TButton;
     Data:String;
 begin
+    {
+        Initialize global variables
+    }
+    CanInstallGitCheetah:=True;
+    NeedsRestart:=False;
+    OldCheetahFile:='';
+
     PrevPageID:=wpSelectTasks;
 
     (*
@@ -572,6 +587,115 @@ begin
     end;
 end;
 
+function UnregisterCheetah(FileName:string):Boolean;
+var
+    RegCmd,Msg:string;
+    CheetahInstalled:Cardinal;
+    RootKey,i:Integer;
+begin
+
+    Result:=True;
+
+    if IsAdminLoggedOn then begin
+        RootKey:=HKEY_LOCAL_MACHINE;
+        RegCmd:='regsvr32 -u -s -n -i:machine "'+FileName+'"';
+    end else begin
+        RootKey:=HKEY_CURRENT_USER;
+        RegCmd:='regsvr32 -u -s "'+FileName+'"';
+    end;
+
+    CheetahInstalled:=0;
+    i:=0;
+    RegQueryDWordValue(RootKey,GitUninstallKey,'ShellExtensionInstalled',
+                       CheetahInstalled);
+    if CheetahInstalled <> 0 then begin
+        if not Exec('>',RegCmd,'',SW_HIDE,ewWaitUntilTerminated,i)
+        then begin
+            Msg:='Error: '+SysErrorMessage(i);
+            i:=1;
+        end;
+    end;
+    if i <> 0 then begin
+        Msg:=Msg+'Line {#emit __LINE__}: Unable to unregister explorer context menu.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
+        Result:=False;
+        // This is not a critical error, the user can probably fix it
+        // manually, so we continue.
+    end;
+
+    if (CheetahInstalled <> 0) and (Result = True) and not
+       RegDeleteValue(RootKey,GitUninstallKey,'ShellExtensionInstalled')
+    then begin
+        Msg:='Line {#emit __LINE__}: Unable to remove Registry entry for Git Explorer Context Menu.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
+        Result:=False;
+        // This is not a critical error, the user can probably fix it manually,
+        // so we continue.
+    end;
+end;
+
+// This function tries to delete the given file. If deletion is denied
+// by Windows it will rename the file by appending an incrementing
+// number. In case it needs to rename the file it sets the NeedsRestart
+// variable to true.
+function DeleteOrMoveFile(FileName,TargetFileName:string):Boolean;
+var
+    Msg:string;
+begin
+    Result:=True;
+
+    if not FileExists(FileName) then begin
+        Exit;
+    end;
+
+    if DeleteFile(FileName) then begin
+        Exit;
+    end;
+
+    NeedsRestart:=True;
+    if not RenameFile(FileName,TargetFileName) then begin
+        Msg:='Line {#emit __LINE__}: Unable to move installed shell extension "'+FileName+'" to "'+TargetFileName+'".';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
+        Result:=False;
+        Exit;
+        // This is not a critical error, Git can be used without the
+        // context menu, so we continue.
+    end;
+end;
+
+function RestartExplorer():Boolean;
+var
+    ResultCode:Integer;
+begin
+
+    if not Exec('>','taskkill -f -im explorer.exe','',SW_HIDE,
+                ewWaitUntilTerminated, ResultCode)
+    then begin
+        MsgBox('Line {#emit __LINE__}: Restart of explorer failed. System restart required.',mbError,MB_OK);
+        Result:=False;
+        Exit;
+    end;
+
+    if ResultCode <> 0 then begin
+        MsgBox('Line {#emit __LINE__}: Restart of explorer failed. System restart required.',mbError,MB_OK);
+        Result:=False;
+        Exit;
+    end;
+
+    if not Exec('>','explorer.exe','',SW_HIDE,ewWaitUntilIdle,ResultCode)
+    then begin
+        MsgBox('Line {#emit __LINE__}: Restart of explorer failed. System restart required.',mbError,MB_OK);
+        Result:=False;
+        Exit;
+    end;
+
+    // No need to check ResultCode because the explorer does not end
+    Result:=True;
+end;
+
 // AfterInstall
 //
 // Even though the name of this procedure suggests otherwise most of the
@@ -580,12 +704,30 @@ end;
 // beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,Cmd,Msg:string;
+    AppDir,FileName,Cmd,Msg,CheetahFilename,TargetFileName:string;
     BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
     FindRec:TFindRec;
 begin
+    CheetahFilename:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+
+    // This part is run directly before copying the files for the
+    // installation
+    if CurStep=ssInstall then begin
+        UnregisterCheetah(CheetahFilename);
+        TargetFileName:=CheetahFilename+'_moved';
+        if not DeleteOrMoveFile(CheetahFilename,TargetFileName) then begin
+            CanInstallGitCheetah:=False;
+        end else begin
+            // If NeedRestart is set we need to shedule the file
+            // which is currently in use for later deletion
+            if NeedsRestart then begin
+                OldCheetahFile:=TargetFileName;
+            end;
+        end;
+    end;
+
     if CurStep<>ssPostInstall then begin
         Exit;
     end;
@@ -882,15 +1024,27 @@ end;
 // needs to be instructed/offered to restart the computer
 function NeedRestart():Boolean;
 var
-    AppDir,Msg,RegCmd,Command:string;
-    RootKey:Integer;
+    AppDir,Msg,CheetahFilename,RegCmd,Command:string;
+    RootKey,i:Integer;
 begin
     AppDir:=ExpandConstant('{app}');
+    CheetahFilename:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+
+    {
+        Copy and Register Windows Explorer Context menu (git-cheetah)
+
+        We need to do this here because this function is evaluated
+        before CurStepChanged = ssPostInstall. In case restart of the
+        explorer fails we would otherwise have no chance to instruct
+        the fallback of a system restart.
+    }
 
     if IsAdminLoggedOn then begin
         RootKey:=HKEY_LOCAL_MACHINE;
+        RegCmd:='regsvr32 -s -n -i:machine "'+CheetahFilename+'"';
     end else begin
         RootKey:=HKEY_CURRENT_USER;
+        RegCmd:='regsvr32 -s "'+CheetahFilename+'"';
     end;
 
     // This is deinstallation code for the old shell extension. We need
@@ -921,7 +1075,70 @@ begin
         end;
     end;
 
-    Result:=False;
+    if IsTaskSelected('shellextension') then begin
+        if not CanInstallGitCheetah then begin
+            Msg:='Line {#emit __LINE__}: Unable to install Git Explorer Context Menu.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end;
+
+        i:=0;
+        if CanInstallGitCheetah and not Exec('>',RegCmd,'',SW_HIDE,
+                                             ewWaitUntilTerminated,i)
+        then begin
+            Msg:=SysErrorMessage(i);
+            i:=-1;
+        end;
+        if (i <> 0) then begin
+            if (i = -1) then begin
+                Msg:=Format('Registering COM failed (Code: %d) ', [Msg, i]);
+            end else begin
+                Msg:='Command failed:"'+RegCmd+'". '+Msg+' ';
+            end;
+            Msg:=Msg+' Line {#emit __LINE__}: Unable to install explorer context menu.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            CanInstallGitCheetah:=False;
+            // This is not a critical error, the user can probably fix
+            // it manually, so we continue.
+        end;
+
+        if CanInstallGitCheetah then begin
+            if not RegWriteDWordValue(RootKey,GitUninstallKey,
+                                      'ShellExtensionInstalled',1)
+            then begin
+                Msg:='Line {#emit __LINE__}: Unable to create Registry entry to install Git Explorer Context Menu.';
+                MsgBox(Msg,mbError,MB_OK);
+                Log(Msg);
+                CanInstallGitCheetah:=False;
+                // This is not a critical error, the user can probably
+                // fix it manually, so we continue.
+            end;
+        end;
+    end;
+
+    if NeedsRestart then begin
+        if MsgBox('To complete the installation the explorer needs to be restarted, do you want me to do it now?',
+                  mbConfirmation, MB_YESNO) = IDYES
+        then begin
+            if RestartExplorer() = True then begin
+                if not DeleteFile(OldCheetahFile) then begin
+                    Msg:='Line {#emit __LINE__}: Failed to delete "'+
+                         OldCheetahFile+'".';
+                    MsgBox(Msg,mbError,MB_OK);
+                    Log(Msg);
+                end;
+                NeedsRestart := False;
+            end;
+        end else begin
+            // If the user chooses not to restart the explorer we
+            // can not delete the old cheetah plugin when finishing
+            // the installation
+            OldCheetahFile:='';
+        end;
+    end;
+
+    Result:=NeedsRestart;
 end;
 
 {
@@ -962,11 +1179,39 @@ end;
 // function.
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir,Command,Msg:string;
+    AppDir,Command,Msg,CheetahFilename,TargetFileName:string;
     EnvPath,EnvHome,EnvSSH:TArrayOfString;
     i:Longint;
     RootKey:Integer;
 begin
+    AppDir:=ExpandConstant('{app}');
+
+    if CurUninstallStep = usPostUninstall then begin
+        if NeedsRestart and (MsgBox('To complete the deinstallation the explorer needs to be restarted, do you want me to do it now?',
+                                    mbConfirmation, MB_YESNO) = IDYES)
+        then begin
+            if RestartExplorer() = True then begin
+                if not DeleteFile(OldCheetahFile) then begin
+                    Msg:='Line {#emit __LINE__}: Unable to delete old cheetah plugin.';
+                    MsgBox(Msg,mbError,MB_OK);
+                    Log(Msg);
+                    // This results in one undeleted file which is not
+                    // critical and can be resolved manually.
+                end;
+
+                // If needed delete leftover files.
+                DeleteFile(AppDir+'\git-cheetah\git_shell_ext.dll_moved');
+                if RemoveDir(ExpandConstant('{app}\git-cheetah')) then begin
+                    RemoveDir(ExpandConstant('{app}'));
+                end;
+                NeedsRestart := False;
+            end;
+        end;
+        if NeedsRestart then begin
+            MsgBox('Please restart your computer and remove leftover files in git folder manually to complete deinstallation.', mbInformation, MB_OK);
+        end;
+    end;
+
     if CurUninstallStep<>usUninstall then begin
         Exit;
     end;
@@ -978,7 +1223,6 @@ begin
         "ChangesEnvironment=yes" not happend before the change!
     }
 
-    AppDir:=ExpandConstant('{app}');
     Command:=AppDir+'\setup.ini';
 
     // Delete the current user's GIT_SSH and SVN_SSH if we set it.
@@ -1057,4 +1301,25 @@ begin
         RootKey:=HKEY_CURRENT_USER;
     end;
 
+    CheetahFilename:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+    if not UnregisterCheetah(CheetahFilename) then begin
+        Msg:='Line {#emit __LINE__}: Unable to unregister explorer context menu.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
+        // This is not a critical error, the user can probably fix it
+        // manually, so we continue.
+    end else begin
+        TargetFileName:=CheetahFilename+'_moved';
+        if not DeleteOrMoveFile(CheetahFilename,TargetFileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to delete/move explorer context menu.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix
+            // it manually, so we continue.
+        end else if NeedsRestart then begin
+            // Shedule old cheetah plugin for deletion after
+            // deinstallation
+            OldCheetahFile:=TargetFileName;
+        end;
+    end;
 end;
