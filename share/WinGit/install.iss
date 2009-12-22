@@ -34,8 +34,6 @@ WizardSmallImageFile=gitsmall.bmp
 [Tasks]
 Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; Flags: checkedonce
 Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
-Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
-Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
 
 [Files]
 Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
@@ -587,7 +585,6 @@ var
     Count,i:Longint;
     IsNTFS:Boolean;
     FindRec:TFindRec;
-    RootKey:Integer;
 begin
     if CurStep<>ssPostInstall then begin
         Exit;
@@ -843,39 +840,6 @@ begin
         // This is not a critical error, the user can probably fix it manually,
         // so we continue.
     end;
-
-    {
-        Create the Windows Explorer shell extensions
-    }
-
-    if IsAdminLoggedOn then begin
-        RootKey:=HKEY_LOCAL_MACHINE;
-    end else begin
-        RootKey:=HKEY_CURRENT_USER;
-    end;
-
-    if IsTaskSelected('shellextension') then begin
-        Cmd:=ExpandConstant('"{syswow64}\cmd.exe"');
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd+' /c "pushd "%1" && "'+AppDir+'\bin\sh.exe" --login -i"')) then begin
-            Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
-
-    if IsTaskSelected('guiextension') then begin
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
-            Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey:Integer);
@@ -912,6 +876,52 @@ begin
         Data:='CRLFCommitAsIs';
     end;
     SetPreviousData(PreviousDataKey,'CRLF Option',Data);
+end;
+
+// This function is called during installation to determine if the user
+// needs to be instructed/offered to restart the computer
+function NeedRestart():Boolean;
+var
+    AppDir,Msg,RegCmd,Command:string;
+    RootKey:Integer;
+begin
+    AppDir:=ExpandConstant('{app}');
+
+    if IsAdminLoggedOn then begin
+        RootKey:=HKEY_LOCAL_MACHINE;
+    end else begin
+        RootKey:=HKEY_CURRENT_USER;
+    end;
+
+    // This is deinstallation code for the old shell extension. We need
+    // to leave it here during the transition phase so it will be
+    // removed when performing an update.
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell')
+        then begin
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
+    Result:=False;
 end;
 
 {
@@ -1047,27 +1057,4 @@ begin
         RootKey:=HKEY_CURRENT_USER;
     end;
 
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
-
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
 end;
