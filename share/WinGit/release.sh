@@ -1,19 +1,55 @@
 #!/bin/sh
 
 force=
-case "$1" in
--f|--force)
-	force=t
-	shift
-	;;
-esac
+do_compile=t
+while test $# -gt 0
+do
+	case "$1" in
+	-f|--force)
+		force=t
+		shift
+		;;
+	-n|--no-compile)
+		do_compile=
+		shift
+		;;
+	*)
+		break
+	esac
+done
 
 test -z "$1" && {
-	echo "Usage: $0 <version>" >&2
+	echo "Usage: $0 [-f] [-n] <version>" >&2
 	exit 1
 }
 
 version=$1
+
+create_msysgit_tag () {
+	i=0 &&
+	while ! git tag -a -m "Git for Windows $1" \
+	                $(git describe HEAD | cut -d- -f1).msysgit.$i
+	do
+		i=$[$i+1]
+	done
+}
+
+# compile everything needed for standard setup
+test "$do_compile" && {
+	start /share/WinGit/ReleaseNotes.rtf &&
+	echo "Press enter to continue (Ctrl-C to stop)" &&
+	read && {
+		# create a commit if ReleaseNotes changed
+		test "$(git diff /share/WinGit/ReleaseNotes.rtf)" && {
+			git add /share/WinGit/ReleaseNotes.rtf &&
+			git commit -m "Git for Windows $version"
+		}
+		(cd /git &&
+		 create_msysgit_tag $version &&
+		 make install) &&
+		(cd /src/git-cheetah/explorer/ && make)
+	} || exit 1
+}
 
 test -z "$force" && {
 	die () {
