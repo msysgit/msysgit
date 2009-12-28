@@ -1,0 +1,61 @@
+From 18840c3a329b3c2e2ef9ef0b59daf89767e7e7cd Mon Sep 17 00:00:00 2001
+From: Sebastian Schuberth <sschuberth@gmail.com>
+Date: Tue, 29 Dec 2009 15:19:05 +0100
+Subject: [PATCH] Allow the target name to differ from the source name
+
+Use hd2u as the target name to not overwrite MinGW's dos2unix.
+
+Signed-off-by: Sebastian Schuberth <sschuberth@gmail.com>
+---
+ Makefile.in |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 2a67b3c..8885d37 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -18,7 +18,7 @@ PACKAGE_VERSION=@PACKAGE_VERSION@
+ 
+ CC = @CC@
+ CFLAGS = @CFLAGS@ -Wall -pedantic
+-TARGET = dos2unix
++TARGET = hd2u
+ SCRIPTS = \
+ 	configure \
+ 	install-sh \
+@@ -41,8 +41,8 @@ LIBS= @LIBS@
+ 
+ all:	$(TARGET)
+ 
+-$(TARGET):	$(TARGET).c config.h
+-	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) $(LIBS)
++$(TARGET):	dos2unix.c config.h
++	$(CC) $(CFLAGS) -o $@ dos2unix.c $(LIBS)
+ 
+ 
+ all-optimized:		$(TARGET)-optimized
+@@ -51,10 +51,10 @@ $(TARGET)-optimized:	$(TARGET).pa benchmark1 $(TARGET).bp benchmark2
+ 	@echo "You should check BENCHMARKING results: second one should be better."
+ 
+ $(TARGET).pa:
+-	$(CC) $(CFLAGS) $(CFLAGS_PROFILE) -fprofile-arcs -o $(TARGET) $(TARGET).c $(LIBS)
++	$(CC) $(CFLAGS) $(CFLAGS_PROFILE) -fprofile-arcs -o $(TARGET) dos2unix.c $(LIBS)
+ 
+ $(TARGET).bp:
+-	$(CC) $(CFLAGS) $(CFLAGS_PROFILE) -fbranch-probabilities -o $(TARGET) $(TARGET).c $(LIBS)
++	$(CC) $(CFLAGS) $(CFLAGS_PROFILE) -fbranch-probabilities -o $(TARGET) dos2unix.c $(LIBS)
+ 
+ 
+ test:	$(TARGET)
+@@ -104,7 +104,7 @@ install:
+ 
+ tarball:
+ 	$(INSTALL) -d -m 755 ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+-	$(INSTALL) -m 644 $(TARGET).c ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
++	$(INSTALL) -m 644 dos2unix.c ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 	$(INSTALL) -m 755 $(SCRIPTS) ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 	$(INSTALL) -m 644 $(DOC) ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 	$(INSTALL) -m 644 Makefile.in configure.in config.h.in ./$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+-- 
+1.6.5.rc2.13.g1be2
+
