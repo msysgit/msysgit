@@ -1,0 +1,56 @@
+From dd51600c94bf6624c95fddbede23b502bbc4d766 Mon Sep 17 00:00:00 2001
+From: Johannes Sixt <j6t@kdbg.org>
+Date: Tue, 29 Dec 2009 21:31:16 +0100
+Subject: [PATCH] Do not start the fstab observer thread.
+
+To update mount points while an MSYS program is active, a thread is started
+on program startup that observes fstab changes. On program shutdown, this
+thread is nowhere terminated explicitly, but only implicitly by
+ExitProcess(). Procmon reveals that this takes aroung 100ms.
+
+The consequence is that when an MSYS program is started from CMD, it takes
+at least 100ms, even if it does nothing, such as 'cat < nul'.
+
+The mount point information is shared between MSYS processes, and only the
+first one starts this thread and takes the penalty. This is commonly an
+interactive bash: nobody cares that it takes 0.1sec to shut down because
+all programs that it launches (and their child processes) are not
+penalized. But if MSYS programs are run from CMD, the penalty is taken
+every time.
+
+This patch disables the watcher thread by default, but it can be enabled
+by setting the environment variable MSYS_WATCH_FSTAB to a non-empty string
+(that does not start with a zero).
+---
+ source/winsup/cygwin/path.cc |   13 ++++++++++++-
+ 1 files changed, 12 insertions(+), 1 deletions(-)
+
+diff --git a/source/winsup/cygwin/path.cc b/source/winsup/cygwin/path.cc
+index 1b84bf1..77b6a1e 100644
+--- a/source/winsup/cygwin/path.cc
++++ b/source/winsup/cygwin/path.cc
+@@ -1684,9 +1684,20 @@ mount_info::read_mounts_thread (LPVOID thrdParam)
+ void
+ mount_info::read_mounts (reg_key& r)
+ {
++    char buf[100] = { 0 };
++
+     InitializeCriticalSection(&lock);
+     read_mounts2();
+-    threadH = CreateThread (NULL, 0, mount_info::read_mounts_thread, this, 0, threadID);
++    GetEnvironmentVariable("MSYS_WATCH_FSTAB", buf, sizeof (buf));
++    if (buf[0] && buf[0] != '0')
++      {
++	threadH = CreateThread (NULL, 0, mount_info::read_mounts_thread, this, 0, threadID);
++      }
++    else
++      {
++	threadH = NULL;
++	threadID = 0;
++      }
+ }
+
+ /* read_mounts: Given a specific regkey, read mounts from under its
+--
+1.6.6.1089.g733b565
+
