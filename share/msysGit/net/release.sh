@@ -39,7 +39,7 @@ sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
   < "$SHARE"/setup-msysgit.sh > setup-msysgit.sh &&
 echo "Creating archive" &&
 cd .. &&
-7z a $OPTS7 "$TMPPACK" installer-tmp &&
+/share/7-Zip/7za.exe a $OPTS7 "$TMPPACK" installer-tmp &&
 (cat /share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
  echo 'Title="msysGit-netinstall: MinGW Git + MSys DevEnv installation"' &&

@@ -15,7 +15,7 @@ cd "$TMPDIR" &&
 cp /share/WinGit/README.portable ./ &&
 cp /msys.bat ./git-bash.bat &&
 cp /git-cmd.bat ./ &&
-7z a $OPTS7 $TARGET7 * ||
+/share/7-Zip/7za.exe a $OPTS7 $TARGET7 * ||
 exit
 
 if test -z "$NO_SFX"
