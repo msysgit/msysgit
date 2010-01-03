@@ -79,7 +79,11 @@ Type: dirifempty; Name: {app}\home
 #include "putty.inc.iss"
 
 function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
-external 'CreateHardLinkA@Kernel32.dll';
+#ifdef UNICODE
+external 'CreateHardLinkW@Kernel32.dll stdcall delayload setuponly';
+#else
+external 'CreateHardLinkA@Kernel32.dll stdcall delayload setuponly';
+#endif
 
 const
     // Git Path options.
