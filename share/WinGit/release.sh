@@ -72,6 +72,7 @@ cp /share/resources/gpl-2.0.rtf /share/resources/git.bmp /share/resources/gitsma
 homewinpath=$(cd ~ ; pwd -W) &&
 sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
 	< /share/WinGit/install.iss > $TMPDIR/install.iss &&
+cp /share/WinGit/*.inc.iss $TMPDIR &&
 echo "Lauching Inno Setup compiler ..." &&
 /share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" -q | grep -Ev "\s*Reading|\s*Compressing" &&
 (cd / && git tag -a -m "Git for Windows $1" Git-$1)

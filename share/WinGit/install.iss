@@ -39,7 +39,7 @@ Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Wind
 Name: consolefont; Description: Use TrueType font (required for proper character encoding); GroupDescription: Console properties:; Flags: checkedonce
 
 [Files]
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \install.*, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
 Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]
@@ -75,95 +75,10 @@ Type: dirifempty; Name: {app}\home\{username}
 Type: dirifempty; Name: {app}\home
 
 [Code]
-{
-    Helper methods
-}
-
-function GetShellFolder(Param:string):string;
-begin
-    if IsAdminLoggedOn then begin
-        Param:='{common'+Param+'}';
-    end else begin
-        Param:='{user'+Param+'}';
-    end;
-    Result:=ExpandConstant(Param);
-end;
+#include "helpers.inc.iss"
 
 function CreateHardLink(lpFileName,lpExistingFileName:string;lpSecurityAttributes:Integer):Boolean;
 external 'CreateHardLinkA@Kernel32.dll';
-
-function GetEnvStrings(VarName:string;AllUsers:Boolean):TArrayOfString;
-var
-    Path:string;
-    i:Longint;
-    p:Integer;
-begin
-    Path:='';
-
-    // See http://www.jrsoftware.org/isfaq.php#env
-    if AllUsers then begin
-        // We ignore errors here. The resulting array of strings will be empty.
-        RegQueryStringValue(HKEY_LOCAL_MACHINE,'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',VarName,Path);
-    end else begin
-        // We ignore errors here. The resulting array of strings will be empty.
-        RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
-    end;
-
-    // Make sure we have at least one semicolon.
-    Path:=Path+';';
-
-    // Split the directories in PATH into an array of strings.
-    i:=0;
-    SetArrayLength(Result,0);
-
-    p:=Pos(';',Path);
-    while p>0 do begin
-        SetArrayLength(Result,i+1);
-        if p>1 then begin
-            Result[i]:=Copy(Path,1,p-1);
-            i:=i+1;
-        end;
-        Path:=Copy(Path,p+1,Length(Path));
-        p:=Pos(';',Path);
-    end;
-end;
-
-function SetEnvStrings(VarName:string;AllUsers,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
-var
-    Path,KeyName:string;
-    i:Longint;
-begin
-    // Merge all non-empty directory strings into a PATH variable.
-    Path:='';
-    for i:=0 to GetArrayLength(DirStrings)-1 do begin
-        if Length(DirStrings[i])>0 then begin
-            if Length(Path)>0 then begin
-                Path:=Path+';'+DirStrings[i];
-            end else begin
-                Path:=DirStrings[i];
-            end;
-        end;
-    end;
-
-    // See http://www.jrsoftware.org/isfaq.php#env
-    if AllUsers then begin
-        KeyName:='SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
-        if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=(not RegValueExists(HKEY_LOCAL_MACHINE,KeyName,VarName)) or
-                         RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
-        end else begin
-            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
-        end;
-    end else begin
-        KeyName:='Environment';
-        if DeleteIfEmpty and (Length(Path)=0) then begin
-            Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName)) or
-                         RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
-        end else begin
-            Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
-        end;
-    end;
-end;
 
 const
     TortoiseSVNInstallKey='SOFTWARE\TortoiseSVN';
