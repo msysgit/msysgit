@@ -50,7 +50,7 @@ Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename:
 Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: desktopicon
 
 ; Create a special shortcut that does not set a working directory. This is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
-Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; IconFilename: {app}\etc\git.ico; Tasks: shellextension
+Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; IconFilename: {app}\etc\git.ico
 
 [Messages]
 BeveledLabel={#emit APP_URL}
