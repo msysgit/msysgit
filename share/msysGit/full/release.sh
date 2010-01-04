@@ -56,5 +56,6 @@ OPTS7="-m0=lzma -mx=9 -md=64M" &&
  echo 'OverwriteMode="2"' &&
  echo 'RunProgram="\"%%T\\msysGit\\bin\\sh.exe\" --login -i"' &&
  echo ';!@InstallEnd@!7z' &&
- cat "$TARGET".7z) > "$TARGET"
-
+ cat "$TARGET".7z) > "$TARGET" &&
+echo "Success! You'll find the new installer at \"$TARGET\"." &&
+rm "$TARGET".7z

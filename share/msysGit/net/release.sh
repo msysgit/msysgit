@@ -57,5 +57,5 @@ cd .. &&
  echo 'RunProgram="\"%%T\bin\sh.exe\" --login -i"' &&
  echo ';!@InstallEnd@!' &&
  cat "$TMPPACK") > "$TARGET" &&
-echo Success! You\'ll find the new installer at $TARGET
+echo "Success! You'll find the new installer at \"$TARGET\"." &&
 rm $TMPPACK
