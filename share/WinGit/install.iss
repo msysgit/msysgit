@@ -78,7 +78,7 @@ Type: dirifempty; Name: {app}\home
 #include "helpers.inc.iss"
 #include "putty.inc.iss"
 
-function CreateHardLink(lpFileName,lpExistingFileName:string;lpSecurityAttributes:Integer):Boolean;
+function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
 external 'CreateHardLinkA@Kernel32.dll';
 
 const
@@ -112,7 +112,7 @@ var
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
-    Path:string;
+    Path:String;
 begin
     Path:=ExtractFilePath(EdtPlink.Text);
     BrowseForFolder('Please select the PuTTY folder:',Path,False);
@@ -463,7 +463,7 @@ end;
 
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,Cmd,Msg:string;
+    AppDir,FileName,Cmd,Msg:String;
     BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     IsNTFS:Boolean;
@@ -760,7 +760,7 @@ end;
 
 procedure RegisterPreviousData(PreviousDataKey:Integer);
 var
-    Data:string;
+    Data:String;
 begin
     // Git Path options.
     Data:='';
@@ -800,7 +800,7 @@ end;
 
 function InitializeUninstall:Boolean;
 var
-    FileName,NewName,Msg:string;
+    FileName,NewName,Msg:String;
 begin
     FileName:=ExpandConstant('{app}\bin\ssh-agent.exe');
     if FileExists(FileName) then begin
@@ -826,7 +826,7 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir,Command,Msg:string;
+    AppDir,Command,Msg:String;
     EnvPath,EnvHome,EnvSSH:TArrayOfString;
     i:Longint;
     RootKey:Integer;
