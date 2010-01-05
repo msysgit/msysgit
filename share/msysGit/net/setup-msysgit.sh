@@ -49,6 +49,7 @@ do
 done
 
 git init &&
+git config core.autocrlf false &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
 git config remote.origin.fetch \
 	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
