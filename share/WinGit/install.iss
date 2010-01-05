@@ -10,6 +10,9 @@ OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
 OutputDir=%OUTPUTDIR%
 SolidCompression=yes
 
+; Uncomment the line below to be able to compile the script from within the IDE.
+;SourceDir={#GetEnv('TEMP')}\WinGit
+
 ; Installer-related
 AllowNoIcons=yes
 AppName={#emit APP_NAME}
