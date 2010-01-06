@@ -1,3 +1,37 @@
+// Copies a NULL-terminated array of characters to a string.
+function ArrayToString(Chars:array of Char):String;
+var
+    Len,i:Longint;
+begin
+    Len:=GetArrayLength(Chars);
+    SetLength(Result,Len);
+
+    i:=0;
+    while (i<Len) and (Chars[i]<>#0) do begin
+        Result[i+1]:=Chars[i];
+        Inc(i);
+    end;
+
+    SetLength(Result,i);
+end;
+
+// Copies a string to a NULL-terminated array of characters.
+function StringToArray(Str:String):array of Char;
+var
+    Len,i:Longint;
+begin
+    Len:=Length(Str);
+    SetArrayLength(Result,Len+1);
+
+    i:=0;
+    while i<Len do begin
+        Result[i]:=Str[i+1];
+        Inc(i);
+    end;
+
+    Result[i]:=#0;
+end;
+
 // Returns the path to the common or user shell folder as specified in "Param".
 function GetShellFolder(Param:string):string;
 begin
