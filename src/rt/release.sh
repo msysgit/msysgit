@@ -1,8 +1,13 @@
 #!/bin/sh
 
-release=MSYS-1.0.11-20090120-src
-src=$release.tar.gz
-mirror=http://heanet.dl.sourceforge.net/sourceforge/mingw
+release=MSYS-1_0_11
+dir=msys/rt
+cvs=:pserver:anonymous@mingw.cvs.sf.net:/cvsroot/mingw
+
+die () {
+	echo "$*" >&2
+	exit 1
+}
 
 cd "$(dirname "$0")"
 mkdir -p build
@@ -14,50 +19,51 @@ debug_clean=
 test "$debug" = "$(cat debug.txt 2>/dev/null)" || debug_clean=t
 echo "$debug" > debug.txt
 
-if ! test -e $src
-then
-	curl -o $src $mirror/$src
-fi
-
-test -e $release ||
+test -e $release/$dir ||
 (
-tar xzvf $src &&
+mkdir -p $release &&
 cd $release &&
-git init &&
-git config core.autocrlf false &&
-git add . &&
-git commit -m "Import of $release"
-) ||
-{ echo "Error: Initializing git repository from MSYS source fails." ; exit 1 ; }
+cvs -d$cvs co -r$release $dir) ||
+die "Could not check out from CVS"
 
-cd $release || {
+cd $release/$dir || {
   echo "Huh? $release does not exist."
   exit 1
 }
 
-i=$(git rev-list --all | wc -l) &&
-total=$(ls ../../patches/*.patch | wc -l) &&
+test -d .git || {
+git init &&
+git config core.autocrlf false &&
+git add . &&
+git commit -m "Import of $release"
+} ||
+die "Error: Initializing git repository from MSYS source fails."
+
+current=$(git rev-list --all | wc -l) &&
+total=$(ls ../../../../patches/*.patch | wc -l) &&
+i=1 &&
 while test $i -le $total
 do
-	git am ../../patches/$(printf "%04d" $i)*.patch || break
+	test $i -lt $current ||
+	git am ../../../../patches/$(printf "%04d" $i)*.patch || break
 	i=$(($i+1))
 done ||
-{ echo "Error: Applying patches failed." ; exit 1 ; }
+die "Error: Applying patches failed."
 
 (export MSYSTEM=MSYS &&
  (test -d bld || mkdir bld) &&
  cd bld &&
  DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
  (test -f Makefile && test -z "$debug_clean" ||
-  ../source/configure --prefix=/usr) &&
+  ../src/configure --prefix=/usr) &&
  (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
  (test -z "$debug_clean" || make clean) &&
  (make || test -f $DLL) &&
  (test ! -z "$debug" || strip $DLL) &&
- rebase -b 0x30000000 $DLL &&
+ rebase -b 0x68000000 $DLL &&
  mv $DLL /bin/) &&
 cd / &&
 hash=$(git hash-object -w bin/new-msys-1.0.dll) &&
 git update-index --cacheinfo 100755 $hash bin/msys-1.0.dll &&
-git commit -s -m "Updated msys-1.0.dll to ${release%-src}" &&
+git commit -s -m "Updated msys-1.0.dll to $release" &&
 /share/msysGit/post-checkout-hook HEAD^ HEAD 1
