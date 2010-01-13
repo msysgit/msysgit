@@ -50,6 +50,9 @@ do
 done ||
 die "Error: Applying patches failed."
 
+test -f /bin/cc.exe || ln gcc.exe /bin/cc.exe ||
+die "Could not make sure that MSys cc is found instead of MinGW one"
+
 (export MSYSTEM=MSYS &&
  (test -d bld || mkdir bld) &&
  cd bld &&
