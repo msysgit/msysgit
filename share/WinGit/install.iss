@@ -598,7 +598,7 @@ begin
     // Delete GIT_SSH and SVN_SSH if a previous installation set them (this is required for the GS_OpenSSH case).
     EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to reset GIT_SSH prior to install.';
             MsgBox(Msg,mbError,MB_OK);
@@ -610,7 +610,7 @@ begin
 
     EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(EnvSSH[0],GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to reset SVN_SSH prior to install.';
             MsgBox(Msg,mbError,MB_OK);
@@ -677,7 +677,7 @@ begin
     // Delete HOME if a previous installation modified it.
     EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',FileName))=0) then begin
+       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to reset HOME prior to install.';
             MsgBox(Msg,mbError,MB_OK);
@@ -858,7 +858,7 @@ begin
     // Delete the current user's GIT_SSH and SVN_SSH if we set it.
     EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(EnvSSH[0],GetIniString('Environment','GIT_SSH','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',Command))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to GIT_SSH.';
             MsgBox(Msg,mbError,MB_OK);
@@ -870,7 +870,7 @@ begin
 
     EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(EnvSSH[0],GetIniString('Environment','SVN_SSH','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',Command))=0) then begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to SVN_SSH.';
             MsgBox(Msg,mbError,MB_OK);
@@ -903,7 +903,7 @@ begin
     // Reset the current user's HOME if we modified it.
     EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(EnvHome[0],GetIniString('Environment','HOME','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',Command))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to HOME.';
             MsgBox(Msg,mbError,MB_OK);
