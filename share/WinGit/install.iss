@@ -72,8 +72,11 @@ Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontSize; Val
 Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Flags: createvalueifdoesntexist
 
 [UninstallDelete]
+; Delete the built-ins.
 Type: files; Name: {app}\bin\git-*.exe
 Type: files; Name: {app}\libexec\git-core\git-*.exe
+Type: files; Name: {app}\libexec\git-core\git.exe
+; Delete a home directory inside the msysGit directory.
 Type: dirifempty; Name: {app}\home\{username}
 Type: dirifempty; Name: {app}\home
 
