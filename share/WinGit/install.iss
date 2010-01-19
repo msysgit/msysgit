@@ -91,6 +91,13 @@ external 'CreateHardLinkW@Kernel32.dll stdcall delayload setuponly';
 external 'CreateHardLinkA@Kernel32.dll stdcall delayload setuponly';
 #endif
 
+function CreateSymbolicLink(lpSymlinkFileName,lpTargetFileName:String;dwFlags:DWORD):Boolean;
+#ifdef UNICODE
+external 'CreateSymbolicLinkW@Kernel32.dll stdcall delayload setuponly';
+#else
+external 'CreateSymbolicLinkA@Kernel32.dll stdcall delayload setuponly';
+#endif
+
 const
     // Git Path options.
     GP_BashOnly       = 1;
@@ -476,7 +483,7 @@ var
     AppDir,FileName,Cmd,Msg:String;
     BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
-    IsNTFS:Boolean;
+    LinkCreated:Boolean;
     FindRec:TFindRec;
     RootKey:Integer;
 begin
@@ -493,12 +500,6 @@ begin
     // Load the built-ins from a text file.
     FileName:=ExpandConstant('{app}\{#emit APP_BUILTINS}');
     if LoadStringsFromFile(FileName,BuiltIns) then begin
-        // Check if we are running on NTFS.
-        IsNTFS:=False;
-        if SetNTFSCompression(AppDir+'\bin\git.exe',true) then begin
-            IsNTFS:=SetNTFSCompression(AppDir+'\bin\git.exe',false);
-        end;
-
         Count:=GetArrayLength(BuiltIns)-1;
 
         // Delete those scripts from "bin" which have been replaced by built-ins in "libexec\git-core".
@@ -509,43 +510,41 @@ begin
             end;
         end;
 
-        // Map the built-ins to git.exe.
-        if IsNTFS then begin
-            Log('Line {#emit __LINE__}: Partition seems to be NTFS, trying to create built-in aliases as hard links.');
+        // Create built-ins as aliases for git.exe.
+        for i:=0 to Count do begin
+            FileName:=AppDir+'\'+BuiltIns[i];
 
-            for i:=0 to Count do begin
-                FileName:=AppDir+'\'+BuiltIns[i];
+            // Delete any existing built-in.
+            if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+                Log('Line {#emit __LINE__}: Unable to delete existing built-in "'+FileName+'", skipping.');
+                continue;
+            end;
 
-                // On non-NTFS partitions, create hard links.
-                if (FileExists(FileName) and (not DeleteFile(FileName))) or
-                   (not CreateHardLink(FileName,AppDir+'\bin\git.exe',0)) then begin
-                    Log('Line {#emit __LINE__}: Unable to create hard link "'+FileName+'", will try to copy files.');
-                    IsNTFS:=False;
-                    Break;
+            try
+                // This will throw an exception on pre-WinVista systems.
+                LinkCreated:=CreateSymbolicLink(FileName,AppDir+'\bin\git.exe',0);
+            except
+                LinkCreated:=False;
+                Log('Line {#emit __LINE__}: Creating symbolic link "'+FileName+'" failed, will try a hard link.');
+            end;
+            
+            if not LinkCreated then begin
+                try
+                    // This will throw an exception on pre-Win2k systems.
+                    LinkCreated:=CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
+                except
+                    LinkCreated:=False;
+                    Log('Line {#emit __LINE__}: Creating hardlink "'+FileName+'" failed, will try a copy.');
                 end;
             end;
 
-            Log('Line {#emit __LINE__}: Successfully created built-in aliases as hard links.');
-        end;
-
-        // The fallback is to copy the files.
-        if not IsNTFS then begin
-            Log('Line {#emit __LINE__}: Trying to create built-in aliases as file copies.');
-
-            for i:=0 to Count do begin
-                FileName:=AppDir+'\'+BuiltIns[i];
-
-                // On non-NTFS partitions, copy simply the files (overwriting existing ones).
-                if not FileCopy(AppDir+'\bin\git.exe',FileName,false) then begin
-                    Msg:='Line {#emit __LINE__}: Unable to create file copy "'+FileName+'".';
-                    MsgBox(Msg,mbError,MB_OK);
-                    Log(Msg);
+            if not LinkCreated then begin
+                if not FileCopy(AppDir+'\bin\git.exe',FileName,False) then begin
+                    Log('Line {#emit __LINE__}: Creating copy "'+FileName+'" failed, giving up.');
                     // This is not a critical error, Git could basically be used without the
-                    // aliases for built-ins, so we continue.
+                    // built-ins, so we continue.
                 end;
             end;
-
-            Log('Line {#emit __LINE__}: Successfully created built-in aliases as file copies.');
         end;
 
         // Delete any duplicate files in case we are updating from a non-libexec to a libexec directory layout.
