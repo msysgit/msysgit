@@ -175,6 +175,44 @@ begin
     end;
 end;
 
+procedure DeleteContextMenuEntries;
+var
+    AppDir,Command,Msg:String;
+    RootKey:Integer;
+begin
+    AppDir:=ExpandConstant('{app}');
+
+    if IsAdminLoggedOn then begin
+        RootKey:=HKEY_LOCAL_MACHINE;
+    end else begin
+        RootKey:=HKEY_CURRENT_USER;
+    end;
+
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
+            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+end;
+
 {
     Installer code
 }
@@ -881,7 +919,6 @@ var
     AppDir,Command,Msg:String;
     EnvPath,EnvHome,EnvSSH:TArrayOfString;
     i:Longint;
-    RootKey:Integer;
 begin
     if CurUninstallStep<>usUninstall then begin
         Exit;
@@ -967,33 +1004,5 @@ begin
         Delete the Windows Explorer shell extensions
     }
 
-    if IsAdminLoggedOn then begin
-        RootKey:=HKEY_LOCAL_MACHINE;
-    end else begin
-        RootKey:=HKEY_CURRENT_USER;
-    end;
-
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
-
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
+    DeleteContextMenuEntries;
 end;
