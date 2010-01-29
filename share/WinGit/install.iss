@@ -43,8 +43,10 @@ Name: icons; Description: Additional icons; Types: custom
 Name: icons\quicklaunch; Description: In the Quick Launch; Types: custom
 Name: icons\desktop; Description: On the Desktop; Types: custom
 Name: ext; Description: Windows Explorer integration; Types: custom
-Name: ext\shellhere; Description: """Git Bash Here"" context menu entry"; Types: custom
-Name: ext\guihere; Description: """Git GUI Here"" context menu entry"; Types: custom
+Name: ext\reg; Description: Context menu entries; Flags: exclusive; Types: custom
+Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
+Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
+Name: ext\cheetah; Description: git-cheetah shell extension; Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
 Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
@@ -107,6 +109,9 @@ Type: files; Name: {app}\bin\git-*.exe
 Type: files; Name: {app}\libexec\git-core\git-*.exe
 Type: files; Name: {app}\libexec\git-core\git.exe
 
+; Delete any (temporary) git-cheetah files.
+Type: files; Name: {app}\git-cheetah\*.*
+
 ; Delete a home directory inside the msysGit directory.
 Type: dirifempty; Name: {app}\home\{username}
 Type: dirifempty; Name: {app}\home
@@ -114,6 +119,7 @@ Type: dirifempty; Name: {app}\home
 [Code]
 #include "helpers.inc.iss"
 #include "putty.inc.iss"
+#include "modules.inc.iss"
 
 function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
 #ifdef UNICODE
@@ -157,6 +163,12 @@ var
     // Wizard page and variables for the line ending conversion options.
     CRLFPage:TWizardPage;
     RdbCRLF:array[GC_LFOnly..GC_CRLFCommitAsIs] of TRadioButton;
+
+    // Wizard page and variables for the processes page.
+    Processes:ProcessList;
+    ProcessesPage:TWizardPage;
+    ProcessesListBox:TListBox;
+    ProcessesRefresh:TButton;
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
@@ -209,6 +221,20 @@ begin
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
+        end;
+    end;
+end;
+
+procedure RefreshProcessList(Sender:TObject);
+var
+    i:Longint;
+    Caption:String;
+begin
+    ProcessesListBox.Items.Clear;
+    if (Sender=NIL) or (FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes)) then begin
+        for i:=0 to GetArrayLength(Processes)-1 do begin
+            Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID)+')';
+            ProcessesListBox.Items.Append(Caption);
         end;
     end;
 end;
@@ -530,20 +556,79 @@ begin
     end else if Data='CRLFCommitAsIs' then begin
         RdbCRLF[GC_CRLFCommitAsIs].Checked:=True;
     end;
+
+    (*
+     * Create a custom page for finding the processes that lock a module.
+     *)
+
+    ProcessesPage:=CreateCustomPage(
+        wpPreparing,
+        'Replacing in-use files',
+        'The following applications use files that need to be replaced, please close them.'
+    );
+
+    ProcessesListBox:=TListBox.Create(ProcessesPage);
+    with ProcessesListBox do begin
+        Parent:=ProcessesPage.Surface;
+        Width:=ProcessesPage.SurfaceWidth;
+        Height:=ProcessesPage.SurfaceHeight-ScaleY(8);
+    end;
+
+    ProcessesRefresh:=TNewButton.Create(WizardForm);
+    with ProcessesRefresh do begin
+        Parent:=WizardForm;
+        Width:=WizardForm.NextButton.Width;
+        Height:=WizardForm.NextButton.Height;
+        Top:=WizardForm.NextButton.Top;
+        Left:=WizardForm.ClientWidth-WizardForm.NextButton.Left-WizardForm.NextButton.Width;
+        Caption:='&Refresh';
+        OnClick:=@RefreshProcessList;
+    end;
+
+    // Initially hide the Refresh button, show it when the process page becomes current.
+    ProcessesRefresh.Hide;
+end;
+
+function ShouldSkipPage(PageID:Integer):Boolean;
+begin
+    if (ProcessesPage<>NIL) and (PageID=ProcessesPage.ID) then begin
+        Result:=(not FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes))
+             or (GetArrayLength(Processes)=0);
+    end else begin
+        Result:=False;
+    end;
+end;
+
+procedure CurPageChanged(CurPageID:Integer);
+begin
+    if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
+        RefreshProcessList(NIL);
+        ProcessesRefresh.Show;
+    end else begin
+        ProcessesRefresh.Hide;
+    end;
 end;
 
 function NextButtonClick(CurPageID:Integer):Boolean;
 begin
-    if (PuTTYPage=NIL) or (CurPageID<>PuTTYPage.ID) then begin
-        Result:=True;
-        Exit;
-    end;
+    Result:=True;
 
-    Result:=RdbSSH[GS_OpenSSH].Checked or
-           (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
-
-    if not Result then begin
-        MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
+    if (PuTTYPage<>NIL) and (CurPageID=PuTTYPage.ID) then begin
+        Result:=RdbSSH[GS_OpenSSH].Checked or
+            (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
+        if not Result then begin
+            MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
+        end;
+    end else if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
+        Result:=(ProcessesListBox.Items.Count=0);
+        if not Result then begin
+            Result:=(MsgBox(
+                'If you continue without closing the listed applications you need to log off and on again before changes take effect.' + #13 +
+                'Are you sure you want to continue anyway?',
+                mbConfirmation,
+                MB_YESNO
+            )=IDYES);
+        end;
     end;
 end;
 
@@ -555,7 +640,7 @@ end;
 // beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,Cmd,Msg:String;
+    AppDir,FileName,TempName,Cmd,Msg:String;
     BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     LinkCreated:Boolean;
@@ -602,7 +687,7 @@ begin
                 LinkCreated:=False;
                 Log('Line {#emit __LINE__}: Creating symbolic link "'+FileName+'" failed, will try a hard link.');
             end;
-            
+
             if not LinkCreated then begin
                 try
                     // This will throw an exception on pre-Win2k systems.
@@ -768,11 +853,11 @@ begin
 
         // List \cmd before \bin so \cmd has higher priority and programs in
         // there will be called in favor of those in \bin.
-        EnvPath[i]:=ExpandConstant('{app}\cmd');
+        EnvPath[i]:=AppDir+'\cmd';
 
         if RdbPath[GP_CmdTools].Checked then begin
             SetArrayLength(EnvPath,i+2);
-            EnvPath[i+1]:=ExpandConstant('{app}\bin');
+            EnvPath[i+1]:=AppDir+'\bin';
 
             // Set HOME for the Windows Command Prompt, but only if it has not been set manually before.
             EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
@@ -810,7 +895,7 @@ begin
     end;
 
     {
-        Create the Windows Explorer shell extensions
+        Create the Windows Explorer integrations
     }
 
     if IsAdminLoggedOn then begin
@@ -819,7 +904,7 @@ begin
         RootKey:=HKEY_CURRENT_USER;
     end;
 
-    if IsComponentSelected('ext\shellhere') then begin
+    if IsComponentSelected('ext\reg\shellhere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','wscript "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
@@ -830,7 +915,7 @@ begin
         end;
     end;
 
-    if IsComponentSelected('ext\guihere') then begin
+    if IsComponentSelected('ext\reg\guihere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
@@ -838,6 +923,47 @@ begin
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
             // so we continue.
+        end;
+    end;
+
+    // It is either the Registry-based context menu entries, or the shell extension.
+    if IsComponentSelected('ext\cheetah') then begin
+        DeleteContextMenuEntries;
+
+        FileName:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        TempName:=GenerateUniqueName(ExtractFilePath(FileName),'.git_shell_ext');
+
+        // Try to delete any previously renamed old shell extension files.
+        DelTree(ExtractFilePath(FileName)+'\*.git_shell_ext',False,True,False);
+
+        if FileExists(FileName) then begin
+            if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
+                Msg:='Line {#emit __LINE__}: Unable to unregister "'+FileName+'".';
+                MsgBox(Msg,mbError,MB_OK);
+                Log(Msg);
+                // This is not a critical error, the user can probably fix it manually,
+                // so we continue.
+            end;
+
+            if (not DeleteFile(FileName)) and (not RenameFile(FileName,TempName)) then begin
+                Msg:='Line {#emit __LINE__}: Unable to delete or rename "'+FileName+'".';
+                MsgBox(Msg,mbError,MB_OK);
+                Log(Msg);
+                // This is pretty much critical, but will be catched below when
+                // renaming the new shell extension file fails.
+            end;
+        end;
+
+        if not RenameFile(FileName+'.new',FileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to install git-cheetah. Please do it manually by renaming' + #13 + #13 +
+                 '"'+FileName+'.new" to "'+FileName+'"' + #13 + #13 +
+                 'and registering the shell extension by typing' + #13 + #13 +
+                 '"regsvr32 '+ExtractFileName(FileName)+'"' + #13 + #13 +
+                 'at the command prompt in the git-cheetah directory.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end else begin
+            RegisterServer(Is64BitInstallMode,FileName,False);
         end;
     end;
 end;
@@ -916,7 +1042,7 @@ end;
 // function.
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
-    AppDir,Command,Msg:String;
+    AppDir,FileName,Msg:String;
     EnvPath,EnvHome,EnvSSH:TArrayOfString;
     i:Longint;
 begin
@@ -932,12 +1058,12 @@ begin
     }
 
     AppDir:=ExpandConstant('{app}');
-    Command:=AppDir+'\setup.ini';
+    FileName:=AppDir+'\setup.ini';
 
     // Delete the current user's GIT_SSH and SVN_SSH if we set it.
     EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to GIT_SSH.';
             MsgBox(Msg,mbError,MB_OK);
@@ -949,7 +1075,7 @@ begin
 
     EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
     if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to SVN_SSH.';
             MsgBox(Msg,mbError,MB_OK);
@@ -982,7 +1108,7 @@ begin
     // Reset the current user's HOME if we modified it.
     EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
     if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',Command))=0) then begin
+       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to HOME.';
             MsgBox(Msg,mbError,MB_OK);
@@ -992,8 +1118,8 @@ begin
         end;
     end;
 
-    if FileExists(Command) and (not DeleteFile(Command)) then begin
-        Msg:='Line {#emit __LINE__}: Unable to delete file "'+Command+'".';
+    if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+        Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'".';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
@@ -1001,8 +1127,15 @@ begin
     end;
 
     {
-        Delete the Windows Explorer shell extensions
+        Delete the Windows Explorer integrations
     }
 
     DeleteContextMenuEntries;
+
+    FileName:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+    if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+        Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please delete it manually after logging off and on again.';
+        MsgBox(Msg,mbError,MB_OK);
+        Log(Msg);
+    end;
 end;
