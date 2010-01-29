@@ -45,6 +45,7 @@ Name: icons\desktop; Description: On the Desktop; Types: custom
 Name: ext; Description: Windows Explorer integration; Types: custom
 Name: ext\shellhere; Description: """Git Bash Here"" context menu entry"; Types: custom
 Name: ext\guihere; Description: """Git GUI Here"" context menu entry"; Types: custom
+Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
 Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
 [Files]
@@ -67,6 +68,7 @@ SetupAppTitle={#emit APP_NAME} Setup
 SetupWindowTitle={#emit APP_NAME} Setup
 
 [Registry]
+; There is no "Console" key in HKLM.
 Root: HKCU; Subkey: Console; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Components: consolefont
 Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Components: consolefont
 Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Components: consolefont
@@ -77,11 +79,34 @@ Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontFamily; V
 Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Flags: createvalueifdoesntexist
 Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Flags: createvalueifdoesntexist
 
+; File associations for configuration files that may be contained in a repository (so this does not include ".gitconfig").
+Root: HKLM; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitattributes; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+
+Root: HKLM; Subkey: Software\Classes\.gitignore; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitignore; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitignore; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitignore; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitignore; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitignore; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+
+Root: HKLM; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKLM; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueData: txtfile; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueName: Content Type; ValueData: text/plain; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+Root: HKCU; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueName: PerceivedType; ValueData: text; Flags: createvalueifdoesntexist; Check: not IsAdminLoggedOn; Components: assoc
+
 [UninstallDelete]
 ; Delete the built-ins.
 Type: files; Name: {app}\bin\git-*.exe
 Type: files; Name: {app}\libexec\git-core\git-*.exe
 Type: files; Name: {app}\libexec\git-core\git.exe
+
 ; Delete a home directory inside the msysGit directory.
 Type: dirifempty; Name: {app}\home\{username}
 Type: dirifempty; Name: {app}\home
