@@ -34,12 +34,18 @@ WizardImageStretch=no
 WizardImageFile=git.bmp
 WizardSmallImageFile=gitsmall.bmp
 
-[Tasks]
-Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; Flags: checkedonce
-Name: desktopicon; Description: Create a &Desktop icon; GroupDescription: Additional icons:; Flags: checkedonce
-Name: shellextension; Description: "Add ""Git Ba&sh Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
-Name: guiextension; Description: "Add ""Git &GUI Here"""; GroupDescription: Windows Explorer integration:; Flags: checkedonce
-Name: consolefont; Description: Use TrueType font (required for proper character encoding); GroupDescription: Console properties:; Flags: checkedonce
+[Types]
+; Define a dummy type to avoid getting the default ones.
+Name: custom; Description: Custom installation; Flags: iscustom
+
+[Components]
+Name: icons; Description: Additional icons; Types: custom
+Name: icons\quicklaunch; Description: In the Quick Launch; Types: custom
+Name: icons\desktop; Description: On the Desktop; Types: custom
+Name: ext; Description: Windows Explorer integration; Types: custom
+Name: ext\shellhere; Description: """Git Bash Here"" context menu entry"; Types: custom
+Name: ext\guihere; Description: """Git GUI Here"" context menu entry"; Types: custom
+Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
 [Files]
 Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
@@ -49,8 +55,8 @@ Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 Name: {group}\Uninstall Git; Filename: {uninstallexe}
-Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: quicklaunchicon
-Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Tasks: desktopicon
+Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Components: icons\quicklaunch
+Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Components: icons\desktop
 
 ; Create a special shortcut that does not set a working directory. This is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
 Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; IconFilename: {app}\etc\git.ico
@@ -61,10 +67,10 @@ SetupAppTitle={#emit APP_NAME} Setup
 SetupWindowTitle={#emit APP_NAME} Setup
 
 [Registry]
-Root: HKCU; Subkey: Console; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Tasks: consolefont
-Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Tasks: consolefont
-Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Tasks: consolefont
-Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Tasks: consolefont
+Root: HKCU; Subkey: Console; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Components: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Components: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontSize; ValueData: $000e0000; Components: consolefont
+Root: HKCU; Subkey: Console; ValueType: dword; ValueName: FontWeight; ValueData: $00000190; Components: consolefont
 
 Root: HKCU; Subkey: Console\Git Bash; ValueType: string; ValueName: FaceName; ValueData: Lucida Console; Flags: createvalueifdoesntexist
 Root: HKCU; Subkey: Console\Git Bash; ValueType: dword; ValueName: FontFamily; ValueData: $00000036; Flags: createvalueifdoesntexist
@@ -158,7 +164,7 @@ var
     BtnPlink:TButton;
     Data:String;
 begin
-    PrevPageID:=wpSelectTasks;
+    PrevPageID:=wpSelectProgramGroup;
 
     (*
      * Create a custom page for modifying the environment.
@@ -744,7 +750,7 @@ begin
         RootKey:=HKEY_CURRENT_USER;
     end;
 
-    if IsTaskSelected('shellextension') then begin
+    if IsComponentSelected('ext\shellhere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','wscript "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
@@ -755,7 +761,7 @@ begin
         end;
     end;
 
-    if IsTaskSelected('guiextension') then begin
+    if IsComponentSelected('ext\guihere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
             Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
