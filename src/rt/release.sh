@@ -42,6 +42,7 @@ die "Could not make sure that MSys cc is found instead of MinGW one"
 cd msys/rt &&
 release=MSYS-g$(git show -s --pretty=%h HEAD) &&
 (export MSYSTEM=MSYS &&
+ export PATH=/bin:$PATH &&
  (test -d bld || mkdir bld) &&
  cd bld &&
  DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
