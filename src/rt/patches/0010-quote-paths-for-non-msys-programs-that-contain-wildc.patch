@@ -1,0 +1,51 @@
+From ca92234f3b5d3d0d54e0ba141cebdcfeebae11d9 Mon Sep 17 00:00:00 2001
+From: Heiko Voigt <hvoigt@hvoigt.net>
+Date: Wed, 3 Feb 2010 22:16:56 +0100
+Subject: [PATCH] quote paths for non msys programs that contain wildcards
+
+Native windows programs expect to receive quotes in their arguments.
+Unlike in the Unix world where they are stripped by the shell.
+
+We are dealing with a thin mingw layer here that makes windows
+commandline parsing behave like on Unix seen from inside of the program.
+A native Windows program is expected to do wildcard expansion on its
+own. Thus mingw automatically adds a layer that does this to every
+program compiled (e.g. git).
+
+Problems occur when starting git with a wildcard from bash:
+
+  git log -- "*"
+
+Bash then strips the "" and passes * to the lower layer like its done on
+Unix. This is then given to the execution of the program, but because of
+the wildcard expansion layer it would currently expand * before its
+given to argv[]. Thats why we need to readd "" to all arguments
+containing windows wildcards before calling a native program for all
+arguments containing Windows wildcards.
+
+Signed-off-by: Heiko Voigt <hvoigt@hvoigt.net>
+---
+ msys/rt/src/winsup/cygwin/spawn.cc |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
+
+diff --git a/msys/rt/src/winsup/cygwin/spawn.cc b/msys/rt/src/winsup/cygwin/spawn.cc
+index 108b2f1..342159f 100644
+--- a/msys/rt/src/winsup/cygwin/spawn.cc
++++ b/msys/rt/src/winsup/cygwin/spawn.cc
+@@ -528,7 +528,12 @@ spawn_guts (HANDLE hToken, const char * prog_arg, const char *const *argv,
+ 	  a = i ? newargv[i] : (char *) real_path;
+ 	  HMMM(a);
+ 	  int len = strlen (a);
+-	  if (len != 0 && !strpbrk (a, " \t\n\r\""))
++	  /* surround paths that contain wildcards or special characters
++	   * with quotes (") because they would have been expanded by
++	   * bash already and a native Windows program expects its
++	   * arguments not to be expanded by the shell unlike in the
++	   * Unix world. */
++	  if (len != 0 && !strpbrk (a, " \t\n\r\"*?"))
+ 	    one_line.add (a, len);
+ 	  else
+ 	    {
+-- 
+1.6.5.1.msysgit.1.12.gf4ccd
+
