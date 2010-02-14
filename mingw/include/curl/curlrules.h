@@ -7,7 +7,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2009, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: curlrules.h,v 1.6 2009-04-29 15:15:38 yangtse Exp $
+ * $Id: curlrules.h,v 1.8 2010-02-02 12:58:50 yangtse Exp $
  ***************************************************************************/
 
 /* ================================================================ */
@@ -57,7 +57,7 @@
  * that the dimension of a constant array can not be a negative one.
  * In this way if the compile time verification fails, the compilation
  * will fail issuing an error. The error description wording is compiler
- * dependant but it will be quite similar to one of the following:
+ * dependent but it will be quite similar to one of the following:
  *
  *   "negative subscript or subscript is too large"
  *   "array must have at least one element"
@@ -245,5 +245,9 @@ typedef char
 
 #undef CURL_TYPEOF_CURL_SOCKLEN_T
 #undef CURL_TYPEOF_CURL_OFF_T
+
+#ifdef CURL_NO_OLDIES
+#undef CURL_FORMAT_OFF_T /* not required since 7.19.0 - obsoleted in 7.20.0 */
+#endif
 
 #endif /* __CURL_CURLRULES_H */
