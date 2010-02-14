@@ -70,7 +70,7 @@ then
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
 (cd /mingw && tar cf - \
-	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* \
+	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
