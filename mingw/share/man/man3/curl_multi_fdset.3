@@ -1,4 +1,4 @@
-.\" $Id: curl_multi_fdset.3,v 1.13 2008-12-28 21:56:56 bagder Exp $
+.\" $Id: curl_multi_fdset.3,v 1.15 2010-01-26 23:02:13 bagder Exp $
 .\"
 .TH curl_multi_fdset 3 "2 Jan 2006" "libcurl 7.16.0" "libcurl Manual"
 .SH NAME
@@ -21,21 +21,22 @@ but be sure to FD_ZERO them before calling this function as
 otherwise remove any others. The \fIcurl_multi_perform(3)\fP function should be
 called as soon as one of them is ready to be read from or written to.
 
+To be sure to have up-to-date results, you should call
+\fIcurl_multi_perform\fP until it does not return CURLM_CALL_MULTI_PERFORM
+prior to calling \fIcurl_multi_fdset\fP.  This will make sure that libcurl has
+updated the handles' socket states.
+
 If no file descriptors are set by libcurl, \fImax_fd\fP will contain -1 when
 this function returns. Otherwise it will contain the higher descriptor number
 libcurl set.
 
-You should also be aware that when doing select(), you should consider using a
-rather small (single-digit number of seconds) timeout and call
-\fIcurl_multi_perform\fP regularly - even if no activity has been seen on the
-fd_sets - as otherwise libcurl-internal retries and timeouts may not work as
-you'd think and want.
-
-Starting with libcurl 7.16.0, you should use \fBcurl_multi_timeout\fP to
-figure out how long to wait for action.
+When doing select(), you should use \fBcurl_multi_timeout\fP to figure out how
+long to wait for action. Call \fIcurl_multi_perform\fP even if no activity has
+been seen on the fd_sets after the timeout expires as otherwise internal
+retries and timeouts may not work as you'd think and want.
 .SH RETURN VALUE
 CURLMcode type, general libcurl multi interface error code. See
 \fIlibcurl-errors(3)\fP
 .SH "SEE ALSO"
-.BR curl_multi_cleanup "(3)," curl_multi_init "(3), "
-.BR curl_multi_timeout "(3) "
+.BR curl_multi_cleanup "(3), " curl_multi_init "(3), "
+.BR curl_multi_timeout "(3), " curl_multi_perform "(3) "

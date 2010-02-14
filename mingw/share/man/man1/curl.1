@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2009, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -18,10 +18,10 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
-.\" * $Id: curl.1,v 1.269 2009-04-23 22:01:34 bagder Exp $
+.\" * $Id: curl.1,v 1.287 2010-02-02 12:27:12 kdudka Exp $
 .\" **************************************************************************
 .\"
-.TH curl 1 "10 July 2008" "Curl 7.19.0" "Curl Manual"
+.TH curl 1 "28 November 2009" "Curl 7.20.0" "Curl Manual"
 .SH NAME
 curl \- transfer a URL
 .SH SYNOPSIS
@@ -74,6 +74,10 @@ If you specify URL without protocol:// prefix, curl will attempt to guess what
 protocol you might want. It will then default to HTTP but try other protocols
 based on often-used host name prefixes. For example, for host names starting
 with "ftp." curl will assume you want to speak FTP.
+
+curl will do its best to use what you pass to it as a URL. It is not trying to
+validate it as a syntactically correct URL by any means but is instead
+\fBvery\fP liberal with what it accepts.
 
 Curl will attempt to re-use connections for multiple file transfers, so that
 getting many files from the same server will not do multiple connects /
@@ -215,6 +219,13 @@ To create remote directories when using FTP or SFTP, try
 \fI--ftp-create-dirs\fP.
 .IP "--crlf"
 (FTP) Convert LF to CRLF in upload. Useful for MVS (OS/390).
+.IP "--crlfile <file>"
+(HTTPS/FTPS) Provide a file using PEM format with a Certificate Revocation
+List that may specify peer certificates that are to be considered revoked.
+
+If this option is used several times, the last one will be used.
+
+(Added in 7.19.7)
 .IP "-d/--data <data>"
 (HTTP) Sends the specified data in a POST request to the HTTP server, in the
 same way that a browser does when a user has filled in an HTML form and
@@ -450,19 +461,29 @@ will re-use the same IP address it already uses for the control
 connection. (Added in 7.14.2)
 
 This option has no effect if PORT, EPRT or EPSV is used instead of PASV.
-.IP "--ftp-ssl"
-(FTP) Try to use SSL/TLS for the FTP connection.  Reverts to a non-secure
-connection if the server doesn't support SSL/TLS.  See also
-\fI--ftp-ssl-control\fP and \fI--ftp-ssl-reqd\fP for different levels of
-encryption required. (Added in 7.11.0)
+.IP "--ftp-pret"
+(FTP) Tell curl to send a PRET command before PASV (and EPSV). Certain
+FTP servers, mainly drftpd, require this non-standard command for
+directory listings as well as up and downloads in PASV mode.
+(Added in 7.20.x)
+.IP "--ssl"
+(FTP, POP3, IMAP, SMTP) Try to use SSL/TLS for the connection.  Reverts to a
+non-secure connection if the server doesn't support SSL/TLS.  See also
+\fI--ftp-ssl-control\fP and \fI--ssl-reqd\fP for different levels of
+encryption required. (Added in 7.20.0)
+
+This option was formerly known as \fI--ftp-ssl\fP (Added in 7.11.0) and that
+can still be used but will be removed in a future version.
 .IP "--ftp-ssl-control"
 (FTP) Require SSL/TLS for the FTP login, clear for transfer.  Allows secure
 authentication, but non-encrypted data transfers for efficiency.  Fails the
 transfer if the server doesn't support SSL/TLS.  (Added in 7.16.0)
-.IP "--ftp-ssl-reqd"
-(FTP) Require SSL/TLS for the FTP connection.
-Terminates the connection if the server doesn't support SSL/TLS.
-(Added in 7.15.5)
+.IP "--ssl-reqd"
+(FTP, POP3, IMAP, SMTP) Require SSL/TLS for the connection.  Terminates the
+connection if the server doesn't support SSL/TLS. (Added in 7.20.0)
+
+This option was formerly known as \fI--ftp-ssl-reqd\fP (added in 7.15.5) and
+that can still be used but will be removed in a future version.
 .IP "--ftp-ssl-ccc"
 (FTP) Use CCC (Clear Command Channel)
 Shuts down the SSL/TLS layer after authenticating. The rest of the
@@ -480,7 +501,7 @@ waits for a reply from the server.
 .IP "-F/--form <name=content>"
 (HTTP) This lets curl emulate a filled-in form in which a user has pressed the
 submit button. This causes curl to POST data using the Content-Type
-multipart/form-data according to RFC1867. This enables uploading of binary
+multipart/form-data according to RFC2388. This enables uploading of binary
 files etc. To force the 'content' part to be a file, prefix the file name
 with an @ sign. To just get the content part from a file, prefix the file name
 with the symbol <. The difference between @ and < is then that @ makes a file
@@ -587,6 +608,9 @@ time only.
 make it discard all "session cookies". This will basically have the same effect
 as if a new session is started. Typical browsers always discard session
 cookies when they're closed down.
+.IP "-J/--remote-header-name"
+(HTTP) This option tells the -O/--remote-name option to use the server-specified
+Content-Disposition filename instead of extracting a filename from the URL.
 .IP "-k/--insecure"
 (SSL) This option explicitly allows curl to perform "insecure" SSL connections
 and transfers. All SSL connections are attempted to be made secure by using
@@ -745,7 +769,15 @@ password to all hosts that the site may redirect to. This may or may not
 introduce a security breach if the site redirects you to a site to which
 you'll send your authentication info (which is plaintext in the case of HTTP
 Basic authentication).
+.IP "--mail-rcpt <address>"
+(SMTP) Specify a single address that the given mail should get sent to. This
+option can be used multiple times to specify many recipients.
 
+(Added in 7.20.0)
+.IP "--mail-from <address>"
+(SMTP) Specify a single address that the given mail should get sent from.
+
+(Added in 7.20.0)
 .IP "--max-filesize <bytes>"
 Specify the maximum size (in bytes) of a file to download. If the file
 requested is larger than this value, the transfer will not start and curl will
@@ -953,6 +985,12 @@ connection
 If this option is used several times, the last one will be used. Disable the
 use of PORT with \fI--ftp-pasv\fP. Disable the attempt to use the EPRT command
 instead of PORT by using \fI--disable-eprt\fP. EPRT is really PORT++.
+
+Starting in 7.19.5, you can append \&":[start]-[end]\&" to the right of the
+address, to tell curl what TCP port range to use. That means you specify a
+port range, from a lower to a higher number. A single number works as well,
+but do note that it increases the risk of failure since the port may not be
+available.
 .IP "-q"
 If used as the first parameter on the command line, the \fIcurlrc\fP config
 file will not be read and used. See the \fI-K/--config\fP for details on the
@@ -1062,7 +1100,7 @@ timestamp.
 If a transient error is returned when curl tries to perform a transfer, it
 will retry this number of times before giving up. Setting the number to 0
 makes curl do no retries (which is the default). Transient error means either:
-a timeout, an FTP 5xx response code or an HTTP 5xx response code.
+a timeout, an FTP 4xx response code or an HTTP 5xx response code.
 
 When curl is about to retry a transfer, it will first wait one second and then
 for all forthcoming retries it will double the waiting time until it reaches
@@ -1091,7 +1129,7 @@ Set this option to zero to not timeout retries. (Added in 7.12.3)
 If this option is used multiple times, the last occurrence determines the
 amount.
 .IP "-s/--silent"
-Silent mode. Don't show progress meter or error messages.  Makes
+Silent or quiet mode. Don't show progress meter or error messages.  Makes
 Curl mute.
 .IP "-S/--show-error"
 When used with -s it makes curl show an error message if it fails.
@@ -1132,6 +1170,8 @@ mutually exclusive.
 If this option is used several times, the last one will be used. (This option
 was previously wrongly documented and used as --socks without the number
 appended.)
+
+This option (as well as \fI--socks4\fP) does not work with IPV6, FTPS or LDAP.
 .IP "--socks5-gssapi-service <servicename>"
 The default service name for a socks server is rcmd/server-fqdn. This option
 allows you to change it.
@@ -1164,6 +1204,14 @@ TTYPE=<term> Sets the terminal type.
 XDISPLOC=<X display> Sets the X display location.
 
 NEW_ENV=<var,val> Sets an environment variable.
+.IP "--tftp-blksize <value>"
+(TFTP) Set TFTP BLKSIZE option (must be >512). This is the block size that
+curl will try to use when tranferring data to or from a TFTP server. By
+default 512 bytes will be used.
+
+If this option is used several times, the last one will be used.
+
+(Added in 7.20.0)
 .IP "-T/--upload-file <file>"
 This transfers the specified local file to the remote URL. If there is no file
 part in the specified URL, Curl will append the local file name. NOTE that you
@@ -1173,6 +1221,9 @@ file name to use. That will most likely cause the upload operation to fail. If
 this is used on a HTTP(S) server, the PUT command will be used.
 
 Use the file name "-" (a single dash) to use stdin instead of a given file.
+Alternately, the file name "." (a single period) may be specified instead
+of "-" to use stdin in non-blocking mode to allow reading server output
+while stdin is being uploaded.
 
 You can specify one -T for each URL on the command line. Each -T + URL pair
 specifies what to upload and to where. curl also supports "globbing" of the -T
@@ -1247,6 +1298,8 @@ If you think this option still doesn't give you enough details, consider using
 \fI--trace\fP or \fI--trace-ascii\fP instead.
 
 This option overrides previous uses of \fI--trace-ascii\fP or \fI--trace\fP.
+
+Use \fI-S/--silent\fP to make curl quiet.
 .IP "-V/--version"
 Displays information about curl and the libcurl version it uses.
 
@@ -1414,7 +1467,9 @@ If this option is used several times, the last one will be used.
 (HTTP) Specifies a custom request method to use when communicating with the
 HTTP server.  The specified request will be used instead of the method
 otherwise used (which defaults to GET). Read the HTTP 1.1 specification for
-details and explanations.
+details and explanations. Common additional HTTP requests include PUT and
+DELETE, but related technologies like WebDAV offers PROPFIND, COPY, MOVE and
+more.
 
 (FTP)
 Specifies a custom FTP command to use instead of LIST when doing file lists
