@@ -79,8 +79,14 @@ exec make
 set binDirectory "$msysRoot/bin"
 set resDirectory "$msysRoot/share/resources"
 
+set command "$binDirectory/sh.exe"
+set arguments "--login -i"
+if {$env(COMMONPROGRAMW6432) != ""} {
+	set command "%WINDIR%\\SysWOW64\\cmd.exe"
+	set arguments "/c \"$binDirectory/sh.exe\" --login -i"
+}
 exec ./create-shortcut.exe --work-dir "%HOMEDRIVE%%HOMEPATH%" \
 	--icon-file "$resDirectory/msysgitlogo.ico" \
-	--arguments "--login -i" \
-	"$binDirectory/sh.exe" \
+	--arguments $arguments \
+	$command \
 	"$targetDirectory/msysGit.lnk"
