@@ -75,10 +75,17 @@ test -f /etc/linkfile && rm -f "$(cat /etc/linkfile)"
 prompt_and_exit 0
 EOF
 echo "$USERPROFILE/Desktop/finish-checkout.lnk" > tmproot/etc/linkfile &&
+command=sh.exe &&
+arguments="--login -i" &&
+if test -n "$COMMONPROGRAMW6432"
+then
+	arguments="//c $command $arguments" &&
+	command="$WINDIR"\\SysWOW64\\cmd.exe && echo "$arguments"
+fi &&
 ./create-shortcut --work-dir "$(cd tmproot/bin && pwd -W)" \
 	--icon-file "$(cd ../resources && pwd -W)/msysgitlogo.ico" \
-	--arguments "--login -i" \
-	"$(pwd -W)"/tmproot/bin/sh.exe \
+	--arguments "$arguments" \
+	"$command" \
 	"$(cat tmproot/etc/linkfile)" &&
 cat << EOF ||
 
