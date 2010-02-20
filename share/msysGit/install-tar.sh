@@ -5,9 +5,23 @@ die () {
 	exit 1
 }
 
+root=/
+while test $# -gt 0
+do
+	case "$1" in
+	--mingw)
+		root=/mingw
+		shift
+		;;
+	*)
+		break
+	esac
+done
+
+cd "$root" || die "$root does not exist?"
+
 test $# -ne 1 && die "Usage: $0 <TARFILE>"
 
-cd /mingw || echo "/mingw does not exist?"
 
 index=$(/share/msysGit/pre-install.sh) || die "Pre-install stage failed"
 
