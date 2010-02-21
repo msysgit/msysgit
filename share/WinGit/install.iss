@@ -46,7 +46,7 @@ Name: ext; Description: Windows Explorer integration; Types: custom
 Name: ext\reg; Description: Context menu entries; Flags: exclusive; Types: custom
 Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
 Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
-Name: ext\cheetah; Description: git-cheetah shell extension; Flags: exclusive; Types: custom
+Name: ext\cheetah; Description: git-cheetah shell extension (32-bit only); Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
 Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
@@ -245,7 +245,7 @@ end;
 
 procedure InitializeWizard;
 var
-    PrevPageID:Integer;
+    i,PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
     PuTTYSessions:TArrayOfString;
@@ -253,6 +253,20 @@ var
     BtnPlink:TButton;
     Data:String;
 begin
+    // Until we have a 64-bit version of git-cheetah, disable it on 64-bit Windows.
+    if isWin64 then begin
+        for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
+            Data:=LowerCase(WizardForm.ComponentsList.ItemCaption[i]);
+            if Pos('context',Data)>0 then begin
+                // Select the Registry-based context menu entries.
+                WizardForm.ComponentsList.Checked[i]:=True;
+            end else if Pos('cheetah',Data)>0 then begin
+                // Disable the git-cheetah shell extension.
+                WizardForm.ComponentsList.ItemEnabled[i]:=False;
+            end;
+        end;
+    end;
+
     PrevPageID:=wpSelectProgramGroup;
 
     (*
