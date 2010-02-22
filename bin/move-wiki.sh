@@ -50,5 +50,5 @@ test $# = 0 && set $(download_index)
 
 for arg
 do
-	echo action $arg
+	action $arg
 done
