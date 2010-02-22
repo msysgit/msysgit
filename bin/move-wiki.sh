@@ -17,9 +17,16 @@ NAMESPACE=MSysGit
 
 transform () {
 	perl -e 'while (<>) {
+		if ($_ eq "{{{\n") {
+			print "<code>\n";
+			while (<>) {
+				last if ($_ eq "}}}\n");
+				print $_;
+			}
+			print "</code>\n";
+			next;
+		}
 		s/^#.*/<!-- $& -->/;
-		s/{{{/<code>/g;
-		s/}}}/<\/code>/g;
 		s/`(.*?)`/<code>$1<\/code>/g;
 		s/(?<=\s)!([A-Z])/$1/g;
 		s/(?<!\[)\[(?![a-z]*:)([^\] ]+) +([^\]]+)\]/[[MSysGit:$1|$2]]/g;
