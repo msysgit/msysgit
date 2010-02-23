@@ -63,10 +63,12 @@ die () {
 test -s /etc/modifiedFiles && {
 	echo "Trying to finish checkout" >&2
 	cat /etc/modifiedFiles |
-	xargs git checkout -- ||
+	tr "\n" "\0" |
+	xargs -0r git checkout -- ||
 	die "Please close _all_ msysGit instances and run this shortcut again"
 	test -z "$(cat /etc/modifiedFiles |
-			xargs git diff --ignore-submodules --name-only)" ||
+		tr "\n" "\0" |
+		xargs -0r git diff --ignore-submodules --name-only)" ||
 	die "At least one file could not be updated; is msysGit still running?"
 }
 
