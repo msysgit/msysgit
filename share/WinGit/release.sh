@@ -36,9 +36,7 @@ create_msysgit_tag () {
 
 # compile everything needed for standard setup
 test "$do_compile" && {
-	start /share/WinGit/ReleaseNotes.rtf &&
-	echo "Press enter to continue (Ctrl-C to stop)" &&
-	read && {
+	wordpad /share/WinGit/ReleaseNotes.rtf && {
 		# create a commit if ReleaseNotes changed
 		test "$(git diff /share/WinGit/ReleaseNotes.rtf)" && {
 			git add /share/WinGit/ReleaseNotes.rtf &&
