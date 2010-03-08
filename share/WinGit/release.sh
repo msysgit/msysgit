@@ -108,6 +108,7 @@ homewinpath=$(cd ~ ; pwd -W) &&
 sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
 	< /share/WinGit/install.iss > $TMPDIR/install.iss &&
 cp /share/WinGit/*.inc.iss $TMPDIR &&
-echo "Lauching Inno Setup compiler ..." &&
+echo "Launching Inno Setup compiler ..." &&
 /share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" -q | grep -Ev "\s*Reading|\s*Compressing" &&
-(cd / && git tag -a -m "Git for Windows $1" Git-$1)
+(cd / && git tag -a -m "Git for Windows $1" Git-$1) &&
+echo "Installer is available as $homewinpath/Git-$version.exe"
