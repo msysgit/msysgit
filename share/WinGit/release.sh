@@ -25,6 +25,25 @@ test -z "$1" && {
 
 version=$1
 
+test -z "$force" && {
+	die () {
+		echo "$*" >&2
+		echo "If that is okay, please call '$0 -f $version'" >&2
+		exit 1
+	}
+
+	(cd /git &&
+	 git update-index --refresh &&
+	 git diff-files --quiet &&
+	 git diff-index --cached HEAD --) ||
+	die "Git submodule has dirty files"
+	(cd / &&
+	 git update-index --refresh &&
+	 git diff-files --quiet &&
+	 git diff-index --cached HEAD --) ||
+	die "msysGit super project not up-to-date"
+}
+
 create_msysgit_tag () {
 	i=0 &&
 	while ! git tag -a -m "Git for Windows $1" \
