@@ -84,7 +84,7 @@ test -z "$force" && {
 			;;
 		esac
 		cmp "$f" "/git/$basename" ||
-		die "Installed Git disagrees with contents of /git/"
+		die "Installed Git disagrees with contents of /git/ ($f)"
 	done
 	(cd / &&
 	 git update-index --refresh &&
