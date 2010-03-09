@@ -542,7 +542,7 @@ begin
                 if not FileCopy(AppDir+'\bin\git.exe',FileName,False) then begin
                     Log('Line {#emit __LINE__}: Creating copy "'+FileName+'" failed, giving up.');
                     // This is not a critical error, Git could basically be used without the
-                    // built-ins, so we continue.
+                    // aliases for built-ins, so we continue.
                 end;
             end;
         end;
