@@ -63,10 +63,12 @@ die () {
 test -s /etc/modifiedFiles && {
 	echo "Trying to finish checkout" >&2
 	cat /etc/modifiedFiles |
-	xargs git checkout -- ||
+	tr "\n" "\0" |
+	xargs -0r git checkout -- ||
 	die "Please close _all_ msysGit instances and run this shortcut again"
 	test -z "$(cat /etc/modifiedFiles |
-			xargs git diff --ignore-submodules --name-only)" ||
+		tr "\n" "\0" |
+		xargs -0r git diff --ignore-submodules --name-only)" ||
 	die "At least one file could not be updated; is msysGit still running?"
 }
 
@@ -75,10 +77,17 @@ test -f /etc/linkfile && rm -f "$(cat /etc/linkfile)"
 prompt_and_exit 0
 EOF
 echo "$USERPROFILE/Desktop/finish-checkout.lnk" > tmproot/etc/linkfile &&
+command=sh.exe &&
+arguments="--login -i" &&
+if test -n "$COMMONPROGRAMW6432"
+then
+	arguments="//c $command $arguments" &&
+	command="$WINDIR"\\SysWOW64\\cmd.exe && echo "$arguments"
+fi &&
 ./create-shortcut --work-dir "$(cd tmproot/bin && pwd -W)" \
 	--icon-file "$(cd ../resources && pwd -W)/msysgitlogo.ico" \
-	--arguments "--login -i" \
-	"$(pwd -W)"/tmproot/bin/sh.exe \
+	--arguments "$arguments" \
+	"$command" \
 	"$(cat tmproot/etc/linkfile)" &&
 cat << EOF ||
 
