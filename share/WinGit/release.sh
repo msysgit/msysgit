@@ -97,7 +97,7 @@ test -z "$force" && {
 		*/git-citool|*/git-gui)
 			basename=git-gui/git-gui
 			;;
-		*/git-gui--askpass|*/git-gui.tcl)
+		*/git-gui--askpass|*/git-gui--askyesno|*/git-gui.tcl)
 			basename=git-gui/$(basename "$f")
 			;;
 		*)
