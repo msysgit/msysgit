@@ -46,10 +46,11 @@ test -z "$force" && {
 
 create_msysgit_tag () {
 	i=0 &&
-	while ! git tag -a -m "Git for Windows $1" \
-	                $(git describe HEAD | cut -d- -f1).msysgit.$i
+	tag=$(git describe HEAD | cut -d- -f1) &&
+	tag=${tag%.msysgit.*} &&
+	while ! git tag -a -m "Git for Windows $1" $tag.msysgit.$i
 	do
-		i=$[$i+1]
+		i=$(($i+1))
 	done
 }
 
