@@ -754,10 +754,12 @@ begin
         Cmd:='core.autocrlf false';
     end;
     if not Exec(AppDir + '\bin\git.exe', 'config -f gitconfig ' + Cmd,
-            AppDir + '\etc', SW_HIDE, ewWaitUntilTerminated, i) then begin
+                AppDir + '\etc', SW_HIDE, ewWaitUntilTerminated, i) then begin
         Msg:='Unable to configure the line ending conversion: ' + Cmd;
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
+        // This is not a critical error, the user can probably fix it manually,
+        // so we continue.
     end;
 
     {
