@@ -19,13 +19,15 @@
 @rem Set the console codepage to match the GUI codepage.
 @chcp %cp_ansi% > nul
 @git.exe %*
+@set ErrorLevel=%ErrorLevel%
 @rem Restore the original console codepage.
 @chcp %cp_oem% > nul
 @goto quit 
 
 :gui
 @if "%2"=="citool" @goto default
-@start wish.exe "%git_install_root%\libexec\git-core\git-gui" -- %2 %3 %4 %5 %6 %7 %8 %9
+@for /f "tokens=1-1*" %%a in ("%*") do @set args=%%b
+@start "git-gui" wish.exe "%git_install_root%\libexec\git-core\git-gui" -- %args%
 
 :quit
-@%COMSPEC% /c exit /b %ErrorLevel%
+@"%COMSPEC%" /c exit /b %ErrorLevel%
