@@ -13,12 +13,19 @@ test -f $file || curl $mirror$file > $file || exit
 # unpack it
 test -d $dir || tar xzf $file || exit
 
+# initialize Git repository
+test -d $dir/.git ||
+(cd $dir && git init && git add . && git commit -m initial) || exit
+
+# patch it
+(cd $dir && git apply --verbose ../patch/zlib-config.patch) || exit
+
 # compile it
 sysroot="$(pwd)/sysroot/x86_64-w64-mingw32"
 cross="$(pwd)/sysroot/bin/x86_64-w64-mingw32"
 test -f $dir/example.exe || {
 	(cd $dir &&
-	 CC="$cross-gcc.exe" AR="$cross-ar.exe rc" RANLIB="$cross-ranlib.exe" \
+	 CC="$cross-gcc.exe" AR="$cross-ar.exe" RANLIB="$cross-ranlib.exe" \
 	 ./configure --prefix=$sysroot &&
 	 make) || exit
 }
