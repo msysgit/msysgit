@@ -81,7 +81,7 @@ set resDirectory "$msysRoot/share/resources"
 
 set command "$binDirectory/sh.exe"
 set arguments "--login -i"
-if {$env(COMMONPROGRAMW6432) != ""} {
+if {[info exists env(COMMONPROGRAMW6432)] && $env(COMMONPROGRAMW6432) != ""} {
 	set command "%WINDIR%\\SysWOW64\\cmd.exe"
 	set arguments "/c \"$binDirectory/sh.exe\" --login -i"
 }
