@@ -73,6 +73,7 @@ fi &&
 (cd /mingw && tar cf - \
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
+	bin/getcp.exe \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
 cp /mingw/bin/hd2u.exe bin/dos2unix.exe &&
