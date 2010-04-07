@@ -57,7 +57,7 @@ git config branch.@@MSYSGITBRANCH@@.remote origin &&
 git config branch.@@MSYSGITBRANCH@@.merge refs/heads/@@MSYSGITBRANCH@@ &&
 git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
 git config remote.mob.fetch +refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/mob &&
-git config remote.mob.push @@MSYSGITBRANCH@@:mob &&
+git config remote.mob.push HEAD:mob &&
 
 USE_HTTP=
 git fetch || {
@@ -106,6 +106,7 @@ t)
 	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
 ;;
 esac
+MINGW4MSYSGIT_MOB_URL=ssh://mob@repo.or.cz/srv/git/git/mingw/4msysgit.git
 
 git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
 mkdir -p git &&
@@ -120,6 +121,9 @@ git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
 git fetch --tags mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git config remote.mob.url $MINGW4MSYSGIT_MOB_URL &&
+git config remote.mob.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git config remote.mob.push 'HEAD:mob' &&
 git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
