@@ -8,7 +8,7 @@ test -z "$1" && {
 }
 
 MSYSGITBRANCH="$2"
-test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=master
+test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=devel
 FOURMSYSGITBRANCH="$3"
 
 TARGET="$HOME"/msysGit-netinstall-"$1".exe

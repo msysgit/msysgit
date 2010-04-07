@@ -53,11 +53,11 @@ git config core.autocrlf false &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
 git config remote.origin.fetch \
 	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
-git config branch.master.remote origin &&
-git config branch.master.merge refs/heads/@@MSYSGITBRANCH@@ &&
+git config branch.@@MSYSGITBRANCH@@.remote origin &&
+git config branch.@@MSYSGITBRANCH@@.merge refs/heads/@@MSYSGITBRANCH@@ &&
 git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
-git config remote.mob.fetch +refs/heads/mob:refs/remotes/origin/mob &&
-git config remote.mob.push master:mob &&
+git config remote.mob.fetch +refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/mob &&
+git config remote.mob.push @@MSYSGITBRANCH@@:mob &&
 
 USE_HTTP=
 git fetch || {
@@ -77,10 +77,10 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
 echo
 echo -------------------------------------------------------
-echo Checking out the master branch
+echo Checking out the @@MSYSGITBRANCH@@ branch
 echo -------------------------------------------------------
-git-checkout -l -f -q -b master origin/@@MSYSGITBRANCH@@ ||
-	error Couldn\'t checkout the master branch!
+git-checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
+	error Couldn\'t checkout the @@MSYSGITBRANCH@@ branch!
 mkdir -p .git/hooks &&
 cp share/msysGit/post-checkout-hook .git/hooks/post-checkout ||
 	error Could not install post-checkout hook
@@ -108,7 +108,7 @@ t)
 esac
 
 git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
-mkdir git &&
+mkdir -p git &&
 cd git &&
 git init &&
 git config core.autocrlf input &&
@@ -123,12 +123,14 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
-	FOURMSYS=$(cd .. && git ls-tree HEAD git |
-		sed -n "s/^160000 commit \(.*\)	git$/\1/p")
+	FOURMSYS=origin/devel
 else
 	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
 fi &&
-git checkout -l -f -q $FOURMSYS ||
+git config branch.${FOURMSYS#origin/}.remote origin &&
+git config branch.${FOURMSYS#origin/}.merge refs/heads/${FOURMSYS#origin/} &&
+git fetch origin &&
+git checkout -l -f -q -b ${FOURMSYS#origin/} $FOURMSYS ||
 error Couldn\'t update submodule git!
 
 echo
