@@ -8,9 +8,20 @@ TO=junio/next
 test $# -gt 0 && {
 	case "$1" in
 	*/git-rebase-todo)
+		if test -n "$MY_EXCLUDE"
+		then
+			git rev-list $TO..$MY_EXCLUDE > "$1".exclude
+		else
+			touch "$1".exclude
+		fi &&
 		mv "$1" "$1".bup &&
 		while read command sha1 oneline
 		do
+			# skip history obsoleted by a previous rebasing merge
+			if grep ^$sha1 "$1".exclude > /dev/null
+			then
+				continue
+			fi &&
 			case "$command" in
 			\#*|'')
 				echo "$command $sha1 $oneline"
@@ -66,10 +77,12 @@ then
 	done)" &&
 	if test -z "$rebasing_merge"
 	then
-		GIT_EDITOR="$this" git rebase -i $TO
+		GIT_EDITOR="$this" MY_EXCLUDE= git rebase -i $TO
 	else
 		GIT_EDITOR="$this" \
-		git rebase -i --onto $TO $rebasing_merge
+		MY_EXCLUDE=$rebasing_merge^2 \
+		git rebase -i --onto $TO \
+			$(git merge-base $rebasing_merge^ $TO)
 	fi
 fi &&
 git merge -s ours -m "Rebasing merge to $TO" origin/devel
