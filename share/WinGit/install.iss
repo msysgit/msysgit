@@ -5,7 +5,8 @@
 
 [Setup]
 ; Compiler-related
-InternalCompressLevel=max
+Compression=lzma2/ultra
+LZMAUseSeparateProcess=yes
 OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
 OutputDir=%OUTPUTDIR%
 SolidCompression=yes
