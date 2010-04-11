@@ -19,7 +19,6 @@ AllowNoIcons=yes
 AppName={#emit APP_NAME}
 AppPublisherURL={#emit APP_URL}
 AppVersion={#emit APP_VERSION}
-AppVerName={#emit APP_NAME+' '+APP_VERSION}
 ChangesEnvironment=yes
 DefaultDirName={pf}\{#emit APP_NAME}
 DefaultGroupName={#emit APP_NAME}
