@@ -1,5 +1,8 @@
 #!/mingw/bin/tclsh
 
+cd [file dirname $argv0]
+set msysRoot [file dirname [file dirname [pwd]]]
+
 switch -regexp [lindex $argv 0] {
 "^(|help|-h|-help|--help)$" {
 	puts "Usage: $argv0 \[option\]"
@@ -56,7 +59,6 @@ switch -regexp [lindex $argv 0] {
 }
 "^(EnableQuickEdit|quickedit)$" {
 	package require registry 1.0
-	regsub "^(.*)/etc/inputrc" $env(INPUTRC) "\\1" msysRoot
 	set sh [string map { "\\" "_" "/" "_" } $msysRoot/bin/sh.exe]
 	set key "HKEY_CURRENT_USER\\Console"
 	registry set $key "QuickEdit" 1 dword
@@ -71,9 +73,6 @@ default {
 }
 }
 
-cd [file dirname $argv0]
-
-regsub "^(.*)/etc/inputrc" $env(INPUTRC) "\\1" msysRoot
 exec make
 
 set binDirectory "$msysRoot/bin"
