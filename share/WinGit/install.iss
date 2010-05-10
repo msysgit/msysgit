@@ -947,7 +947,7 @@ begin
     if IsComponentSelected('ext\cheetah') then begin
         DeleteContextMenuEntries;
 
-        FileName:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
         TempName:=GenerateUniqueName(ExtractFilePath(FileName),'.git_shell_ext');
 
         // Try to delete any previously renamed old shell extension files.
@@ -1149,7 +1149,7 @@ begin
 
     DeleteContextMenuEntries;
 
-    FileName:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+    FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
     if FileExists(FileName) and (not DeleteFile(FileName)) then begin
         Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please delete it manually after logging off and on again.';
         MsgBox(Msg,mbError,MB_OK);
