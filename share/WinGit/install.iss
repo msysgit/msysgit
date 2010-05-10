@@ -59,11 +59,6 @@ Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 Name: {group}\Uninstall Git; Filename: {uninstallexe}
-Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Components: icons\quicklaunch
-Name: {code:GetShellFolder|desktop}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; Components: icons\desktop
-
-; Create a special shortcut that does not set a working directory. This is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
-Name: {app}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; IconFilename: {app}\etc\git.ico
 
 [Messages]
 BeveledLabel={#emit APP_URL}
@@ -910,6 +905,51 @@ begin
         // This is not a critical error, the user can probably fix it manually,
         // so we continue.
     end;
+
+    {
+        Create shortcuts that need to be created regardless of the "Don't create a Start Menu folder" toggle
+    }
+
+    Cmd:=ExpandConstant('{syswow64}\cmd.exe');
+    TempName:='/c ""'+AppDir+'\bin\sh.exe" --login -i"';
+    FileName:=AppDir+'\etc\git.ico';
+
+    if isComponentSelected('icons\quicklaunch') then begin
+        CreateShellLink(
+            ExpandConstant('{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash.lnk')
+        ,   'Git Bash'
+        ,   Cmd
+        ,   TempName
+        ,   '%HOMEDRIVE%%HOMEPATH%'
+        ,   FileName
+        ,   0
+        ,   SW_SHOWNORMAL
+        );
+    end;
+    if isComponentSelected('icons\desktop') then begin
+        CreateShellLink(
+            GetShellFolder('desktop')+'\Git Bash.lnk'
+        ,   'Git Bash'
+        ,   Cmd
+        ,   TempName
+        ,   '%HOMEDRIVE%%HOMEPATH%'
+        ,   FileName
+        ,   0
+        ,   SW_SHOWNORMAL
+        );
+    end;
+
+    // Create a special shortcut that does not set a working directory. This is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
+    CreateShellLink(
+        AppDir+'\Git Bash.lnk'
+    ,   'Git Bash'
+    ,   Cmd
+    ,   TempName
+    ,   ''
+    ,   FileName
+    ,   0
+    ,   SW_SHOWNORMAL
+    );
 
     {
         Create the Windows Explorer integrations
