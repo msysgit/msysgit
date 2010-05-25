@@ -226,13 +226,35 @@ end;
 
 procedure RefreshProcessList(Sender:TObject);
 var
+    ProcsCloseRequired,ProcsCloseRestart:ProcessList;
+    Found:Boolean;
     i:Longint;
     Caption:String;
 begin
+    Found:=FindProcessesUsingModule(ExpandConstant('{app}\bin\msys-1.0.dll'),ProcsCloseRequired);
+    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseRestart) or Found;
+
+    // Misuse the "Restartable" flag to indicate which processes are required
+    // to be closed before setup can continue, and which just should be closed
+    // in order to make changes take effect immediately.
+    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseRestart));
+    for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
+        Processes[i]:=ProcsCloseRequired[i];
+        Processes[i].Restartable:=False;
+    end;
+    for i:=0 to GetArrayLength(ProcsCloseRestart)-1 do begin
+        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseRestart[i];
+        Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
+    end;
+
     ProcessesListBox.Items.Clear;
-    if (Sender=NIL) or (FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes)) then begin
+    if (Sender=NIL) or Found then begin
         for i:=0 to GetArrayLength(Processes)-1 do begin
-            Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID)+')';
+            Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID);
+            if not Processes[i].Restartable then begin
+                Caption:=Caption+', closing is required';
+            end;
+            Caption:=Caption+')';
             ProcessesListBox.Items.Append(Caption);
         end;
     end;
@@ -624,6 +646,8 @@ begin
 end;
 
 function NextButtonClick(CurPageID:Integer):Boolean;
+var
+    i:Integer;
 begin
     Result:=True;
 
@@ -634,10 +658,21 @@ begin
             MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
         end;
     end else if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
-        Result:=(ProcessesListBox.Items.Count=0);
+        // It would have been nicer to just disable the "Next" button, but the
+        // WizardForm exports the button just read-only.
+        for i:=0 to GetArrayLength(Processes)-1 do begin
+            if not Processes[i].Restartable then begin
+                MsgBox('Setup cannot continue until you close at least those applications in the list that are marked as "closing is required".',mbCriticalError,MB_OK);
+                Result:=False;
+                Exit;
+            end;
+        end;
+
+        Result:=(GetArrayLength(Processes)=0);
+
         if not Result then begin
             Result:=(MsgBox(
-                'If you continue without closing the listed applications you need to log off and on again before changes take effect.' + #13 +
+                'If you continue without closing the listed applications, you will need to log off and on again before changes take effect.' + #13 + #13 +
                 'Are you sure you want to continue anyway?',
                 mbConfirmation,
                 MB_YESNO
