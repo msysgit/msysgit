@@ -602,8 +602,9 @@ end;
 function ShouldSkipPage(PageID:Integer):Boolean;
 begin
     if (ProcessesPage<>NIL) and (PageID=ProcessesPage.ID) then begin
-        Result:=(not FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes))
-             or (GetArrayLength(Processes)=0);
+        // This page is only reached forward (by pressing "Next", never by pressing "Back").
+        RefreshProcessList(NIL);
+        Result:=(GetArrayLength(Processes)=0);
     end else begin
         Result:=False;
     end;
@@ -611,8 +612,8 @@ end;
 
 procedure CurPageChanged(CurPageID:Integer);
 begin
+    // Show the "Refresh" button only on the processes page.
     if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
-        RefreshProcessList(NIL);
         ProcessesRefresh.Show;
     end else begin
         ProcessesRefresh.Hide;
