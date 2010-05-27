@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <process.h>
 #include <tchar.h>
+#include <stdio.h>
 #include "SystemInfo.h"
 
 

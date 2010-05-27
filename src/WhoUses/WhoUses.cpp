@@ -11,6 +11,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <stdio.h>
 #include "SystemInfo.h"
 
 LPCTSTR GetFileNamePosition( LPCTSTR lpPath )
