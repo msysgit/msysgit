@@ -16,42 +16,51 @@ if ($since eq '') {
 	$since = str2time($ARGV[0]);
 }
 
-$url = 'http://code.google.com/p/msysgit/updates/list?num=50&start=';
+$url = 'http://code.google.com/p/msysgit/issues/list?can=1&num=10000&q=status:';
+$issue_url = 'http://code.google.com/p/msysgit/issues/detail?id=';
 
-my ($offset, $date, $issue, $oneline);
-
-sub get_fixes ($) {
-	$offset = shift;
-
-	open IN, 'curl -s "' . $url . $offset . '" |';
-	while (<IN>) {
-		if (/<span class="date below-more" title="([^"]+)"/) {
-			$date = str2time($1);
-			if ($date < $since) {
-				close IN;
-				return 0;
-			}
+sub test_issue ($$) {
+	my $since = shift;
+	my $id = shift;
+	my $subject = '<no subject>';
+	my $fix_count = 0;
+	my $fix_date = 0;
+	my $cur_date = 0;
+	open ISSUE, 'curl -s "' . $issue_url . $id . '" |';
+	while (<ISSUE>) {
+		if (/<span class="h3" >([^<]+)<\/span>/) {
+			$subject = decode_entities($1);
 		}
-		elsif (/<a class="ot-issue-link" [^>]*>([^<]+)</) {
-			$issue = $1;
-			$_ = <IN>;
-			if (/^\s*\((.+)\) Status changed/) {
-				$oneline = decode_entities($1);
-				while (<IN>) {
-					if (/^<\/div>/) {
-						last;
-					}
-					if (/<span class="ot-issue-field-value">Fixed<\/span>/) {
-						print "Issue $issue ($oneline) was fixed\n";
-					}
-				}
-			}
+		elsif (/<span class="date" title="([^"]+)">/) {
+			$cur_date = str2time($1);
+		}
+		elsif (/<b>Status:<\/b> Fixed/) {
+			$fix_count++;
+			$fix_date = $cur_date;
+		}
+	}
+	close ISSUE;
+	if ($fix_date >= $since) {
+		my $fixed = "fixed";
+		if ($fix_count > 1) {
+			$fixed = "fixed again";
+		}
+		print "Issue $id ($subject) was $fixed\n";
+	}
+}
+
+sub get_issues ($$) {
+	my $since = shift;
+	my $status = shift;
+
+	open IN, 'curl -s "' . $url . $status . '" |';
+	while (<IN>) {
+		if (/<td class="vt id col_0"><a href="detail\?id=(\d+)">\d+<\/a><\/td>/) {
+			test_issue($since, $1);
 		}
 	}
 	close IN;
 	return 1;
 }
 
-for (my $off = 0; $off < 250 && get_fixes($off); $off += 50) {
-	# do nothing
-}
+get_issues($since, 'Fixed');
