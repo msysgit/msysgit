@@ -7,8 +7,26 @@ EOF
 	exit(1);
 }
 
-use Date::Parse;
-use HTML::Entities;
+# do not use Date::Parse; which is not installed on msysGit
+
+sub str2time($) {
+	my $date = shift;
+	my $result = `date -d "$date" +%s`;
+	chomp $result;
+	return $result;
+}
+
+# do not use HTML::Entities; which is not installed on msysGit
+
+sub decode_entities($) {
+	my $html = shift;
+	$html =~ s/&quot;/"/g;
+	$html =~ s/&lt;/</g;
+	$html =~ s/&gt;/>/g;
+	# must be last one
+	$html =~ s/&amp;/\&/g;
+	return $html;
+}
 
 my $since = `git show -s --format=%ct $ARGV[0]^0 2> /dev/null`;
 chomp($since);
