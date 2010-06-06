@@ -17,11 +17,11 @@
 @rem Get the current GUI ("ANSI") codepage.
 @for /f %%i in ('getcp -ansi') do @set cp_ansi=%%i
 @rem Set the console codepage to match the GUI codepage.
-@chcp %cp_ansi% > nul
+@chcp %cp_ansi% > nul < nul
 @git.exe %*
 @set ErrorLevel=%ErrorLevel%
 @rem Restore the original console codepage.
-@chcp %cp_oem% > nul
+@chcp %cp_oem% > nul < nul
 @goto quit 
 
 :gui
