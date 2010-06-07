@@ -992,39 +992,8 @@ begin
         DeleteContextMenuEntries;
 
         FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
-        TempName:=GenerateUniqueName(ExtractFilePath(FileName),'.git_shell_ext');
-
-        // Try to delete any previously renamed old shell extension files.
-        DelTree(ExtractFilePath(FileName)+'\*.git_shell_ext',False,True,False);
-
-        if FileExists(FileName) then begin
-            if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
-                Msg:='Line {#emit __LINE__}: Unable to unregister "'+FileName+'".';
-                MsgBox(Msg,mbError,MB_OK);
-                Log(Msg);
-                // This is not a critical error, the user can probably fix it manually,
-                // so we continue.
-            end;
-
-            if (not DeleteFile(FileName)) and (not RenameFile(FileName,TempName)) then begin
-                Msg:='Line {#emit __LINE__}: Unable to delete or rename "'+FileName+'".';
-                MsgBox(Msg,mbError,MB_OK);
-                Log(Msg);
-                // This is pretty much critical, but will be catched below when
-                // renaming the new shell extension file fails.
-            end;
-        end;
-
-        if not RenameFile(FileName+'.new',FileName) then begin
-            Msg:='Line {#emit __LINE__}: Unable to install git-cheetah. Please do it manually by renaming' + #13 + #13 +
-                 '"'+FileName+'.new" to "'+FileName+'"' + #13 + #13 +
-                 'and registering the shell extension by typing' + #13 + #13 +
-                 '"regsvr32 '+ExtractFileName(FileName)+'"' + #13 + #13 +
-                 'at the command prompt in the git-cheetah directory.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-        end else begin
-            RegisterServer(Is64BitInstallMode,FileName,False);
+        if not ReplaceInUseFile(FileName,FileName+'.new',True) then begin
+            Log('Line {#emit __LINE__}: Replacing file "'+FileName+'" failed.');
         end;
     end;
 end;

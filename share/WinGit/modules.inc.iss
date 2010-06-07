@@ -539,3 +539,72 @@ begin
         Result:=FindProcessesUsingModule_WinVista(Module,Processes);
     end;
 end;
+
+{
+    Helper code
+}
+
+// Tries to replace an in-use file, e.g. a registered shell extension, by
+// renaming it and then renaming the new file to the original name. Optionally,
+// performs (un-)registering via regsvr32.
+function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean):Boolean;
+var
+    CurFilePath,CurFileName,NewFileName:String;
+    CurFileStem,CurFileTemp:String;
+    UnregisterFailed,RenameFailed:Boolean;
+    Msg:String;
+begin
+    Result:=False;
+
+    // Note that CurFile may not exist, in which case NewFile is just renamed.
+    if not FileExists(NewFile) then begin
+        Exit;
+    end;
+
+    CurFilePath:=ExtractFilePath(CurFile);
+    CurFileName:=ExtractFileName(CurFile);
+    NewFileName:=ExtractFileName(NewFile);
+
+    // Get the file name without extension or period and use that as a suffix
+    // for the temporary file.
+    CurFileStem:=ChangeFileExt(CurFileName,'');
+    CurFileTemp:=GenerateUniqueName(CurFilePath,'.'+CurFileStem);
+
+    // Clean-up by trying to delete any previously renamed temporary files.
+    DelTree(CurFilePath+'\*.'+CurFileStem,False,True,False);
+
+    UnregisterFailed:=False;
+    RenameFailed:=False;
+
+    if FileExists(CurFile) then begin
+        if Register and (not UnregisterServer(Is64BitInstallMode,CurFile,False)) then begin
+            UnregisterFailed:=True;
+        end;
+
+        if (not DeleteFile(CurFile)) and (not RenameFile(CurFile,CurFileTemp)) then begin
+            RenameFailed:=True;
+        end;
+    end;
+
+    if not RenameFile(NewFile,CurFile) then begin
+        Msg:='Unable to install a new version of "'+CurFileName+'". ' +
+             'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
+        if FileExists(CurFile) then begin
+            if UnregisterFailed then begin
+                Msg := Msg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
+            end;
+            if RenameFailed then begin
+                Msg := Msg + '- rename "' + CurFileName + '" to something else,' + #13;
+            end;
+        end;
+        Msg         := Msg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
+        Msg         := Msg + '- run "regsvr32 ' + CurFileName + '".';
+
+        MsgBox(Msg,mbError,MB_OK);
+    end else begin
+        if Register then begin
+            RegisterServer(Is64BitInstallMode,CurFile,False);
+        end;
+        Result:=True;
+    end;
+end;
