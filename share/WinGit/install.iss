@@ -52,7 +52,10 @@ Name: assoc; Description: Associate .git* configuration files with the default t
 Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
 [Files]
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
+; Install files that might be in use during setup under a different name.
+Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion
+
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll; Flags: recursesubdirs replacesameversion
 Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]

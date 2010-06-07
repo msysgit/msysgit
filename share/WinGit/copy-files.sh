@@ -85,7 +85,7 @@ cp /etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
 cp /share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
-cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/git_shell_ext.dll.new &&
+cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
