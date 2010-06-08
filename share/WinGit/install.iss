@@ -111,6 +111,11 @@ Type: files; Name: {app}\libexec\git-core\git.exe
 ; Delete any (temporary) git-cheetah files.
 Type: files; Name: {app}\git-cheetah\*.*
 
+; Delete any manually created shortcuts.
+Type: files; Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash.lnk
+Type: files; Name: {code:GetShellFolder|desktop}\Git Bash.lnk
+Type: files; Name: {app}\Git Bash.lnk
+
 ; Delete a home directory inside the msysGit directory.
 Type: dirifempty; Name: {app}\home\{username}
 Type: dirifempty; Name: {app}\home
