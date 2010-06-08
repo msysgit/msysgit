@@ -1270,9 +1270,17 @@ begin
     DeleteContextMenuEntries;
 
     FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
-    if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-        Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please delete it manually after logging off and on again.';
-        MsgBox(Msg,mbError,MB_OK);
-        Log(Msg);
+    if FileExists(FileName) then begin
+        if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
+            Msg:='Line {#emit __LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end;
+
+        if not DeleteFile(FileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please do it manually after logging off and on again.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end;
     end;
 end;
