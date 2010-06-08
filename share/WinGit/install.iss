@@ -231,12 +231,17 @@ end;
 
 procedure RefreshProcessList(Sender:TObject);
 var
+    Modules:TArrayOfString;
     ProcsCloseRequired,ProcsCloseRestart:ProcessList;
     Found:Boolean;
     i:Longint;
     Caption:String;
 begin
-    Found:=FindProcessesUsingModule(ExpandConstant('{app}\bin\msys-1.0.dll'),ProcsCloseRequired);
+    SetArrayLength(Modules,2);
+    Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+    Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+    Found:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
+
     Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseRestart) or Found;
 
     // Misuse the "Restartable" flag to indicate which processes are required
