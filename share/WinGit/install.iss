@@ -167,7 +167,7 @@ var
     Processes:ProcessList;
     ProcessesPage:TWizardPage;
     ProcessesListBox:TListBox;
-    ProcessesRefresh:TButton;
+    ProcessesRefresh,ContinueButton:TButton;
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
@@ -257,6 +257,10 @@ begin
             Caption:=Caption+')';
             ProcessesListBox.Items.Append(Caption);
         end;
+    end;
+
+    if ContinueButton<>NIL then begin
+        ContinueButton.Enabled:=(GetArrayLength(ProcsCloseRequired)=0);
     end;
 end;
 
@@ -619,6 +623,9 @@ begin
         Caption:='&Refresh';
         OnClick:=@RefreshProcessList;
     end;
+
+    // This button is only used by the uninstaller.
+    ContinueButton:=NIL;
 
     // Initially hide the Refresh button, show it when the process page becomes current.
     ProcessesRefresh.Hide;
@@ -1075,27 +1082,92 @@ end;
 
 function InitializeUninstall:Boolean;
 var
-    FileName,NewName,Msg:String;
+    Form:TSetupForm;
+    Info:TLabel;
+    ExitButton,RefreshButton:TButton;
 begin
-    FileName:=ExpandConstant('{app}\bin\ssh-agent.exe');
-    if FileExists(FileName) then begin
-        // Create a temporary copy of the file we try to delete.
-        NewName:=FileName+'.'+IntToStr(1000+Random(9000));
-        Result:=FileCopy(FileName,NewName,True) and DeleteFile(FileName);
+    Result:=True;
 
-        if not Result then begin
-            Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
+    Form:=CreateCustomForm;
+    try
+        Form.Caption:='Git Uninstall: Removing in-use files';
+        Form.ClientWidth:=ScaleX(500);
+        Form.ClientHeight:=ScaleY(256);
+        Form.Center;
 
-            // Clean-up the temporary copy (ignoring any errors).
-            DeleteFile(NewName);
-        end else begin
-            // Clean-up the temporary copy (ignoring any errors).
-            RenameFile(NewName,FileName);
+        Info:=TLabel.Create(Form);
+        with Info do begin
+            Parent:=Form;
+            Left:=ScaleX(11);
+            Top:=ScaleY(11);
+            AutoSize:=True;
+            Caption:='The following applications use files that need to be removed, please close them.';
         end;
-    end else begin
-        Result:=True;
+
+        ContinueButton:=TButton.Create(Form);
+        with ContinueButton do begin
+            Parent:=Form;
+            Left:=Form.ClientWidth-ScaleX(75+10);
+            Top:=Form.ClientHeight-ScaleY(23+10);
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Continue';
+            ModalResult:=mrOk;
+        end;
+
+        ExitButton:=TButton.Create(Form);
+        with ExitButton do begin
+            Parent:=Form;
+            Left:=ContinueButton.Left-ScaleX(75+6);
+            Top:=ContinueButton.Top;
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Exit';
+            ModalResult:=mrCancel;
+            Cancel:=True;
+        end;
+
+        RefreshButton:=TButton.Create(Form);
+        with RefreshButton do begin
+            Parent:=Form;
+            Left:=ScaleX(10);
+            Top:=ExitButton.Top;
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Refresh';
+            OnClick:=@RefreshProcessList;
+        end;
+
+        ProcessesListBox:=TListBox.Create(Form);
+        with ProcessesListBox do begin
+            Parent:=Form;
+            Left:=ScaleX(11);
+            Top:=Info.Top+Info.Height+11;
+            Width:=Form.ClientWidth-ScaleX(11*2);
+            Height:=ContinueButton.Top-ScaleY(11*4);
+        end;
+
+        Form.ActiveControl:=ContinueButton;
+
+        RefreshProcessList(NIL);
+        if GetArrayLength(Processes)>0 then begin
+            // Now that these dialogs are going to be shown, we should probably
+            // disable the "Are you sure to remove Git?" confirmation dialog, but
+            // unfortunately that is not possible with Inno Setup currently.
+            Result:=(Form.ShowModal()=mrOk);
+
+            // Note: The number of processes might have changed during a refresh.
+            if Result and (GetArrayLength(Processes)>0) then begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications, you will need to log off and on again to remove some files manually.' + #13 + #13 +
+                    'Are you sure you want to continue anyway?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end;
+        end;
+    finally
+        Form.free;
     end;
 end;
 
