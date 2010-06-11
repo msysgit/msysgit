@@ -207,7 +207,7 @@ external 'Module32NextA@Kernel32.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_Win95(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
 var
     Success:Boolean;
     ProcSnap:THandle;
@@ -226,7 +226,9 @@ begin
     end;
 
     // Compare strings case-insensitively.
-    Module:=Lowercase(Module);
+    for i:=0 to GetArraylength(Modules)-1 do begin
+        Modules[i]:=Lowercase(Modules[i]);
+    end;
 
     // Loop over the processes in the system.
     ProcEntry.dwSize:=SizeOf(ProcEntry);
@@ -246,16 +248,19 @@ begin
 
                 while Success do begin
                     ModPath:=ArrayToString(ModEntry.szExePath);
-                    if Pos(Module,Lowercase(ModPath))>0 then begin
-                        i:=GetArrayLength(Processes);
-                        SetArrayLength(Processes,i+1);
-                        Processes[i].ID:=ProcEntry.th32ProcessID;
-                        Processes[i].Path:=ProcPath;
-                        Processes[i].Name:=GetFileDescription(ProcPath);
-                        if Length(Processes[i].Name)=0 then begin
-                            Processes[i].Name:=ExtractFileName(ProcPath);
+
+                    for i:=0 to GetArraylength(Modules)-1 do begin
+                        if Pos(Modules[i],Lowercase(ModPath))>0 then begin
+                            i:=GetArrayLength(Processes);
+                            SetArrayLength(Processes,i+1);
+                            Processes[i].ID:=ProcEntry.th32ProcessID;
+                            Processes[i].Path:=ProcPath;
+                            Processes[i].Name:=GetFileDescription(ProcPath);
+                            if Length(Processes[i].Name)=0 then begin
+                                Processes[i].Name:=ExtractFileName(ProcPath);
+                            end;
+                            Processes[i].Restartable:=False;
                         end;
-                        Processes[i].Restartable:=False;
                     end;
 
                     Success:=Module32Next(ModSnap,ModEntry);
@@ -271,6 +276,17 @@ begin
     CloseHandle(ProcSnap);
 
     Result:=True;
+end;
+
+// Returns a list of running processes that currectly use the specified module.
+// The module may be a filename to a DLL with or without path.
+function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):Boolean;
+var
+    Modules:TArrayOfString;
+begin
+    SetArrayLength(Modules,1);
+    Modules[0]:=Module;
+    Result:=FindProcessesUsingModules_Win95(Modules,Processes);
 end;
 
 {
@@ -337,9 +353,9 @@ external 'GetModuleFileNameExW@Psapi.dll stdcall delayload';
 external 'GetModuleFileNameExA@Psapi.dll stdcall delayload';
 #endif
 
-// Returns a list of running processes that currectly use the specified module.
-// The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):Boolean;
+// Returns a list of running processes that currectly use one of the specified modules.
+// Each module may be a filename to a DLL with or without path.
+function FindProcessesUsingModules_Win2000(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
 var
     ProcList,ModList:IdList;
     p,m,i:Longint;
@@ -355,7 +371,9 @@ begin
     end;
 
     // Compare strings case-insensitively.
-    Module:=Lowercase(Module);
+    for i:=0 to GetArraylength(Modules)-1 do begin
+        Modules[i]:=Lowercase(Modules[i]);
+    end;
 
     for p:=0 to GetArraylength(ProcList)-1 do begin
         Process:=OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,False,ProcList[p]);
@@ -366,20 +384,22 @@ begin
                     PathLength:=GetModuleFileNameEx(Process,ModList[m],Path,MAX_PATH);
                     SetLength(Path,PathLength);
 
-                    if Pos(Module,Lowercase(Path))>0 then begin
-                        SetLength(Path,MAX_PATH);
-                        PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
-                        SetLength(Path,PathLength);
+                    for i:=0 to GetArraylength(Modules)-1 do begin
+                        if Pos(Modules[i],Lowercase(Path))>0 then begin
+                            SetLength(Path,MAX_PATH);
+                            PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
+                            SetLength(Path,PathLength);
 
-                        i:=GetArrayLength(Processes);
-                        SetArrayLength(Processes,i+1);
-                        Processes[i].ID:=ProcList[p];
-                        Processes[i].Path:=Path;
-                        Processes[i].Name:=GetFileDescription(Path);
-                        if Length(Processes[i].Name)=0 then begin
-                            Processes[i].Name:=ExtractFileName(Path);
+                            i:=GetArrayLength(Processes);
+                            SetArrayLength(Processes,i+1);
+                            Processes[i].ID:=ProcList[p];
+                            Processes[i].Path:=Path;
+                            Processes[i].Name:=GetFileDescription(Path);
+                            if Length(Processes[i].Name)=0 then begin
+                                Processes[i].Name:=ExtractFileName(Path);
+                            end;
+                            Processes[i].Restartable:=False;
                         end;
-                        Processes[i].Restartable:=False;
                     end;
                 end;
             end;
@@ -388,6 +408,17 @@ begin
     end;
 
     Result:=True;
+end;
+
+// Returns a list of running processes that currectly use the specified module.
+// The module may be a filename to a DLL with or without path.
+function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):Boolean;
+var
+    Modules:TArrayOfString;
+begin
+    SetArrayLength(Modules,1);
+    Modules[0]:=Module;
+    Result:=FindProcessesUsingModules_Win2000(Modules,Processes);
 end;
 
 {
@@ -450,13 +481,12 @@ external 'RmRegisterResources@Rstrtmgr.dll stdcall delayload';
 function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded:UINT;var pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
 external 'RmGetList@Rstrtmgr.dll stdcall delayload';
 
-// Returns a list of running processes that currectly use the specified module.
-// The module has to be a full path and filename to a DLL.
-function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):Boolean;
+// Returns a list of running processes that currectly use one of the specified modules.
+// Each module has to be a full path and filename to a DLL.
+function FindProcessesUsingModules_WinVista(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
 var
     Handle:DWORD;
     Name:SessionKey;
-    Files:TArrayOfString;
     Apps:array of RM_UNIQUE_PROCESS;
     Services:TArrayOfString;
     Process:THandle;
@@ -470,20 +500,13 @@ begin
     SetArrayLength(Processes,0);
     Result:=False;
 
-    // We require the full path to the module here.
-    if not FileExists(Module) then begin
-        Exit;
-    end;
-
     // NULL-terminate the array of chars.
     Name[CCH_RM_SESSION_KEY+1]:=#0;
     if RmStartSession(Handle,0,Name)<>ERROR_SUCCESS then begin
         Exit;
     end;
 
-    SetArrayLength(Files,1);
-    Files[0]:=Module;
-    if RmRegisterResources(Handle,GetArrayLength(Files),Files,0,Apps,0,Services)=ERROR_SUCCESS then begin
+    if RmRegisterResources(Handle,GetArrayLength(Modules),Modules,0,Apps,0,Services)=ERROR_SUCCESS then begin
         // Reallocate the arrays until they are large enough to hold the process information.
         Needed:=1;
         repeat
@@ -521,10 +544,40 @@ begin
     RmEndSession(Handle);
 end;
 
+// Returns a list of running processes that currectly use the specified module.
+// The module has to be a full path and filename to a DLL.
+function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):Boolean;
+var
+    Modules:TArrayOfString;
+begin
+    SetArrayLength(Modules,1);
+    Modules[0]:=Module;
+    Result:=FindProcessesUsingModules_WinVista(Modules,Processes);
+end;
+
 {
     Wrapper code
 }
 
+// Returns a list of running processes that currectly use one of the specified modules.
+// Automatically calls the best implementation for the running OS.
+function FindProcessesUsingModules(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+var
+    Version:TWindowsVersion;
+begin
+    GetWindowsVersionEx(Version);
+
+    if (Version.Major<5) or (not Version.NTPlatform) then begin
+        Result:=FindProcessesUsingModules_Win95(Modules,Processes);
+    end else if Version.Major<6 then begin
+        Result:=FindProcessesUsingModules_Win2000(Modules,Processes);
+    end else begin
+        Result:=FindProcessesUsingModules_WinVista(Modules,Processes);
+    end;
+end;
+
+// Returns a list of running processes that currectly use the specified module.
+// Automatically calls the best implementation for the running OS.
 function FindProcessesUsingModule(Module:String;var Processes:ProcessList):Boolean;
 var
     Version:TWindowsVersion;
@@ -537,5 +590,74 @@ begin
         Result:=FindProcessesUsingModule_Win2000(Module,Processes);
     end else begin
         Result:=FindProcessesUsingModule_WinVista(Module,Processes);
+    end;
+end;
+
+{
+    Helper code
+}
+
+// Tries to replace an in-use file, e.g. a registered shell extension, by
+// renaming it and then renaming the new file to the original name. Optionally,
+// performs (un-)registering via regsvr32.
+function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean):Boolean;
+var
+    CurFilePath,CurFileName,NewFileName:String;
+    CurFileStem,CurFileTemp:String;
+    UnregisterFailed,RenameFailed:Boolean;
+    Msg:String;
+begin
+    Result:=False;
+
+    // Note that CurFile may not exist, in which case NewFile is just renamed.
+    if not FileExists(NewFile) then begin
+        Exit;
+    end;
+
+    CurFilePath:=ExtractFilePath(CurFile);
+    CurFileName:=ExtractFileName(CurFile);
+    NewFileName:=ExtractFileName(NewFile);
+
+    // Get the file name without extension or period and use that as a suffix
+    // for the temporary file.
+    CurFileStem:=ChangeFileExt(CurFileName,'');
+    CurFileTemp:=GenerateUniqueName(CurFilePath,'.'+CurFileStem);
+
+    // Clean-up by trying to delete any previously renamed temporary files.
+    DelTree(CurFilePath+'\*.'+CurFileStem,False,True,False);
+
+    UnregisterFailed:=False;
+    RenameFailed:=False;
+
+    if FileExists(CurFile) then begin
+        if Register and (not UnregisterServer(Is64BitInstallMode,CurFile,False)) then begin
+            UnregisterFailed:=True;
+        end;
+
+        if (not DeleteFile(CurFile)) and (not RenameFile(CurFile,CurFileTemp)) then begin
+            RenameFailed:=True;
+        end;
+    end;
+
+    if not RenameFile(NewFile,CurFile) then begin
+        Msg:='Unable to install a new version of "'+CurFileName+'". ' +
+             'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
+        if FileExists(CurFile) then begin
+            if UnregisterFailed then begin
+                Msg := Msg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
+            end;
+            if RenameFailed then begin
+                Msg := Msg + '- rename "' + CurFileName + '" to something else,' + #13;
+            end;
+        end;
+        Msg         := Msg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
+        Msg         := Msg + '- run "regsvr32 ' + CurFileName + '".';
+
+        MsgBox(Msg,mbError,MB_OK);
+    end else begin
+        if Register then begin
+            RegisterServer(Is64BitInstallMode,CurFile,False);
+        end;
+        Result:=True;
     end;
 end;

@@ -52,7 +52,10 @@ Name: assoc; Description: Associate .git* configuration files with the default t
 Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
 
 [Files]
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*; Flags: recursesubdirs replacesameversion
+; Install files that might be in use during setup under a different name.
+Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion
+
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll; Flags: recursesubdirs replacesameversion
 Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]
@@ -107,6 +110,11 @@ Type: files; Name: {app}\libexec\git-core\git.exe
 
 ; Delete any (temporary) git-cheetah files.
 Type: files; Name: {app}\git-cheetah\*.*
+
+; Delete any manually created shortcuts.
+Type: files; Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash.lnk
+Type: files; Name: {code:GetShellFolder|desktop}\Git Bash.lnk
+Type: files; Name: {app}\Git Bash.lnk
 
 ; Delete a home directory inside the msysGit directory.
 Type: dirifempty; Name: {app}\home\{username}
@@ -164,7 +172,7 @@ var
     Processes:ProcessList;
     ProcessesPage:TWizardPage;
     ProcessesListBox:TListBox;
-    ProcessesRefresh:TButton;
+    ProcessesRefresh,ContinueButton:TButton;
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
@@ -223,15 +231,46 @@ end;
 
 procedure RefreshProcessList(Sender:TObject);
 var
+    Modules:TArrayOfString;
+    ProcsCloseRequired,ProcsCloseRestart:ProcessList;
+    Found:Boolean;
     i:Longint;
     Caption:String;
 begin
+    SetArrayLength(Modules,2);
+    Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+    Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+    Found:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
+
+    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseRestart) or Found;
+
+    // Misuse the "Restartable" flag to indicate which processes are required
+    // to be closed before setup can continue, and which just should be closed
+    // in order to make changes take effect immediately.
+    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseRestart));
+    for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
+        Processes[i]:=ProcsCloseRequired[i];
+        Processes[i].Restartable:=False;
+    end;
+    for i:=0 to GetArrayLength(ProcsCloseRestart)-1 do begin
+        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseRestart[i];
+        Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
+    end;
+
     ProcessesListBox.Items.Clear;
-    if (Sender=NIL) or (FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes)) then begin
+    if (Sender=NIL) or Found then begin
         for i:=0 to GetArrayLength(Processes)-1 do begin
-            Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID)+')';
+            Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID);
+            if not Processes[i].Restartable then begin
+                Caption:=Caption+', closing is required';
+            end;
+            Caption:=Caption+')';
             ProcessesListBox.Items.Append(Caption);
         end;
+    end;
+
+    if ContinueButton<>NIL then begin
+        ContinueButton.Enabled:=(GetArrayLength(ProcsCloseRequired)=0);
     end;
 end;
 
@@ -595,6 +634,9 @@ begin
         OnClick:=@RefreshProcessList;
     end;
 
+    // This button is only used by the uninstaller.
+    ContinueButton:=NIL;
+
     // Initially hide the Refresh button, show it when the process page becomes current.
     ProcessesRefresh.Hide;
 end;
@@ -602,8 +644,9 @@ end;
 function ShouldSkipPage(PageID:Integer):Boolean;
 begin
     if (ProcessesPage<>NIL) and (PageID=ProcessesPage.ID) then begin
-        Result:=(not FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),Processes))
-             or (GetArrayLength(Processes)=0);
+        // This page is only reached forward (by pressing "Next", never by pressing "Back").
+        RefreshProcessList(NIL);
+        Result:=(GetArrayLength(Processes)=0);
     end else begin
         Result:=False;
     end;
@@ -611,8 +654,8 @@ end;
 
 procedure CurPageChanged(CurPageID:Integer);
 begin
+    // Show the "Refresh" button only on the processes page.
     if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
-        RefreshProcessList(NIL);
         ProcessesRefresh.Show;
     end else begin
         ProcessesRefresh.Hide;
@@ -620,6 +663,8 @@ begin
 end;
 
 function NextButtonClick(CurPageID:Integer):Boolean;
+var
+    i:Integer;
 begin
     Result:=True;
 
@@ -630,10 +675,21 @@ begin
             MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
         end;
     end else if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
-        Result:=(ProcessesListBox.Items.Count=0);
+        // It would have been nicer to just disable the "Next" button, but the
+        // WizardForm exports the button just read-only.
+        for i:=0 to GetArrayLength(Processes)-1 do begin
+            if not Processes[i].Restartable then begin
+                MsgBox('Setup cannot continue until you close at least those applications in the list that are marked as "closing is required".',mbCriticalError,MB_OK);
+                Result:=False;
+                Exit;
+            end;
+        end;
+
+        Result:=(GetArrayLength(Processes)=0);
+
         if not Result then begin
             Result:=(MsgBox(
-                'If you continue without closing the listed applications you need to log off and on again before changes take effect.' + #13 +
+                'If you continue without closing the listed applications, you will need to log off and on again before changes take effect.' + #13 + #13 +
                 'Are you sure you want to continue anyway?',
                 mbConfirmation,
                 MB_YESNO
@@ -988,39 +1044,8 @@ begin
         DeleteContextMenuEntries;
 
         FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
-        TempName:=GenerateUniqueName(ExtractFilePath(FileName),'.git_shell_ext');
-
-        // Try to delete any previously renamed old shell extension files.
-        DelTree(ExtractFilePath(FileName)+'\*.git_shell_ext',False,True,False);
-
-        if FileExists(FileName) then begin
-            if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
-                Msg:='Line {#emit __LINE__}: Unable to unregister "'+FileName+'".';
-                MsgBox(Msg,mbError,MB_OK);
-                Log(Msg);
-                // This is not a critical error, the user can probably fix it manually,
-                // so we continue.
-            end;
-
-            if (not DeleteFile(FileName)) and (not RenameFile(FileName,TempName)) then begin
-                Msg:='Line {#emit __LINE__}: Unable to delete or rename "'+FileName+'".';
-                MsgBox(Msg,mbError,MB_OK);
-                Log(Msg);
-                // This is pretty much critical, but will be catched below when
-                // renaming the new shell extension file fails.
-            end;
-        end;
-
-        if not RenameFile(FileName+'.new',FileName) then begin
-            Msg:='Line {#emit __LINE__}: Unable to install git-cheetah. Please do it manually by renaming' + #13 + #13 +
-                 '"'+FileName+'.new" to "'+FileName+'"' + #13 + #13 +
-                 'and registering the shell extension by typing' + #13 + #13 +
-                 '"regsvr32 '+ExtractFileName(FileName)+'"' + #13 + #13 +
-                 'at the command prompt in the git-cheetah directory.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-        end else begin
-            RegisterServer(Is64BitInstallMode,FileName,False);
+        if not ReplaceInUseFile(FileName,FileName+'.new',True) then begin
+            Log('Line {#emit __LINE__}: Replacing file "'+FileName+'" failed.');
         end;
     end;
 end;
@@ -1067,27 +1092,92 @@ end;
 
 function InitializeUninstall:Boolean;
 var
-    FileName,NewName,Msg:String;
+    Form:TSetupForm;
+    Info:TLabel;
+    ExitButton,RefreshButton:TButton;
 begin
-    FileName:=ExpandConstant('{app}\bin\ssh-agent.exe');
-    if FileExists(FileName) then begin
-        // Create a temporary copy of the file we try to delete.
-        NewName:=FileName+'.'+IntToStr(1000+Random(9000));
-        Result:=FileCopy(FileName,NewName,True) and DeleteFile(FileName);
+    Result:=True;
 
-        if not Result then begin
-            Msg:='Line {#emit __LINE__}: Please stop all ssh-agent processes and run uninstall again.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
+    Form:=CreateCustomForm;
+    try
+        Form.Caption:='Git Uninstall: Removing in-use files';
+        Form.ClientWidth:=ScaleX(500);
+        Form.ClientHeight:=ScaleY(256);
+        Form.Center;
 
-            // Clean-up the temporary copy (ignoring any errors).
-            DeleteFile(NewName);
-        end else begin
-            // Clean-up the temporary copy (ignoring any errors).
-            RenameFile(NewName,FileName);
+        Info:=TLabel.Create(Form);
+        with Info do begin
+            Parent:=Form;
+            Left:=ScaleX(11);
+            Top:=ScaleY(11);
+            AutoSize:=True;
+            Caption:='The following applications use files that need to be removed, please close them.';
         end;
-    end else begin
-        Result:=True;
+
+        ContinueButton:=TButton.Create(Form);
+        with ContinueButton do begin
+            Parent:=Form;
+            Left:=Form.ClientWidth-ScaleX(75+10);
+            Top:=Form.ClientHeight-ScaleY(23+10);
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Continue';
+            ModalResult:=mrOk;
+        end;
+
+        ExitButton:=TButton.Create(Form);
+        with ExitButton do begin
+            Parent:=Form;
+            Left:=ContinueButton.Left-ScaleX(75+6);
+            Top:=ContinueButton.Top;
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Exit';
+            ModalResult:=mrCancel;
+            Cancel:=True;
+        end;
+
+        RefreshButton:=TButton.Create(Form);
+        with RefreshButton do begin
+            Parent:=Form;
+            Left:=ScaleX(10);
+            Top:=ExitButton.Top;
+            Width:=ScaleX(75);
+            Height:=ScaleY(23);
+            Caption:='Refresh';
+            OnClick:=@RefreshProcessList;
+        end;
+
+        ProcessesListBox:=TListBox.Create(Form);
+        with ProcessesListBox do begin
+            Parent:=Form;
+            Left:=ScaleX(11);
+            Top:=Info.Top+Info.Height+11;
+            Width:=Form.ClientWidth-ScaleX(11*2);
+            Height:=ContinueButton.Top-ScaleY(11*4);
+        end;
+
+        Form.ActiveControl:=ContinueButton;
+
+        RefreshProcessList(NIL);
+        if GetArrayLength(Processes)>0 then begin
+            // Now that these dialogs are going to be shown, we should probably
+            // disable the "Are you sure to remove Git?" confirmation dialog, but
+            // unfortunately that is not possible with Inno Setup currently.
+            Result:=(Form.ShowModal()=mrOk);
+
+            // Note: The number of processes might have changed during a refresh.
+            if Result and (GetArrayLength(Processes)>0) then begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications, you will need to log off and on again to remove some files manually.' + #13 + #13 +
+                    'Are you sure you want to continue anyway?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end;
+        end;
+    finally
+        Form.free;
     end;
 end;
 
@@ -1190,9 +1280,17 @@ begin
     DeleteContextMenuEntries;
 
     FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
-    if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-        Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please delete it manually after logging off and on again.';
-        MsgBox(Msg,mbError,MB_OK);
-        Log(Msg);
+    if FileExists(FileName) then begin
+        if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
+            Msg:='Line {#emit __LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end;
+
+        if not DeleteFile(FileName) then begin
+            Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please do it manually after logging off and on again.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+        end;
     end;
 end;
