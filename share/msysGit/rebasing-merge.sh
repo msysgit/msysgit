@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TO=junio/next
+TO=${1:-junio/next}
 
 TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
 
@@ -49,9 +49,11 @@ case "\$1" in
 esac &&
 exec "$(git var GIT_EDITOR)" "\$@"
 EOF
+	TO_SHA1=$(git rev-parse --short $TO) &&
 	if GIT_EDITOR="$TMP_EDITOR" git rebase -i $MERGE --onto $TO
 	then
-		git merge -s ours -m "Rebasing merge to $TO" $ORIG_HEAD
+		git merge -s ours -m "Rebasing merge to $TO ($TO_SHA1)" \
+			$ORIG_HEAD
 	else
 		cat << EOF
 
