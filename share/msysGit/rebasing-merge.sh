@@ -7,8 +7,6 @@ TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
 # Rebase 'devel' on top of 'junio/next', the merging the old state of
 # 'devel' with the merge strategy 'ours' to enable a fast-forward.
 
-THIS="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")" &&
-cd /git &&
 case "$(git rev-parse --symbolic-full-name HEAD)" in
 refs/heads/devel)
 	test "$(git rev-parse HEAD)" = "$(git rev-parse origin/devel)" ||
@@ -50,6 +48,7 @@ esac &&
 exec "$(git var GIT_EDITOR)" "\$@"
 EOF
 	TO_SHA1=$(git rev-parse --short $TO) &&
+	chmod a+x "$TMP_EDITOR" &&
 	if GIT_EDITOR="$TMP_EDITOR" git rebase -i $MERGE --onto $TO
 	then
 		git merge -s ours -m "Rebasing merge to $TO ($TO_SHA1)" \
