@@ -125,7 +125,7 @@ sed -e '/share\/msysGit/d' -e "s/msysGit/Git (version $version)/" \
 	< /etc/motd > $TMPDIR/etc/motd &&
 cp /share/resources/gpl-2.0.rtf /share/resources/git.bmp /share/resources/gitsmall.bmp $TMPDIR &&
 homewinpath=$(cd ~ ; pwd -W) &&
-sed -e "s/%APPVERSION%/$version/" -e "s@%OUTPUTDIR%@$homewinpath@" \
+sed -e "s/%APPVERSION%/$version/" \
 	< /share/WinGit/install.iss > $TMPDIR/install.iss &&
 cp /share/WinGit/*.inc.iss $TMPDIR &&
 echo "Launching Inno Setup compiler ..." &&
