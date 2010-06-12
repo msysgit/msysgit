@@ -57,12 +57,13 @@ create_msysgit_tag () {
 # compile everything needed for standard setup
 test "$do_compile" && {
 	wordpad /share/WinGit/ReleaseNotes.rtf && {
-		# create a commit if ReleaseNotes changed
-		if test ! -z "$(git diff /share/WinGit/ReleaseNotes.rtf)"
-		then
+		(cd / &&
+		 # create a commit if ReleaseNotes changed
+		 if test ! -z "$(git diff /share/WinGit/ReleaseNotes.rtf)"
+		 then
 			git add /share/WinGit/ReleaseNotes.rtf &&
 			git commit -m "Git for Windows $version"
-		fi &&
+		 fi) &&
 		(cd /git &&
 		 create_msysgit_tag $version &&
 		 make install) &&
