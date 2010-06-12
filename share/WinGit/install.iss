@@ -8,7 +8,7 @@
 Compression=lzma2/ultra
 LZMAUseSeparateProcess=yes
 OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
-OutputDir=%OUTPUTDIR%
+OutputDir={#GetEnv('USERPROFILE')}
 SolidCompression=yes
 
 ; Uncomment the line below to be able to compile the script from within the IDE.
