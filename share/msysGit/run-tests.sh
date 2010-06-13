@@ -58,7 +58,7 @@ cd /git &&
 echo make $PARALLEL_MAKE &&
 (cd t &&
  rm -rf test-results &&
- time make $PARALLEL_MAKE -k "$@") 2>&1 |
+ time make $PARALLEL_MAKE -k "$@" < /dev/null) 2>&1 |
 (
  CURRENT_TESTS=
  FAILED_TESTS=
