@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# in its infinite wisdom, Microsoft decided that Vista should treat _all_
-# programs _containing_ the substring "setup", "install" or "update" as
-# administrative programs.
+# In its infinite wisdom, Microsoft decided that Vista should treat _all_
+# programs whose filename _contains_ a substring like "setup", "install",
+# "update", "patch" etc. as administrative programs.
 #
-# And now we have to say _explicitely_ that they are not.  Great.
+# And now we have to say _explicitly_ that they are not.  Great.
 
 cd /
 
