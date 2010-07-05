@@ -9,8 +9,12 @@ TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
 
 case "$(git rev-parse --symbolic-full-name HEAD)" in
 refs/heads/devel)
-	test "$(git rev-parse HEAD)" = "$(git rev-parse origin/devel)" ||
-	test "$(git rev-parse devel@{1})" = "$(git rev-parse origin/devel)" || {
+	UPSTREAM=$(git rev-parse --symbolic-full-name HEAD@{u}) || {
+		echo "Not tracking any remote branch!" >&2
+		exit 1
+	}
+	test "$(git rev-parse HEAD)" = "$(git rev-parse $UPSTREAM)" ||
+	test "$(git rev-parse devel@{1})" = "$(git rev-parse $UPSTREAM)" || {
 		echo "Your 'devel' is not up-to-date!" >&2
 		exit 1
 	}
