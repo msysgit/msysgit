@@ -58,9 +58,14 @@ EOF
 		git merge -s ours -m "Rebasing merge to $TO ($TO_SHA1)" \
 			$ORIG_HEAD
 	else
+		FINISH="$(git rev-parse --git-dir)/finish-rebasing-merge.sh"
+		cat > "$FINISH" << EOF
+git merge -s ours -m "Rebasing merge to $TO ($TO_SHA1)" $ORIG_HEAD
+EOF
+		chmod a+x "$FINISH"
 		cat << EOF
 
-After the rebase, call 'git merge -s ours $ORIG_HEAD' manually
+After the rebase, call '$FINISH' manually
 EOF
 	fi
 
