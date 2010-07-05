@@ -71,7 +71,7 @@ echo make $PARALLEL_MAKE &&
 		printf "Currently running $(echo "$CURRENT_TESTS" |
 			sed 's/-[^ ]*//g')\\r"
 		;;
-	'* passed'*)
+	'* passed'*|'# passed'*)
 		get_finished_tests
 		;;
 	esac
