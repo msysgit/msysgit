@@ -19,7 +19,8 @@ generate_skip_list () {
 		name=${d#trash directory.}
 		short=${name%%-*}
 		sh $name.sh |
-		sed -n "s/.*FAIL \([0-9]*\).*/$short.\1/p"
+		sed -n -e "s/.*FAIL \([0-9]*\).*/$short.\1/p" \
+			-e "s/^not ok - \([0-9]*\).*/$short.\1/p"
 	done
 }
 
