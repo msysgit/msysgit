@@ -6,7 +6,9 @@
 @for /F "delims=" %%I in ("%~dp0..") do @set git_install_root=%%~fI
 @set PATH=%git_install_root%\bin;%git_install_root%\mingw\bin;%PATH%
 
-@if "%HOME%"=="" @set HOME=%USERPROFILE%
+@if not exist "%HOME%" @set HOME="%HOMEDRIVE%%HOMEPATH%"
+@if not exist "%HOME%" @set HOME="%USERPROFILE%"
+
 @set PLINK_PROTOCOL=ssh
 
 @if "%1"=="gui" @goto gui
