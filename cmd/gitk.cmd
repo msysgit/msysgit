@@ -9,4 +9,4 @@
 @if not exist "%HOME%" @set HOME="%HOMEDRIVE%%HOMEPATH%"
 @if not exist "%HOME%" @set HOME="%USERPROFILE%"
 
-@start wish.exe "%git_install_root%\bin\gitk" -- %*
+@start "gitk" wish.exe "%git_install_root%\bin\gitk" -- %*
