@@ -1,6 +1,15 @@
 #!/bin/sh
 
+force=
+case "$1" in -f|--force) shift; force=t;; esac
+
 TO=${1:-junio/next}
+
+if test -z "$force" && test -z "$(git rev-list .."$TO")"
+then
+	echo "Nothing new in $TO; To force a rebase, use the --force, Luke!" >&2
+	exit 1
+fi
 
 TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
 
