@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2000-2006 Shun-ichi Goto
  * Copyright (c) 2002, J. Grant (English Corrections)
+ * Copyright (c) 2010, Reini Urban (added realm to http_auth basic)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,6 +38,9 @@
  *
  *   See more detail:
  *     http://www.taiyo.co.jp/~gotoh/ssh/connect.html
+ *
+ *   With realm for http_auth basic:
+ *     http://gist.github.com/360940
  *
  * How To Compile
  * ==============
@@ -171,7 +175,7 @@
  *
  * ssh-askpass support
  * ===================
-  *
+ *
  *   You can use ssh-askpass (came from OpenSSH or else) to specify
  *   password on graphical environment (X-Window or MS Windows). To use
  *   this, set program name to environment variable SSH_ASKPASS. On UNIX,
@@ -199,6 +203,12 @@
  *  Hypertext Transfer Protocol -- HTTP/1.1  -- RFC 2616
  *  HTTP Authentication: Basic and Digest Access Authentication -- RFC 2617
  *             For proxy authentication, refer these documents.
+ *
+ * Debugging
+ * =========
+ *  Use -d -d twice to print a hex encoded stream for both directions and
+ *  decode them via
+ *    perl -e'local $/;$_=<>;print chr(hex($_)) for split / /,$_'
  *
  ***********************************************************************/
 
@@ -335,6 +345,8 @@ int   relay_method = METHOD_UNDECIDED;          /* relaying method */
 char *relay_host = NULL;                        /* hostname of relay server */
 u_short relay_port = 0;                         /* port of relay server */
 char *relay_user = NULL;                        /* user name for auth */
+
+char realm[1024];				/* for basic http_auth */
 
 /* destination target host and port */
 char *dest_host = NULL;
@@ -2388,9 +2400,15 @@ basic_auth (SOCKET s)
     memset (userpass, 0, len);
 
     f_report = 0;                               /* don't report for security */
-    ret = sendf(s, "Proxy-Authorization: Basic %s\r\n", cred);
-    f_report = 1;
-    report_text(">>>", "Proxy-Authorization: Basic xxxxx\r\n");
+    if (realm) {
+        ret = sendf(s, "Proxy-Authorization: Basic %s %s\r\n", cred, realm);
+        f_report = 1;
+        report_text(">>>", "Proxy-Authorization: Basic xxxxx realm=\"xxxxx\"\r\n");
+    } else {
+        ret = sendf(s, "Proxy-Authorization: Basic %s\r\n", cred);
+        f_report = 1;
+        report_text(">>>", "Proxy-Authorization: Basic xxxxx\r\n");
+    }
 
     memset(cred, 0, strlen(cred));
     free(cred);
@@ -2455,8 +2473,7 @@ begin_http_relay( SOCKET s )
      * Symantec's Raptor firewall) */
     case 401:                                   /* WWW-Auth required */
     case 407:                                   /* Proxy-Auth required */
-        /** NOTE: As easy implementation, we support only BASIC scheme
-            and ignore realm. */
+        /** NOTE: As easy implementation, we support only BASIC scheme */
         /* If proxy_auth_type is PROXY_AUTH_BASIC and get
          this result code, authentication was failed. */
         if (proxy_auth_type != PROXY_AUTH_NONE) {
@@ -2471,9 +2488,9 @@ begin_http_relay( SOCKET s )
             downcase(buf);
             if (expect(buf, auth_what)) {
                 /* parse type and realm */
-                char *scheme, *realm;
+                char *scheme, *mrealm;
                 scheme = cut_token(buf, " ");
-                realm = cut_token(scheme, " ");
+                mrealm = cut_token(scheme, " ");
                 if ( scheme == NULL || realm == NULL ) {
                     debug("Invalid format of %s field.", auth_what);
                     return START_ERROR;         /* fail */
@@ -2481,6 +2498,8 @@ begin_http_relay( SOCKET s )
                 /* check supported auth type */
                 if (expect(scheme, "basic")) {
                     proxy_auth_type = PROXY_AUTH_BASIC;
+                    strcpy(realm, mrealm);
+                    debug("realm: %s", mrealm);
                 } else {
                     debug("Unsupported authentication type: %s", scheme);
                 }
@@ -2490,6 +2509,7 @@ begin_http_relay( SOCKET s )
             debug("Can't find %s in response header.", auth_what);
             return START_ERROR;
         } else {
+            debug("START_RETRY with proxy_auth_type=%d\n", PROXY_AUTH_BASIC);
             return START_RETRY;
         }
 
@@ -2691,8 +2711,9 @@ do_repeater( SOCKET local_in, SOCKET local_out, SOCKET remote )
                 fatal("recv() failed, %d\n", socket_errno());
             } else {
                 debug("recv %d bytes\n", len);
-                if ( 1 < f_debug )              /* more verbose */
+                if ( 1 < f_debug ) {             /* more verbose */
                     report_bytes( "<<<", rbuf+rbuf_len, len);
+                }
                 rbuf_len += len;
             }
         }
