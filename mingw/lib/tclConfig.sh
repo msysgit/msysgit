@@ -17,7 +17,7 @@ TCL_DLL_FILE="tcl85.dll"
 TCL_VERSION='8.5'
 TCL_MAJOR_VERSION='8'
 TCL_MINOR_VERSION='5'
-TCL_PATCH_LEVEL='.8'
+TCL_PATCH_LEVEL='.9'
 
 # C compiler to use for compilation.
 TCL_CC='cl'
@@ -112,7 +112,7 @@ TCL_LIB_FLAG='-ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # build directory.
-TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.8/win -ltcl85'
+TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.9/win -ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # installed directory.
@@ -147,7 +147,7 @@ TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.lib'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tcl was
 # compiled.
-TCL_SRC_DIR='/src/tcltk/tcl8.5.8'
+TCL_SRC_DIR='/src/tcltk/tcl8.5.9'
 
 # List of standard directories in which to look for packages during
 # "package require" commands.  Contains the "prefix" directory plus also
@@ -165,14 +165,14 @@ TCL_STUB_LIB_FLAG='-ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # build directory.
-TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.8/win -ltclstub85'
+TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.9/win -ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # installed directory.
 TCL_STUB_LIB_SPEC='-L/mingw/lib -ltclstub85'
 
 # Path to the Tcl stub library in the build directory.
-TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.8/win/tclstub85.lib'
+TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.9/win/tclstub85.lib'
 
 # Path to the Tcl stub library in the install directory.
 TCL_STUB_LIB_PATH='/mingw/lib/tclstub85.lib'

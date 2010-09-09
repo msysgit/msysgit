@@ -6,7 +6,7 @@
  * Copyright (c) 1998-1999 by Scriptics Corporation.
  * All rights reserved.
  *
- * RCS: @(#) $Id: tclPlatDecls.h,v 1.27 2007/12/13 15:23:20 dgp Exp $
+ * RCS: @(#) $Id: tclPlatDecls.h,v 1.27.2.2 2010/05/21 12:18:17 nijtmans Exp $
  */
 
 #ifndef _TCLPLATDECLS
@@ -26,18 +26,12 @@
 /*
  *  Pull in the typedef of TCHAR for windows.
  */
-#if defined(__CYGWIN__)
-    typedef char TCHAR;
-#elif defined(__WIN32__) && !defined(_TCHAR_DEFINED)
+#if defined(__WIN32__) && !defined(_TCHAR_DEFINED)
 #   include <tchar.h>
 #   ifndef _TCHAR_DEFINED
 	/* Borland seems to forget to set this. */
-        typedef _TCHAR TCHAR;
-#	define _TCHAR_DEFINED
-#   endif
-#   if defined(_MSC_VER) && defined(__STDC__)
-	/* MSVC++ misses this. */
 	typedef _TCHAR TCHAR;
+#	define _TCHAR_DEFINED
 #   endif
 #endif
 
@@ -51,32 +45,32 @@
 #ifndef Tcl_WinUtfToTChar_TCL_DECLARED
 #define Tcl_WinUtfToTChar_TCL_DECLARED
 /* 0 */
-EXTERN TCHAR *		Tcl_WinUtfToTChar (CONST char * str, int len, 
-				Tcl_DString * dsPtr);
+EXTERN TCHAR *		Tcl_WinUtfToTChar(CONST char *str, int len,
+				Tcl_DString *dsPtr);
 #endif
 #ifndef Tcl_WinTCharToUtf_TCL_DECLARED
 #define Tcl_WinTCharToUtf_TCL_DECLARED
 /* 1 */
-EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len, 
-				Tcl_DString * dsPtr);
+EXTERN char *		Tcl_WinTCharToUtf(CONST TCHAR *str, int len,
+				Tcl_DString *dsPtr);
 #endif
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
 #ifndef Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 /* 0 */
-EXTERN int		Tcl_MacOSXOpenBundleResources (Tcl_Interp * interp, 
-				CONST char * bundleName, int hasResourceFile, 
-				int maxPathLen, char * libraryPath);
+EXTERN int		Tcl_MacOSXOpenBundleResources(Tcl_Interp *interp,
+				CONST char *bundleName, int hasResourceFile,
+				int maxPathLen, char *libraryPath);
 #endif
 #ifndef Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 /* 1 */
-EXTERN int		Tcl_MacOSXOpenVersionedBundleResources (
-				Tcl_Interp * interp, CONST char * bundleName, 
-				CONST char * bundleVersion, 
-				int hasResourceFile, int maxPathLen, 
-				char * libraryPath);
+EXTERN int		Tcl_MacOSXOpenVersionedBundleResources(
+				Tcl_Interp *interp, CONST char *bundleName,
+				CONST char *bundleVersion,
+				int hasResourceFile, int maxPathLen,
+				char *libraryPath);
 #endif
 #endif /* MACOSX */
 
@@ -85,12 +79,12 @@ typedef struct TclPlatStubs {
     struct TclPlatStubHooks *hooks;
 
 #ifdef __WIN32__ /* WIN */
-    TCHAR * (*tcl_WinUtfToTChar) (CONST char * str, int len, Tcl_DString * dsPtr); /* 0 */
-    char * (*tcl_WinTCharToUtf) (CONST TCHAR * str, int len, Tcl_DString * dsPtr); /* 1 */
+    TCHAR * (*tcl_WinUtfToTChar) (CONST char *str, int len, Tcl_DString *dsPtr); /* 0 */
+    char * (*tcl_WinTCharToUtf) (CONST TCHAR *str, int len, Tcl_DString *dsPtr); /* 1 */
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
-    int (*tcl_MacOSXOpenBundleResources) (Tcl_Interp * interp, CONST char * bundleName, int hasResourceFile, int maxPathLen, char * libraryPath); /* 0 */
-    int (*tcl_MacOSXOpenVersionedBundleResources) (Tcl_Interp * interp, CONST char * bundleName, CONST char * bundleVersion, int hasResourceFile, int maxPathLen, char * libraryPath); /* 1 */
+    int (*tcl_MacOSXOpenBundleResources) (Tcl_Interp *interp, CONST char *bundleName, int hasResourceFile, int maxPathLen, char *libraryPath); /* 0 */
+    int (*tcl_MacOSXOpenVersionedBundleResources) (Tcl_Interp *interp, CONST char *bundleName, CONST char *bundleVersion, int hasResourceFile, int maxPathLen, char *libraryPath); /* 1 */
 #endif /* MACOSX */
 } TclPlatStubs;
 

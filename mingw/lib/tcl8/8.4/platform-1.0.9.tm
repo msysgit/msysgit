@@ -103,7 +103,12 @@ proc ::platform::generic {} {
 	}
 	sunos {
 	    set plat solaris
-	    if {![string match "ia64*" $cpu]} {
+	    if {[string match "ix86" $cpu]} {
+		if {$tcl_platform(wordSize) == 8} {
+		    set cpu x86_64
+		}
+	    } elseif {![string match "ia64*" $cpu]} {
+		# sparc
 		if {$tcl_platform(wordSize) == 8} {
 		    append cpu 64
 		}
@@ -175,10 +180,30 @@ proc ::platform::identify {} {
 
 	    set v unknown
 
-	    if {[file exists /lib64] && [file isdirectory /lib64]} {
-		set base /lib64
-	    } else {
-		set base /lib
+	    # Determine in which directory to look. /lib, or /lib64.
+	    # For that we use the tcl_platform(wordSize).
+	    #
+	    # We could use the 'cpu' info, per the equivalence below,
+	    # that however would be restricted to intel. And this may
+	    # be a arm, mips, etc. system. The wordsize is more
+	    # fundamental.
+	    #
+	    # ix86   <=> (wordSize == 4) <=> 32 bit ==> /lib
+	    # x86_64 <=> (wordSize == 8) <=> 64 bit ==> /lib64
+	    #
+	    # Do not look into /lib64 even if present, if the cpu
+	    # doesn't fit.
+
+	    switch -exact -- $tcl_platform(wordSize) {
+		4 {
+		    set base /lib
+		}
+		8 {
+		    set base /lib64
+		}
+		default {
+		    return -code error "Bad wordSize $tcl_platform(wordSize), expected 4 or 8"
+		}
 	    }
 
 	    set libclist [lsort [glob -nocomplain -directory $base libc*]]
@@ -256,6 +281,13 @@ proc ::platform::patterns {id} {
 	macosx*-*    {
 	    # 10.5+ 
 	    if {[regexp {macosx([^-]*)-(.*)} $id -> v cpu]} {
+
+		switch -exact -- $cpu {
+		    ix86    -
+		    x86_64  { set alt i386-x86_64 }
+		    default { set alt {} }
+		}
+
 		if {$v ne ""} {
 		    foreach {major minor} [split $v .] break
 
@@ -264,21 +296,33 @@ proc ::platform::patterns {id} {
 		    for {set j $minor} {$j >= 5} {incr j -1} {
 			lappend res macosx${major}.${j}-${cpu}
 			lappend res macosx${major}.${j}-universal
+			if {$alt ne {}} {
+			    lappend res macosx${major}.${j}-$alt
+			}
 		    }
 
 		    # Add unversioned patterns for 10.3/10.4 builds.
 		    lappend res macosx-${cpu}
 		    lappend res macosx-universal
+		    if {$alt ne {}} {
+			lappend res macosx-$alt
+		    }
 		} else {
 		    lappend res macosx-universal
+		    if {$alt ne {}} {
+			lappend res macosx-$alt
+		    }
 		}
 	    } else {
 		lappend res macosx-universal
 	    }
 	}
-	macosx-powerpc -
-	macosx-ix86    {
+	macosx-powerpc {
 	    lappend res macosx-universal
+	}
+	macosx-x86_64 -
+	macosx-ix86 {
+	    lappend res macosx-universal macosx-i386-x86_64
 	}
     }
     lappend res tcl ; # Pure tcl packages are always compatible.
@@ -289,7 +333,7 @@ proc ::platform::patterns {id} {
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide platform 1.0.5
+package provide platform 1.0.9
 
 # ### ### ### ######### ######### #########
 ## Demo application

@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tcl.h,v 1.254.2.13 2009/11/03 19:21:37 dgp Exp $
+ * RCS: @(#) $Id: tcl.h,v 1.254.2.16 2010/08/04 17:02:39 dgp Exp $
  */
 
 #ifndef _TCL
@@ -60,10 +60,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  8
+#define TCL_RELEASE_SERIAL  9
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.8"
+#define TCL_PATCH_LEVEL	    "8.5.9"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -145,7 +145,7 @@ extern "C" {
  *
  * The following TCL_VARARGS* macros are to support old extensions
  * written for older versions of Tcl where the macros permitted
- * support for the varargs.h system as well as stdarg.h .  
+ * support for the varargs.h system as well as stdarg.h .
  *
  * New code should just directly be written to use stdarg.h conventions.
  */
@@ -167,7 +167,7 @@ extern "C" {
  * Note: when building static but linking dynamically to MSVCRT we must still
  *       correctly decorate the C library imported function.  Use CRTIMPORT
  *       for this purpose.  _DLL is defined by the compiler when linking to
- *       MSVCRT.  
+ *       MSVCRT.
  */
 
 #if (defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))
@@ -262,7 +262,7 @@ extern "C" {
 #endif
 
 /*
- * Make sure EXTERN isn't defined elsewhere
+ * Make sure EXTERN isn't defined elsewhere.
  */
 
 #ifdef EXTERN
@@ -315,7 +315,7 @@ typedef long LONG;
 #endif
 
 /*
- * Darwin specifc configure overrides (to support fat compiles, where
+ * Darwin specific configure overrides (to support fat compiles, where
  * configure runs only once for multiple architectures):
  */
 
@@ -359,7 +359,7 @@ typedef long LONG;
 #      if defined(__WIN32__) && !defined(__CYGWIN__)
 #         define TCL_LL_MODIFIER        "I64"
 #      else
-#         define TCL_LL_MODIFIER	"L"
+#         define TCL_LL_MODIFIER	"ll"
 #      endif
 typedef struct stat	Tcl_StatBuf;
 #   elif defined(__WIN32__)
@@ -514,9 +514,10 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
  * given to Tcl_CreateThread.
  */
 
-#define TCL_THREAD_STACK_DEFAULT (0)    /* Use default size for stack */
-#define TCL_THREAD_NOFLAGS	 (0000) /* Standard flags, default behaviour */
-#define TCL_THREAD_JOINABLE	 (0001) /* Mark the thread as joinable */
+#define TCL_THREAD_STACK_DEFAULT (0)    /* Use default size for stack. */
+#define TCL_THREAD_NOFLAGS	 (0000) /* Standard flags, default
+					 * behaviour. */
+#define TCL_THREAD_JOINABLE	 (0001) /* Mark the thread as joinable. */
 
 /*
  * Flag values passed to Tcl_StringCaseMatch.
@@ -528,20 +529,20 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
  * Flag values passed to Tcl_GetRegExpFromObj.
  */
 
-#define	TCL_REG_BASIC		000000	/* BREs (convenience) */
-#define	TCL_REG_EXTENDED	000001	/* EREs */
-#define	TCL_REG_ADVF		000002	/* advanced features in EREs */
-#define	TCL_REG_ADVANCED	000003	/* AREs (which are also EREs) */
-#define	TCL_REG_QUOTE		000004	/* no special characters, none */
-#define	TCL_REG_NOCASE		000010	/* ignore case */
-#define	TCL_REG_NOSUB		000020	/* don't care about subexpressions */
-#define	TCL_REG_EXPANDED	000040	/* expanded format, white space &
-					 * comments */
+#define	TCL_REG_BASIC		000000	/* BREs (convenience). */
+#define	TCL_REG_EXTENDED	000001	/* EREs. */
+#define	TCL_REG_ADVF		000002	/* Advanced features in EREs. */
+#define	TCL_REG_ADVANCED	000003	/* AREs (which are also EREs). */
+#define	TCL_REG_QUOTE		000004	/* No special characters, none. */
+#define	TCL_REG_NOCASE		000010	/* Ignore case. */
+#define	TCL_REG_NOSUB		000020	/* Don't care about subexpressions. */
+#define	TCL_REG_EXPANDED	000040	/* Expanded format, white space &
+					 * comments. */
 #define	TCL_REG_NLSTOP		000100  /* \n doesn't match . or [^ ] */
-#define	TCL_REG_NLANCH		000200  /* ^ matches after \n, $ before */
-#define	TCL_REG_NEWLINE		000300  /* newlines are line terminators */
-#define	TCL_REG_CANMATCH	001000  /* report details on partial/limited
-					 * matches */
+#define	TCL_REG_NLANCH		000200  /* ^ matches after \n, $ before. */
+#define	TCL_REG_NEWLINE		000300  /* Newlines are line terminators. */
+#define	TCL_REG_CANMATCH	001000  /* Report details on partial/limited
+					 * matches. */
 
 /*
  * Flags values passed to Tcl_RegExpExecObj.
@@ -600,13 +601,13 @@ typedef struct stat *Tcl_OldStat_;
  *			interpreter's result is meaningless.
  */
 
-#define TCL_OK		0
-#define TCL_ERROR	1
-#define TCL_RETURN	2
-#define TCL_BREAK	3
-#define TCL_CONTINUE	4
+#define TCL_OK			0
+#define TCL_ERROR		1
+#define TCL_RETURN		2
+#define TCL_BREAK		3
+#define TCL_CONTINUE		4
 
-#define TCL_RESULT_SIZE 200
+#define TCL_RESULT_SIZE		200
 
 /*
  * Flags to control what substitutions are performed by Tcl_SubstObj():
@@ -761,19 +762,19 @@ typedef struct Tcl_Obj {
 				 * internal rep. NULL indicates the object has
 				 * no internal rep (has no type). */
     union {			/* The internal representation: */
-	long longValue;		/*   - an long integer value */
-	double doubleValue;	/*   - a double-precision floating value */
-	VOID *otherValuePtr;	/*   - another, type-specific value */
-	Tcl_WideInt wideValue;	/*   - a long long value */
-	struct {		/*   - internal rep as two pointers */
+	long longValue;		/*   - an long integer value. */
+	double doubleValue;	/*   - a double-precision floating value. */
+	VOID *otherValuePtr;	/*   - another, type-specific value. */
+	Tcl_WideInt wideValue;	/*   - a long long value. */
+	struct {		/*   - internal rep as two pointers. */
 	    VOID *ptr1;
 	    VOID *ptr2;
 	} twoPtrValue;
 	struct {		/*   - internal rep as a wide int, tightly
-				 *     packed fields */
-	    VOID *ptr;		/* Pointer to digits */
+				 *     packed fields. */
+	    VOID *ptr;		/* Pointer to digits. */
 	    unsigned long value;/* Alloc, used, and signum packed into a
-				 * single word */
+				 * single word. */
 	} ptrAndLongRep;
     } internalRep;
 } Tcl_Obj;
@@ -859,16 +860,17 @@ typedef struct Tcl_CallFrame {
     Tcl_Namespace *nsPtr;
     int dummy1;
     int dummy2;
-    char *dummy3;
-    char *dummy4;
-    char *dummy5;
+    VOID *dummy3;
+    VOID *dummy4;
+    VOID *dummy5;
     int dummy6;
-    char *dummy7;
-    char *dummy8;
+    VOID *dummy7;
+    VOID *dummy8;
     int dummy9;
-    char *dummy10;
-    char *dummy11;
-    char *dummy12;
+    VOID *dummy10;
+    VOID *dummy11;
+    VOID *dummy12;
+    VOID *dummy13;
 } Tcl_CallFrame;
 
 /*
@@ -935,8 +937,8 @@ typedef struct Tcl_DString {
  * buffer space required by Tcl_PrintDouble.
  */
 
-#define TCL_MAX_PREC 17
-#define TCL_DOUBLE_SPACE (TCL_MAX_PREC+10)
+#define TCL_MAX_PREC		17
+#define TCL_DOUBLE_SPACE	(TCL_MAX_PREC+10)
 
 /*
  * Definition for a number of bytes of buffer space sufficient to hold the
@@ -993,9 +995,9 @@ typedef struct Tcl_DString {
  * page for details):
  */
 
-#define TCL_VOLATILE	((Tcl_FreeProc *) 1)
-#define TCL_STATIC	((Tcl_FreeProc *) 0)
-#define TCL_DYNAMIC	((Tcl_FreeProc *) 3)
+#define TCL_VOLATILE		((Tcl_FreeProc *) 1)
+#define TCL_STATIC		((Tcl_FreeProc *) 0)
+#define TCL_DYNAMIC		((Tcl_FreeProc *) 3)
 
 /*
  * Flag values passed to variable-related functions.
@@ -1348,9 +1350,9 @@ typedef void (Tcl_ScaleTimeProc) _ANSI_ARGS_((Tcl_Time *timebuf,
  * indicate what sorts of events are of interest:
  */
 
-#define TCL_READABLE	(1<<1)
-#define TCL_WRITABLE	(1<<2)
-#define TCL_EXCEPTION	(1<<3)
+#define TCL_READABLE		(1<<1)
+#define TCL_WRITABLE		(1<<2)
+#define TCL_EXCEPTION		(1<<3)
 
 /*
  * Flag values to pass to Tcl_OpenCommandChannel to indicate the disposition
@@ -1368,15 +1370,15 @@ typedef void (Tcl_ScaleTimeProc) _ANSI_ARGS_((Tcl_Time *timebuf,
  * should be closed.
  */
 
-#define TCL_CLOSE_READ	(1<<1)
-#define TCL_CLOSE_WRITE	(1<<2)
+#define TCL_CLOSE_READ		(1<<1)
+#define TCL_CLOSE_WRITE		(1<<2)
 
 /*
  * Value to use as the closeProc for a channel that supports the close2Proc
  * interface.
  */
 
-#define TCL_CLOSE2PROC	((Tcl_DriverCloseProc *)1)
+#define TCL_CLOSE2PROC		((Tcl_DriverCloseProc *) 1)
 
 /*
  * Channel version tag. This was introduced in 8.3.2/8.4.
@@ -1389,7 +1391,7 @@ typedef void (Tcl_ScaleTimeProc) _ANSI_ARGS_((Tcl_Time *timebuf,
 #define TCL_CHANNEL_VERSION_5	((Tcl_ChannelTypeVersion) 0x5)
 
 /*
- * TIP #218: Channel Actions, Ids for Tcl_DriverThreadActionProc
+ * TIP #218: Channel Actions, Ids for Tcl_DriverThreadActionProc.
  */
 
 #define TCL_CHANNEL_THREAD_INSERT (0)
@@ -1485,7 +1487,7 @@ typedef struct Tcl_ChannelType {
 				/* Set blocking mode for the raw channel. May
 				 * be NULL. */
     /*
-     * Only valid in TCL_CHANNEL_VERSION_2 channels or later
+     * Only valid in TCL_CHANNEL_VERSION_2 channels or later.
      */
     Tcl_DriverFlushProc *flushProc;
 				/* Function to call to flush a channel. May be
@@ -1495,7 +1497,7 @@ typedef struct Tcl_ChannelType {
 				 * This will be passed up the stacked channel
 				 * chain. */
     /*
-     * Only valid in TCL_CHANNEL_VERSION_3 channels or later
+     * Only valid in TCL_CHANNEL_VERSION_3 channels or later.
      */
     Tcl_DriverWideSeekProc *wideSeekProc;
 				/* Function to call to seek on the channel
@@ -1503,8 +1505,8 @@ typedef struct Tcl_ChannelType {
 				 * NULL, and must be NULL if seekProc is
 				 * NULL. */
     /*
-     * Only valid in TCL_CHANNEL_VERSION_4 channels or later
-     * TIP #218, Channel Thread Actions
+     * Only valid in TCL_CHANNEL_VERSION_4 channels or later.
+     * TIP #218, Channel Thread Actions.
      */
     Tcl_DriverThreadActionProc *threadActionProc;
 				/* Function to call to notify the driver of
@@ -1512,8 +1514,8 @@ typedef struct Tcl_ChannelType {
 				 * be NULL. */
 
     /*
-     * Only valid in TCL_CHANNEL_VERSION_5 channels or later
-     * TIP #208, File Truncation
+     * Only valid in TCL_CHANNEL_VERSION_5 channels or later.
+     * TIP #208, File Truncation.
      */
     Tcl_DriverTruncateProc *truncateProc;
 				/* Function to call to truncate the underlying
@@ -1547,14 +1549,14 @@ typedef enum Tcl_PathType {
  */
 
 typedef struct Tcl_GlobTypeData {
-    int type;			/* Corresponds to bcdpfls as in 'find -t' */
-    int perm;			/* Corresponds to file permissions */
-    Tcl_Obj *macType;		/* Acceptable mac type */
-    Tcl_Obj *macCreator;	/* Acceptable mac creator */
+    int type;			/* Corresponds to bcdpfls as in 'find -t'. */
+    int perm;			/* Corresponds to file permissions. */
+    Tcl_Obj *macType;		/* Acceptable Mac type. */
+    Tcl_Obj *macCreator;	/* Acceptable Mac creator. */
 } Tcl_GlobTypeData;
 
 /*
- * Type and permission definitions for glob command
+ * Type and permission definitions for glob command.
  */
 
 #define TCL_GLOB_TYPE_BLOCK		(1<<0)
@@ -1573,7 +1575,7 @@ typedef struct Tcl_GlobTypeData {
 #define TCL_GLOB_PERM_X			(1<<4)
 
 /*
- * Flags for the unload callback function
+ * Flags for the unload callback function.
  */
 
 #define TCL_UNLOAD_DETACH_FROM_INTERPRETER	(1<<0)
@@ -2157,9 +2159,9 @@ typedef unsigned short Tcl_UniChar;
 
 typedef struct Tcl_Config {
     CONST char *key;		/* Configuration key to register. ASCII
-				 * encoded, thus UTF-8 */
+				 * encoded, thus UTF-8. */
     CONST char *value;		/* The value associated with the key. System
-				 * encoding */
+				 * encoding. */
 } Tcl_Config;
 
 /*
@@ -2192,7 +2194,7 @@ typedef unsigned int mp_digit;
  * value since the stubs tables don't match.
  */
 
-#define TCL_STUB_MAGIC ((int)0xFCA3BACF)
+#define TCL_STUB_MAGIC		((int) 0xFCA3BACF)
 
 /*
  * The following function is required to be defined in all stubs aware
@@ -2297,7 +2299,7 @@ EXTERN void		Tcl_GetMemoryInfo _ANSI_ARGS_((Tcl_DString *dsPtr));
 #   define Tcl_IncrRefCount(objPtr) \
 	++(objPtr)->refCount
     /*
-     * Use do/while0 idiom for optimum correctness without compiler warnings
+     * Use do/while0 idiom for optimum correctness without compiler warnings.
      * http://c2.com/cgi/wiki?TrivialDoWhileLoop
      */
 #   define Tcl_DecrRefCount(objPtr) \
