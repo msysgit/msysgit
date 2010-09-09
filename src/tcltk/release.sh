@@ -6,13 +6,13 @@
 cd "$(dirname "$0")"
 srcdir=$(pwd)
 
-mirror=http://kent.dl.sourceforge.net/sourceforge/tcl/
-version=8.5.8
+mirror=http://kent.dl.sourceforge.net/project/tcl/Tcl/
+version=8.5.9
 
 for p in tcl tk
 do
 	# get the package
-	u=$mirror$p$version-src.tar.gz
+	u=$mirror$version/$p$version-src.tar.gz
 	b=$(basename $u)
 	test -f $b || curl $u > $b || exit
 
