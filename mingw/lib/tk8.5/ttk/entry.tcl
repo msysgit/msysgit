@@ -1,5 +1,5 @@
 #
-# $Id: entry.tcl,v 1.4 2007/12/13 15:27:08 dgp Exp $
+# $Id: entry.tcl,v 1.4.2.2 2010/09/01 16:40:15 jenglish Exp $
 #
 # DERIVED FROM: tk/library/entry.tcl r1.22
 #
@@ -34,13 +34,17 @@ namespace eval ttk {
     }
 }
 
+### Option database settings.
+#
+option add *TEntry.cursor [ttk::cursor text]
+
 ### Bindings.
 #
 # Removed the following standard Tk bindings:
 #
 # <Control-Key-space>, <Control-Shift-Key-space>,
 # <Key-Select>,  <Shift-Key-Select>:
-#	Ttk entry widget doesn't use selection anchor.
+#	ttk::entry widget doesn't use selection anchor.
 # <Key-Insert>:
 #	Inserts PRIMARY selection (on non-Windows platforms).
 #	This is inconsistent with typical platform bindings.
@@ -133,6 +137,9 @@ bind TEntry <Key-Tab> 			{# nothing}
 if {[tk windowingsystem] eq "aqua"} {
     bind TEntry <Command-KeyPress>	{# nothing}
 }
+# Tk-on-Cocoa generates characters for these two keys. [Bug 2971663]
+bind TEntry <Down>			{# nothing}
+bind TEntry <Up>			{# nothing}
 
 ## Additional emacs-like bindings:
 #
@@ -224,7 +231,7 @@ proc ttk::entry::See {w {index insert}} {
 #	position following the next end-of-word position.
 #
 set ::ttk::entry::State(startNext) \
-	[string equal $tcl_platform(platform) "windows"]
+	[string equal $::tcl_platform(platform) "windows"]
 
 proc ttk::entry::NextWord {w start} {
     variable State

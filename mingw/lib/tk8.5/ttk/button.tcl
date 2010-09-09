@@ -1,5 +1,5 @@
 #
-# $Id: button.tcl,v 1.2 2006/11/27 06:53:55 jenglish Exp $
+# $Id: button.tcl,v 1.2.4.1 2010/08/26 02:06:10 hobbs Exp $
 #
 # Bindings for Buttons, Checkbuttons, and Radiobuttons.
 #
@@ -54,7 +54,7 @@ bind TRadiobutton <KeyPress-Down> 	{ ttk::button::RadioTraverse %W +1 }
 proc ttk::button::activate {w} {
     $w instate disabled { return }
     set oldState [$w state pressed]
-    update idletasks; after 100
+    update idletasks; after 100	;# block event loop to avoid reentrancy
     $w state $oldState
     $w invoke
 }

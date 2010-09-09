@@ -10,8 +10,8 @@
 # Copyright (c) 2007 by ActiveState Software Inc.
 # Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 # 
-# RCS: @(#) $Id: bgerror.tcl,v 1.38 2007/12/13 15:26:26 dgp Exp $
-# $Id: bgerror.tcl,v 1.38 2007/12/13 15:26:26 dgp Exp $
+# RCS: @(#) $Id: bgerror.tcl,v 1.38.2.1 2010/01/20 23:43:50 patthoyts Exp $
+# $Id: bgerror.tcl,v 1.38.2.1 2010/01/20 23:43:50 patthoyts Exp $
 
 namespace eval ::tk::dialog::error {
     namespace import -force ::tk::msgcat::*
@@ -142,6 +142,8 @@ proc ::tk::dialog::error::bgerror err {
 
     if {$windowingsystem eq "aqua"} {
 	::tk::unsupported::MacWindowStyle style $dlg moveableAlert {}
+    } elseif {$windowingsystem eq "x11"} {
+	wm attributes $dlg -type dialog
     }
 
     frame $dlg.bot

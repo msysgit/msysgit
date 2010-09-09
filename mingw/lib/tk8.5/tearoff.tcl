@@ -2,7 +2,7 @@
 #
 # This file contains procedures that implement tear-off menus.
 #
-# RCS: @(#) $Id: tearoff.tcl,v 1.11 2007/04/23 21:16:43 das Exp $
+# RCS: @(#) $Id: tearoff.tcl,v 1.11.4.1 2010/01/03 01:17:48 patthoyts Exp $
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -78,6 +78,11 @@ proc ::tk::TearOffMenu {w {x 0} {y 0}} {
 	    	wm title $menu [$parent entrycget active -label]
 	    }
 	}
+    }
+
+    if {[tk windowingsystem] eq "win32"} {
+	wm transient $menu [winfo toplevel $parent]
+	wm attributes $menu -toolwindow 1
     }
 
     $menu post $x $y

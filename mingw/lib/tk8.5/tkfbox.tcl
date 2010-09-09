@@ -11,7 +11,7 @@
 #	files by clicking on the file icons or by entering a filename
 #	in the "Filename:" entry.
 #
-# RCS: @(#) $Id: tkfbox.tcl,v 1.68.2.3 2009/10/22 10:27:58 dkf Exp $
+# RCS: @(#) $Id: tkfbox.tcl,v 1.68.2.5 2010/01/20 23:43:51 patthoyts Exp $
 #
 # Copyright (c) 1994-1998 Sun Microsystems, Inc.
 #
@@ -1047,6 +1047,7 @@ proc ::tk::dialog::file::Create {w class} {
     global tk_library
 
     toplevel $w -class $class
+    if {[tk windowingsystem] eq "x11"} {wm attributes $w -type dialog}
     pack [ttk::frame $w.contents] -expand 1 -fill both
     #set w $w.contents
 
@@ -1819,7 +1820,7 @@ proc ::tk::dialog::file::ListInvoke {w filenames} {
     if {$class eq "TkChooseDir" || [file isdirectory $file]} {
 	set appPWD [pwd]
 	if {[catch {cd $file}]} {
-	    tk_messageBox -type ok -parent $w -message -icon warning \
+	    tk_messageBox -type ok -parent $w -icon warning -message \
 		    [mc "Cannot change to the directory \"%1\$s\".\nPermission denied." $file]
 	} else {
 	    cd $appPWD

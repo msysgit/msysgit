@@ -4,7 +4,7 @@
 # can be used by non-unix systems that do not have built-in support
 # for shells.
 #
-# RCS: @(#) $Id: console.tcl,v 1.37.2.2 2009/04/10 16:29:18 das Exp $
+# RCS: @(#) $Id: console.tcl,v 1.37.2.3 2010/01/04 21:34:12 patthoyts Exp $
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
@@ -325,6 +325,39 @@ proc ::tk::ConsolePrompt {{partial normal}} {
     $w see end
 }
 
+# Copy selected text from the console
+proc ::tk::console::Copy {w} {
+    if {![catch {set data [$w get sel.first sel.last]}]} {
+        clipboard clear -displayof $w
+        clipboard append -displayof $w $data
+    }
+}
+# Copies selected text. If the selection is within the current active edit
+# region then it will be cut, if not it is only copied.
+proc ::tk::console::Cut {w} {
+    if {![catch {set data [$w get sel.first sel.last]}]} {
+        clipboard clear -displayof $w
+        clipboard append -displayof $w $data
+        if {[$w compare sel.first >= output]} {
+            $w delete sel.first sel.last
+	}
+    }
+}
+# Paste text from the clipboard
+proc ::tk::console::Paste {w} {
+    catch {
+        set clip [::tk::GetSelection $w CLIPBOARD]
+        set list [split $clip \n\r]
+        tk::ConsoleInsert $w [lindex $list 0]
+        foreach x [lrange $list 1 end] {
+            $w mark set insert {end - 1c}
+            tk::ConsoleInsert $w "\n"
+            tk::ConsoleInvoke
+            tk::ConsoleInsert $w $x
+        }
+    }
+}
+
 # ::tk::ConsoleBind --
 # This procedure first ensures that the default bindings for the Text
 # class have been defined.  Then certain bindings are overridden for
@@ -351,6 +384,8 @@ proc ::tk::ConsoleBind {w} {
 
     # Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
     # Otherwise, if a widget binding for one of these is defined, the
+    # <Keypress> class binding will also fire and insert the character
+    # which is wrong.
 
     bind Console <Alt-KeyPress> {# nothing }
     bind Console <Meta-KeyPress> {# nothing}
@@ -523,32 +558,10 @@ proc ::tk::ConsoleBind {w} {
 	    exit
 	}
     }
-    bind Console <<Cut>> {
-        # Same as the copy event
- 	if {![catch {set data [%W get sel.first sel.last]}]} {
-	    clipboard clear -displayof %W
-	    clipboard append -displayof %W $data
-	}
-    }
-    bind Console <<Copy>> {
- 	if {![catch {set data [%W get sel.first sel.last]}]} {
-	    clipboard clear -displayof %W
-	    clipboard append -displayof %W $data
-	}
-    }
-    bind Console <<Paste>> {
-	catch {
-	    set clip [::tk::GetSelection %W CLIPBOARD]
-	    set list [split $clip \n\r]
-	    tk::ConsoleInsert %W [lindex $list 0]
-	    foreach x [lrange $list 1 end] {
-		%W mark set insert {end - 1c}
-		tk::ConsoleInsert %W "\n"
-		tk::ConsoleInvoke
-		tk::ConsoleInsert %W $x
-	    }
-	}
-    }
+    bind Console <<Cut>> { ::tk::console::Cut %W }
+    bind Console <<Copy>> { ::tk::console::Copy %W }
+    bind Console <<Paste>> { ::tk::console::Paste %W }
+
     bind Console <<Console_FontSizeIncr>> {
         set size [font configure TkConsoleFont -size]
         font configure TkConsoleFont -size [incr size]
@@ -586,7 +599,6 @@ proc ::tk::ConsoleBind {w} {
 	if {"%A" ne ""} {
 	    ::tk::console::TagProc %W
 	}
-	break
     }
 }
 

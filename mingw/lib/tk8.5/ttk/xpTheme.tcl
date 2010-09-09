@@ -1,5 +1,5 @@
 #
-# $Id: xpTheme.tcl,v 1.6.2.2 2009/05/14 00:53:04 patthoyts Exp $
+# $Id: xpTheme.tcl,v 1.6.2.5 2010/09/02 17:46:11 jenglish Exp $
 #
 # Settings for 'xpnative' theme
 #
@@ -48,10 +48,20 @@ namespace eval ttk::theme::xpnative {
 	ttk::style map TCombobox \
 	    -selectbackground [list !focus SystemWindow] \
 	    -selectforeground [list !focus SystemWindowText] \
-	    -foreground	[list {readonly focus} SystemHighlightText] \
+	    -foreground	[list \
+		disabled		SystemGrayText \
+	    	{readonly focus}	SystemHighlightText \
+	    ] \
 	    -focusfill	[list {readonly focus} SystemHighlight] \
 	    ;
 
+	ttk::style configure TSpinbox -padding {2 0 14 0}
+	ttk::style map TSpinbox \
+	    -selectbackground [list !focus SystemWindow] \
+	    -selectforeground [list !focus SystemWindowText] \
+	    ;
+
 	ttk::style configure Toolbutton -padding {4 4}
+
     }
 }

@@ -1,5 +1,5 @@
 #
-# $Id: notebook.tcl,v 1.4 2007/02/24 09:15:07 das Exp $
+# $Id: notebook.tcl,v 1.4.4.1 2010/08/26 02:06:10 hobbs Exp $
 #
 # Bindings for TNotebook widget
 #
@@ -21,21 +21,26 @@ bind TNotebook <Destroy>		{ ttk::notebook::Cleanup %W }
 # ActivateTab $nb $tab --
 #	Select the specified tab and set focus.
 #
-# 	If $tab was already the current tab, set the focus to the
-#	notebook widget.  Otherwise, set the focus to the first
-#	traversable widget in the pane.  The behavior is that the
-#	notebook takes focus when the user selects the same tab
-#	a second time.  This mirrors Windows tab behavior.
+#  Desired behavior:
+#	+ take focus when reselecting the currently-selected tab;
+#	+ keep focus if the notebook already has it;
+#	+ otherwise set focus to the first traversable widget
+#	  in the newly-selected tab;
+#	+ do not leave the focus in a deselected tab.
 #
 proc ttk::notebook::ActivateTab {w tab} {
-    if {[$w index $tab] eq [$w index current]} {
-	focus $w
+    set oldtab [$w select]
+    $w select $tab
+    set newtab [$w select] ;# NOTE: might not be $tab, if $tab is disabled
+
+    if {[focus] eq $w} { return }
+    if {$newtab eq $oldtab} { focus $w ; return }
+
+    update idletasks ;# needed so focus logic sees correct mapped states
+    if {[set f [ttk::focusFirst $newtab]] ne ""} {
+	ttk::traverseTo $f
     } else {
-    	$w select $tab
-	update ;# needed so focus logic sees correct mapped/unmapped states
-	if {[set f [ttk::focusFirst [$w select]]] ne ""} {
-	    tk::TabToWindow $f
-	}
+	focus $w
     }
 }
 
@@ -102,6 +107,8 @@ proc ttk::notebook::enableTraversal {nb} {
     if {![info exists TLNotebooks($top)]} {
 	# Augment $top bindings:
 	#
+	bind $top <Control-Key-Next>         {+ttk::notebook::TLCycleTab %W  1}
+	bind $top <Control-Key-Prior>        {+ttk::notebook::TLCycleTab %W -1}
 	bind $top <Control-Key-Tab> 	     {+ttk::notebook::TLCycleTab %W  1}
 	bind $top <Shift-Control-Key-Tab>    {+ttk::notebook::TLCycleTab %W -1}
 	catch {

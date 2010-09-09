@@ -1,23 +1,23 @@
 # tk.tcl --
 #
-# Initialization script normally executed in the interpreter for each
-# Tk-based application.  Arranges class bindings for widgets.
+# Initialization script normally executed in the interpreter for each Tk-based
+# application.  Arranges class bindings for widgets.
 #
-# RCS: @(#) $Id: tk.tcl,v 1.73.2.12 2009/11/03 20:15:25 dgp Exp $
+# RCS: @(#) $Id: tk.tcl,v 1.73.2.15 2010/08/04 17:06:52 dgp Exp $
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
-			;# before using 8.5 [package] features.
+package require Tcl 8.5	;# Guard against [source] in an 8.4- interp before
+			;# using 8.5 [package] features.
 # Insist on running with compatible version of Tcl
 package require Tcl 8.5.0
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.8
+package require -exact Tk  8.5.9
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -25,8 +25,8 @@ namespace eval ::tk {
     namespace eval msgcat {
 	namespace export mc mcmax
         if {[interp issafe] || [catch {package require msgcat}]} {
-            # The msgcat package is not available.  Supply our own
-            # minimal replacement.
+            # The msgcat package is not available.  Supply our own minimal
+            # replacement.
             proc mc {src args} {
                 return [format $src {*}$args]
             }
@@ -69,13 +69,13 @@ if {[info exists ::auto_path] && ($::tk_library ne "")
 
 set ::tk_strictMotif 0
 
-# Turn on useinputmethods (X Input Methods) by default.
-# We catch this because safe interpreters may not allow the call.
+# Turn on useinputmethods (X Input Methods) by default. We catch this because
+# safe interpreters may not allow the call.
 
 catch {tk useinputmethods 1}
-
+
 # ::tk::PlaceWindow --
-#   place a toplevel at a particular position
+#   Place a toplevel at a particular position
 # Arguments:
 #   toplevel	name of toplevel window
 #   ?placement?	pointer ?center? ; places $w centered on the pointer
@@ -137,9 +137,9 @@ proc ::tk::PlaceWindow {w {place ""} {anchor ""}} {
     wm geometry $w +$x+$y
     wm deiconify $w
 }
-
+
 # ::tk::SetFocusGrab --
-#   swap out current focus and grab temporarily (for dialogs)
+#   Swap out current focus and grab temporarily (for dialogs)
 # Arguments:
 #   grab	new window to grab
 #   focus	window to give focus to
@@ -156,8 +156,8 @@ proc ::tk::SetFocusGrab {grab {focus {}}} {
     if {[winfo exists $oldGrab]} {
 	lappend data [grab status $oldGrab]
     }
-    # The "grab" command will fail if another application
-    # already holds the grab.  So catch it.
+    # The "grab" command will fail if another application already holds the
+    # grab.  So catch it.
     catch {grab $grab}
     if {[winfo exists $focus]} {
 	focus $focus
@@ -165,7 +165,7 @@ proc ::tk::SetFocusGrab {grab {focus {}}} {
 }
 
 # ::tk::RestoreFocusGrab --
-#   restore old focus and grab (for dialogs)
+#   Restore old focus and grab (for dialogs)
 # Arguments:
 #   grab	window that had taken grab
 #   focus	window that had taken focus
@@ -197,12 +197,12 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 	}
     }
 }
-
+
 # ::tk::GetSelection --
-#   This tries to obtain the default selection.  On Unix, we first try
-#   and get a UTF8_STRING, a type supported by modern Unix apps for
-#   passing Unicode data safely.  We fall back on the default STRING
-#   type otherwise.  On Windows, only the STRING type is necessary.
+#   This tries to obtain the default selection.  On Unix, we first try and get
+#   a UTF8_STRING, a type supported by modern Unix apps for passing Unicode
+#   data safely.  We fall back on the default STRING type otherwise.  On
+#   Windows, only the STRING type is necessary.
 # Arguments:
 #   w	The widget for which the selection will be retrieved.
 #	Important for the -displayof property.
@@ -229,18 +229,18 @@ if {$tcl_platform(platform) eq "unix"} {
 	}
     }
 }
-
+
 # ::tk::ScreenChanged --
-# This procedure is invoked by the binding mechanism whenever the
-# "current" screen is changing.  The procedure does two things.
-# First, it uses "upvar" to make variable "::tk::Priv" point at an
-# array variable that holds state for the current display.  Second,
-# it initializes the array if it didn't already exist.
+# This procedure is invoked by the binding mechanism whenever the "current"
+# screen is changing.  The procedure does two things.  First, it uses "upvar"
+# to make variable "::tk::Priv" point at an array variable that holds state
+# for the current display.  Second, it initializes the array if it didn't
+# already exist.
 #
 # Arguments:
 # screen -		The name of the new screen.
 
-proc ::tk::ScreenChanged screen {
+proc ::tk::ScreenChanged {screen} {
     set x [string last . $screen]
     if {$x > 0} {
 	set disp [string range $screen 0 [expr {$x - 1}]]
@@ -248,7 +248,12 @@ proc ::tk::ScreenChanged screen {
 	set disp $screen
     }
 
-    uplevel #0 upvar #0 ::tk::Priv.$disp ::tk::Priv
+    # Ensure that namespace separators never occur in the display name (as
+    # they cause problems in variable names). Double-colons exist in some VNC
+    # display names. [Bug 2912473]
+    set disp [string map {:: _doublecolon_} $disp]
+
+    uplevel #0 [list upvar #0 ::tk::Priv.$disp ::tk::Priv]
     variable ::tk::Priv
     global tcl_platform
 
@@ -288,11 +293,10 @@ proc ::tk::ScreenChanged screen {
 # value, which will cause trouble later).
 
 tk::ScreenChanged [winfo screen .]
-
+
 # ::tk::EventMotifBindings --
-# This procedure is invoked as a trace whenever ::tk_strictMotif is
-# changed.  It is used to turn on or turn off the motif virtual
-# bindings.
+# This procedure is invoked as a trace whenever ::tk_strictMotif is changed.
+# It is used to turn on or turn off the motif virtual bindings.
 #
 # Arguments:
 # n1 - the name of the variable being changed ("::tk_strictMotif").
@@ -311,10 +315,10 @@ proc ::tk::EventMotifBindings {n1 dummy dummy} {
     event $op <<Paste>> <Control-Key-y>
     event $op <<Undo>> <Control-underscore>
 }
-
+
 #----------------------------------------------------------------------
-# Define common dialogs on platforms where they are not implemented 
-# using compiled code.
+# Define common dialogs on platforms where they are not implemented using
+# compiled code.
 #----------------------------------------------------------------------
 
 if {![llength [info commands tk_chooseColor]]} {
@@ -350,7 +354,7 @@ if {![llength [info command tk_chooseDirectory]]} {
 	return [::tk::dialog::file::chooseDir:: {*}$args]
     }
 }
-
+
 #----------------------------------------------------------------------
 # Define the set of common virtual events.
 #----------------------------------------------------------------------
@@ -363,20 +367,19 @@ switch -exact -- [tk windowingsystem] {
 	event add <<PasteSelection>> <ButtonRelease-2>
 	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
 	event add <<Redo>> <Control-Key-Z> <Control-Lock-Key-z>
-	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym
-	# that is returned when the user presses <Shift-Tab>.  In order for
-	# tab traversal to work, we have to add these keysyms to the 
-	# PrevWindow event.
-	# We use catch just in case the keysym isn't recognized.
-	# This is needed for XFree86 systems
+	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym that is
+	# returned when the user presses <Shift-Tab>. In order for tab
+	# traversal to work, we have to add these keysyms to the PrevWindow
+	# event. We use catch just in case the keysym isn't recognized. This
+	# is needed for XFree86 systems
 	catch { event add <<PrevWindow>> <ISO_Left_Tab> }
 	# This seems to be correct on *some* HP systems.
 	catch { event add <<PrevWindow>> <hpBackTab> }
 
 	trace add variable ::tk_strictMotif write ::tk::EventMotifBindings
 	set ::tk_strictMotif $::tk_strictMotif
-	# On unix, we want to always display entry/text selection,
-	# regardless of which window has focus
+	# On unix, we want to always display entry/text selection, regardless
+	# of which window has focus
 	set ::tk::AlwaysShowSelection 1
     }
     "win32" {
@@ -400,6 +403,7 @@ switch -exact -- [tk windowingsystem] {
 	event add <<Redo>> <Command-Key-y> <Control-Lock-Key-Y>
     }
 }
+
 # ----------------------------------------------------------------------
 # Read in files that define all of the class bindings.
 # ----------------------------------------------------------------------
@@ -420,6 +424,7 @@ if {$::tk_library ne ""} {
 	SourceLibFile text
     }
 }
+
 # ----------------------------------------------------------------------
 # Default bindings for keyboard traversal.
 # ----------------------------------------------------------------------
@@ -427,12 +432,11 @@ if {$::tk_library ne ""} {
 event add <<PrevWindow>> <Shift-Tab>
 bind all <Tab> {tk::TabToWindow [tk_focusNext %W]}
 bind all <<PrevWindow>> {tk::TabToWindow [tk_focusPrev %W]}
-
+
 # ::tk::CancelRepeat --
-# This procedure is invoked to cancel an auto-repeat action described
-# by ::tk::Priv(afterId).  It's used by several widgets to auto-scroll
-# the widget when the mouse is dragged out of the widget with a
-# button pressed.
+# This procedure is invoked to cancel an auto-repeat action described by
+# ::tk::Priv(afterId).  It's used by several widgets to auto-scroll the widget
+# when the mouse is dragged out of the widget with a button pressed.
 #
 # Arguments:
 # None.
@@ -442,12 +446,12 @@ proc ::tk::CancelRepeat {} {
     after cancel $Priv(afterId)
     set Priv(afterId) {}
 }
-
+
 # ::tk::TabToWindow --
 # This procedure moves the focus to the given widget.
-# It sends a <<TraverseOut>> virtual event to the previous focus window, 
-# if any, before changing the focus, and a <<TraverseIn>> event
-# to the new focus window afterwards.
+# It sends a <<TraverseOut>> virtual event to the previous focus window, if
+# any, before changing the focus, and a <<TraverseIn>> event to the new focus
+# window afterwards.
 #
 # Arguments:
 # w - Window to which focus should be set.
@@ -460,38 +464,21 @@ proc ::tk::TabToWindow {w} {
     focus $w
     event generate $w <<TraverseIn>>
 }
-
+
 # ::tk::UnderlineAmpersand --
-# This procedure takes some text with ampersand and returns
-# text w/o ampersand and position of the ampersand.
-# Double ampersands are converted to single ones.
-# Position returned is -1 when there is no ampersand.
+# This procedure takes some text with ampersand and returns text w/o ampersand
+# and position of the ampersand.  Double ampersands are converted to single
+# ones.  Position returned is -1 when there is no ampersand.
 #
 proc ::tk::UnderlineAmpersand {text} {
-    set idx [string first "&" $text]
-    if {$idx >= 0} {
-	set underline $idx
-	# ignore "&&"
-	while {[string match "&" [string index $text [expr {$idx + 1}]]]} {
-	    set base [expr {$idx + 2}]
-	    set idx  [string first "&" [string range $text $base end]]
-	    if {$idx < 0} {
-		break
-	    } else {
-		set underline [expr {$underline + $idx + 1}]
-		incr idx $base
-	    }
-	}
-    }
-    if {$idx >= 0} {
-	regsub -all -- {&([^&])} $text {\1} text
-    }
-    return [list $text $idx]
+    set s [string map {&& & & \ufeff} $text]
+    set idx [string first \ufeff $s]
+    return [list [string map {\ufeff {}} $s] $idx]
 }
 
 # ::tk::SetAmpText -- 
-# Given widget path and text with "magic ampersands",
-# sets -text and -underline options for the widget
+# Given widget path and text with "magic ampersands", sets -text and
+# -underline options for the widget
 #
 proc ::tk::SetAmpText {widget text} {
     lassign [UnderlineAmpersand $text] newtext under
@@ -499,8 +486,8 @@ proc ::tk::SetAmpText {widget text} {
 }
 
 # ::tk::AmpWidget --
-# Creates new widget, turning -text option into -text and
-# -underline options, returned by ::tk::UnderlineAmpersand.
+# Creates new widget, turning -text option into -text and -underline options,
+# returned by ::tk::UnderlineAmpersand.
 #
 proc ::tk::AmpWidget {class path args} {
     set options {}
@@ -520,8 +507,8 @@ proc ::tk::AmpWidget {class path args} {
 }
 
 # ::tk::AmpMenuArgs --
-# Processes arguments for a menu entry, turning -label option into
-# -label and -underline options, returned by ::tk::UnderlineAmpersand.
+# Processes arguments for a menu entry, turning -label option into -label and
+# -underline options, returned by ::tk::UnderlineAmpersand.
 #
 proc ::tk::AmpMenuArgs {widget add type args} {
     set options {}
@@ -535,10 +522,10 @@ proc ::tk::AmpMenuArgs {widget add type args} {
     }
     $widget add $type {*}$options
 }
-
+
 # ::tk::FindAltKeyTarget --
-# search recursively through the hierarchy of visible widgets
-# to find button or label which has $char as underlined character
+# Search recursively through the hierarchy of visible widgets to find button
+# or label which has $char as underlined character
 #
 proc ::tk::FindAltKeyTarget {path char} {
     switch -- [winfo class $path] {
@@ -565,15 +552,15 @@ proc ::tk::FindAltKeyTarget {path char} {
 }
 
 # ::tk::AltKeyInDialog --
-# <Alt-Key> event handler for standard dialogs. Sends <<AltUnderlined>>
-# to button or label which has appropriate underlined character
+# <Alt-Key> event handler for standard dialogs. Sends <<AltUnderlined>> to
+# button or label which has appropriate underlined character
 #
 proc ::tk::AltKeyInDialog {path key} {
     set target [FindAltKeyTarget $path $key]
     if { $target eq ""} return
     event generate $target <<AltUnderlined>>
 }
-
+
 # ::tk::mcmaxamp --
 # Replacement for mcmax, used for texts with "magic ampersand" in it.
 #
@@ -590,15 +577,21 @@ proc ::tk::mcmaxamp {args} {
     }
     return $maxlen
 }
+
 # For now, turn off the custom mdef proc for the mac:
 
 if {[tk windowingsystem] eq "aqua"} {
     namespace eval ::tk::mac {
-	set useCustomMDEF 0
+	variable useCustomMDEF 0
     }
 }
 
 # Run the Ttk themed widget set initialization
 if {$::ttk::library ne ""} {
-    uplevel \#0 [list source $::ttk::library/ttk.tcl]
+    uplevel \#0 [list source [file join $::ttk::library ttk.tcl]]
 }
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

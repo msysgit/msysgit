@@ -4,7 +4,7 @@
 # It also implements keyboard traversal of menus and implements a few
 # other utility procedures related to menus.
 #
-# RCS: @(#) $Id: menu.tcl,v 1.26.2.5 2009/04/10 16:08:45 das Exp $
+# RCS: @(#) $Id: menu.tcl,v 1.26.2.6 2010/01/09 00:51:38 patthoyts Exp $
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -406,6 +406,9 @@ proc ::tk::MenuUnpost menu {
     # Unpost menu(s) and restore some stuff that's dependent on
     # what was posted.
 
+    after cancel [array get Priv menuActivatedTimer]
+    unset -nocomplain Priv(menuActivated)
+
     catch {
 	if {$mb ne ""} {
 	    set menu [$mb cget -menu]
@@ -547,6 +550,7 @@ proc ::tk::MbButtonUp w {
 proc ::tk::MenuMotion {menu x y state} {
     variable ::tk::Priv
     if {$menu eq $Priv(window)} {
+        set activeindex [$menu index active]
 	if {[$menu cget -type] eq "menubar"} {
 	    if {[info exists Priv(focus)] && $menu ne $Priv(focus)} {
 		$menu activate @$x,$y
@@ -556,9 +560,18 @@ proc ::tk::MenuMotion {menu x y state} {
 	    $menu activate @$x,$y
 	    GenerateMenuSelect $menu
 	}
-    }
-    if {($state & 0x1f00) != 0} {
-	$menu postcascade active
+        set index [$menu index @$x,$y]
+        if {[info exists Priv(menuActivated)] \
+                && $index ne "none" \
+                && $index ne $activeindex \
+                && [$menu type $index] eq "cascade"} {
+            set mode [option get $menu clickToFocus ClickToFocus]
+            if {$mode eq "" || ([string is boolean $mode] && !$mode)} {
+                set delay [expr {[$menu cget -type] eq "menubar"? 0 : 50}]
+                set Priv(menuActivatedTimer) \
+                    [after $delay [list $menu postcascade active]]
+            }
+        }
     }
 }
 
@@ -599,6 +612,9 @@ proc ::tk::MenuButtonDown menu {
 	    if {$::tk_strictMotif} {
 		set Priv(cursor) [$menu cget -cursor]
 		$menu configure -cursor arrow
+	    }
+	    if {[$menu type active] eq "cascade"} {
+		set Priv(menuActivated) 1
 	    }
         }
 
@@ -1311,6 +1327,7 @@ proc ::tk_popup {menu x y {entry {}}} {
         tk::SaveGrabInfo $menu
 	grab -global $menu
 	set Priv(popup) $menu
+	set Priv(menuActivated) 1
 	tk_menuSetFocus $menu
     }
 }

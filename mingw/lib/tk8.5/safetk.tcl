@@ -2,7 +2,7 @@
 #
 # Support procs to use Tk in safe interpreters.
 #
-# RCS: @(#) $Id: safetk.tcl,v 1.12 2008/03/27 21:05:09 hobbs Exp $
+# RCS: @(#) $Id: safetk.tcl,v 1.12.2.1 2009/12/10 00:34:12 andreas_kupries Exp $
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 #
@@ -81,19 +81,23 @@ proc ::safe::loadTk {} {}
 	    }
 	}
     }
+
+    # Get state for access to the cleanupHook.
+    namespace upvar ::safe S$slave state
+
     if {![::tcl::OptProcArgGiven "-use"]} {
 	# create a decorated toplevel
 	::tcl::Lassign [tkTopLevel $slave $display] w use
 
 	# set our delete hook (slave arg is added by interpDelete)
 	# to clean up both window related code and tkInit(slave)
-	Set [DeleteHookName $slave] [list tkDelete {} $w]
+	set state(cleanupHook) [list tkDelete {} $w]
 
     } else {
 
 	# set our delete hook (slave arg is added by interpDelete)
 	# to clean up tkInit(slave)
-	Set [DeleteHookName $slave] [list disallowTk]
+	set state(cleanupHook) [list disallowTk]
 
 	# Let's be nice and also accept tk window names instead of ids
 	if {[string match ".*" $use]} {

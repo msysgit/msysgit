@@ -1,5 +1,5 @@
 #
-# $Id: ttk.tcl,v 1.8.2.1 2009/05/14 00:53:04 patthoyts Exp $
+# $Id: ttk.tcl,v 1.8.2.2 2010/08/26 02:06:10 hobbs Exp $
 #
 # Ttk widget set initialization script.
 #
@@ -44,8 +44,11 @@ proc ttk::deprecated'warning {old new} {
 
 ### Backward-compatibility.
 #
-
-package ifneeded tile 0.8.0 { package require Tk ; package provide tile 0.8.0 }
+#
+# Make [package require tile] an effective no-op;
+# see SF#3016598 for discussion.
+#
+package ifneeded tile 0.8.6 { package provide tile 0.8.6 }
 
 # ttk::panedwindow used to be named ttk::paned.  Keep the alias for now.
 #
@@ -105,6 +108,7 @@ source [file join $::ttk::library notebook.tcl]
 source [file join $::ttk::library panedwindow.tcl]
 source [file join $::ttk::library entry.tcl]
 source [file join $::ttk::library combobox.tcl]	;# dependency: entry.tcl
+source [file join $::ttk::library spinbox.tcl]  ;# dependency: entry.tcl
 source [file join $::ttk::library treeview.tcl]
 source [file join $::ttk::library sizegrip.tcl]
 
@@ -143,7 +147,7 @@ ttk::LoadThemes; rename ::ttk::LoadThemes {}
 
 ### Select platform-specific default theme:
 #
-# Notes: 
+# Notes:
 #	+ On OSX, aqua theme is the default
 #	+ On Windows, xpnative takes precedence over winnative if available.
 #	+ On X11, users can use the X resource database to

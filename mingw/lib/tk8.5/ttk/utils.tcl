@@ -1,20 +1,50 @@
 #
-# $Id: utils.tcl,v 1.6 2008/01/06 19:16:12 jenglish Exp $
+# $Id: utils.tcl,v 1.6.2.1 2010/08/26 02:06:10 hobbs Exp $
 #
 # Utilities for widget implementations.
 #
 
 ### Focus management.
 #
+# See also: #1516479
+#
 
 ## ttk::takefocus --
 #	This is the default value of the "-takefocus" option
-#	for widgets that participate in keyboard navigation.
+#	for ttk::* widgets that participate in keyboard navigation.
 #
-# See also: tk::FocusOK
+# NOTES:
+#	tk::FocusOK (called by tk_focusNext) tests [winfo viewable]
+#	if -takefocus is 1, empty, or missing; but not if it's a
+#	script prefix, so we have to check that here as well.
+#
 #
 proc ttk::takefocus {w} {
     expr {[$w instate !disabled] && [winfo viewable $w]}
+}
+
+## ttk::GuessTakeFocus --
+#	This routine is called as a fallback for widgets
+#	with a missing or empty -takefocus option.
+#
+#	It implements the same heuristics as tk::FocusOK.
+#
+proc ttk::GuessTakeFocus {w} {
+    # Don't traverse to widgets with '-state disabled':
+    #
+    if {![catch {$w cget -state} state] && $state eq "disabled"} {
+	return 0
+    }
+
+    # Allow traversal to widgets with explicit key or focus bindings:
+    #
+    if {[regexp {Key|Focus} [concat [bind $w] [bind [winfo class $w]]]]} {
+	return 1;
+    }
+
+    # Default is nontraversable:
+    #
+    return 0;
 }
 
 ## ttk::traverseTo $w --
@@ -38,36 +68,26 @@ proc ttk::clickToFocus {w} {
 }
 
 ## ttk::takesFocus w --
-#	Test if the widget can take keyboard focus:
+#	Test if the widget can take keyboard focus.
 #
-#	+ widget is viewable, AND:
-#	- if -takefocus is missing or empty, return 0, OR
-#	- if -takefocus is 0 or 1, return that value, OR
-#	- append the widget name to -takefocus and evaluate it
-#	  as a script.
-#
-# See also: tk::FocusOK
-#
-# Note: This routine doesn't implement the same fallback heuristics
-#	as tk::FocusOK.
+#	See the description of the -takefocus option in options(n)
+#	for details.
 #
 proc ttk::takesFocus {w} {
-
-    if {![winfo viewable $w]} { return 0 }
-
-    if {![catch {$w cget -takefocus} takefocus]} {
+    if {![winfo viewable $w]} {
+    	return 0
+    } elseif {[catch {$w cget -takefocus} takefocus]} {
+	return [GuessTakeFocus $w]
+    } else {
 	switch -- $takefocus {
-	    0  -
-	    1  { return $takefocus }
-	    "" { return 0 }
+	    "" { return [GuessTakeFocus $w] }
+	    0  { return 0 }
+	    1  { return 1 }
 	    default {
-		set value [uplevel #0 $takefocus [list $w]]
-		return [expr {$value eq 1}]
+		return [expr {[uplevel #0 $takefocus [list $w]] == 1}]
 	    }
 	}
     }
-
-    return 0
 }
 
 ## ttk::focusFirst $w --
@@ -251,10 +271,7 @@ proc ttk::copyBindings {from to} {
     }
 }
 
-## Standard mousewheel bindings.
-#
-# Usage: [ttk::copyBindings TtkScrollable $bindtag]
-# adds mousewheel support to a scrollable widget.
+### Mousewheel bindings.
 #
 # Platform inconsistencies:
 #
@@ -276,6 +293,35 @@ proc ttk::copyBindings {from to} {
 # MouseWheel scrolling is accelerated on X11, which is conventional
 # for Tk and appears to be conventional for other toolkits (although
 # Gtk+ and Qt do not appear to use as large a factor).
+#
+
+## ttk::bindMouseWheel $bindtag $command...
+#	Adds basic mousewheel support to $bindtag.
+#	$command will be passed one additional argument
+#	specifying the mousewheel direction (-1: up, +1: down).
+#
+
+proc ttk::bindMouseWheel {bindtag callback} {
+    switch -- [tk windowingsystem] {
+	x11 {
+	    bind $bindtag <ButtonPress-4> "$callback -1"
+	    bind $bindtag <ButtonPress-5> "$callback +1"
+	}
+	win32 {
+	    bind $bindtag <MouseWheel> [append callback { [expr {-(%D/120)}]}]
+	}
+	aqua {
+	    bind $bindtag <MouseWheel> [append callback { [expr {-(%D)}]} ]
+	}
+    }
+}
+
+## Mousewheel bindings for standard scrollable widgets.
+#
+# Usage: [ttk::copyBindings TtkScrollable $bindtag]
+#
+# $bindtag should be for a widget that supports the
+# standard scrollbar protocol.
 #
 
 switch -- [tk windowingsystem] {

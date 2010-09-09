@@ -3,7 +3,7 @@
 # This file defines the procedure tk_dialog, which creates a dialog
 # box containing a bitmap, a message, and one or more buttons.
 #
-# RCS: @(#) $Id: dialog.tcl,v 1.24 2007/12/13 15:26:27 dgp Exp $
+# RCS: @(#) $Id: dialog.tcl,v 1.24.2.2 2010/01/20 23:43:51 patthoyts Exp $
 #
 # Copyright (c) 1992-1993 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -74,6 +74,8 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     if {$windowingsystem eq "aqua"} {
 	::tk::unsupported::MacWindowStyle style $w moveableModal {}
+    } elseif {$windowingsystem eq "x11"} {
+	wm attributes $w -type dialog
     }
 
     frame $w.bot
@@ -129,15 +131,14 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     # 4. Create a binding for <Return> on the dialog if there is a
     # default button.
+    # Convention also dictates that if the keyboard focus moves among the
+    # the buttons that the <Return> binding affects the button with the focus.
 
     if {$default >= 0} {
-	bind $w <Return> "
-	[list $w.button$default] configure -state active -relief sunken
-	update idletasks
-	after 100
-	set ::tk::Priv(button) $default
-	"
+	bind $w <Return> [list $w.button$default invoke]
     }
+    bind $w <<PrevWindow>> [list bind $w <Return> {[tk_focusPrev %W] invoke}]
+    bind $w <Tab> [list bind $w <Return> {[tk_focusNext %W] invoke}]
 
     # 5. Create a <Destroy> binding for the window that sets the
     # button variable to -1;  this is needed in case something happens
@@ -172,17 +173,12 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     # 7. Set a grab and claim the focus too.
 
-    set oldFocus [focus]
-    set oldGrab [grab current $w]
-    if {$oldGrab ne ""} {
-	set grabStatus [grab status $oldGrab]
-    }
-    grab $w
     if {$default >= 0} {
-	focus $w.button$default
+        set focus $w.button$default
     } else {
-	focus $w
+        set focus $w
     }
+    tk::SetFocusGrab $w $focus
 
     # 8. Wait for the user to respond, then restore the focus and
     # return the index of the selected button.  Restore the focus
@@ -191,21 +187,14 @@ proc ::tk_dialog {w title text bitmap default args} {
     # restore any grab that was in effect.
 
     vwait ::tk::Priv(button)
-    catch {focus $oldFocus}
+
     catch {
 	# It's possible that the window has already been destroyed,
 	# hence this "catch".  Delete the Destroy handler so that
 	# Priv(button) doesn't get reset by it.
 
 	bind $w <Destroy> {}
-	destroy $w
     }
-    if {$oldGrab ne ""} {
-	if {$grabStatus ne "global"} {
-	    grab $oldGrab
-	} else {
-	    grab -global $oldGrab
-	}
-    }
+    tk::RestoreFocusGrab $w $focus
     return $Priv(button)
 }

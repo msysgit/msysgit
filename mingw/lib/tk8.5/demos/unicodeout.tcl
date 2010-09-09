@@ -3,13 +3,33 @@
 # This demonstration script shows how you can produce output (in label
 # widgets) using many different alphabets.
 #
-# RCS: @(#) $Id: unicodeout.tcl,v 1.7 2007/12/13 15:27:07 dgp Exp $
+# RCS: @(#) $Id: unicodeout.tcl,v 1.7.2.1 2009/12/15 03:43:33 kennykb Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
 }
 
 package require Tk
+
+# On Windows, we need to determine whether the font system will render
+# right-to-left text.
+
+if {[tk windowingsystem] eq {win32}} {
+    set rkey [join {
+	HKEY_LOCAL_MACHINE
+	SOFTWARE
+	Microsoft
+	{Windows NT}
+	CurrentVersion
+	LanguagePack
+    } \\]
+    set w32langs {}
+    if {![catch {package require registry}]} {
+	if {[catch {registry values $rkey} w32langs]} {
+	    set w32langs {}
+	}
+    }
+}
 
 set w .unicodeout
 catch {destroy $w}
@@ -55,32 +75,34 @@ set oldCursor [$w cget -cursor]
 $w conf -cursor watch
 update
 
-if {[tk windowingsystem] in {x11 win32}} {
-	# Using presentation forms (pre-layouted)
-	addSample $w Arabic \
-		"\uFE94\uFEF4\uFE91\uFEAE\uFECC\uFEDF\uFE8D " \
-		"\uFE94\uFEE4\uFEE0\uFEDC\uFEDF\uFE8D"
+if {[tk windowingsystem] eq {x11}
+    || (([tk windowingsystem] eq {win32}) && ({ARABIC} ni $w32langs))} {
+    # Using presentation forms (pre-layouted)
+    addSample $w Arabic \
+	"\uFE94\uFEF4\uFE91\uFEAE\uFECC\uFEDF\uFE8D " \
+	"\uFE94\uFEE4\uFEE0\uFEDC\uFEDF\uFE8D"
 } else {
-	# Using standard text characters
-	addSample $w Arabic \
-		"\u0627\u0644\u0643\u0644\u0645\u0629 " \
-		"\u0627\u0644\u0639\u0631\u0628\u064A\u0629"
+    # Using standard text characters
+    addSample $w Arabic \
+	"\u0627\u0644\u0643\u0644\u0645\u0629 " \
+	"\u0627\u0644\u0639\u0631\u0628\u064A\u0629"
 }
 addSample $w "Trad. Chinese" "\u4E2D\u570B\u7684\u6F22\u5B57"
 addSample $w "Simpl. Chinese" "\u6C49\u8BED"
 addSample $w Greek \
 	 "\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE " \
 	 "\u03B3\u03BB\u03CE\u03C3\u03C3\u03B1"
-if {[tk windowingsystem] in {x11 win32}} {
-	# Visual order (pre-layouted)
-	addSample $w Hebrew \
-		"\u05DD\u05D9\u05DC\u05E9\u05D5\u05E8\u05D9 " \
-		"\u05DC\u05D9\u05D0\u05E8\u05E9\u05D9"
+if {[tk windowingsystem] eq {x11}
+    || (([tk windowingsystem] eq {win32}) && ({HEBREW} ni $w32langs))} {
+    # Visual order (pre-layouted)
+    addSample $w Hebrew \
+	"\u05EA\u05D9\u05E8\u05D1\u05E2 " \
+	"\u05D1\u05EA\u05DB"
 } else {
-	# Standard logical order
-	addSample $w Hebrew \
-		"\u05D9\u05E9\u05E8\u05D0\u05D9\u05DC " \
-		"\u05D9\u05E8\u05D5\u05E9\u05DC\u05D9\u05DD"
+    # Standard logical order
+    addSample $w Hebrew \
+	"\u05DB\u05EA\u05D1 " \
+	"\u05E2\u05D1\u05E8\u05D9\u05EA"
 }
 addSample $w Japanese \
 	 "\u65E5\u672C\u8A9E\u306E\u3072\u3089\u304C\u306A, " \

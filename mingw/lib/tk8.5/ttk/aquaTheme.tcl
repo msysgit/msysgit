@@ -1,5 +1,5 @@
 #
-# $Id: aquaTheme.tcl,v 1.11.2.1 2008/07/22 17:02:31 das Exp $
+# $Id: aquaTheme.tcl,v 1.11.2.2 2010/08/26 02:06:10 hobbs Exp $
 #
 # Aqua theme (OSX native look and feel)
 #
@@ -31,25 +31,20 @@ namespace eval ttk::theme::aqua {
 
 	ttk::style configure TButton -anchor center -width -6
 	ttk::style configure Toolbutton -padding 4
-	# See Apple HIG figs 14-63, 14-65
-	ttk::style configure TNotebook -tabposition n -padding {20 12}
-	ttk::style configure TNotebook.Tab -padding {10 2 10 2}
+
+	ttk::style configure TNotebook -tabmargins {10 0} -tabposition n
+	ttk::style configure TNotebook -padding {18 8 18 17}
+	ttk::style configure TNotebook.Tab -padding {12 3 12 2}
 
 	# Combobox:
 	ttk::style configure TCombobox -postoffset {5 -2 -10 0}
 
 	# Treeview:
-	ttk::style configure Treeview -rowheight 18
 	ttk::style configure Heading -font TkHeadingFont
-	ttk::style map Row \
+	ttk::style configure Treeview -rowheight 18 -background White
+	ttk::style map Treeview \
 	    -background {{selected background} systemHighlightSecondary
 		    selected systemHighlight}
-	ttk::style map Cell \
-	    -foreground {{selected background} systemModelessDialogInactiveText
-		    selected systemModelessDialogActiveText}
-	ttk::style map Item \
-	    -foreground {{selected background} systemModelessDialogInactiveText
-		    selected systemModelessDialogActiveText}
 
 	# Enable animation for ttk::progressbar widget:
 	ttk::style configure TProgressbar -period 100 -maxphase 255

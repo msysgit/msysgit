@@ -1,4 +1,4 @@
-# $Id: treeview.tcl,v 1.4.2.1 2008/06/20 14:14:20 jenglish Exp $
+# $Id: treeview.tcl,v 1.4.2.2 2010/08/26 02:06:10 hobbs Exp $
 #
 # ttk::treeview widget bindings and utilities.
 #
@@ -21,15 +21,6 @@ namespace eval ttk::treeview {
 
     # For pressmode == "heading"
     set State(heading)  	{}
-
-    # Provide [lassign] if not already present
-    # (@@@ TODO: check if this is still needed after horrible-identify purge)
-    #
-    if {![llength [info commands lassign]]} {
-	proc lassign {vals args} {
-	    uplevel 1 [list foreach $args $vals break]
-	}
-    }
 }
 
 ### Widget bindings.
@@ -112,21 +103,15 @@ proc ttk::treeview::Keynav {w dir} {
 #	Sets cursor, active element ...
 #
 proc ttk::treeview::Motion {w x y} {
-    variable ::ttk::Cursors
-    variable State
-
     set cursor {}
     set activeHeading {}
 
-    lassign [$w identify $x $y] what where detail
-    switch -- $what {
-	separator { set cursor $Cursors(hresize) }
-	heading { set activeHeading $where }
+    switch -- [$w identify region $x $y] {
+	separator { set cursor hresize }
+	heading { set activeHeading [$w identify column $x $y] }
     }
 
-    if {[$w cget -cursor] ne $cursor} {
-	$w configure -cursor $cursor
-    }
+    ttk::setCursor $w $cursor
     ActivateHeading $w $activeHeading
 }
 
@@ -170,19 +155,20 @@ proc ttk::treeview::DoubleClick {w x y} {
 ## Press -- ButtonPress binding.
 #
 proc ttk::treeview::Press {w x y} {
-    lassign [$w identify $x $y] what where detail
-    focus $w	;# or: ClickToFocus?
-
-    switch -- $what {
+    focus $w
+    switch -- [$w identify region $x $y] {
 	nothing { }
-	heading { heading.press $w $where }
-	separator { resize.press $w $x $where }
-	cell -
-	row  -
-	item { SelectOp $w $where choose }
-    }
-    if {$what eq "item" && [string match *indicator $detail]} {
-    	Toggle $w $where
+	heading { heading.press $w $x $y }
+	separator { resize.press $w $x $y }
+	tree -
+	cell {
+	    set item [$w identify item $x $y]
+	    SelectOp $w $item choose
+	    switch -glob -- [$w identify element $x $y] {
+		*indicator -
+		*disclosure { Toggle $w $item }
+	    }
+	}
     }
 }
 
@@ -208,10 +194,10 @@ proc ttk::treeview::Release {w x y} {
 
 ### Interactive column resizing.
 #
-proc ttk::treeview::resize.press {w x column} {
+proc ttk::treeview::resize.press {w x y} {
     variable State
     set State(pressMode) "resize"
-    set State(resizeColumn) $column
+    set State(resizeColumn) [$w identify column $x $y]
 }
 
 proc ttk::treeview::resize.drag {w x} {
@@ -226,8 +212,9 @@ proc ttk::treeview::resize.release {w x} {
 ### Heading activation.
 #
 
-proc ttk::treeview::heading.press {w column} {
+proc ttk::treeview::heading.press {w x y} {
     variable State
+    set column [$w identify column $x $y]
     set State(pressMode) "heading"
     set State(heading) $column
     $w heading $column state pressed
@@ -235,8 +222,9 @@ proc ttk::treeview::heading.press {w column} {
 
 proc ttk::treeview::heading.drag {w x y} {
     variable State
-    lassign [$w identify $x $y] what where detail
-    if {$what eq "heading" && $where eq $State(heading)} {
+    if {   [$w identify region $x $y] eq "heading"
+        && [$w identify column $x $y] eq $State(heading)
+    } {
     	$w heading $State(heading) state pressed
     } else {
     	$w heading $State(heading) state !pressed
@@ -246,7 +234,7 @@ proc ttk::treeview::heading.drag {w x y} {
 proc ttk::treeview::heading.release {w} {
     variable State
     if {[lsearch -exact [$w heading $State(heading) state] pressed] >= 0} {
-	after idle [$w heading $State(heading) -command]
+	after 0 [$w heading $State(heading) -command]
     }
     $w heading $State(heading) state !pressed
 }
