@@ -20,7 +20,6 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: curl.h,v 1.406 2010-01-22 12:17:03 bagder Exp $
  ***************************************************************************/
 
 /*
@@ -177,7 +176,9 @@ typedef int (*curl_progress_callback)(void *clientp,
   /* Tests have proven that 20K is a very bad buffer size for uploads on
      Windows, while 16K for some odd reason performed a lot better.
      We do the ifndef check to allow this value to easier be changed at build
-     time for those who feel adventurous. */
+     time for those who feel adventurous. The practical minimum is about
+     400 bytes since libcurl uses a buffer of this size as a scratch area
+     (unrelated to network send operations). */
 #define CURL_MAX_WRITE_SIZE 16384
 #endif
 
@@ -196,6 +197,97 @@ typedef size_t (*curl_write_callback)(char *buffer,
                                       size_t size,
                                       size_t nitems,
                                       void *outstream);
+
+
+
+/* enumeration of file types */
+typedef enum {
+  CURLFILETYPE_FILE = 0,
+  CURLFILETYPE_DIRECTORY,
+  CURLFILETYPE_SYMLINK,
+  CURLFILETYPE_DEVICE_BLOCK,
+  CURLFILETYPE_DEVICE_CHAR,
+  CURLFILETYPE_NAMEDPIPE,
+  CURLFILETYPE_SOCKET,
+  CURLFILETYPE_DOOR, /* is possible only on Sun Solaris now */
+
+  CURLFILETYPE_UNKNOWN /* should never occur */
+} curlfiletype;
+
+#define CURLFINFOFLAG_KNOWN_FILENAME    (1<<0)
+#define CURLFINFOFLAG_KNOWN_FILETYPE    (1<<1)
+#define CURLFINFOFLAG_KNOWN_TIME        (1<<2)
+#define CURLFINFOFLAG_KNOWN_PERM        (1<<3)
+#define CURLFINFOFLAG_KNOWN_UID         (1<<4)
+#define CURLFINFOFLAG_KNOWN_GID         (1<<5)
+#define CURLFINFOFLAG_KNOWN_SIZE        (1<<6)
+#define CURLFINFOFLAG_KNOWN_HLINKCOUNT  (1<<7)
+
+/* Content of this structure depends on information which is known and is
+   achievable (e.g. by FTP LIST parsing). Please see the url_easy_setopt(3) man
+   page for callbacks returning this structure -- some fields are mandatory,
+   some others are optional. The FLAG field has special meaning. */
+struct curl_fileinfo {
+  char *filename;
+  curlfiletype filetype;
+  time_t time;
+  unsigned int perm;
+  int uid;
+  int gid;
+  curl_off_t size;
+  long int hardlinks;
+
+  struct {
+    /* If some of these fields is not NULL, it is a pointer to b_data. */
+    char *time;
+    char *perm;
+    char *user;
+    char *group;
+    char *target; /* pointer to the target filename of a symlink */
+  } strings;
+
+  unsigned int flags;
+
+  /* used internally */
+  char * b_data;
+  size_t b_size;
+  size_t b_used;
+};
+
+/* return codes for CURLOPT_CHUNK_BGN_FUNCTION */
+#define CURL_CHUNK_BGN_FUNC_OK      0
+#define CURL_CHUNK_BGN_FUNC_FAIL    1 /* tell the lib to end the task */
+#define CURL_CHUNK_BGN_FUNC_SKIP    2 /* skip this chunk over */
+
+/* if splitting of data transfer is enabled, this callback is called before
+   download of an individual chunk started. Note that parameter "remains" works
+   only for FTP wildcard downloading (for now), otherwise is not used */
+typedef long (*curl_chunk_bgn_callback)(const void *transfer_info,
+                                        void *ptr,
+                                        int remains);
+
+/* return codes for CURLOPT_CHUNK_END_FUNCTION */
+#define CURL_CHUNK_END_FUNC_OK      0
+#define CURL_CHUNK_END_FUNC_FAIL    1 /* tell the lib to end the task */
+
+/* If splitting of data transfer is enabled this callback is called after
+   download of an individual chunk finished.
+   Note! After this callback was set then it have to be called FOR ALL chunks.
+   Even if downloading of this chunk was skipped in CHUNK_BGN_FUNC.
+   This is the reason why we don't need "transfer_info" parameter in this
+   callback and we are not interested in "remains" parameter too. */
+typedef long (*curl_chunk_end_callback)(void *ptr);
+
+/* return codes for FNMATCHFUNCTION */
+#define CURL_FNMATCHFUNC_MATCH    0 /* string corresponds to the pattern */
+#define CURL_FNMATCHFUNC_NOMATCH  1 /* pattern doesn't match the string */
+#define CURL_FNMATCHFUNC_FAIL     2 /* an error occurred */
+
+/* callback type for wildcard downloading pattern matching. If the
+   string matches the pattern, return CURL_FNMATCHFUNC_MATCH value, etc. */
+typedef int (*curl_fnmatch_callback)(void *ptr,
+                                     const char *pattern,
+                                     const char *string);
 
 /* These are the return codes for the seek callbacks */
 #define CURL_SEEKFUNC_OK       0
@@ -408,6 +500,8 @@ typedef enum {
   CURLE_FTP_PRET_FAILED,         /* 84 - a PRET command failed */
   CURLE_RTSP_CSEQ_ERROR,         /* 85 - mismatch of RTSP CSeq numbers */
   CURLE_RTSP_SESSION_ERROR,      /* 86 - mismatch of RTSP Session Identifiers */
+  CURLE_FTP_BAD_FILE_LIST,       /* 87 - unable to parse FTP file list */
+  CURLE_CHUNK_FAILED,            /* 88 - chunk callback reported error */
 
   CURL_LAST /* never use! */
 } CURLcode;
@@ -622,6 +716,12 @@ typedef enum {
 #define CURLPROTO_SMTP   (1<<16)
 #define CURLPROTO_SMTPS  (1<<17)
 #define CURLPROTO_RTSP   (1<<18)
+#define CURLPROTO_RTMP   (1<<19)
+#define CURLPROTO_RTMPT  (1<<20)
+#define CURLPROTO_RTMPE  (1<<21)
+#define CURLPROTO_RTMPTE (1<<22)
+#define CURLPROTO_RTMPS  (1<<23)
+#define CURLPROTO_RTMPTS (1<<24)
 #define CURLPROTO_ALL    (~0) /* enable everything */
 
 /* long may be 32 or 64 bits, but we should never depend on anything else
@@ -1315,6 +1415,26 @@ typedef enum {
   /* Let the application define a custom write method for RTP data */
   CINIT(INTERLEAVEFUNCTION, FUNCTIONPOINT, 196),
 
+  /* Turn on wildcard matching */
+  CINIT(WILDCARDMATCH, LONG, 197),
+
+  /* Directory matching callback called before downloading of an
+     individual file (chunk) started */
+  CINIT(CHUNK_BGN_FUNCTION, FUNCTIONPOINT, 198),
+
+  /* Directory matching callback called after the file (chunk)
+     was downloaded, or skipped */
+  CINIT(CHUNK_END_FUNCTION, FUNCTIONPOINT, 199),
+
+  /* Change match (fnmatch-like) callback for wildcard matching */
+  CINIT(FNMATCH_FUNCTION, FUNCTIONPOINT, 200),
+
+  /* Let the application define custom chunk data pointer */
+  CINIT(CHUNK_DATA, OBJECTPOINT, 201),
+
+  /* FNMATCH_FUNCTION user pointer */
+  CINIT(FNMATCH_DATA, OBJECTPOINT, 202),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
@@ -1763,9 +1883,12 @@ typedef enum {
   CURLINFO_RTSP_CLIENT_CSEQ = CURLINFO_LONG   + 37,
   CURLINFO_RTSP_SERVER_CSEQ = CURLINFO_LONG   + 38,
   CURLINFO_RTSP_CSEQ_RECV   = CURLINFO_LONG   + 39,
+  CURLINFO_PRIMARY_PORT     = CURLINFO_LONG   + 40,
+  CURLINFO_LOCAL_IP         = CURLINFO_STRING + 41,
+  CURLINFO_LOCAL_PORT       = CURLINFO_LONG   + 42,
   /* Fill in new entries below here! */
 
-  CURLINFO_LASTONE          = 39
+  CURLINFO_LASTONE          = 42
 } CURLINFO;
 
 /* CURLINFO_RESPONSE_CODE is the new name for the option previously known as

@@ -21,7 +21,6 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: curlbuild.h.in,v 1.8 2009-04-29 15:15:38 yangtse Exp $
  ***************************************************************************/
 
 /* ================================================================ */

@@ -20,7 +20,6 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: curlrules.h,v 1.8 2010-02-02 12:58:50 yangtse Exp $
  ***************************************************************************/
 
 /* ================================================================ */
@@ -187,7 +186,7 @@ typedef char
 /*          EXTERNALLY AND INTERNALLY VISIBLE DEFINITIONS           */
 /* ================================================================ */
 
-/* 
+/*
  * CURL_ISOCPP and CURL_OFF_T_C definitions are done here in order to allow
  * these to be visible and exported by the external libcurl interface API,
  * while also making them visible to the library internals, simply including

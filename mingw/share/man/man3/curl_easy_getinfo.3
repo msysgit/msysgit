@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2009, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -18,7 +18,6 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
-.\" * $Id: curl_easy_getinfo.3,v 1.44 2010-01-21 13:58:30 bagder Exp $
 .\" **************************************************************************
 .\"
 .TH curl_easy_getinfo 3 "11 Feb 2009" "libcurl 7.19.4" "libcurl Manual"
@@ -174,6 +173,17 @@ string holding the IP address of the most recent connection done with this
 \fBcurl\fP handle. This string may be IPv6 if that's enabled. Note that you
 get a pointer to a memory area that will be re-used at next request so you
 need to copy the string if you want to keep the information. (Added in 7.19.0)
+.IP CURLINFO_PRIMARY_PORT
+Pass a pointer to a long to receive the destination port of the most recent
+connection done with this \fBcurl\fP handle. (Added in 7.21.0)
+.IP CURLINFO_LOCAL_IP
+Pass a pointer to a char pointer to receive the pointer to a zero-terminated
+string holding the local (source) IP address of the most recent connection done
+with this \fBcurl\fP handle. This string may be IPv6 if that's enabled. The
+same restrictions apply as to \fICURLINFO_PRIMARY_IP\fP. (Added in 7.21.0)
+.IP CURLINFO_LOCAL_PORT
+Pass a pointer to a long to receive the local (source) port of the most recent
+connection done with this \fBcurl\fP handle. (Added in 7.21.0)
 .IP CURLINFO_COOKIELIST
 Pass a pointer to a 'struct curl_slist *' to receive a linked-list of all
 cookies cURL knows (expired ones, too). Don't forget to
@@ -188,6 +198,9 @@ working with the socket, you must call curl_easy_cleanup() as usual and let
 libcurl close the socket and cleanup other resources associated with the
 handle. This is typically used in combination with \fICURLOPT_CONNECT_ONLY\fP.
 (Added in 7.15.2)
+
+NOTE: this API is not really working on win64, since the SOCKET type on win64
+is 64 bit large while its 'long' is only 32 bits.
 .IP CURLINFO_FTP_ENTRY_PATH
 Pass a pointer to a char pointer to receive a pointer to a string holding the
 path of the entry path. That is the initial path libcurl ended up in when
@@ -217,10 +230,10 @@ Applications wishing to resume an RTSP session on another connection should
 retreive this info before closing the active connection.
 .IP CURLINFO_RTSP_CLIENT_CSEQ
 Pass a pointer to a long to receive the next CSeq that will be used by the
-application. 
+application.
 .IP CURLINFO_RTSP_SERVER_CSEQ
 Pass a pointer to a long to receive the next server CSeq that will be expected
-by the application. 
+by the application.
 
 \fI(NOTE: listening for server initiated requests is currently
 unimplemented).\fP

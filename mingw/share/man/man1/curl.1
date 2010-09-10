@@ -18,7 +18,6 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
-.\" * $Id: curl.1,v 1.287 2010-02-02 12:27:12 kdudka Exp $
 .\" **************************************************************************
 .\"
 .TH curl 1 "28 November 2009" "Curl 7.20.0" "Curl Manual"
@@ -215,7 +214,7 @@ local directory hierarchy as needed. This option creates the dirs mentioned
 with the -o option, nothing else. If the -o file name uses no dir or if the
 dirs it mentions already exist, no dir will be created.
 
-To create remote directories when using FTP or SFTP, try 
+To create remote directories when using FTP or SFTP, try
 \fI--ftp-create-dirs\fP.
 .IP "--crlf"
 (FTP) Convert LF to CRLF in upload. Useful for MVS (OS/390).
@@ -928,6 +927,52 @@ in web browsers, so curl does the conversion by default to maintain
 consistency. However, a server may require a POST to remain a POST after such
 a redirection. This option is meaningful only when using \fI-L/--location\fP
 (Added in 7.19.1)
+.IP "--proto <protocols>"
+Tells curl to use the listed protocols for its initial retrieval. Protocols
+are evaluated left to right, are comma separated, and are each a protocol
+name or 'all', optionally prefixed by zero or more modifiers. Available
+modifiers are:
+.RS
+.TP 3
+.B +
+Permit this protocol in addition to protocols already permitted (this is
+the default if no modifier is used).
+.TP
+.B -
+Deny this protocol, removing it from the list of protocols already permitted.
+.TP
+.B =
+Permit only this protocol (ignoring the list already permitted), though
+subject to later modification by subsequent entries in the comma separated
+list.
+.RE
+.IP
+For example:
+.RS
+.TP 15
+.B --proto -ftps
+uses the default protocols, but disables ftps
+.TP
+.B  --proto -all,https,+http
+only enables http and https
+.TP
+.B --proto =http,https
+also only enables http and https
+.RE
+.IP
+Unknown protocols produce a warning. This allows scripts to safely rely on
+being able to disable potentially dangerous protocols, without relying upon
+support for that protocol being built into curl to avoid an error.
+
+This option can be used multiple times, in which case the effect is the same
+as concatenating the protocols into one instance of the option.
+
+(Added in 7.20.2)
+.IP "--proto-redir <protocols>"
+Tells curl to use the listed protocols after a redirect. See --proto for
+how protocols are represented.
+
+(Added in 7.20.2)
 .IP "--proxy-anyauth"
 Tells curl to pick a suitable authentication method when communicating with
 the given proxy. This might cause an extra request/response round-trip. (Added
@@ -1417,10 +1462,12 @@ The total amount of bytes of the downloaded headers.
 The total amount of bytes that were sent in the HTTP request.
 .TP
 .B speed_download
-The average download speed that curl measured for the complete download.
+The average download speed that curl measured for the complete download. Bytes
+per second.
 .TP
 .B speed_upload
-The average upload speed that curl measured for the complete upload.
+The average upload speed that curl measured for the complete upload. Bytes per
+second.
 .TP
 .B content_type
 The Content-Type of the requested document, if there was any.
