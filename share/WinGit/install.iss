@@ -60,7 +60,6 @@ Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 [Icons]
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
-Name: {group}\Uninstall Git; Filename: {uninstallexe}
 
 [Messages]
 BeveledLabel={#emit APP_URL}
