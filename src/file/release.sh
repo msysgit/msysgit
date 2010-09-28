@@ -19,7 +19,8 @@ fi &&
 	git add . &&
 	git commit -m initial &&
 	git am ../patches/* &&
-	CFLAGS=-I/git/compat/regex ./configure --prefix=/mingw &&
+	CFLAGS="-I/git/compat/regex -DGAWK -DNO_MBSUPPORT" \
+		./configure --prefix=/mingw &&
 	make &&
 	index=$(/share/msysGit/pre-install.sh) &&
 	make install &&
