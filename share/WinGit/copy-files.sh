@@ -50,7 +50,7 @@ msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
 msys-crypto-0.9.8.dll,msys-regex-1.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
 openssl.exe,vim,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ share/bison/ share/git* \
-share/vim/vimrc share/vim/vim72/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
+share/vim/vimrc share/vim/vim73/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,\
 autoload/netrw.vim,autoload/netrwFileHandlers.vim,autoload/netrwSettings.vim,\
 plugin/netrwPlugin.vim,\
