@@ -69,6 +69,7 @@ typedef struct magic_set *magic_t;
 magic_t magic_open(int);
 void magic_close(magic_t);
 
+const char *magic_getpath(const char *, int);
 const char *magic_file(magic_t, const char *);
 const char *magic_descriptor(magic_t, int);
 const char *magic_buffer(magic_t, const void *, size_t);
