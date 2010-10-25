@@ -84,7 +84,7 @@ test -z "$force" && {
 	 git diff-index --cached HEAD --) ||
 	die "Git submodule has dirty files"
 	(cd /git &&
-	 test git.exe = $(ls -t git.exe $(git ls-files) | head -n 1)) ||
+	 test git.exe = $((printf 'git.exe\0'; git ls-files -z) | xargs --null ls -t 2>/dev/null| head -1)) ||
 	die "Git's git.exe is not up-to-date (run 'cd /git && make' to fix)"
 	for f in /bin/git* /libexec/git-core/git*
 	do
