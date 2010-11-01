@@ -968,7 +968,7 @@ begin
     TempName:='/c ""'+AppDir+'\bin\sh.exe" --login -i"';
     FileName:=AppDir+'\etc\git.ico';
 
-    if isComponentSelected('icons\quicklaunch') then begin
+    if IsComponentSelected('icons\quicklaunch') then begin
         CreateShellLink(
             ExpandConstant('{userappdata}\Microsoft\Internet Explorer\Quick Launch\Git Bash.lnk')
         ,   'Git Bash'
@@ -980,7 +980,7 @@ begin
         ,   SW_SHOWNORMAL
         );
     end;
-    if isComponentSelected('icons\desktop') then begin
+    if IsComponentSelected('icons\desktop') then begin
         CreateShellLink(
             GetShellFolder('desktop')+'\Git Bash.lnk'
         ,   'Git Bash'
