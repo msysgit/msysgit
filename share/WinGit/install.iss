@@ -7,7 +7,7 @@
 ; Compiler-related
 Compression=lzma2/ultra
 LZMAUseSeparateProcess=yes
-OutputBaseFilename={#emit APP_NAME+'-'+APP_VERSION}
+OutputBaseFilename={#APP_NAME+'-'+APP_VERSION}
 OutputDir={#GetEnv('USERPROFILE')}
 SolidCompression=yes
 
@@ -16,12 +16,12 @@ SolidCompression=yes
 
 ; Installer-related
 AllowNoIcons=yes
-AppName={#emit APP_NAME}
-AppPublisherURL={#emit APP_URL}
-AppVersion={#emit APP_VERSION}
+AppName={#APP_NAME}
+AppPublisherURL={#APP_URL}
+AppVersion={#APP_VERSION}
 ChangesEnvironment=yes
-DefaultDirName={pf}\{#emit APP_NAME}
-DefaultGroupName={#emit APP_NAME}
+DefaultDirName={pf}\{#APP_NAME}
+DefaultGroupName={#APP_NAME}
 DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
@@ -62,9 +62,9 @@ Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexe
 Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
 
 [Messages]
-BeveledLabel={#emit APP_URL}
-SetupAppTitle={#emit APP_NAME} Setup
-SetupWindowTitle={#emit APP_NAME} Setup
+BeveledLabel={#APP_URL}
+SetupAppTitle={#APP_NAME} Setup
+SetupWindowTitle={#APP_NAME} Setup
 
 [Registry]
 ; There is no "Console" key in HKLM.
@@ -206,7 +206,7 @@ begin
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
     if Pos(AppDir,Command)>0 then begin
         if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git Bash Here" shell extension.';
+            Msg:='Line {#__LINE__}: Unable to remove "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -218,7 +218,7 @@ begin
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
     if Pos(AppDir,Command)>0 then begin
         if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
-            Msg:='Line {#emit __LINE__}: Unable to remove "Git GUI Here" shell extension.';
+            Msg:='Line {#__LINE__}: Unable to remove "Git GUI Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -722,7 +722,7 @@ begin
     }
 
     // Load the built-ins from a text file.
-    FileName:=ExpandConstant('{app}\{#emit APP_BUILTINS}');
+    FileName:=ExpandConstant('{app}\{#APP_BUILTINS}');
     if LoadStringsFromFile(FileName,BuiltIns) then begin
         Count:=GetArrayLength(BuiltIns)-1;
 
@@ -730,7 +730,7 @@ begin
         for i:=0 to Count do begin
             FileName:=AppDir+'\bin\'+ChangeFileExt(ExtractFileName(BuiltIns[i]),'');
             if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-                Log('Line {#emit __LINE__}: Unable to delete script "'+FileName+'", ignoring.');
+                Log('Line {#__LINE__}: Unable to delete script "'+FileName+'", ignoring.');
             end;
         end;
 
@@ -740,7 +740,7 @@ begin
 
             // Delete any existing built-in.
             if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-                Log('Line {#emit __LINE__}: Unable to delete existing built-in "'+FileName+'", skipping.');
+                Log('Line {#__LINE__}: Unable to delete existing built-in "'+FileName+'", skipping.');
                 continue;
             end;
 
@@ -749,7 +749,7 @@ begin
                 LinkCreated:=CreateSymbolicLink(FileName,AppDir+'\bin\git.exe',0);
             except
                 LinkCreated:=False;
-                Log('Line {#emit __LINE__}: Creating symbolic link "'+FileName+'" failed, will try a hard link.');
+                Log('Line {#__LINE__}: Creating symbolic link "'+FileName+'" failed, will try a hard link.');
             end;
 
             if not LinkCreated then begin
@@ -758,13 +758,13 @@ begin
                     LinkCreated:=CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
                 except
                     LinkCreated:=False;
-                    Log('Line {#emit __LINE__}: Creating hardlink "'+FileName+'" failed, will try a copy.');
+                    Log('Line {#__LINE__}: Creating hardlink "'+FileName+'" failed, will try a copy.');
                 end;
             end;
 
             if not LinkCreated then begin
                 if not FileCopy(AppDir+'\bin\git.exe',FileName,False) then begin
-                    Log('Line {#emit __LINE__}: Creating copy "'+FileName+'" failed, giving up.');
+                    Log('Line {#__LINE__}: Creating copy "'+FileName+'" failed, giving up.');
                     // This is not a critical error, Git could basically be used without the
                     // aliases for built-ins, so we continue.
                 end;
@@ -777,14 +777,14 @@ begin
                 if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY)=0 then begin
                     FileName:=AppDir+'\bin\'+FindRec.name;
                     if (Pos(FindRec.name,'git.exe')<>1) and FileExists(FileName) and (not DeleteFile(FileName)) then begin
-                        Log('Line {#emit __LINE__}: Unable to delete dupe "'+FileName+'", ignoring.');
+                        Log('Line {#__LINE__}: Unable to delete dupe "'+FileName+'", ignoring.');
                     end;
                 end;
             until not FindNext(FindRec);
             FindClose(FindRec);
         end;
     end else begin
-        Msg:='Line {#emit __LINE__}: Unable to read file "{#emit APP_BUILTINS}".';
+        Msg:='Line {#__LINE__}: Unable to read file "{#APP_BUILTINS}".';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
         // This is not a critical error, Git could basically be used without the
@@ -825,7 +825,7 @@ begin
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to reset GIT_SSH prior to install.';
+            Msg:='Line {#__LINE__}: Unable to reset GIT_SSH prior to install.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -837,7 +837,7 @@ begin
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to reset SVN_SSH prior to install.';
+            Msg:='Line {#__LINE__}: Unable to reset SVN_SSH prior to install.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -851,7 +851,7 @@ begin
 
         // Set GIT_SSH as specified by the user.
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
-            Msg:='Line {#emit __LINE__}: Unable to set the GIT_SSH environment variable.';
+            Msg:='Line {#__LINE__}: Unable to set the GIT_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -860,7 +860,7 @@ begin
 
         // Mark that we have changed GIT_SSH by writing its value to a file.
         if not SetIniString('Environment','GIT_SSH',EnvSSH[0],FileName) then begin
-            Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+            Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
@@ -872,7 +872,7 @@ begin
         EnvSSH[0]:=AddQuotes(EnvSSH[0]);
 
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
-            Msg:='Line {#emit __LINE__}: Unable to set the SVN_SSH environment variable.';
+            Msg:='Line {#__LINE__}: Unable to set the SVN_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -881,7 +881,7 @@ begin
 
         // Mark that we have changed SVN_SSH by writing its value to a file.
         if not SetIniString('Environment','SVN_SSH',EnvSSH[0],FileName) then begin
-            Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+            Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
@@ -904,7 +904,7 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to reset HOME prior to install.';
+            Msg:='Line {#__LINE__}: Unable to reset HOME prior to install.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -932,7 +932,7 @@ begin
                 SetArrayLength(EnvHome,1);
                 EnvHome[0]:=ExpandConstant('{%HOMEDRIVE}{%HOMEPATH}');
                 if not SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome) then begin
-                    Msg:='Line {#emit __LINE__}: Unable to set the HOME environment variable.';
+                    Msg:='Line {#__LINE__}: Unable to set the HOME environment variable.';
                     MsgBox(Msg,mbError,MB_OK);
                     Log(Msg);
                     // This is not a critical error, the user can probably fix it manually,
@@ -941,7 +941,7 @@ begin
 
                 // Mark that we have changed HOME.
                 if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
-                    Msg:='Line {#emit __LINE__}: Unable to write to file "'+FileName+'".';
+                    Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
                     MsgBox(Msg,mbError,MB_OK);
                     Log(Msg);
                     // This is not a critical error, though uninstall / reinstall will probably not run cleanly,
@@ -953,7 +953,7 @@ begin
 
     // Set the current user's PATH directories.
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
-        Msg:='Line {#emit __LINE__}: Unable to set the PATH environment variable.';
+        Msg:='Line {#__LINE__}: Unable to set the PATH environment variable.';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
@@ -1020,7 +1020,7 @@ begin
     if IsComponentSelected('ext\reg\shellhere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','wscript "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
-            Msg:='Line {#emit __LINE__}: Unable to create "Git Bash Here" shell extension.';
+            Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -1031,7 +1031,7 @@ begin
     if IsComponentSelected('ext\reg\guihere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
-            Msg:='Line {#emit __LINE__}: Unable to create "Git GUI Here" shell extension.';
+            Msg:='Line {#__LINE__}: Unable to create "Git GUI Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -1045,7 +1045,7 @@ begin
 
         FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
         if not ReplaceInUseFile(FileName,FileName+'.new',True) then begin
-            Log('Line {#emit __LINE__}: Replacing file "'+FileName+'" failed.');
+            Log('Line {#__LINE__}: Replacing file "'+FileName+'" failed.');
         end;
     end;
 end;
@@ -1212,7 +1212,7 @@ begin
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to GIT_SSH.';
+            Msg:='Line {#__LINE__}: Unable to revert any possible changes to GIT_SSH.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -1224,7 +1224,7 @@ begin
     if (GetArrayLength(EnvSSH)=1) and
        (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to SVN_SSH.';
+            Msg:='Line {#__LINE__}: Unable to revert any possible changes to SVN_SSH.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -1245,7 +1245,7 @@ begin
 
     // Reset the current user's directories in PATH.
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
-        Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to PATH.';
+        Msg:='Line {#__LINE__}: Unable to revert any possible changes to PATH.';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
@@ -1257,7 +1257,7 @@ begin
     if (GetArrayLength(EnvHome)=1) and
        (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#emit __LINE__}: Unable to revert any possible changes to HOME.';
+            Msg:='Line {#__LINE__}: Unable to revert any possible changes to HOME.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
             // This is not a critical error, the user can probably fix it manually,
@@ -1266,7 +1266,7 @@ begin
     end;
 
     if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-        Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'".';
+        Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'".';
         MsgBox(Msg,mbError,MB_OK);
         Log(Msg);
         // This is not a critical error, the user can probably fix it manually,
@@ -1282,13 +1282,13 @@ begin
     FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
     if FileExists(FileName) then begin
         if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
-            Msg:='Line {#emit __LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
+            Msg:='Line {#__LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
         end;
 
         if not DeleteFile(FileName) then begin
-            Msg:='Line {#emit __LINE__}: Unable to delete file "'+FileName+'". Please do it manually after logging off and on again.';
+            Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'". Please do it manually after logging off and on again.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
         end;
