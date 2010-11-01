@@ -123,3 +123,21 @@ begin
         end;
     end;
 end;
+
+// As IsComponentSelected() is not supported during uninstall, this work-around
+// simply checks the Registry. This is unreliable if the user runs the installer
+// twice, the first time selecting the component, the second deselecting it.
+function IsComponentInstalled(Component:String):Boolean;
+var
+    UninstallKey,UninstallValue:String;
+    Value:String;
+begin
+    Result:=False;
+
+    UninstallKey:='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#APP_NAME}_is1';
+    UninstallValue:='Inno Setup: Selected Components';
+
+    if RegQueryStringValue(HKEY_LOCAL_MACHINE,UninstallKey,UninstallValue,Value) then begin
+        Result:=(Pos(Component,Value)>0);
+    end;
+end;
