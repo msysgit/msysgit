@@ -48,7 +48,7 @@ Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
 Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
 Name: ext\cheetah; Description: git-cheetah shell extension (32-bit only); Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
-Name: consolefont; Description: Use a TrueType font in the console (required for proper character encoding); Types: custom
+Name: consolefont; Description: Use a TrueType font in all console windows (not only for Git Bash); Types: custom
 
 [Files]
 ; Install files that might be in use during setup under a different name.
