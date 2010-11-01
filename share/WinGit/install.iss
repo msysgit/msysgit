@@ -3,6 +3,8 @@
 #define APP_URL      'http://msysgit.googlecode.com/'
 #define APP_BUILTINS 'etc\fileList-builtins.txt'
 
+#define COMP_CONSOLE_FONT 'Use a TrueType font in all console windows (not only for Git Bash)'
+
 [Setup]
 ; Compiler-related
 Compression=lzma2/ultra
@@ -48,7 +50,7 @@ Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
 Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
 Name: ext\cheetah; Description: git-cheetah shell extension (32-bit only); Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
-Name: consolefont; Description: Use a TrueType font in all console windows (not only for Git Bash); Types: custom
+Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
 
 [Files]
 ; Install files that might be in use during setup under a different name.
@@ -651,7 +653,19 @@ begin
 end;
 
 procedure CurPageChanged(CurPageID:Integer);
+var
+    i:Integer;
 begin
+    // Uncheck the console font option by default.
+    if CurPageID=wpSelectComponents then begin
+        for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
+            if WizardForm.ComponentsList.ItemCaption[i]='{#COMP_CONSOLE_FONT}' then begin
+                WizardForm.ComponentsList.Checked[i]:=False;
+                Break;
+            end;
+        end;
+    end;
+
     // Show the "Refresh" button only on the processes page.
     if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
         ProcessesRefresh.Show;
