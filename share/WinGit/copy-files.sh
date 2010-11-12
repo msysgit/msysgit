@@ -36,7 +36,7 @@ echo "Copying files" &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
-bin/{awk,basename.exe,bash.exe,bison.exe,yacc,bunzip2,bzip2.exe,c_rehash,\
+bin/{antiword.exe,awk,basename.exe,bash.exe,bison.exe,yacc,bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 dirname.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,flex.exe,gawk.exe,grep.exe,\
@@ -49,7 +49,7 @@ tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
 msys-crypto-0.9.8.dll,msys-regex-1.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
 openssl.exe,vim,wc.exe,which,xargs.exe,start} lib/engines/ \
-ssl/ cmd/ lib/perl5/ share/bison/ share/git* \
+ssl/ cmd/ lib/perl5/ share/antiword/ share/bison/ share/git* \
 share/vim/vimrc share/vim/vim73/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,\
 autoload/netrw.vim,autoload/netrwFileHandlers.vim,autoload/netrwSettings.vim,\
