@@ -1,0 +1,140 @@
+From 9860d61871f53e94d0780061fcab4e5951e10215 Mon Sep 17 00:00:00 2001
+From: Kirill Smelkov <kirr@mns.spb.ru>
+Date: Wed, 24 Nov 2010 21:29:41 +0300
+Subject: [PATCH 4/4] Implement runtime prefix detection
+
+Antiword needs prefix to know where to look for encoding map tables.
+Don't hardcode this prefix, and instead do, what Git does - determine it
+at runtime.
+
+Signed-off-by: Kirill Smelkov <kirr@mns.spb.ru>
+---
+ antiword.h |    2 ++
+ fonts_u.c  |    6 ++++--
+ misc.c     |   44 ++++++++++++++++++++++++++++++++++++++++++++
+ options.c  |    8 ++++----
+ 4 files changed, 54 insertions(+), 6 deletions(-)
+
+diff --git a/antiword.h b/antiword.h
+index 3f4aad5..1e4a384 100644
+--- a/antiword.h
++++ b/antiword.h
+@@ -430,6 +430,8 @@ extern USHORT	usGetListValue(int, int, const style_block_type *);
+ #if !defined(__riscos)
+ extern const char	*szGetHomeDirectory(void);
+ extern const char	*szGetAntiwordDirectory(void);
++extern const char	*szGetAntiwordRuntimePrefix(void);
++extern const char	*szGetAntiwordRuntimeDir(void);
+ #endif /* !__riscos */
+ extern long	lGetFilesize(const char *);
+ #if defined(DEBUG)
+diff --git a/fonts_u.c b/fonts_u.c
+index a99f7d2..812830e 100644
+--- a/fonts_u.c
++++ b/fonts_u.c
+@@ -27,7 +27,8 @@ FILE *
+ pOpenFontTableFile(void)
+ {
+ 	FILE		*pFile;
+-	const char	*szHome, *szAntiword, *szGlobalFile;
++	const char	*szHome, *szAntiword;
++	char		szGlobalFile[PATH_MAX+1];
+ 	char		szEnvironmentFile[PATH_MAX+1];
+ 	char		szLocalFile[PATH_MAX+1];
+ 
+@@ -75,7 +76,8 @@ pOpenFontTableFile(void)
+ 	}
+ 
+ 	/* Try the global version of the fontnames file */
+-	szGlobalFile = GLOBAL_ANTIWORD_DIR FILE_SEPARATOR FONTNAMES_FILE;
++	snprintf(szGlobalFile, sizeof(szGlobalFile),
++		"%s" FILE_SEPARATOR FONTNAMES_FILE, szGetAntiwordRuntimeDir());
+ 	DBG_MSG(szGlobalFile);
+ 
+ 	pFile = fopen(szGlobalFile, "r");
+diff --git a/misc.c b/misc.c
+index 63d1c91..893faa9 100644
+--- a/misc.c
++++ b/misc.c
+@@ -71,6 +71,50 @@ szGetAntiwordDirectory(void)
+ #endif /* !__riscos */
+ 
+ /*
++ * szGetAntiwordRuntimePrefix
++ * (win32 only)
++ */
++const char *
++szGetAntiwordRuntimePrefix(void)
++{
++	static char prefix[PATH_MAX+1];
++	char *tail;
++	int ncut;
++
++	strncpy(prefix, __argv[0], sizeof(prefix));
++
++	/* do dirname() twice  prefix/bin/antiword.exe -> prefix */
++	for (ncut=0, tail = prefix+strlen(prefix)-1; ncut < 2 && tail >= prefix; --tail) {
++		if (*tail == '/' || *tail == '\\') {
++			*tail = '\0';
++			++ncut;
++		}
++	}
++
++	if (ncut != 2)
++		werr(1, "E: Cannot determine runtime prefix from \'%s\'", __argv[0]);
++
++	return prefix;
++}
++
++/*
++ * szGetAntiwordRuntimeDir
++ * (win32 only)
++ */
++const char *
++szGetAntiwordRuntimeDir(void)
++{
++	static char dir[PATH_MAX+1];
++	const char *prefix = szGetAntiwordRuntimePrefix();
++
++	strncpy(dir, prefix, sizeof(dir));
++	strncat(dir, FILE_SEPARATOR "share" FILE_SEPARATOR "antiword", sizeof(dir)-strlen(dir));
++
++	return dir;
++}
++
++
++/*
+  * Get the size of the specified file.
+  * Returns -1 if the file does not exist or is not a proper file.
+  */
+diff --git a/options.c b/options.c
+index 8379fef..9bcc88a 100644
+--- a/options.c
++++ b/options.c
+@@ -238,11 +238,11 @@ pOpenCharacterMappingFile(const char *szLeafname)
+ 	/* Try the global version of the mapping file */
+ 	if (tFilenameLen <
+ 	    sizeof(szMappingFile) -
+-	    sizeof(GLOBAL_ANTIWORD_DIR) -
++	    strlen(szGetAntiwordRuntimeDir()) -
+ 	    sizeof(FILE_SEPARATOR)) {
+ 		sprintf(szMappingFile,
+-			GLOBAL_ANTIWORD_DIR FILE_SEPARATOR "%s%s",
+-			szLeafname, szSuffix);
++			"%s" FILE_SEPARATOR "%s%s",
++			szGetAntiwordRuntimeDir(), szLeafname, szSuffix);
+ 		DBG_MSG(szMappingFile);
+ 		pFile = fopen(szMappingFile, "r");
+ 		if (pFile != NULL) {
+@@ -253,7 +253,7 @@ pOpenCharacterMappingFile(const char *szLeafname)
+ 	}
+ 	werr(0, "I can't open your mapping file (%s%s)\n"
+ 		"It is not in '%s" FILE_SEPARATOR ANTIWORD_DIR "' nor in '"
+-		GLOBAL_ANTIWORD_DIR "'.", szLeafname, szSuffix, szHome);
++		"%s" "'.", szLeafname, szSuffix, szHome, szGetAntiwordRuntimeDir());
+ 	return NULL;
+ #endif /* __riscos */
+ } /* end of pOpenCharacterMappingFile */
+-- 
+1.7.3.2.245.g03276
+
