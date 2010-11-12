@@ -36,7 +36,8 @@ echo "Copying files" &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd / && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
-bin/{antiword.exe,awk,basename.exe,bash.exe,bison.exe,yacc,bunzip2,bzip2.exe,c_rehash,\
+bin/{antiword.exe,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\
+bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 dirname.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,flex.exe,gawk.exe,grep.exe,\
@@ -84,6 +85,7 @@ cp /git/contrib/completion/git-completion.bash etc/ &&
 cp /etc/termcap etc/ &&
 cp /etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
+cp /etc/gitattributes etc/ &&
 cp /share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
 cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
