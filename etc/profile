@@ -21,6 +21,15 @@ else
   export PATH=".:/usr/local/bin:/bin:/mingw/bin:$PATH"
 fi
 
+# strip out cygwin paths from PATH
+case "$PATH" in
+*/cygwin/*)
+	PATH="$(awk -vRS=: -vORS=: '!/cygwin/' <<< "$PATH")"
+	# awk always adds a trailing separator
+	export PATH="${PATH%:}"
+	;;
+esac
+
 # check msys-1.0.dll
 if test -f /etc/msys-1.0.dll.md5
 then
