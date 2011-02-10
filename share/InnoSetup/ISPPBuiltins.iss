@@ -1,4 +1,4 @@
-; BEGIN BUILTINS.ISS
+; BEGIN ISPPBUILTINS.ISS
 //
 // Inno Setup Preprocessor 5
 //
@@ -9,7 +9,7 @@
 // Inno Setup (C) 1997-2009 Jordan Russell. All Rights Reserved.
 // Portions by Martijn Laan.
 //
-// $Id: Builtins.iss,v 1.10 2009/08/03 14:18:14 mlaan Exp $
+// $Id: ISPPBuiltins.iss,v 1.3 2010/12/29 15:20:26 mlaan Exp $
 //
 #if defined(ISPP_INVOKED) && !defined(_BUILTINS_ISS_)
 //
@@ -337,16 +337,9 @@
   A > B ? A > C ? Int(A) : Int(C) : Int(B)
 //
 
-; The following message can be overriden in ISS script.
-; It is not required by ISPP license agreement, but it would be appreciated
-; if you do not remove this note.
-
-[Messages]
-AboutSetupNote=Inno Setup Preprocessor home page:%nhttp://ispp.sourceforge.net/
-[/Messages]
 #ifdef CStrings
 # pragma parseroption -p-
 #endif
 #endif
-; END BUILTINS.ISS
+; END ISPPBUILTINS.ISS
 
