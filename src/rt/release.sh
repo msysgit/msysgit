@@ -31,10 +31,10 @@ i=1 &&
 while test $i -le $total
 do
 	test $i -le $current ||
-	git am ../rt/patches/$(printf "%04d" $i)*.patch || break
+	git am ../rt/patches/$(printf "%04d" $i)*.patch ||
+	die "Error: Applying patches failed."
 	i=$(($i+1))
-done ||
-die "Error: Applying patches failed."
+done
 
 test -f /bin/cc.exe || ln gcc.exe /bin/cc.exe ||
 die "Could not make sure that MSys cc is found instead of MinGW one"
