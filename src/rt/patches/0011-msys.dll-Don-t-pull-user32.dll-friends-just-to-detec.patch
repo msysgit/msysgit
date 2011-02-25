@@ -1,0 +1,98 @@
+From f7d7efebd35e8e5bf6d685ff4f1197941984be04 Mon Sep 17 00:00:00 2001
+From: Kirill Smelkov <kirr@landau.phys.spbu.ru>
+Date: Sun, 13 Feb 2011 01:12:14 +0300
+Subject: [PATCH] msys.dll: Don't pull user32.dll & friends just to detect whether right alt should be used as meta
+
+I've discovered that every msys program pulls lots of dlls on startup.
+In particular the following simple program
+
+    ---- 8< ----
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int main()
+    {
+        printf("Hello World\n");
+        exit(1);
+    }
+    ---- 8< -----
+
+when compiled with mingw compiler, executes almost instantly, but when
+compiled with msys compiler and linked with msys.dll, starts
+significantly longer - ~0.2 - 0.5 seconds depending on machine.
+
+As Kirill K. Smirnov already found[1] the problem lies in that on
+startup, msys.dll pulls in user32.dll and does lot's of "unnecessary
+things". And the following test justifies it:
+
+    $ WINEDEBUG=loaddll wine xmsys.exe
+    trace:loaddll:load_builtin_dll Loaded L"KERNEL32.dll" at 0x7ed50000: builtin
+    trace:loaddll:load_native_dll Loaded L"Z:\\home\\kirr\\src\\tools\\git\\msysgit\\bin\\xmsys.exe" at 0x400000: native
+    trace:loaddll:load_native_dll Loaded L"Z:\\home\\kirr\\src\\tools\\git\\msysgit\\bin\\msys-1.0.dll" at 0x68000000: native
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\advapi32.dll" at 0x7e950000: builtin
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\gdi32.dll" at 0x7e780000: builtin
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\version.dll" at 0x7ef30000: builtin
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\user32.dll" at 0x7e820000: builtin
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\imm32.dll" at 0x7e410000: builtin
+    trace:loaddll:load_builtin_dll Loaded L"C:\\windows\\system32\\winex11.drv" at 0x7e5c0000: builtin
+
+Investigating showed that msys.dll imports kernel32.dll only, but also
+implements some form of lazy-import (see .../winsup/cygwin/autoload.cc)
+for symbols from other dlls, with the intention (as I see it) not to
+load other system dlls until needed.
+
+But also, it turned out, that in order to see whether AltGr should be
+used as META or not, on _every_ msys startup, we were calling
+GetKeyboardLayout() which is from user32.dll OOPS...
+
+Avoid that, and suddenly my test program runs significantly faster. It
+still pulls in advapi32.dll - this can be investigated later...
+
+[1] http://bugs.winehq.org/show_bug.cgi?id=13606#c8
+
+Signed-off-by: Kirill Smelkov <kirr@landau.phys.spbu.ru>
+---
+ msys/rt/src/winsup/cygwin/autoload.cc         |    2 +-
+ msys/rt/src/winsup/cygwin/fhandler_console.cc |   11 +++++++++++
+ 2 files changed, 12 insertions(+), 1 deletions(-)
+
+diff --git a/msys/rt/src/winsup/cygwin/autoload.cc b/msys/rt/src/winsup/cygwin/autoload.cc
+index 9ed7007..a921b93 100644
+--- a/msys/rt/src/winsup/cygwin/autoload.cc
++++ b/msys/rt/src/winsup/cygwin/autoload.cc
+@@ -426,7 +426,7 @@ LoadDLLfunc (DispatchMessageA, 4, user32)
+ LoadDLLfunc (EmptyClipboard, 0, user32)
+ LoadDLLfunc (FindWindowA, 8, user32)
+ LoadDLLfunc (GetClipboardData, 4, user32)
+-LoadDLLfunc (GetKeyboardLayout, 4, user32)
++//LoadDLLfunc (GetKeyboardLayout, 4, user32)
+ LoadDLLfunc (GetMessageA, 16, user32)
+ LoadDLLfunc (GetPriorityClipboardFormat, 8, user32)
+ LoadDLLfunc (GetProcessWindowStation, 0, user32)
+diff --git a/msys/rt/src/winsup/cygwin/fhandler_console.cc b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+index ada15e4..64ae840 100644
+--- a/msys/rt/src/winsup/cygwin/fhandler_console.cc
++++ b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+@@ -913,8 +913,19 @@ fhandler_console::fhandler_console (const char *name) :
+      these keyboards right <ALT> (called AltGr) is used to produce the
+      shell symbols and should not be interpreted as META. */
+   meta_mask = LEFT_ALT_PRESSED;
++
++  /* the following is disabled because GetKeyboardLayout() pulls in user32.dll
++   * for _every_ msys process
++   *
++   * dtable_init()
++   * ...
++   * dtable::build_fhandler()
++   * fhandler_console::fhandler_console()
++   */
++#if 0
+   if (PRIMARYLANGID (LOWORD (GetKeyboardLayout (0))) == LANG_ENGLISH)
+     meta_mask |= RIGHT_ALT_PRESSED;
++#endif
+ 
+ }
+ 
+-- 
+1.7.4.1.48.g5673d
+
