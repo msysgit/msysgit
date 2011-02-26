@@ -36,26 +36,35 @@ do
 	i=$(($i+1))
 done
 
+
+cd msys &&
+release=MSYS-g$(git show -s --pretty=%h HEAD) ||
+die "Could not detect MSYS release"
+
 test -f /bin/cc.exe || ln gcc.exe /bin/cc.exe ||
 die "Could not make sure that MSys cc is found instead of MinGW one"
 
-cd msys/rt &&
-release=MSYS-g$(git show -s --pretty=%h HEAD) &&
-(export MSYSTEM=MSYS &&
- export PATH=/bin:$PATH &&
- (test -d bld || mkdir bld) &&
- cd bld &&
- DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
- (test -f Makefile && test -z "$debug_clean" ||
-  ../src/configure --prefix=/usr) &&
- (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
- (test -z "$debug_clean" || make clean) &&
- (make || test -f $DLL) &&
- (test ! -z "$debug" || strip $DLL) &&
- rebase -b 0x68000000 $DLL &&
- mv $DLL /bin/) &&
-cd / &&
-hash=$(git hash-object -w bin/new-msys-1.0.dll) &&
-git update-index --cacheinfo 100755 $hash bin/msys-1.0.dll &&
-git commit -s -m "Updated msys-1.0.dll to $release" &&
-/share/msysGit/post-checkout-hook HEAD^ HEAD 1
+# build msys.dll
+release_msys() {
+	(export MSYSTEM=MSYS &&
+	 export PATH=/bin:$PATH &&
+	 cd rt &&
+	 (test -d bld || mkdir bld) &&
+	 cd bld &&
+	 DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
+	 (test -f Makefile && test -z "$debug_clean" ||
+	  ../src/configure --prefix=/usr) &&
+	 (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
+	 (test -z "$debug_clean" || make clean) &&
+	 (make || test -f $DLL) &&
+	 (test ! -z "$debug" || strip $DLL) &&
+	 rebase -b 0x68000000 $DLL &&
+	 mv $DLL /bin/) &&
+	cd / &&
+	hash=$(git hash-object -w bin/new-msys-1.0.dll) &&
+	git update-index --cacheinfo 100755 $hash bin/msys-1.0.dll &&
+	git commit -s -m "Updated msys-1.0.dll to $release" &&
+	/share/msysGit/post-checkout-hook HEAD^ HEAD 1
+}
+
+release_msys
