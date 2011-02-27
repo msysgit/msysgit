@@ -1,6 +1,7 @@
 #!/bin/sh
 
 DEST=/bin/xser32.dll
+cd "$(dirname "$0")" &&
 make &&
 install -m 775 xser32.dll $DEST &&
 git add $DEST &&
