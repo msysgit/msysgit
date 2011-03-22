@@ -39,8 +39,17 @@ esac
 
 rm -f "$TODO_EXTRA"
 
-MERGE=$(git rev-list --parents $TO.. | sed -n 's/ .* .*//p' | head -n 1)
-if test "$(git rev-parse $MERGE:)" = "$(git rev-parse "$MERGE^:")"
+MERGE=
+for commit in $(git rev-list --parents $TO.. | sed -n 's/ .* .*//p')
+do
+	if test "$(git rev-parse $commit:)" = "$(git rev-parse "$commit^:")"
+	then
+		MERGE=$commit
+		break
+	fi
+done
+
+if test -n "$MERGE"
 then
 	ORIG_HEAD=$(git rev-parse HEAD) &&
 	# Find prior merges to $TO
