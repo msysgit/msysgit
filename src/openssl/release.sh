@@ -62,6 +62,7 @@ test -d $DIR || {
 	mkdir $DIR && (
 		cd $DIR &&
 		git init &&
+		git config core.autocrlf false &&
 		/git/contrib/fast-import/import-tars.perl ../$FILE
 	)
 } || die "Could not check out openssl"
