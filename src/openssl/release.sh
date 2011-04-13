@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=0.9.8r
+VERSION=1.0.0d
 DIR=openssl-$VERSION
 URL=http://www.openssl.org/source/$DIR.tar.gz
 FILE=${URL##*/}
@@ -79,24 +79,25 @@ test grep INSTALLTOP=/mingw $DIR/Makefile > /dev/null 2>&1 || (
 	apply_patches
 ) || die "Could not apply the patches"
 
-test -f $DIR/openssl.dll || (
+test -f $DIR/ssleay32.dll || (
 	cd $DIR &&
-	cmd /c ms\\mingw32.bat &&
-	cd out &&
+	./config shared --prefix=/mingw &&
+	make &&
+	cd apps &&
 	list=$(echo *.dll openssl.exe) &&
 	cp $list /mingw/bin && (
 		cd /mingw/bin &&
 		git add $list &&
 		git commit -s -m "Install OpenSSL $VERSION"
 	) &&
+	cd .. &&
 	list=$(echo *.dll.a) &&
 	cp $list /mingw/lib && (
 		cd /mingw/lib &&
 		git add $list &&
 		git commit -s -m "Install OpenSSL $VERSION import libs"
 	) &&
-	cd ../outinc &&
-	cp -r openssl /mingw/include &&
+	cp -r include/openssl /mingw/include &&
 	(
 		cd /mingw/include &&
 		git add openssl &&
