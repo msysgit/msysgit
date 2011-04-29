@@ -25,16 +25,17 @@ then
 	}
 fi
 
+SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
+MSYSGITROOT="$(cd $SCRIPTDIR/../../ && pwd | sed 's/\/$//')/."
 TMPDIR=$1
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
-MSYSGITROOT="$(echo $(pwd) | sed 's/\/$//')/." &&
 mkdir "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
 (git --git-dir=$MSYSGITROOT/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
  mkdir -p doc/git/html && cd doc/git/html &&
- git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
+ git --git-dir=$MSYSGITROOT/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd $MSYSGITROOT && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
 bin/{antiword.exe,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\

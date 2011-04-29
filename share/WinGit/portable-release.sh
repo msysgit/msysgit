@@ -6,11 +6,12 @@ test -z "$1" && {
 }
 
 # change directory to msysGit root
-cd "$(dirname "$0")"/../.. || {
+SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
+MSYSGITROOT="$(cd $SCRIPTDIR/../../ && pwd | sed 's/\/$//')/."
+cd $MSYSGITROOT || {
 	echo "Could not change directory to msysGit root" >&2
 	exit 1
 }
-MSYSGITROOT="$(echo $(pwd) | sed 's/\/$//')/."
 
 TARGET="$HOME"/PortableGit-$1.7z
 OPTS7="-m0=lzma -mx=9 -md=64M"

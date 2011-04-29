@@ -26,7 +26,9 @@ test -z "$1" && {
 version=$1
 
 # change directory to msysGit root
-cd "$(dirname "$0")"/../.. || {
+SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
+MSYSGITROOT="$(cd $SCRIPTDIR/../../ && pwd | sed 's/\/$//')/."
+cd $MSYSGITROOT || {
 	echo "Could not change directory to msysGit root" >&2
 	exit 1
 }
@@ -124,7 +126,7 @@ test -z "$force" && {
 TMPDIR=/tmp/WinGit
 unset DONT_REMOVE_BUILTINS
 
-share/WinGit/copy-files.sh $TMPDIR &&
+$MSYSGITROOT/share/WinGit/copy-files.sh $TMPDIR &&
 sed -e '/share\/msysGit/d' -e "s/msysGit/Git (version $version)/" \
 	< etc/motd > $TMPDIR/etc/motd &&
 cp share/resources/gpl-2.0.rtf share/resources/git.bmp share/resources/gitsmall.bmp $TMPDIR &&
