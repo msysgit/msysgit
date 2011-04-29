@@ -5,18 +5,18 @@ test -z "$1" && {
 	exit 1
 }
 
-test -d /doc/git/html/.git ||
-(cd / && git submodule update --init doc/git/html) || {
+test -d doc/git/html/.git ||
+(git submodule update --init doc/git/html) || {
 	echo "Error: html pages in /doc/git/html/.git missing"
 	exit 1
 }
 
-if test "$( cd /doc/git/html/ ; git config core.autocrlf )" != "true"
+if test "$( cd doc/git/html/ ; git config core.autocrlf )" != "true"
 then
 	echo "Error: documentation must be checked out with core.autocrlf=true."
 	echo "If you have changes in the documentation, hit Ctrl-C NOW."
 	sleep 3
-	(cd /doc/git/html &&
+	(cd doc/git/html &&
 	 git config core.autocrlf true &&
 	 rm -rf *.html *.txt howto &&
 	 git checkout -f) || {
@@ -28,13 +28,14 @@ fi
 TMPDIR=$1
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
+CWD="$(pwd)" &&
 mkdir "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
-(git --git-dir=/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
+(git --git-dir=$CWD/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
-(cd / && tar cf - \
+(cd $CWD && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
 bin/{antiword.exe,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\
 bunzip2,bzip2.exe,c_rehash,\
@@ -61,7 +62,7 @@ syntax/nosyntax.vim,syntax/syncolor.vim,syntax/synload.vim,syntax/syntax.vim,\
 vim.exe}) |
 tar xf - &&
 rm -rf bin/cvs.exe &&
-(test ! -f /lib/Git.pm || cp -u /lib/Git.pm lib/perl5/site_perl/Git.pm) &&
+(test ! -f $CWD/lib/Git.pm || cp -u $CWD/lib/Git.pm lib/perl5/site_perl/Git.pm) &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
@@ -71,26 +72,26 @@ then
 	sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
-(cd /mingw && tar cf - \
+(cd $CWD/mingw && tar cf - \
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
 	bin/getcp.exe bin/rebase.exe \
 	bin/{libpoppler-7.dll,pdfinfo.exe,pdftotext.exe} \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
-cp /mingw/bin/hd2u.exe bin/dos2unix.exe &&
-md5sum /bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
+cp $CWD/mingw/bin/hd2u.exe bin/dos2unix.exe &&
+md5sum $CWD/bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
-cp /git/contrib/completion/git-completion.bash etc/ &&
-cp /etc/termcap etc/ &&
-cp /etc/inputrc etc/ &&
-sed 's/ = \/mingw\// = \//' < /etc/gitconfig > etc/gitconfig &&
-cp /etc/gitattributes etc/ &&
-cp /share/WinGit/Git\ Bash.vbs . &&
+cp $CWD/git/contrib/completion/git-completion.bash etc/ &&
+cp $CWD/etc/termcap etc/ &&
+cp $CWD/etc/inputrc etc/ &&
+sed 's/ = \/mingw\// = \//' < $CWD/etc/gitconfig > etc/gitconfig &&
+cp $CWD/etc/gitattributes etc/ &&
+cp $CWD/share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
-cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
-cp /share/WinGit/ReleaseNotes.rtf . &&
+cp $CWD/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
+cp $CWD/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
-	< /etc/profile > etc/profile &&
-cp /share/resources/git.ico etc/ ||
+	< $CWD/etc/profile > etc/profile &&
+cp $CWD/share/resources/git.ico etc/ ||
 exit 1
