@@ -10,7 +10,7 @@ cd "$(dirname "$0")"/../.. || {
 	echo "Could not change directory to msysGit root" >&2
 	exit 1
 }
-CWD="$(pwd)"
+CWD="$(echo $(pwd) | sed 's/\/$//')/."
 
 TARGET="$HOME"/PortableGit-$1.7z
 OPTS7="-m0=lzma -mx=9 -md=64M"

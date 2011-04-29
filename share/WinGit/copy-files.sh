@@ -28,7 +28,7 @@ fi
 TMPDIR=$1
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
-CWD="$(pwd)" &&
+CWD="$(echo $(pwd) | sed 's/\/$//')/." &&
 mkdir "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
