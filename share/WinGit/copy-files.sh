@@ -6,8 +6,8 @@ test -z "$1" && {
 }
 
 test -d doc/git/html/.git ||
-(git submodule update --init doc/git/html) || {
-	echo "Error: html pages in /doc/git/html/.git missing"
+(git submodule update --init doc/git/html/) || {
+	echo "Error: html pages in /doc/git/html/ missing"
 	exit 1
 }
 
