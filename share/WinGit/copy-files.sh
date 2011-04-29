@@ -28,14 +28,14 @@ fi
 TMPDIR=$1
 
 (test ! -d "$TMPDIR" || echo "Removing $TMPDIR" && rm -rf "$TMPDIR") &&
-CWD="$(echo $(pwd) | sed 's/\/$//')/." &&
+MSYSGITROOT="$(echo $(pwd) | sed 's/\/$//')/." &&
 mkdir "$TMPDIR" &&
 cd "$TMPDIR" &&
 echo "Copying files" &&
-(git --git-dir=$CWD/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
+(git --git-dir=$MSYSGITROOT/doc/git/html/.git log --pretty=format:%s -1 HEAD &&
  mkdir -p doc/git/html && cd doc/git/html &&
  git --git-dir=/doc/git/html/.git archive HEAD | tar xf -) &&
-(cd $CWD && tar cf - \
+(cd $MSYSGITROOT && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
 bin/{antiword.exe,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\
 bunzip2,bzip2.exe,c_rehash,\
@@ -62,7 +62,7 @@ syntax/nosyntax.vim,syntax/syncolor.vim,syntax/synload.vim,syntax/syntax.vim,\
 vim.exe}) |
 tar xf - &&
 rm -rf bin/cvs.exe &&
-(test ! -f $CWD/lib/Git.pm || cp -u $CWD/lib/Git.pm lib/perl5/site_perl/Git.pm) &&
+(test ! -f $MSYSGITROOT/lib/Git.pm || cp -u $MSYSGITROOT/lib/Git.pm lib/perl5/site_perl/Git.pm) &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
@@ -72,26 +72,26 @@ then
 	sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
-(cd $CWD/mingw && tar cf - \
+(cd $MSYSGITROOT/mingw && tar cf - \
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
 	bin/getcp.exe bin/rebase.exe \
 	bin/{libpoppler-7.dll,pdfinfo.exe,pdftotext.exe} \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
-cp $CWD/mingw/bin/hd2u.exe bin/dos2unix.exe &&
-md5sum $CWD/bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
+cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
+md5sum $MSYSGITROOT/bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
-cp $CWD/git/contrib/completion/git-completion.bash etc/ &&
-cp $CWD/etc/termcap etc/ &&
-cp $CWD/etc/inputrc etc/ &&
-sed 's/ = \/mingw\// = \//' < $CWD/etc/gitconfig > etc/gitconfig &&
-cp $CWD/etc/gitattributes etc/ &&
-cp $CWD/share/WinGit/Git\ Bash.vbs . &&
+cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
+cp $MSYSGITROOT/etc/termcap etc/ &&
+cp $MSYSGITROOT/etc/inputrc etc/ &&
+sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
+cp $MSYSGITROOT/etc/gitattributes etc/ &&
+cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
-cp $CWD/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
-cp $CWD/share/WinGit/ReleaseNotes.rtf . &&
+cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
+cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
-	< $CWD/etc/profile > etc/profile &&
-cp $CWD/share/resources/git.ico etc/ ||
+	< $MSYSGITROOT/etc/profile > etc/profile &&
+cp $MSYSGITROOT/share/resources/git.ico etc/ ||
 exit 1

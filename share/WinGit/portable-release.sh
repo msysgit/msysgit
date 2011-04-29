@@ -10,7 +10,7 @@ cd "$(dirname "$0")"/../.. || {
 	echo "Could not change directory to msysGit root" >&2
 	exit 1
 }
-CWD="$(echo $(pwd) | sed 's/\/$//')/."
+MSYSGITROOT="$(echo $(pwd) | sed 's/\/$//')/."
 
 TARGET="$HOME"/PortableGit-$1.7z
 OPTS7="-m0=lzma -mx=9 -md=64M"
@@ -19,15 +19,15 @@ TMPDIR=/tmp/WinGit
 
 DONT_REMOVE_BUILTINS=1 "$(dirname $0)/copy-files.sh" $TMPDIR &&
 cd "$TMPDIR" &&
-cp $CWD/share/WinGit/README.portable ./ &&
-cp $CWD/msys.bat ./git-bash.bat &&
-cp $CWD/git-cmd.bat ./ &&
-$CWD/share/7-Zip/7za.exe a $OPTS7 $TARGET7 * ||
+cp $MSYSGITROOT/share/WinGit/README.portable ./ &&
+cp $MSYSGITROOT/msys.bat ./git-bash.bat &&
+cp $MSYSGITROOT/git-cmd.bat ./ &&
+$MSYSGITROOT/share/7-Zip/7za.exe a $OPTS7 $TARGET7 * ||
 exit
 
 if test -z "$NO_SFX"
 then
-(cat $CWD/share/7-Zip/7zSD.sfx &&
+(cat $MSYSGITROOT/share/7-Zip/7zSD.sfx &&
  echo ';!@Install@!UTF-8!' &&
  echo 'Progress="yes"' &&
  echo 'Title="WinGit: MinGW Git + minimal MSys installation"' &&
