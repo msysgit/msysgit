@@ -2,6 +2,7 @@
 #define APP_VERSION  '%APPVERSION%'
 #define APP_URL      'http://msysgit.googlecode.com/'
 #define APP_BUILTINS 'etc\fileList-builtins.txt'
+#define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
 #define COMP_CONSOLE_FONT 'Use a TrueType font in all console windows (not only for Git Bash)'
 
@@ -141,6 +142,9 @@ external 'CreateSymbolicLinkW@Kernel32.dll stdcall delayload setuponly';
 #else
 external 'CreateSymbolicLinkA@Kernel32.dll stdcall delayload setuponly';
 #endif
+
+function BindImage(ImageName,DllPath,SymbolPath:AnsiString):Boolean;
+external 'BindImage@Imagehlp.dll stdcall delayload setuponly';
 
 const
     // Git Path options.
@@ -721,8 +725,8 @@ end;
 // beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,TempName,Cmd,Msg:String;
-    BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
+    AppDir,DllPath,FileName,TempName,Cmd,Msg:String;
+    BuiltIns,ImageNames,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     LinkCreated:Boolean;
     FindRec:TFindRec;
@@ -733,6 +737,20 @@ begin
     end;
 
     AppDir:=ExpandConstant('{app}');
+
+    {
+        Bind the imported function addresses
+    }
+
+    DllPath:=ExpandConstant('{app}\bin;{app}\mingw\bin;{sys}');
+    // Load the list of images from a text file.
+    FileName:=ExpandConstant('{app}\{#APP_BINDIMAGE}');
+    if LoadStringsFromFile(FileName,ImageNames) then begin
+        Count:=GetArrayLength(ImageNames)-1;
+        for i:=0 to Count do begin
+            BindImage(ImageNames[i],DllPath,'');
+        end;
+    end;
 
     {
         Create the built-ins

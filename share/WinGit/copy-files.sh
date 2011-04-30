@@ -92,5 +92,6 @@ cp /src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
 cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
-cp /share/resources/git.ico etc/ ||
+cp /share/resources/git.ico etc/ &&
+find bin libexec -iname \*.exe -o -iname \*.dll | sort > etc/fileList-bindimage.txt ||
 exit 1
