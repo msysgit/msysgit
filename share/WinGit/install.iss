@@ -1,7 +1,8 @@
-#define APP_NAME     'Git'
-#define APP_VERSION  '%APPVERSION%'
-#define APP_URL      'http://msysgit.googlecode.com/'
-#define APP_BUILTINS 'etc\fileList-builtins.txt'
+#define APP_NAME      'Git'
+#define APP_VERSION   '%APPVERSION%'
+#define APP_URL       'http://msysgit.googlecode.com/'
+#define APP_BUILTINS  'etc\fileList-builtins.txt'
+#define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
 #define COMP_CONSOLE_FONT 'Use a TrueType font in all console windows (not only for Git Bash)'
 
@@ -163,6 +164,9 @@ external 'CreateSymbolicLinkW@Kernel32.dll stdcall delayload setuponly';
 external 'CreateSymbolicLinkA@Kernel32.dll stdcall delayload setuponly';
 #endif
 
+function BindImageEx(Flags:DWORD;ImageName,DllPath,SymbolPath:AnsiString;StatusRoutine:Integer):Boolean;
+external 'BindImageEx@Imagehlp.dll stdcall delayload setuponly';
+
 const
     // Git Path options.
     GP_BashOnly       = 1;
@@ -177,6 +181,12 @@ const
     GC_LFOnly         = 1;
     GC_CRLFAlways     = 2;
     GC_CRLFCommitAsIs = 3;
+
+    // BindImageEx API constants.
+    BIND_NO_BOUND_IMPORTS  = $00000001;
+    BIND_NO_UPDATE         = $00000002;
+    BIND_ALL_IMAGES        = $00000004;
+    BIND_CACHE_IMPORT_DLLS = $00000008;
 
 var
     // Wizard page and variables for the Path options.
@@ -742,8 +752,8 @@ end;
 // beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
-    AppDir,FileName,TempName,Cmd,Msg:String;
-    BuiltIns,EnvPath,EnvHome,EnvSSH:TArrayOfString;
+    AppDir,DllPath,FileName,TempName,Cmd,Msg:String;
+    BuiltIns,ImageNames,EnvPath,EnvHome,EnvSSH:TArrayOfString;
     Count,i:Longint;
     LinkCreated:Boolean;
     FindRec:TFindRec;
@@ -754,6 +764,28 @@ begin
     end;
 
     AppDir:=ExpandConstant('{app}');
+
+    {
+        Bind the imported function addresses
+    }
+
+    try
+        DllPath:=ExpandConstant('{app}\bin;{sys}');
+
+        // Load the list of images from a text file.
+        FileName:=AppDir+'\{#APP_BINDIMAGE}';
+        if LoadStringsFromFile(FileName,ImageNames) then begin
+            Count:=GetArrayLength(ImageNames)-1;
+            for i:=0 to Count do begin
+                FileName:=AppDir+'\'+ImageNames[i];
+                if not BindImageEx(BIND_NO_BOUND_IMPORTS or BIND_CACHE_IMPORT_DLLS,FileName,DllPath,'',0) then begin
+                    Log('Line {#__LINE__}: Error calling BindImageEx for "'+FileName+'".');
+                end;
+            end;
+        end;
+    except
+        Log('Line {#__LINE__}: An exception occurred while calling BindImageEx.');
+    end;
 
     {
         Create the built-ins
