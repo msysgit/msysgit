@@ -760,7 +760,7 @@ begin
     }
 
     // Load the built-ins from a text file.
-    FileName:=ExpandConstant('{app}\{#APP_BUILTINS}');
+    FileName:=AppDir+'\{#APP_BUILTINS}';
     if LoadStringsFromFile(FileName,BuiltIns) then begin
         Count:=GetArrayLength(BuiltIns)-1;
 
