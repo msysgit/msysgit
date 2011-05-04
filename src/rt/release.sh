@@ -7,7 +7,21 @@ die () {
 
 cd "$(dirname "$0")"
 
+target=
 debug=
+
+# see what to build
+case "$1" in
+	msys)
+		target=$1
+		;;
+	*)
+		die "$0 msys [options]"
+		;;
+esac
+
+shift
+
 test "a$1" = "a--debug" && debug=t
 debug_clean=
 test "$debug" = "$(cat debug.txt 2>/dev/null)" || debug_clean=t
@@ -67,4 +81,4 @@ release_msys() {
 	/share/msysGit/post-checkout-hook HEAD^ HEAD 1
 }
 
-release_msys
+release_$target
