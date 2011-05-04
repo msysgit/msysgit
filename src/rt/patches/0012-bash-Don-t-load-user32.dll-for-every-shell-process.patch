@@ -1,0 +1,116 @@
+From c8ec70daf6c29525077ecd691224600803527786 Mon Sep 17 00:00:00 2001
+From: Kirill Smelkov <kirr@landau.phys.spbu.ru>
+Date: Wed, 4 May 2011 16:05:14 +0400
+Subject: [PATCH] bash: Don't load user32.dll for every shell process
+
+I've discovered that like msys.dll, bash too pulls user32.dll in on every
+startup, which slows things down considerably.
+
+It turned out that user32 bits are used in only one place to teach readline how
+to paste from Windows clipboard.
+
+Since this stuff is only occasionally used in interactive shells, and not used
+at all in non-interactive scripts, let's load user32.dll dynamicaly, only when
+needed.
+
+Together with previous patch for msys.dll, this gains significant speedup for
+shell scripts:
+
+        bash's
+        configure --help >/dev/null
+
+old:    ~2.35s
+new:	~1.95s
+
+i.e. 17% improvement.
+
+Under wine the difference is much more dramatic, since loading user32.dll there
+is slower:
+
+old:    ~56s
+new:    ~31a
+
+i.e. 44% speedup.
+
+Signed-off-by: Kirill Smelkov <kirr@landau.phys.spbu.ru>
+---
+ msys/packages/bash/3.1/lib/readline/kill.c |   47 ++++++++++++++++++++++++++--
+ 1 files changed, 44 insertions(+), 3 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/lib/readline/kill.c b/msys/packages/bash/3.1/lib/readline/kill.c
+index 2a74902..92c18e9 100644
+--- a/msys/packages/bash/3.1/lib/readline/kill.c
++++ b/msys/packages/bash/3.1/lib/readline/kill.c
+@@ -659,6 +659,45 @@ rl_yank_last_arg (count, key)
+ #if defined (__CYGWIN__) || __MSYS__
+ #include <windows.h>
+ 
++/* user32.dll symbols are lazily imported at runtime, in order not to slow-down
++ * common script scenarios where clipboard stuff is not needed.
++ *
++ * This is big deal, because loading user32.dll for every sh.exe slows down
++ * shell startup considerably.
++ */
++
++static HMODULE user32;
++static BOOL   WINAPI (*pOpenClipboard)    (HWND hWndNewOwner);
++static BOOL   WINAPI (*pCloseClipboard)   (void);
++static HANDLE WINAPI (*pGetClipboardData) (UINT uFormat);
++
++static FARPROC xGetProcAddress(LPCSTR function)
++{
++  FARPROC pfunc = GetProcAddress(user32, function);
++  if (!pfunc) {
++    fprintf(stderr, "E: cannot import %s from user32.dll\n", function);
++    abort();
++  }
++
++  return pfunc;
++}
++
++static void import_user32()
++{
++  if (user32)
++    return;
++
++  user32 = LoadLibrary("user32.dll");
++  if (!user32) {
++    fprintf(stderr, "E: cannot load user32.dll\n");
++    abort();
++  }
++
++  pOpenClipboard    = xGetProcAddress("OpenClipboard");
++  pCloseClipboard   = xGetProcAddress("CloseClipboard");
++  pGetClipboardData = xGetProcAddress("GetClipboardData");
++}
++
+ int
+ rl_paste_from_clipboard (count, key)
+      int count, key;
+@@ -666,10 +705,12 @@ rl_paste_from_clipboard (count, key)
+   char *data, *ptr;
+   int len;
+ 
+-  if (OpenClipboard (NULL) == 0)
++  import_user32();
++
++  if (pOpenClipboard (NULL) == 0)
+     return (0);
+ 
+-  data = (char *)GetClipboardData (CF_TEXT);
++  data = (char *)pGetClipboardData (CF_TEXT);
+   if (data)
+     {
+       ptr = strchr (data, '\r');
+@@ -686,7 +727,7 @@ rl_paste_from_clipboard (count, key)
+       rl_insert_text (ptr);
+       if (ptr != data)
+ 	free (ptr);
+-      CloseClipboard ();
++      pCloseClipboard ();
+     }
+   return (0);
+ }
+-- 
+1.7.5
+
