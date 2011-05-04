@@ -12,11 +12,11 @@ debug=
 
 # see what to build
 case "$1" in
-	msys)
+	msys|bash)
 		target=$1
 		;;
 	*)
-		die "$0 msys [options]"
+		die "$0 (msys|bash) [options]"
 		;;
 esac
 
@@ -78,6 +78,36 @@ release_msys() {
 	hash=$(git hash-object -w bin/new-msys-1.0.dll) &&
 	git update-index --cacheinfo 100755 $hash bin/msys-1.0.dll &&
 	git commit -s -m "Updated msys-1.0.dll to $release" &&
+	/share/msysGit/post-checkout-hook HEAD^ HEAD 1
+}
+
+# build bash.exe
+release_bash() {
+	(export MSYSTEM=MSYS &&
+	 export PATH=/bin:$PATH &&
+	 cd packages/bash &&
+	 (test -d bld || mkdir bld) &&
+	 cd bld &&
+	 BASH=bash.exe &&
+	 (test -f Makefile && test -z "$debug_clean" ||
+	  ../3.1/configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-nls \
+		--disable-rpath \
+		--without-curses) &&
+	 (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
+	 (test -z "$debug_clean" || make clean) &&
+	 make &&
+	 test -f $BASH &&
+	 (test ! -z "$debug" || strip $BASH) &&
+	 cp $BASH /bin/new-bash.exe) &&
+	cd / &&
+	hash=$(git hash-object -w bin/new-bash.exe) &&
+	git update-index --cacheinfo 100755 $hash bin/bash.exe &&
+	git update-index --cacheinfo 100755 $hash bin/sh.exe &&
+	git commit -s -m "Updated bash.exe to $release" &&
 	/share/msysGit/post-checkout-hook HEAD^ HEAD 1
 }
 
