@@ -698,6 +698,14 @@ procedure CurPageChanged(CurPageID:Integer);
 var
     i:Integer;
 begin
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            // If the default directory is not writable, choose another default that most likely is.
+            // This will be checked later again when the user clicks "Next".
+            WizardForm.DirEdit.Text:=ExpandConstant('{localappdata}\{#APP_NAME}');
+        end;
+    end;
+
     // Uncheck the console font option by default.
     if CurPageID=wpSelectComponents then begin
         for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
@@ -722,6 +730,19 @@ var
     Version:TWindowsVersion;
 begin
     Result:=True;
+
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            MsgBox(
+                'The specified installation directory does not seem to be writable. ' +
+            +   'Please choose another directory or restart setup as a user with sufficient permissions.'
+            ,   mbCriticalError
+            ,   MB_OK
+            );
+            Result:=False;
+            Exit;
+        end;
+    end;
 
     if (PuTTYPage<>NIL) and (CurPageID=PuTTYPage.ID) then begin
         Result:=RdbSSH[GS_OpenSSH].Checked or

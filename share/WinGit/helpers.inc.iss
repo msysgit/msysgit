@@ -60,3 +60,25 @@ begin
         Result:=(Pos(Component,Value)>0);
     end;
 end;
+
+// Checks whether the specified directory can be created and written to.
+// Note that the created dummy file is not explicitly deleted here, so that
+// needs to be done as part of the uninstall process.
+function IsDirWritable(DirName:String):Boolean;
+var
+    FileName:String;
+begin
+    Result:=False;
+
+    if not ForceDirectories(DirName) then begin
+        Exit;
+    end;
+
+    FileName:=DirName+'\setup.ini';
+
+    if not SetIniBool('Dummy','Writable',true,FileName) then begin
+        Exit;
+    end;
+
+    Result:=GetIniBool('Dummy','Writable',false,FileName);
+end;
