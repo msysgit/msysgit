@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 test -z "$1" && {
 	echo "Usage: $0 <dir>"
