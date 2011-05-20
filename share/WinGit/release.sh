@@ -134,9 +134,8 @@ sed -e "s/%APPVERSION%/$version/" \
 	< share/WinGit/install.iss > $TMPDIR/install.iss &&
 cp share/WinGit/*.inc.iss $TMPDIR &&
 echo "Launching Inno Setup compiler ..." &&
-(share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" -q > /tmp/install.out;
+(share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" > /tmp/install.out;
  echo $? > /tmp/install.status) &&
-(grep -Ev "\s*Reading|\s*Compressing" < /tmp/install.out;
- test 0 = "$(cat /tmp/install.status)") &&
+(test 0 = "$(cat /tmp/install.status)") &&
 git tag -a -m "Git for Windows $1" Git-$1 &&
 echo "Installer is available as $HOME/Git-$version.exe"
