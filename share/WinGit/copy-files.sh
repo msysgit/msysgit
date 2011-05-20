@@ -70,7 +70,7 @@ mkdir etc &&
 if test -z "$DONT_REMOVE_BUILTINS"
 then
 	md5sum {bin,libexec/git-core}/git-*.exe libexec/git-core/git.exe |
-	sed -n "s/^$gitmd5 \\*//p" > etc/fileList-builtins.txt &&
+	sed -n -r "s/^$gitmd5\s+\*?(.*)/\1/p" > etc/fileList-builtins.txt &&
 	rm $(cat etc/fileList-builtins.txt)
 fi &&
 (cd $MSYSGITROOT/mingw && tar cf - \
