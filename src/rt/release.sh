@@ -86,6 +86,13 @@ release_bash() {
 	(export MSYSTEM=MSYS &&
 	 export PATH=/bin:$PATH &&
 	 cd packages/bash &&
+	 case "$(git config --get --bool core.autocrlf)" in
+	 true)
+		git config core.autocrlf false &&
+		git read-tree HEAD &&
+		git stash
+		;;
+	 esac &&
 	 (test -d bld || mkdir bld) &&
 	 cd bld &&
 	 BASH=bash.exe &&
