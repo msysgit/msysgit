@@ -93,5 +93,6 @@ cp /share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< /etc/profile > etc/profile &&
 cp /share/resources/git.ico etc/ &&
+(for exe in $(find -iname \*.exe); do if fgrep -q urn:schemas-microsoft-com:asm.v "$exe"; then :; else cp /share/WinGit/asInvoker.manifest "$exe".manifest; fi; done) &&
 find bin libexec -iname \*.exe -o -iname \*.dll | sort > etc/fileList-bindimage.txt ||
 exit 1
