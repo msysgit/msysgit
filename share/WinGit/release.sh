@@ -134,7 +134,13 @@ sed -e "s/%APPVERSION%/$version/" \
 	< share/WinGit/install.iss > $TMPDIR/install.iss &&
 cp share/WinGit/*.inc.iss $TMPDIR &&
 echo "Launching Inno Setup compiler ..." &&
-(cd $TMPDIR; $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss > /tmp/install.out;
+(cd $TMPDIR &&
+ if test -x $MSYSGITROOT/share/InnoSetup/ISCC.exe
+ then
+	 $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
+ else
+	 wine $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
+ fi > /tmp/install.out &&
  echo $? > /tmp/install.status) &&
 (test 0 = "$(cat /tmp/install.status)") &&
 git tag -a -m "Git for Windows $1" Git-$1 &&
