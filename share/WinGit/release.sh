@@ -149,4 +149,4 @@ echo "Launching Inno Setup compiler ..." &&
  echo $? > /tmp/install.status) &&
 (test 0 = "$(cat /tmp/install.status)") &&
 git tag -a -m "Git for Windows $1" Git-$1 &&
-echo "Installer is available as $HOME/Git-$version.exe"
+echo "Installer is available as $(tail -n 1 /tmp/install.out)"
