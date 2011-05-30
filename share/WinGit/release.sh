@@ -139,6 +139,11 @@ echo "Launching Inno Setup compiler ..." &&
  then
 	 $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
  else
+	 case $(wine --version) in
+	 wine-0*|wine-1.[012]*|wine-1.3.[0-9]|wine-1.3.[0-9]-*|wine-1.3.1[0-4]|wine-1.3.1[0-4]-*)
+		echo "You need at least WINE version 1.3.15" >&2 &&
+		exit 1
+	 esac &&
 	 wine $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
  fi > /tmp/install.out &&
  echo $? > /tmp/install.status) &&
