@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 force=
 do_compile=t
@@ -25,6 +25,14 @@ test -z "$1" && {
 
 version=$1
 
+# change directory to msysGit root
+SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
+MSYSGITROOT="$(cd $SCRIPTDIR/../../ && pwd | sed 's/\/$//')/."
+cd $MSYSGITROOT || {
+	echo "Could not change directory to msysGit root" >&2
+	exit 1
+}
+
 test -z "$force" && {
 	die () {
 		echo "$*" >&2
@@ -32,13 +40,12 @@ test -z "$force" && {
 		exit 1
 	}
 
-	(cd /git &&
+	(cd git &&
 	 git update-index --refresh &&
 	 git diff-files --quiet &&
 	 git diff-index --cached HEAD --) ||
 	die "Git submodule has dirty files"
-	(cd / &&
-	 git update-index --refresh &&
+	(git update-index --refresh &&
 	 git diff-files --quiet &&
 	 git diff-index --cached HEAD --) ||
 	die "msysGit super project not up-to-date"
@@ -56,18 +63,17 @@ create_msysgit_tag () {
 
 # compile everything needed for standard setup
 test "$do_compile" && {
-	wordpad /share/WinGit/ReleaseNotes.rtf && {
-		(cd / &&
-		 # create a commit if ReleaseNotes changed
-		 if test ! -z "$(git diff /share/WinGit/ReleaseNotes.rtf)"
+	wordpad share/WinGit/ReleaseNotes.rtf && {
+		( # create a commit if ReleaseNotes changed
+		 if test ! -z "$(git diff share/WinGit/ReleaseNotes.rtf)"
 		 then
-			git add /share/WinGit/ReleaseNotes.rtf &&
+			git add share/WinGit/ReleaseNotes.rtf &&
 			git commit -m "Git for Windows $version"
 		 fi) &&
-		(cd /git &&
+		(cd git &&
 		 create_msysgit_tag $version &&
 		 make install) &&
-		(cd /src/git-cheetah/explorer/ && make)
+		(cd src/git-cheetah/explorer/ && make)
 	} || exit 1
 }
 
@@ -78,15 +84,15 @@ test -z "$force" && {
 		exit 1
 	}
 
-	(cd /git &&
+	(cd git &&
 	 git update-index --refresh &&
 	 git diff-files --quiet &&
 	 git diff-index --cached HEAD --) ||
 	die "Git submodule has dirty files"
-	(cd /git &&
+	(cd git &&
 	 test git.exe = $((printf 'git.exe\0'; git ls-files -z) | xargs --null ls -t 2>/dev/null| head -1)) ||
 	die "Git's git.exe is not up-to-date (run 'cd /git && make' to fix)"
-	for f in /bin/git* /libexec/git-core/git*
+	for f in bin/git* libexec/git-core/git*
 	do
 		case "$f" in
 		*.manifest)
@@ -105,15 +111,14 @@ test -z "$force" && {
 			basename=$(basename "$f")
 			;;
 		esac
-		cmp "$f" "/git/$basename" ||
+		cmp "$f" "git/$basename" ||
 		die "Installed Git disagrees with contents of /git/ ($f)"
 	done
-	(cd / &&
-	 git update-index --refresh &&
+	(git update-index --refresh &&
 	 git diff-files --quiet &&
 	 git diff-index --cached HEAD --) ||
 	die "msysGit super project not up-to-date"
-	(cd /git &&
+	(cd git &&
 	 test ! -z "$(git tag --contains HEAD)") ||
 	die "Git's HEAD is untagged"
 }
@@ -121,17 +126,27 @@ test -z "$force" && {
 TMPDIR=/tmp/WinGit
 unset DONT_REMOVE_BUILTINS
 
-/share/WinGit/copy-files.sh $TMPDIR &&
+$MSYSGITROOT/share/WinGit/copy-files.sh $TMPDIR &&
 sed -e '/share\/msysGit/d' -e "s/msysGit/Git (version $version)/" \
-	< /etc/motd > $TMPDIR/etc/motd &&
-cp /share/resources/gpl-2.0.rtf /share/resources/git.bmp /share/resources/gitsmall.bmp $TMPDIR &&
+	< etc/motd > $TMPDIR/etc/motd &&
+cp share/resources/gpl-2.0.rtf share/resources/git.bmp share/resources/gitsmall.bmp $TMPDIR &&
 sed -e "s/%APPVERSION%/$version/" \
-	< /share/WinGit/install.iss > $TMPDIR/install.iss &&
-cp /share/WinGit/*.inc.iss $TMPDIR &&
+	< share/WinGit/install.iss > $TMPDIR/install.iss &&
+cp share/WinGit/*.inc.iss $TMPDIR &&
 echo "Launching Inno Setup compiler ..." &&
-(/share/InnoSetup/ISCC.exe "$TMPDIR/install.iss" -q > /tmp/install.out;
+(cd $TMPDIR &&
+ if test -x $MSYSGITROOT/share/InnoSetup/ISCC.exe
+ then
+	 $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
+ else
+	 case $(wine --version) in
+	 wine-0*|wine-1.[012]*|wine-1.3.[0-9]|wine-1.3.[0-9]-*|wine-1.3.1[0-4]|wine-1.3.1[0-4]-*)
+		echo "You need at least WINE version 1.3.15" >&2 &&
+		exit 1
+	 esac &&
+	 wine $MSYSGITROOT/share/InnoSetup/ISCC.exe install.iss
+ fi > /tmp/install.out &&
  echo $? > /tmp/install.status) &&
-(grep -Ev "\s*Reading|\s*Compressing" < /tmp/install.out;
- test 0 = "$(cat /tmp/install.status)") &&
-(cd / && git tag -a -m "Git for Windows $1" Git-$1) &&
-echo "Installer is available as $USERPROFILE/Git-$version.exe"
+(test 0 = "$(cat /tmp/install.status)") &&
+git tag -a -m "Git for Windows $1" Git-$1 &&
+echo "Installer is available as $(tail -n 1 /tmp/install.out)"
