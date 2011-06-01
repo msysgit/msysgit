@@ -71,7 +71,7 @@ exec "$(git var GIT_EDITOR)" "\$@"
 EOF
 	TO_SHA1=$(git rev-parse --short $TO) &&
 	chmod a+x "$TMP_EDITOR" &&
-	if GIT_EDITOR="$TMP_EDITOR" git rebase -i $MERGE --onto $TO
+	if GIT_EDITOR="$TMP_EDITOR" git rebase -i --onto $TO $MERGE
 	then
 		git merge -s ours -m "Rebasing merge to $TO ($TO_SHA1)" \
 			$ORIG_HEAD
