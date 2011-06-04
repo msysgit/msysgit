@@ -88,5 +88,5 @@ EOF
 	fi
 
 else
-	git rebase -i $TO
+	git rebase --autosquash -i $TO
 fi
