@@ -1,0 +1,705 @@
+From 7ebac743dd92d54f1ecf770c00404382c0740e4b Mon Sep 17 00:00:00 2001
+From: Karsten Blees <blees@dcon.de>
+Date: Wed, 20 Jul 2011 20:53:33 +0200
+Subject: [PATCH] msys.dll: basic Unicode support
+
+The msys.dll currently uses Windows' *A APIs, i.e. all strings are in the
+default Windows ANSI encoding, which unfortunately depends on the installed
+Windows version and system settings. This leads to a bunch of problems
+when dealing with non-ASCII file names, scripts and environment variables
+(including the infamous %HOME%-directory, which features at least five bug
+reports on the msysgit issue tracker and some more on the mailing list).
+
+Luckily, Windows natively supports Unicode, and cramming Windows' native
+UTF-16 strings into UTF-8 encoded char* strings that are compatible with
+the POSIX APIs exposed by msys.dll is not that difficult.
+
+This patch replaces the Win32 *A APIs used by msys.dll with wrappers that
+accept and return UTF-8 encoded char* strings and delegate to the Windows
+native *W (UTF-16) APIs instead. API functions that only take strings as
+input can mostly be handled by a set of simple macros. The rest usually
+require just a few lines of code each.
+
+The UTF-8 to UTF-16 conversion function (ported from the msysgit Unicode
+patch) tolerates invalid UTF-8, so that it doesn't fail with e.g. legacy
+encoded shell scripts.
+
+Console output needs a bit more work than just wrapping APIs. First, we
+need to replace WriteFile (which expects GetConsoleOutputCP() encoded
+bytes) with WriteConsoleOutputW. Screen position must be tracked based on
+printed wchar_t characters instead of UTF-8 bytes. Finally, strings passed
+to the [f]write APIs may be split anywhere, even in the middle of a UTF-8
+byte sequence. Use a small buffer to store incomplete UTF-8 byte sequences
+until we get to print the remaining bytes.
+
+
+Still TODO:
+- handle console input
+- add wrappers for dynamically loaded *A functions (see autoload.cc 310ff)
+
+Signed-off-by: Karsten Blees <blees@dcon.de>
+---
+ msys/rt/src/winsup/cygwin/Makefile.in         |    2 +-
+ msys/rt/src/winsup/cygwin/fhandler.h          |    1 +
+ msys/rt/src/winsup/cygwin/fhandler_console.cc |   88 +++--
+ msys/rt/src/winsup/cygwin/unicode.c           |  443 +++++++++++++++++++++++++
+ msys/rt/src/winsup/cygwin/unicode.h           |   21 ++
+ 5 files changed, 521 insertions(+), 34 deletions(-)
+ create mode 100644 msys/rt/src/winsup/cygwin/unicode.c
+ create mode 100644 msys/rt/src/winsup/cygwin/unicode.h
+
+diff --git a/msys/rt/src/winsup/cygwin/Makefile.in b/msys/rt/src/winsup/cygwin/Makefile.in
+index ef0ae9e..c312fb4 100644
+--- a/msys/rt/src/winsup/cygwin/Makefile.in
++++ b/msys/rt/src/winsup/cygwin/Makefile.in
+@@ -129,7 +129,7 @@ DLL_OFILES:=assert.o autoload.o \
+ 	sched.o sec_acl.o sec_helper.o security.o select.o shared.o shortcut.o \
+ 	signal.o sigproc.o \
+ 	smallprint.o spawn.o strace.o strsep.o sync.o syscalls.o sysconf.o \
+-	syslog.o termios.o thread.o times.o tty.o uinfo.o uname.o wait.o \
++	syslog.o termios.o thread.o times.o tty.o uinfo.o uname.o unicode.o wait.o \
+ 	window.o \
+ 	$(EXTRA_DLL_OFILES) $(EXTRA_OFILES) $(MALLOC_OFILES) $(MT_SAFE_OBJECTS) 
+ 
+diff --git a/msys/rt/src/winsup/cygwin/fhandler.h b/msys/rt/src/winsup/cygwin/fhandler.h
+index ea698d6..378235a 100644
+--- a/msys/rt/src/winsup/cygwin/fhandler.h
++++ b/msys/rt/src/winsup/cygwin/fhandler.h
+@@ -685,6 +685,7 @@ private:
+   BOOL saw_question_mark;
+ 
+   char my_title_buf [TITLESIZE + 1];
++  unsigned char utf_buf[4], utf_len;
+ 
+   WORD current_win32_attr;
+   ansi_intensity intensity;
+diff --git a/msys/rt/src/winsup/cygwin/fhandler_console.cc b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+index 64ae840..233bf09 100644
+--- a/msys/rt/src/winsup/cygwin/fhandler_console.cc
++++ b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+@@ -30,6 +30,7 @@ details. */
+ #include "sigproc.h"
+ #include "pinfo.h"
+ #include "shared_info.h"
++#include "unicode.h"
+ 
+ #define CONVERT_LIMIT 4096
+ 
+@@ -539,9 +540,9 @@ fhandler_console::scroll_screen (int x1, int y1, int x2, int y2, int xn, int yn)
+     dest.Y = info.winTop;
+   else
+     dest.Y = yn > 0 ? yn : info.winBottom;
+-  fill.Char.AsciiChar = ' ';
++  fill.Char.UnicodeChar = L' ';
+   fill.Attributes = current_win32_attr;
+-  ScrollConsoleScreenBuffer (get_output_handle (), &sr1, &sr2, dest, &fill);
++  ScrollConsoleScreenBufferW (get_output_handle (), &sr1, &sr2, dest, &fill);
+ 
+   /* ScrollConsoleScreenBuffer on Windows 95 is buggy - when scroll distance
+    * is more than half of screen, filling doesn't work as expected */
+@@ -927,6 +928,7 @@ fhandler_console::fhandler_console (const char *name) :
+     meta_mask |= RIGHT_ALT_PRESSED;
+ #endif
+ 
++  utf_len = 0;
+ }
+ 
+ #define FOREGROUND_ATTR_MASK (FOREGROUND_RED | FOREGROUND_GREEN | \
+@@ -1008,7 +1010,7 @@ fhandler_console::clear_screen (int x1, int y1, int x2, int y2)
+       tlc.X = x2;
+       tlc.Y = y2;
+     }
+-  FillConsoleOutputCharacterA (get_output_handle (), ' ',
++  FillConsoleOutputCharacterW (get_output_handle (), L' ',
+ 			       num,
+ 			       tlc,
+ 			       &done);
+@@ -1244,7 +1246,7 @@ fhandler_console::char_command (char c)
+ 	      savebuf = (PCHAR_INFO) cmalloc (HEAP_1_BUF, sizeof (CHAR_INFO) *
+ 					     savebufsiz.X * savebufsiz.Y);
+ 
+-	      ReadConsoleOutputA (get_output_handle (), savebuf,
++	      ReadConsoleOutputW (get_output_handle (), savebuf,
+ 				  savebufsiz, cob, &now.srWindow);
+ 	    }
+ 	  else          /* restore */
+@@ -1258,7 +1260,7 @@ fhandler_console::char_command (char c)
+ 	      if (!savebuf)
+ 		break;
+ 
+-	      WriteConsoleOutputA (get_output_handle (), savebuf,
++	      WriteConsoleOutputW (get_output_handle (), savebuf,
+ 				   savebufsiz, cob, &now.srWindow);
+ 
+ 	      cfree (savebuf);
+@@ -1455,35 +1457,55 @@ fhandler_console::write_normal (const unsigned char *src,
+   if (found != src)
+     {
+       DWORD len = found - src;
+-      do
+-	{
+-	  DWORD buf_len;
+-	  char buf[CONVERT_LIMIT];
+-	  done = buf_len = min (sizeof (buf), len);
+-	  if (!str_to_con (buf, (const char *) src, buf_len))
+-	    {
+-	      debug_printf ("conversion error, handle %p", get_output_handle ());
+-	      __seterrno ();
+-	      return 0;
+-	    }
++		UCHAR *buf = (UCHAR*) src;
++		// unstash incomplete utf-8 chars from the last call
++		if (utf_len) {
++			buf = (UCHAR*) alloca(len + utf_len);
++			memcpy(buf, utf_buf, utf_len);
++			memcpy(buf + utf_len, src, len);
++			len += utf_len;
++			utf_len = 0;
++		}
++		// at end of string, stash incomplete utf-8 chars
++		if (found == end && buf[len - 1] & 0x80) {
++			// last char is lead-byte of 2-, 3- or 4-byte sequence
++			if (buf[len - 1] >= 0xc2 && buf[len - 1] < 0xf5)
++				utf_len = 1;
++			// or second-last is lead-byte of 3- or 4-byte sequence
++			else if (len > 1 && buf[len - 2] >= 0xe0 && buf[len - 2] < 0xf5
++					&& (buf[len - 1] & 0xc0) == 0x80)
++				utf_len = 2;
++			// or third-last is lead-byte of 4-byte sequence
++			else if (len > 2 && buf[len - 3] >= 0xf0 && buf[len - 3] < 0xf5
++					&& (buf[len - 1] & 0xc0) == 0x80 && (buf[len - 2] & 0xc0)
++					== 0x80)
++				utf_len = 3;
++			else
++				utf_len = 0;
++
++			if (utf_len) {
++				memcpy(utf_buf, buf + len - utf_len, utf_len);
++				len -= utf_len;
++			}
++		}
+ 
+-	  if (insert_mode)
+-	    {
+-	      int x, y;
+-	      cursor_get (&x, &y);
+-	      scroll_screen (x, y, -1, y, x + buf_len, y);
+-	    }
++		// convert to wide char
++		int wlen = 2 * len + 1;
++		WCHAR *wbuf = (WCHAR*) alloca(wlen * sizeof(wchar_t));
++		wlen = utftowcsn(wbuf, (const char*) buf, wlen, len);
+ 
+-	  if (!WriteFile (get_output_handle (), buf, buf_len, &done, 0))
+-	    {
+-	      debug_printf ("write failed, handle %p", get_output_handle ());
+-	      __seterrno ();
+-	      return 0;
+-	    }
+-	  len -= done;
+-	  src += done;
+-	}
+-      while (len > 0);
++		if (insert_mode) {
++			int x, y;
++			cursor_get(&x, &y);
++			scroll_screen(x, y, -1, y, x + wlen, y);
++		}
++
++		if (!WriteConsoleW(get_output_handle(), wbuf, wlen, &done, 0)) {
++			debug_printf ("write failed, handle %p", get_output_handle ());
++			__seterrno ();
++			return 0;
++		}
++		src = found;
+     }
+ 
+   if (src < end)
+@@ -1507,7 +1529,7 @@ fhandler_console::write_normal (const unsigned char *src,
+ 		  y--;
+ 		}
+ 	      else
+-		WriteFile (get_output_handle (), "\n", 1, &done, 0);
++		WriteConsoleW (get_output_handle (), L"\n", 1, &done, 0);
+ 	    }
+ 	  if (!get_w_binary ())
+ 	    x = 0;
+diff --git a/msys/rt/src/winsup/cygwin/unicode.c b/msys/rt/src/winsup/cygwin/unicode.c
+new file mode 100644
+index 0000000..fcb7755
+--- /dev/null
++++ b/msys/rt/src/winsup/cygwin/unicode.c
+@@ -0,0 +1,443 @@
++
++#include "winsup.h"
++#include "unicode.h"
++#include <stdlib.h>
++#include <limits.h>
++#include <windows.h>
++#include <wchar.h>
++
++#define A(n) LPCSTR a##n
++#define W(n) LPWSTR w##n = NULL;
++
++// convert LPCSTR utf to LPCWSTR wcs, allocating memory on the stack
++#define A2W(utf,wcs) if (utf) { \
++	int l = 2 * strlen(utf) + 1; \
++	(wcs) = alloca(l * sizeof(wchar_t)); \
++	utftowcs((wcs), (utf), l); \
++} else { \
++	(wcs) = NULL; \
++}
++
++// convert parameter "a#n" to local variable "w#n"
++#define A2VW(n) A2W(a##n,w##n)
++
++// wrapper macros for Win32 *A functions with LPCSTR input parameters
++#define WRAP_A(r,name) r WINAPI name##A(A(1)) { W(1) A2VW(1) return name##W(w1); }
++#define WRAP_AX(r,name,t2) r WINAPI name##A(A(1),t2 x2) { W(1) A2VW(1) return name##W(w1,x2); }
++#define WRAP_AX2(r,name,t2,t3) r WINAPI name##A(A(1),t2 x2,t3 x3) { W(1) A2VW(1) return name##W(w1,x2,x3); }
++#define WRAP_AX3(r,name,t2,t3,t4) r WINAPI name##A(A(1),t2 x2,t3 x3,t4 x4) { W(1) A2VW(1) return name##W(w1,x2,x3,x4); }
++#define WRAP_AX4(r,name,t2,t3,t4,t5) r WINAPI name##A(A(1),t2 x2,t3 x3,t4 x4,t5 x5) { W(1) A2VW(1) return name##W(w1,x2,x3,x4,x5); }
++#define WRAP_AX6(r,name,t2,t3,t4,t5,t6,t7) r WINAPI name##A(A(1),t2 x2,t3 x3,t4 x4,t5 x5,t6 x6,t7 x7) { W(1) A2VW(1) return name##W(w1,x2,x3,x4,x5,x6,x7); }
++#define WRAP_A2(r,name) r WINAPI name##A(A(1),A(2)) { W(1) W(2) A2VW(1) A2VW(2) return name##W(w1,w2); }
++#define WRAP_A2X(r,name,t3) r WINAPI name##A(A(1),A(2),t3 x3) { W(1) W(2) A2VW(1) A2VW(2) return name##W(w1,w2,x3); }
++#define WRAP_X2A(r,name,t1,t2) r WINAPI name##A(t1 x1,t2 x2,A(3)) { W(3) A2VW(3) return name##W(x1,x2,w3); }
++#define WRAP_X3A(r,name,t1,t2,t3) r WINAPI name##A(t1 x1,t2 x2,t3 x3,A(4)) { W(4) A2VW(4) return name##W(x1,x2,x3,w4); }
++#define WRAP_X5A(r,name,t1,t2,t3,t4,t5) r WINAPI name##A(t1 x1,t2 x2,t3 x3,t4 x4,t5 x5,A(6)) { W(6) A2VW(6) return name##W(x1,x2,x3,x4,x5,w6); }
++
++
++// list of Win32 *A functions referenced by MSYS.DLL
++// most of these can be wrapped using above macros, the rest is implemented below
++
++WRAP_A2X(BOOL,CopyFile,BOOL)
++WRAP_AX(BOOL,CreateDirectory,LPSECURITY_ATTRIBUTES)
++WRAP_A2X(BOOL,CreateDirectoryEx,LPSECURITY_ATTRIBUTES)
++WRAP_X3A(HANDLE,CreateEvent,LPSECURITY_ATTRIBUTES,BOOL,BOOL)
++WRAP_AX6(HANDLE,CreateFile,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE)
++WRAP_X5A(HANDLE,CreateFileMapping,HANDLE,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD)
++WRAP_X2A(HANDLE,CreateMutex,LPSECURITY_ATTRIBUTES,BOOL)
++// BOOL WINAPI CreateProcessA(LPCSTR,LPSTR,LPSECURITY_ATTRIBUTES,LPSECURITY_ATTRIBUTES,BOOL,DWORD,PVOID,LPCSTR,LPSTARTUPINFOA,LPPROCESS_INFORMATION);
++WRAP_X3A(HANDLE,CreateSemaphore,LPSECURITY_ATTRIBUTES,LONG,LONG)
++WRAP_A(BOOL,DeleteFile)
++// DWORD WINAPI ExpandEnvironmentStringsA(LPCSTR,LPSTR,DWORD);
++WRAP_AX2(HANDLE,FindFirstChangeNotification,BOOL,DWORD)
++// HANDLE WINAPI FindFirstFileA(LPCSTR,LPWIN32_FIND_DATAA);
++// BOOL WINAPI FindNextFileA(HANDLE,LPWIN32_FIND_DATAA);
++// BOOL WINAPI FreeEnvironmentStringsA(LPSTR a);
++// LPSTR WINAPI GetCommandLineA(VOID);
++// BOOL WINAPI GetComputerNameA(LPSTR,PDWORD);
++// DWORD WINAPI GetConsoleTitleA(LPSTR,DWORD);
++// DWORD WINAPI GetCurrentDirectoryA(DWORD,LPSTR);
++WRAP_AX4(BOOL,GetDiskFreeSpace,PDWORD,PDWORD,PDWORD,PDWORD)
++WRAP_AX3(BOOL,GetDiskFreeSpaceEx,PULARGE_INTEGER,PULARGE_INTEGER,PULARGE_INTEGER)
++WRAP_A(UINT,GetDriveType)
++// LPSTR WINAPI GetEnvironmentStringsA(void);
++// DWORD WINAPI GetEnvironmentVariableA(LPCSTR,LPSTR,DWORD);
++WRAP_A(DWORD,GetFileAttributes);
++// DWORD WINAPI GetFullPathNameA(LPCSTR,DWORD,LPSTR,LPSTR*);
++// DWORD WINAPI GetModuleFileNameA(HINSTANCE,LPSTR,DWORD);
++WRAP_A(HMODULE,GetModuleHandle)
++// VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA);
++// UINT WINAPI GetSystemDirectoryA(LPSTR,UINT);
++// BOOL WINAPI GetVersionExA(LPOSVERSIONINFOA);
++// BOOL WINAPI GetVolumeInformationA(LPCSTR,LPSTR,DWORD,PDWORD,PDWORD,PDWORD,LPSTR,DWORD);
++WRAP_AX(BOOL,IsBadStringPtr,UINT)
++WRAP_A(HINSTANCE,LoadLibrary)
++WRAP_AX2(HINSTANCE,LoadLibraryEx,HANDLE,DWORD)
++WRAP_A2(BOOL,MoveFile)
++WRAP_A2X(BOOL,MoveFileEx,DWORD)
++WRAP_X2A(HANDLE,OpenEvent,DWORD,BOOL)
++WRAP_X2A(HANDLE,OpenFileMapping,DWORD,BOOL)
++WRAP_X2A(HANDLE,OpenMutex,DWORD,BOOL)
++WRAP_X2A(HANDLE,OpenSemaphore,DWORD,BOOL)
++// void WINAPI OutputDebugStringA(LPCSTR);
++// TODO: BOOL WINAPI PeekConsoleInputA(HANDLE,PINPUT_RECORD,DWORD,PDWORD);
++// TODO: BOOL WINAPI ReadConsoleInputA(HANDLE,PINPUT_RECORD,DWORD,PDWORD);
++WRAP_A(BOOL,RemoveDirectory)
++WRAP_A(BOOL,SetConsoleTitle);
++WRAP_A(BOOL,SetCurrentDirectory)
++WRAP_A2(BOOL,SetEnvironmentVariable)
++WRAP_AX(BOOL,SetFileAttributes,DWORD)
++
++
++BOOL WINAPI CreateProcessA(LPCSTR a1, LPSTR a2, LPSECURITY_ATTRIBUTES x3,
++		LPSECURITY_ATTRIBUTES x4, BOOL x5, DWORD flags, PVOID env, LPCSTR a8,
++		LPSTARTUPINFOA asi, LPPROCESS_INFORMATION x10)
++{
++	W(1) W(2) W(8)
++	LPWSTR wenv = NULL;
++	STARTUPINFOW *wsi = NULL;
++	A2VW(1) A2VW(2) A2VW(8)
++	if (env) {
++		if (flags & CREATE_UNICODE_ENVIRONMENT) {
++			wenv = env;
++		} else {
++			LPCSTR aenv = env;
++			int l = 0, wl;
++			while (aenv[l])
++				l += strlen(&aenv[l]) + 1;
++			l++;
++			wl = 2 * l + 1;
++			wenv = alloca(wl * sizeof(wchar_t));
++			utftowcsn(wenv, aenv, wl, l);
++			flags |= CREATE_UNICODE_ENVIRONMENT;
++		}
++	}
++	if (asi) {
++		wsi = alloca(asi->cb);
++		memcpy(wsi, asi, asi->cb);
++		A2W(asi->lpDesktop,wsi->lpDesktop)
++		A2W(asi->lpTitle,wsi->lpTitle)
++	}
++	return CreateProcessW(w1, w2, x3, x4, x5, flags, wenv, w8, wsi, x10);
++}
++
++DWORD WINAPI ExpandEnvironmentStringsA(LPCSTR a1, LPSTR a2, DWORD x3)
++{
++	W(1) A2VW(1)
++	if (a2 && x3) {
++		LPWSTR w2 = alloca(x3 * sizeof(wchar_t));
++		DWORD r = ExpandEnvironmentStringsW(w1, w2, x3);
++		if (!r || (r = wcstoutf(a2, w2, x3)) >= 0)
++			return r;
++	}
++	return 3 * ExpandEnvironmentStringsW(w1, NULL, 0);
++}
++
++HANDLE WINAPI FindFirstFileA(LPCSTR a1, LPWIN32_FIND_DATAA a2)
++{
++	W(1)
++	WIN32_FIND_DATAW w2;
++	HANDLE r;
++	A2VW(1)
++	r = FindFirstFileW(w1, &w2);
++	if (r == INVALID_HANDLE_VALUE)
++		return r;
++	if (wcstoutf(a2->cFileName, w2.cFileName, MAX_PATH) < 0 || wcstoutf(
++			a2->cAlternateFileName, w2.cAlternateFileName, MAX_PATH) < 0) {
++		FindClose(r);
++		return INVALID_HANDLE_VALUE;
++	}
++	return r;
++}
++
++BOOL WINAPI FindNextFileA(HANDLE x1, LPWIN32_FIND_DATAA a2)
++{
++	WIN32_FIND_DATAW w2;
++	if (!FindNextFileW(x1, &w2))
++		return FALSE;
++	if (wcstoutf(a2->cFileName, w2.cFileName, MAX_PATH) < 0 || wcstoutf(
++			a2->cAlternateFileName, w2.cAlternateFileName, MAX_PATH) < 0)
++		return FALSE;
++	return TRUE;
++}
++
++BOOL WINAPI FreeEnvironmentStringsA(LPSTR a1)
++{
++	LocalFree((HLOCAL) a1);
++	return TRUE;
++}
++
++static LPSTR cmdline = NULL;
++
++LPSTR WINAPI GetCommandLineA()
++{
++	if (!cmdline) {
++		LPWSTR w = GetCommandLineW();
++		int len = 3 * wcslen(w) + 1;
++		cmdline = LocalAlloc(0, len);
++		wcstoutf(cmdline, w, len);
++	}
++	return cmdline;
++}
++
++BOOL WINAPI GetComputerNameA(LPSTR a1, PDWORD x2)
++{
++	DWORD r = (*x2);
++	LPWSTR w1 = alloca(r * sizeof(wchar_t));
++	if (GetComputerNameW(w1, &r)) {
++		if ((r = wcstoutf(a1, w1, (*x2))) >= 0) {
++			(*x2) = r;
++			return TRUE;
++		}
++	}
++	(*x2) = 3 * r;
++	return FALSE;
++}
++
++DWORD WINAPI GetConsoleTitleA(LPSTR a1, DWORD x2)
++{
++	// TODO truncate string if buffer is too small
++	LPWSTR w1 = alloca(x2 * sizeof(wchar_t));
++	DWORD r = GetConsoleTitleW(w1, x2);
++	if (!r || (r = wcstoutf(a1, w1, x2)) >= 0)
++		return r;
++	return 0;
++}
++
++DWORD WINAPI GetCurrentDirectoryA(DWORD x1, LPSTR a2)
++{
++	if (x1 && a2) {
++		LPWSTR w2 = alloca(x1 * sizeof(wchar_t));
++		DWORD r = GetCurrentDirectoryW(x1, w2);
++		if (!r || (r = wcstoutf(a2, w2, x1)) >= 0)
++			return r;
++	}
++	return 3 * GetCurrentDirectoryW(0, NULL);
++}
++
++#ifdef GetEnvironmentStringsA
++#undef GetEnvironmentStringsA
++#endif
++
++LPSTR WINAPI GetEnvironmentStrings()
++{
++	return GetEnvironmentStringsA();
++}
++
++LPSTR WINAPI GetEnvironmentStringsA()
++{
++	LPWSTR w = GetEnvironmentStringsW();
++	int wlen = 0, alen;
++	LPSTR a;
++	if (!w)
++		return NULL;
++
++	// get length of environment (\0 separates entries, \0\0 terminates)
++	while (w[wlen])
++		wlen += wcslen(&w[wlen]) + 1;
++	wlen++;
++
++	// cannot use wcstoutf because of \0 chars in the string
++	alen = WideCharToMultiByte(CP_UTF8, 0, w, wlen, NULL, 0, NULL, NULL);
++	a = LocalAlloc(0, alen);
++	WideCharToMultiByte(CP_UTF8, 0, w, wlen, a, alen, NULL, NULL);
++
++	FreeEnvironmentStringsW(w);
++	return a;
++}
++
++DWORD WINAPI GetEnvironmentVariableA(LPCSTR a1, LPSTR a2, DWORD x3)
++{
++	W(1) A2VW(1)
++	if (a2 && x3) {
++		LPWSTR w2 = alloca(x3 * sizeof(wchar_t));
++		DWORD r = GetEnvironmentVariableW(w1, w2, x3);
++		if (!r || (r = wcstoutf(a2, w2, x3)) >= 0)
++			return r;
++	}
++	return 3 * GetEnvironmentVariableW(w1, NULL, 0);
++}
++
++DWORD WINAPI GetFullPathNameA(LPCSTR a1, DWORD x2, LPSTR a3, LPSTR *a4)
++{
++	W(1) A2VW(1)
++	if (a3 && x2) {
++		LPWSTR w3 = alloca(x2 * sizeof(wchar_t));
++		LPWSTR w4 = NULL;
++		DWORD r = GetFullPathNameW(w1, x2, w3, &w4);
++		if (!r)
++			return 0;
++		if ((r = wcstoutf(a3, w3, x2)) >= 0) {
++			if (*w4) {
++				*a4 = a3 + r;
++				while (*((*a4) - 1) != '\\' && *((*a4) - 1) != '/')
++					(*a4)--;
++			}
++			return r;
++		}
++	}
++	return 3 * GetFullPathNameW(w1, 0, NULL, NULL);
++}
++
++DWORD WINAPI GetModuleFileNameA(HINSTANCE x1, LPSTR a2, DWORD x3)
++{
++	// TODO truncate string if buffer is too small
++	LPWSTR w2 = alloca(x3 * sizeof(wchar_t));
++	DWORD r = GetModuleFileNameW(x1, w2, x3);
++	if (!r || (r = wcstoutf(a2, w2, x3)) >= 0)
++		return r;
++	return 0;
++}
++
++static LPSTARTUPINFOA startupinfo = NULL;
++
++VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA a1)
++{
++	if (!startupinfo) {
++		STARTUPINFOW siw;
++		GetStartupInfoW(&siw);
++		startupinfo = LocalAlloc(0, sizeof(STARTUPINFOA));
++		memcpy(startupinfo, &siw, sizeof(STARTUPINFOA));
++		if (siw.lpTitle) {
++			DWORD len = 3 * wcslen(siw.lpTitle) + 1;
++			startupinfo->lpTitle = LocalAlloc(0, len);
++			wcstoutf(startupinfo->lpTitle, siw.lpTitle, len);
++		}
++		if (siw.lpDesktop) {
++			DWORD len = 3 * wcslen(siw.lpDesktop) + 1;
++			startupinfo->lpDesktop = LocalAlloc(0, len);
++			wcstoutf(startupinfo->lpDesktop, siw.lpDesktop, len);
++		}
++	}
++	memcpy(a1, startupinfo, sizeof(STARTUPINFOA));
++}
++
++UINT WINAPI GetSystemDirectoryA(LPSTR a1, UINT x2)
++{
++	if (a1 && x2) {
++		LPWSTR w1 = alloca(x2 * sizeof(wchar_t));
++		UINT r = GetSystemDirectoryW(w1, x2);
++		if (!r || (r = wcstoutf(a1, w1, x2)) >= 0)
++			return r;
++	}
++	return 3 * GetSystemDirectoryW(NULL, 0);
++}
++
++BOOL WINAPI GetVersionExA(LPOSVERSIONINFOA a1)
++{
++	OSVERSIONINFOW w1;
++	w1.dwOSVersionInfoSize = sizeof(w1);
++	if (!GetVersionExW(&w1))
++		return FALSE;
++	memcpy(a1, &w1, a1->dwOSVersionInfoSize);
++	wcstoutf(a1->szCSDVersion, w1.szCSDVersion, sizeof(a1->szCSDVersion));
++	return TRUE;
++}
++
++BOOL WINAPI GetVolumeInformationA(LPCSTR a1, LPSTR a2, DWORD x3, PDWORD x4,
++		PDWORD x5, PDWORD x6, LPSTR a7, DWORD x8)
++{
++	W(1)
++	WCHAR w2[MAX_PATH], w7[MAX_PATH];
++	A2VW(1)
++	if (!GetVolumeInformationW(w1, w2, MAX_PATH, x4, x5, x6, w7, MAX_PATH))
++		return FALSE;
++	if (a2 && wcstoutf(a2, w2, x3) < 0)
++		return FALSE;
++	if (a7 && wcstoutf(a7, w7, x8) < 0)
++		return FALSE;
++	return TRUE;
++}
++
++void WINAPI OutputDebugStringA(LPCSTR a1)
++{
++	W(1) A2VW(1)
++	OutputDebugStringW(w1);
++}
++
++// TODO: BOOL WINAPI PeekConsoleInputA(HANDLE,PINPUT_RECORD,DWORD,PDWORD);
++// TODO: BOOL WINAPI ReadConsoleInputA(HANDLE,PINPUT_RECORD,DWORD,PDWORD);
++
++
++
++int utftowcsn(wchar_t *wcs, const char *utfs, size_t wcslen, int utflen)
++{
++	int upos = 0, wpos = 0;
++	const unsigned char *utf = (const unsigned char*) utfs;
++	if (!utf || !wcs || wcslen < 1) {
++		SetLastError(ERROR_INSUFFICIENT_BUFFER);
++		return -1;
++	}
++	/* reserve space for \0 */
++	wcslen--;
++	if (utflen < 0)
++		utflen = INT_MAX;
++
++	while (upos < utflen) {
++		int c = utf[upos++];
++		if (utflen == INT_MAX && c == 0)
++			break;
++
++		if (wpos >= wcslen) {
++			wcs[wpos] = 0;
++			SetLastError(ERROR_INSUFFICIENT_BUFFER);
++			return -1;
++		}
++
++		if (c < 0x80) {
++			/* ASCII */
++			wcs[wpos++] = c;
++		} else if (c >= 0xc2 && c < 0xe0 && upos < utflen && (utf[upos] & 0xc0)
++				== 0x80) {
++			/* 2-byte utf-8 */
++			c = ((c & 0x1f) << 6);
++			c |= (utf[upos++] & 0x3f);
++			wcs[wpos++] = c;
++		} else if (c >= 0xe0 && c < 0xf0 && upos + 1 < utflen && !(c == 0xe0
++				&& utf[upos] < 0xa0) && /* over-long encoding */
++		(utf[upos] & 0xc0) == 0x80 && (utf[upos + 1] & 0xc0) == 0x80) {
++			/* 3-byte utf-8 */
++			c = ((c & 0x0f) << 12);
++			c |= ((utf[upos++] & 0x3f) << 6);
++			c |= (utf[upos++] & 0x3f);
++			wcs[wpos++] = c;
++		} else if (c >= 0xf0 && c < 0xf5 && upos + 2 < utflen && wpos + 1
++				< wcslen && !(c == 0xf0 && utf[upos] < 0x90) && /* over-long encoding */
++		!(c == 0xf4 && utf[upos] >= 0x90) && /* > \u10ffff */
++		(utf[upos] & 0xc0) == 0x80 && (utf[upos + 1] & 0xc0) == 0x80
++				&& (utf[upos + 2] & 0xc0) == 0x80) {
++			/* 4-byte utf-8: convert to \ud8xx \udcxx surrogate pair */
++			c = ((c & 0x07) << 18);
++			c |= ((utf[upos++] & 0x3f) << 12);
++			c |= ((utf[upos++] & 0x3f) << 6);
++			c |= (utf[upos++] & 0x3f);
++			c -= 0x10000;
++			wcs[wpos++] = 0xd800 | (c >> 10);
++			wcs[wpos++] = 0xdc00 | (c & 0x3ff);
++		} else if (c >= 0xa0) {
++			/* invalid utf-8 byte, printable unicode char: convert 1:1 */
++			wcs[wpos++] = c;
++		} else {
++			/* invalid utf-8 byte, non-printable unicode: convert to hex */
++			static const char *hex = "0123456789abcdef";
++			wcs[wpos++] = hex[c >> 4];
++			if (wpos < wcslen)
++				wcs[wpos++] = hex[c & 0x0f];
++		}
++	}
++	wcs[wpos] = 0;
++	return wpos;
++}
++
++int wcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
++{
++	if (!wcs || !utf || utflen < 1) {
++		SetLastError(ERROR_INVALID_PARAMETER);
++		return -1;
++	}
++	utflen = WideCharToMultiByte(CP_UTF8, 0, wcs, -1, utf, utflen, NULL, NULL);
++	if (utflen)
++		return utflen - 1;
++	SetLastError(ERROR_INSUFFICIENT_BUFFER);
++	return -1;
++}
+diff --git a/msys/rt/src/winsup/cygwin/unicode.h b/msys/rt/src/winsup/cygwin/unicode.h
+new file mode 100644
+index 0000000..30ff8ce
+--- /dev/null
++++ b/msys/rt/src/winsup/cygwin/unicode.h
+@@ -0,0 +1,21 @@
++#ifndef __UNICODE_H
++#define __UNICODE_H
++
++#include <wchar.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++int utftowcsn(wchar_t *wcs, const char *utf, size_t wcslen, int utflen);
++static inline int utftowcs(wchar_t *wcs, const char *utf, size_t wcslen)
++{
++	return utftowcsn(wcs, utf, wcslen, -1);
++}
++int wcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __UNICODE_H */
+-- 
+1.7.5.3810.gc7570.dirty
+
