@@ -31,13 +31,15 @@ test -d $DIR || {
 } || die "Could not check out vim"
 
 cd $DIR/src &&
+make -f Make_ming.mak clean &&
 make -f Make_ming.mak GUI=no vim.exe &&
+make -f Make_ming.mak GUI=yes gvim.exe &&
 INDEX=$(/share/msysGit/pre-install.sh) &&
 rm -rf /share/vim/vim[0-9]* &&
 VIM_VERSION=$(sed -n 's/.*VIM_VERSION_NODOT	"\(.*\)".*/\1/p' < version.h) &&
 SHARE=/share/vim/$VIM_VERSION &&
 cp -R ../runtime $SHARE &&
-cp vim.exe $SHARE/ &&
+cp gvim.exe vim.exe $SHARE/ &&
 cat > /bin/vi << EOF &&
 #!/bin/sh
 
@@ -45,6 +47,11 @@ exec $SHARE/vim "\$@"
 EOF
 rm -f /bin/vim.exe &&
 cp /bin/vi /bin/vim &&
+cat > /bin/gvim << EOF &&
+#!/bin/sh
+
+exec $SHARE/gvim "\$@"
+EOF
 /share/msysGit/post-install.sh $INDEX Install $VIM_VERSION || {
 	echo "Failed to install vi"
 	exit 1
