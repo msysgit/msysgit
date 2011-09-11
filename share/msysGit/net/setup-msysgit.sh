@@ -36,9 +36,8 @@ echo
 echo -------------------------------------------------------
 echo Fetching the latest MSys environment
 echo -------------------------------------------------------
-MSYSGIT_REPO_GIT=git://repo.or.cz/msysgit.git
-MSYSGIT_REPO_GIT_MOB=ssh://mob@repo.or.cz/srv/git/msysgit.git
-MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
+MSYSGIT_REPO_GIT=git://github.com/msysgit/msysgit
+MSYSGIT_REPO_HTTP=https://github.com/msysgit/msysgit.git
 
 # Multiply git.exe
 
@@ -48,6 +47,7 @@ do
 		"$INSTALL_PATH/installer-tmp/bin/git-$builtin.exe"
 done
 
+git config --system http.sslCAinfo /bin/curl-ca-bundle.crt
 git init &&
 git config core.autocrlf false &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
@@ -55,9 +55,6 @@ git config remote.origin.fetch \
 	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
 git config branch.@@MSYSGITBRANCH@@.remote origin &&
 git config branch.@@MSYSGITBRANCH@@.merge refs/heads/@@MSYSGITBRANCH@@ &&
-git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
-git config remote.mob.fetch +refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/mob &&
-git config remote.mob.push HEAD:mob &&
 
 USE_HTTP=
 git fetch || {
@@ -96,17 +93,16 @@ echo -------------------------------------------------------
 
 case "$USE_HTTP" in
 t)
-	GIT_REPO_URL=http://repo.or.cz/r/git.git/
+	GIT_REPO_URL=https://github.com/git/git.git
 	MINGW_REPO_URL=http://repo.or.cz/r/git/mingw.git/
-	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
+	MINGW4MSYSGIT_REPO_URL=https://github.com/msysgit/git.git
 ;;
 '')
-	GIT_REPO_URL=git://repo.or.cz/git.git
+	GIT_REPO_URL=git://github.com/git/git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
-	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
+	MINGW4MSYSGIT_REPO_URL=git://github.com/msysgit/git
 ;;
 esac
-MINGW4MSYSGIT_MOB_URL=ssh://mob@repo.or.cz/srv/git/git/mingw/4msysgit.git
 
 git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
 mkdir -p git &&
@@ -121,9 +117,6 @@ git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
 git fetch --tags mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git config remote.mob.url $MINGW4MSYSGIT_MOB_URL &&
-git config remote.mob.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git config remote.mob.push 'HEAD:mob' &&
 git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then

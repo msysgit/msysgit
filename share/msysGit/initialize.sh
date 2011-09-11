@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# This script initializes /.git from msysgit.git on repo.or.cz
+# This script initializes /.git from msysgit/msysgit on github.com
 
 test -d /git/.git || {
 	cd /git &&
 	git init &&
 	git config core.autocrlf false &&
 	git remote add -f origin \
-		mob@repo.or.cz:/srv/git/git/mingw/4msysgit.git &&
+		git://github.com/msysgit/git &&
 	if test ! -f /etc/full-git-sha1 ||
 		! git reset $(cat /etc/full-git-sha1)
 	then
@@ -23,7 +23,7 @@ test -d /.git || {
 	cd / &&
 	git init &&
 	git config core.autocrlf false &&
-	git remote add -f origin mob@repo.or.cz:/srv/git/msysgit.git &&
+	git remote add -f origin git://github.com/msysgit/msysgit &&
 	if test ! -f /etc/full-msysgit-sha1 ||
 		! git reset $(cat /etc/full-msysgit-sha1)
 	then
