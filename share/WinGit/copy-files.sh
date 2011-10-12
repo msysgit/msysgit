@@ -43,7 +43,7 @@ bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 dirname.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,flex.exe,gawk.exe,grep.exe,\
-gunzip,gzip.exe,head.exe,id.exe,kill.exe,less.exe,libW11.dll,ln.exe,\
+head.exe,id.exe,kill.exe,less.exe,libW11.dll,ln.exe,\
 ls.exe,m4.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,\
@@ -78,6 +78,7 @@ fi &&
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
 	bin/getcp.exe bin/rebase.exe \
+	bin/gzip.exe bin/gunzip.exe \
 	bin/{libpoppler-7.dll,pdfinfo.exe,pdftotext.exe} \
 	lib/{tcl,tk,dde,reg}* libexec/gnupg/) |
 tar xf - &&
