@@ -88,6 +88,14 @@ begin
     end;
 end;
 
+// Sets the contents of the specified environment variable for the current process.
+function SetEnvironmentVariable(lpName,lpValue:String):Boolean;
+#ifdef UNICODE
+external 'SetEnvironmentVariableW@Kernel32.dll stdcall delayload setuponly';
+#else
+external 'SetEnvironmentVariableA@Kernel32.dll stdcall delayload setuponly';
+#endif
+
 // Sets the environment variable "VarName" to the concatenation of "DirStrings"
 // using ";" as the delimiter. If "AllUsers" is true, a common variable is set,
 // else a user-specific one. If "DeleteIfEmpty" is true and "DirStrings" is
@@ -127,6 +135,9 @@ begin
             Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
         end;
     end;
+
+    // Also update the environment of the current process.
+    SetEnvironmentVariable(VarName,Path);
 end;
 
 // As IsComponentSelected() is not supported during uninstall, this work-around
