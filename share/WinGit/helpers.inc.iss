@@ -64,6 +64,11 @@ begin
         RegQueryStringValue(HKEY_CURRENT_USER,'Environment',VarName,Path);
     end;
 
+    // Fallback for built-in variables which are not stored in the Registry.
+    if Length(Path)=0 then begin
+        Path:=ExpandConstant('{%'+VarName+'}');
+    end;
+
     // Make sure we have at least one semicolon.
     Path:=Path+';';
 
