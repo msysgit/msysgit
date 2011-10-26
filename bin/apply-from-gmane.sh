@@ -3,6 +3,7 @@
 URL="$1"
 
 case "$URL" in
+http://thread.*) URL=http://article.${URL#http://thread.};;
 http://*|article.gmane.org*) ;;
 *@*)
 	TMP=.git/apply.tmp
@@ -13,7 +14,7 @@ esac
 
 case "$URL" in
 */raw) ;;
-*) URL=$URL/raw;;
+*) URL=${URL%/}/raw;;
 esac
 
 curl $URL | git am --whitespace=fix -s
