@@ -1,15 +1,40 @@
 #!/bin/sh
+#
+# Rebase 'devel' on top of an upstream branch (defaults to 'junio/next').
+# This merges the old state of 'devel' using the merge strategy 'ours'
+# to enable a fast-forward.
+#
+# options:
+#  --dry-run
+#     do not perform the rebase but only display the revisions selected
+#
+#  --graph
+#     as for dry-run but display the commits as a graph
+#
+#  --cherry
+#     as for --dry-run but display the commits using cherry notation to mark
+#     commits that are suitable for upstream consideration.
 
 force=
+dryrun=
 graph=
+cherry=
 while test $# -gt 0
 do
 	case "$1" in
 	-f|--force)
 		force=t
 		;;
-	-s|--show|-g|--graph)
-		graph=t
+	-s|--show|-d|--dry-run)
+		dryrun=t
+		;;
+	-g|--graph)
+		dryrun=t
+		graph=--graph
+		;;
+	-c|--cherry)
+		dryrun=t
+		cherry=--cherry
 		;;
 	-*)
 		echo "Unknown option: $1" >&2
@@ -31,9 +56,6 @@ then
 fi
 
 TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
-
-# Rebase 'devel' on top of 'junio/next', the merging the old state of
-# 'devel' with the merge strategy 'ours' to enable a fast-forward.
 
 case "$(git rev-parse --symbolic-full-name HEAD)" in
 refs/heads/devel)
@@ -90,9 +112,9 @@ then
 	done
 fi
 
-if test -n "$graph"
+if test -n "$dryrun"
 then
-	git log --graph --oneline --boundary $RANGE
+	git log --oneline $graph $cherry --boundary $RANGE
 	exit
 fi
 
