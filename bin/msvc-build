@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+cd /git
+
+test -d msvcgit || git clone git://repo.or.cz/msvcgit.git
+
+vsvars=
+type cl.exe 2> /dev/null ||
+vsvars="$(ls -t \
+	"$PROGRAMFILES/Microsoft Visual Studio"*/Common7/Tools/vsvars32.bat |
+	head -n 1)"
+
+
+cat > msvc-build.cmd << EOF
+call msvcgit\\setup_32bit_env.cmd
+call "$vsvars"
+make MSVC=1
+EOF
+
+cmd /c msvc-build.cmd
