@@ -3,14 +3,18 @@
 set -e
 
 gui=
+clean=
 while test $# -gt 0
 do
 	case "$1" in
 	--gui|--dev|--devenv|--vs|--visual-studio)
 		gui=t
 		;;
+	clean)
+		clean=t
+		;;
 	*)
-		echo "Usage: $0 [--vs]" >&2
+		echo "Usage: $0 [--vs] [clean]" >&2
 		exit 1
 		;;
 	esac
@@ -18,6 +22,20 @@ do
 done
 
 cd /git
+
+case "$clean" in
+t)
+	case "$gui" in
+	t)
+		rm -rf git.sln libgit
+		;;
+	'')
+		make clean
+		;;
+	esac
+	exit
+	;;
+esac
 
 test -d msvcgit || git clone git://repo.or.cz/msvcgit.git
 
