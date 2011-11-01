@@ -91,9 +91,9 @@ end;
 // Sets the contents of the specified environment variable for the current process.
 function SetEnvironmentVariable(lpName,lpValue:String):Boolean;
 #ifdef UNICODE
-external 'SetEnvironmentVariableW@Kernel32.dll stdcall delayload setuponly';
+external 'SetEnvironmentVariableW@Kernel32.dll stdcall delayload';
 #else
-external 'SetEnvironmentVariableA@Kernel32.dll stdcall delayload setuponly';
+external 'SetEnvironmentVariableA@Kernel32.dll stdcall delayload';
 #endif
 
 // Sets the environment variable "VarName" to the concatenation of "DirStrings"
