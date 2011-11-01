@@ -12,11 +12,22 @@ vsvars="$(ls -t \
 	"$PROGRAMFILES/Microsoft Visual Studio"*/Common7/Tools/vsvars32.bat |
 	head -n 1)"
 
+config_mak=
+test -f config.mak &&
+config_mak=config.mak.bup.$$ &&
+mv config.mak $config_mak
+
+cat > config.mak << EOF
+CFLAGS += -Imsvcgit/32bits/include
+LDFLAGS += -Lmsvcgit/32bits/lib
+EOF
 
 cat > msvc-build.cmd << EOF
-call msvcgit\\setup_32bit_env.cmd
 call "$vsvars"
 make MSVC=1
 EOF
 
 cmd /c msvc-build.cmd
+
+test -z "$config_mak" ||
+mv $config_mak config.mak
