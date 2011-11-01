@@ -2,6 +2,21 @@
 
 set -e
 
+gui=
+while test $# -gt 0
+do
+	case "$1" in
+	--gui|--dev|--devenv|--vs|--visual-studio)
+		gui=t
+		;;
+	*)
+		echo "Usage: $0 [--vs]" >&2
+		exit 1
+		;;
+	esac
+	shift
+done
+
 cd /git
 
 test -d msvcgit || git clone git://repo.or.cz/msvcgit.git
@@ -22,10 +37,14 @@ CFLAGS += -Imsvcgit/32bits/include
 LDFLAGS += -Lmsvcgit/32bits/lib
 EOF
 
-cat > msvc-build.cmd << EOF
-call "$vsvars"
-make MSVC=1
-EOF
+echo "call \"$vsvars\"" > msvc-build.cmd
+if test -z "$gui"
+then
+	echo 'make MSVC=1' >> msvc-build.cmd
+else
+	echo 'perl contrib/buildsystems/generate -g Vcproj' >> msvc-build.cmd
+	echo 'start git.sln' >> msvc-build.cmd
+fi
 
 cmd /c msvc-build.cmd
 
