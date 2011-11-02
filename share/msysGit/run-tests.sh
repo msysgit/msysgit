@@ -56,6 +56,12 @@ get_finished_tests () {
 }
 
 cd /git &&
+for file in *.exe
+do
+	dir=${file%.exe} &&
+	test ! -d "$dir" ||
+	rm -rf "$dir"
+done &&
 echo make $PARALLEL_MAKE &&
 (cd t &&
  rm -rf test-results &&
