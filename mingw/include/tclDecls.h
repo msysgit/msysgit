@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id: tclDecls.h,v 1.130.2.2 2010/02/07 22:16:54 nijtmans Exp $
  */
 
 #ifndef _TCLDECLS
@@ -1314,12 +1312,12 @@ EXTERN void		Tcl_ResetResult(Tcl_Interp *interp);
 #ifndef Tcl_ScanElement_TCL_DECLARED
 #define Tcl_ScanElement_TCL_DECLARED
 /* 218 */
-EXTERN int		Tcl_ScanElement(CONST char *str, int *flagPtr);
+EXTERN int		Tcl_ScanElement(CONST char *src, int *flagPtr);
 #endif
 #ifndef Tcl_ScanCountedElement_TCL_DECLARED
 #define Tcl_ScanCountedElement_TCL_DECLARED
 /* 219 */
-EXTERN int		Tcl_ScanCountedElement(CONST char *str, int length,
+EXTERN int		Tcl_ScanCountedElement(CONST char *src, int length,
 				int *flagPtr);
 #endif
 #ifndef Tcl_SeekOld_TCL_DECLARED
@@ -3434,7 +3432,7 @@ typedef struct TclStubs {
     void (*tcl_CreateFileHandler) (int fd, int mask, Tcl_FileProc *proc, ClientData clientData); /* 9 */
 #endif /* UNIX */
 #ifdef __WIN32__ /* WIN */
-    void *reserved9;
+    VOID *reserved9;
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
     void (*tcl_CreateFileHandler) (int fd, int mask, Tcl_FileProc *proc, ClientData clientData); /* 9 */
@@ -3443,7 +3441,7 @@ typedef struct TclStubs {
     void (*tcl_DeleteFileHandler) (int fd); /* 10 */
 #endif /* UNIX */
 #ifdef __WIN32__ /* WIN */
-    void *reserved10;
+    VOID *reserved10;
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
     void (*tcl_DeleteFileHandler) (int fd); /* 10 */
@@ -3608,7 +3606,7 @@ typedef struct TclStubs {
     int (*tcl_GetOpenFile) (Tcl_Interp *interp, CONST char *chanID, int forWriting, int checkUsage, ClientData *filePtr); /* 167 */
 #endif /* UNIX */
 #ifdef __WIN32__ /* WIN */
-    void *reserved167;
+    VOID *reserved167;
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
     int (*tcl_GetOpenFile) (Tcl_Interp *interp, CONST char *chanID, int forWriting, int checkUsage, ClientData *filePtr); /* 167 */
@@ -3633,7 +3631,7 @@ typedef struct TclStubs {
     int (*tcl_IsSafe) (Tcl_Interp *interp); /* 185 */
     char * (*tcl_JoinPath) (int argc, CONST84 char *CONST *argv, Tcl_DString *resultPtr); /* 186 */
     int (*tcl_LinkVar) (Tcl_Interp *interp, CONST char *varName, char *addr, int type); /* 187 */
-    void *reserved188;
+    VOID *reserved188;
     Tcl_Channel (*tcl_MakeFileChannel) (ClientData handle, int mode); /* 189 */
     int (*tcl_MakeSafe) (Tcl_Interp *interp); /* 190 */
     Tcl_Channel (*tcl_MakeTcpClientChannel) (ClientData tcpSocket); /* 191 */
@@ -3663,8 +3661,8 @@ typedef struct TclStubs {
     void (*tcl_RegExpRange) (Tcl_RegExp regexp, int index, CONST84 char **startPtr, CONST84 char **endPtr); /* 215 */
     void (*tcl_Release) (ClientData clientData); /* 216 */
     void (*tcl_ResetResult) (Tcl_Interp *interp); /* 217 */
-    int (*tcl_ScanElement) (CONST char *str, int *flagPtr); /* 218 */
-    int (*tcl_ScanCountedElement) (CONST char *str, int length, int *flagPtr); /* 219 */
+    int (*tcl_ScanElement) (CONST char *src, int *flagPtr); /* 218 */
+    int (*tcl_ScanCountedElement) (CONST char *src, int length, int *flagPtr); /* 219 */
     int (*tcl_SeekOld) (Tcl_Channel chan, int offset, int mode); /* 220 */
     int (*tcl_ServiceAll) (void); /* 221 */
     int (*tcl_ServiceEvent) (int flags); /* 222 */
@@ -3730,7 +3728,7 @@ typedef struct TclStubs {
     int (*tcl_UnstackChannel) (Tcl_Interp *interp, Tcl_Channel chan); /* 282 */
     Tcl_Channel (*tcl_GetStackedChannel) (Tcl_Channel chan); /* 283 */
     void (*tcl_SetMainLoop) (Tcl_MainLoopProc *proc); /* 284 */
-    void *reserved285;
+    VOID *reserved285;
     void (*tcl_AppendObjToObj) (Tcl_Obj *objPtr, Tcl_Obj *appendObjPtr); /* 286 */
     Tcl_Encoding (*tcl_CreateEncoding) (CONST Tcl_EncodingType *typePtr); /* 287 */
     void (*tcl_CreateThreadExitHandler) (Tcl_ExitProc *proc, ClientData clientData); /* 288 */

@@ -194,48 +194,83 @@ proc ::platform::identify {} {
 	    # Do not look into /lib64 even if present, if the cpu
 	    # doesn't fit.
 
+	    # TODO: Determine the prefixes (i386, x86_64, ...) for
+	    # other cpus.  The path after the generic one is utterly
+	    # specific to intel right now.  Ok, on Ubuntu, possibly
+	    # other Debian systems we may apparently be able to query
+	    # the necessary CPU code. If we can't we simply use the
+	    # hardwired fallback.
+
 	    switch -exact -- $tcl_platform(wordSize) {
 		4 {
-		    set base /lib
+		    lappend bases /lib
+		    if {[catch {
+			exec dpkg-architecture -qDEB_HOST_MULTIARCH
+		    } res]} {
+			lappend bases /lib/i386-linux-gnu
+		    } else {
+			# dpkg-arch returns the full tripled, not just cpu.
+			lappend bases /lib/$res
+		    }
 		}
 		8 {
-		    set base /lib64
+		    lappend bases /lib64
+		    if {[catch {
+			exec dpkg-architecture -qDEB_HOST_MULTIARCH
+		    } res]} {
+			lappend bases /lib/x86_64-linux-gnu
+		    } else {
+			# dpkg-arch returns the full tripled, not just cpu.
+			lappend bases /lib/$res
+		    }
 		}
 		default {
 		    return -code error "Bad wordSize $tcl_platform(wordSize), expected 4 or 8"
 		}
 	    }
 
-	    set libclist [lsort [glob -nocomplain -directory $base libc*]]
-	    if {[llength $libclist]} {
-		set libc [lindex $libclist 0]
-
-		# Try executing the library first. This should suceed
-		# for a glibc library, and return the version
-		# information.
-
-		if {![catch {
-		    set vdata [lindex [split [exec $libc] \n] 0]
-		}]} {
-		    regexp {([0-9]+(\.[0-9]+)*)} $vdata -> v
-		    foreach {major minor} [split $v .] break
-		    set v glibc${major}.${minor}
-		} else {
-		    # We had trouble executing the library. We are now
-		    # inspecting its name to determine the version
-		    # number. This code by Larry McVoy.
-
-		    if {[regexp -- {libc-([0-9]+)\.([0-9]+)} $libc -> major minor]} {
-			set v glibc${major}.${minor}
-		    }
-		}
+	    foreach base $bases {
+		if {[LibcVersion $base -> v]} break
 	    }
+
 	    append plat -$v
 	    return "${plat}-${cpu}"
 	}
     }
 
     return $id
+}
+
+proc ::platform::LibcVersion {base _->_ vv} {
+    upvar 1 $vv v
+    set libclist [lsort [glob -nocomplain -directory $base libc*]]
+
+    if {![llength $libclist]} { return 0 }
+
+    set libc [lindex $libclist 0]
+
+    # Try executing the library first. This should suceed
+    # for a glibc library, and return the version
+    # information.
+
+    if {![catch {
+	set vdata [lindex [split [exec $libc] \n] 0]
+    }]} {
+	regexp {([0-9]+(\.[0-9]+)*)} $vdata -> v
+	foreach {major minor} [split $v .] break
+	set v glibc${major}.${minor}
+	return 1
+    } else {
+	# We had trouble executing the library. We are now
+	# inspecting its name to determine the version
+	# number. This code by Larry McVoy.
+
+	if {[regexp -- {libc-([0-9]+)\.([0-9]+)} $libc -> major minor]} {
+	    set v glibc${major}.${minor}
+	    return 1
+	}
+    }
+    return 0
 }
 
 # -- platform::patterns
@@ -333,7 +368,7 @@ proc ::platform::patterns {id} {
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide platform 1.0.9
+package provide platform 1.0.10
 
 # ### ### ### ######### ######### #########
 ## Demo application

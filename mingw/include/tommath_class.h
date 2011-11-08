@@ -993,7 +993,3 @@
 #else
 #define LTM_LAST
 #endif
-
-/* $Source: /cvsroot/tcl/libtommath/tommath_class.h,v $ */
-/* $Revision: 1.3 $ */
-/* $Date: 2006/12/01 19:45:39 $ */

@@ -8,8 +8,6 @@
 # out for themselves.
 #
 # The information in this file is specific to a single platform.
-#
-# RCS: @(#) $Id: tclConfig.sh.in,v 1.8 2001/11/08 03:07:22 mdejong Exp $
 
 TCL_DLL_FILE="tcl85.dll"
 
@@ -17,13 +15,13 @@ TCL_DLL_FILE="tcl85.dll"
 TCL_VERSION='8.5'
 TCL_MAJOR_VERSION='8'
 TCL_MINOR_VERSION='5'
-TCL_PATCH_LEVEL='.9'
+TCL_PATCH_LEVEL='.11'
 
 # C compiler to use for compilation.
 TCL_CC='cl'
 
 # -D flags for use with the C compiler.
-TCL_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -Dinline=__inline -DSTDC_HEADERS=1 -DHAVE_NO_LPFN_DECLS=1 -DHAVE_NO_FINDEX_ENUMS=1 -DTCL_CFGVAL_ENCODING=\"cp1252\" -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
+TCL_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -Dinline=__inline -DSTDC_HEADERS=1 -DHAVE_NO_LPFN_DECLS=1 -DHAVE_NO_STRUCT_STAT32I64=1 -DHAVE_NO_FINDEX_ENUMS=1 -DTCL_CFGVAL_ENCODING=\"cp1252\" -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -Dintptr_t=int -Duintptr_t=unsigned\ int -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
 
 # If TCL was built with debugging symbols, generated libraries contain
 # this string at the end of the library name (before the extension).
@@ -34,7 +32,7 @@ TCL_CFLAGS_DEBUG='-nologo -Z7 -Od -WX -MDd -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NON
 TCL_CFLAGS_OPTIMIZE='-nologo -O2 -MD -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE'
 
 # Default linker flags used in an optimized and debuggable build, respectively.
-TCL_LDFLAGS_DEBUG='-debug:full'
+TCL_LDFLAGS_DEBUG='-debug'
 TCL_LDFLAGS_OPTIMIZE='-release'
 
 # Flag, 1: we built a shared lib, 0 we didn't
@@ -105,14 +103,14 @@ TCL_LD_SEARCH_FLAGS=''
 TCL_COMPAT_OBJS=''
 
 # Name of the ranlib program to use.
-TCL_RANLIB=''
+TCL_RANLIB='ranlib'
 
 # -l flag to pass to the linker to pick up the Tcl library
 TCL_LIB_FLAG='-ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # build directory.
-TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.9/win -ltcl85'
+TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.11/win -ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # installed directory.
@@ -147,7 +145,7 @@ TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.lib'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tcl was
 # compiled.
-TCL_SRC_DIR='/src/tcltk/tcl8.5.9'
+TCL_SRC_DIR='/src/tcltk/tcl8.5.11'
 
 # List of standard directories in which to look for packages during
 # "package require" commands.  Contains the "prefix" directory plus also
@@ -165,14 +163,14 @@ TCL_STUB_LIB_FLAG='-ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # build directory.
-TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.9/win -ltclstub85'
+TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.11/win -ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # installed directory.
 TCL_STUB_LIB_SPEC='-L/mingw/lib -ltclstub85'
 
 # Path to the Tcl stub library in the build directory.
-TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.9/win/tclstub85.lib'
+TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.11/win/tclstub85.lib'
 
 # Path to the Tcl stub library in the install directory.
 TCL_STUB_LIB_PATH='/mingw/lib/tclstub85.lib'
