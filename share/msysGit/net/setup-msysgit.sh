@@ -94,11 +94,13 @@ echo -------------------------------------------------------
 case "$USE_HTTP" in
 t)
 	GIT_REPO_URL=https://github.com/git/git.git
+	HTMLDOCS_REPO_URL=https://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=http://repo.or.cz/r/git/mingw.git/
 	MINGW4MSYSGIT_REPO_URL=https://github.com/msysgit/git.git
 ;;
 '')
 	GIT_REPO_URL=git://github.com/git/git
+	HTMLDOCS_REPO_URL=git://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
 	MINGW4MSYSGIT_REPO_URL=git://github.com/msysgit/git
 ;;
@@ -137,12 +139,12 @@ echo -------------------------------------------------------
 
 cd .. &&
 rm -rf /doc/git/html &&
-git config submodule.html.url $GIT_REPO_URL &&
+git config submodule.html.url $HTMLDOCS_REPO_URL &&
 mkdir -p doc/git/html &&
 cd doc/git/html &&
 git init &&
-git config remote.origin.url $GIT_REPO_URL &&
-git config remote.origin.fetch '+refs/heads/html:refs/remotes/origin/html' &&
+git config remote.origin.url $HTMLDOCS_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/master:refs/remotes/origin/master' &&
 git fetch origin &&
 git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
 	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
