@@ -147,6 +147,7 @@ Type: dirifempty; Name: {app}\home
 
 [Code]
 #include "helpers.inc.iss"
+#include "environment.inc.iss"
 #include "putty.inc.iss"
 #include "modules.inc.iss"
 
