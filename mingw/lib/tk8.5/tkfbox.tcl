@@ -11,8 +11,6 @@
 #	files by clicking on the file icons or by entering a filename
 #	in the "Filename:" entry.
 #
-# RCS: @(#) $Id: tkfbox.tcl,v 1.68.2.5 2010/01/20 23:43:51 patthoyts Exp $
-#
 # Copyright (c) 1994-1998 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -985,6 +983,12 @@ proc ::tk::dialog::file::Config {dataName type argList} {
 	lappend specs {-multiple "" "" "0"}
     }
 
+    # The "-confirmoverwrite" option is only for the "save" file dialog.
+    #
+    if {$type eq "save"} {
+	lappend specs {-confirmoverwrite "" "" "1"}
+    }
+
     # 2: default values depending on the type of the dialog
     #
     if {![info exists data(selectPath)]} {
@@ -1861,7 +1865,7 @@ proc ::tk::dialog::file::Done {w {selectFilePath ""}} {
 	set Priv(selectFile) $data(selectFile)
 	set Priv(selectPath) $data(selectPath)
 
-	if {($data(type) eq "save") && [file exists $selectFilePath]} {
+	if {($data(type) eq "save") && $data(-confirmoverwrite) && [file exists $selectFilePath]} {
 	    set reply [tk_messageBox -icon warning -type yesno -parent $w \
 		    -message [mc "File \"%1\$s\" already exists.\nDo you want\
 		    to overwrite it?" $selectFilePath]]

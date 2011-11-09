@@ -1,8 +1,6 @@
 # spin.tcl --
 #
 # This demonstration script creates several spinbox widgets.
-#
-# RCS: @(#) $Id: spin.tcl,v 1.3 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

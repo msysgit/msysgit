@@ -1,6 +1,4 @@
 #
-# $Id: notebook.tcl,v 1.4.4.1 2010/08/26 02:06:10 hobbs Exp $
-#
 # Bindings for TNotebook widget
 #
 

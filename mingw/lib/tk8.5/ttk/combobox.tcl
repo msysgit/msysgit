@@ -1,6 +1,4 @@
 #
-# $Id: combobox.tcl,v 1.12.2.4 2010/08/26 02:06:10 hobbs Exp $
-#
 # Combobox bindings.
 #
 # <<NOTE-WM-TRANSIENT>>:

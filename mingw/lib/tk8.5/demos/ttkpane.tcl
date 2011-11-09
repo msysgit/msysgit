@@ -1,8 +1,6 @@
 # ttkpane.tcl --
 #
 # This demonstration script creates a Ttk pane with some content.
-#
-# RCS: @(#) $Id: ttkpane.tcl,v 1.3 2007/12/13 15:27:07 dgp Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

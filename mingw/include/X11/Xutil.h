@@ -364,13 +364,13 @@ extern void XDestroyRegion(
 #endif
 );
 
-extern void XEmptyRegion(
+extern Bool XEmptyRegion(
 #if NeedFunctionPrototypes
     Region		/* r */
 #endif
 );
 
-extern void XEqualRegion(
+extern Bool XEqualRegion(
 #if NeedFunctionPrototypes
     Region		/* r1 */,
     Region		/* r2 */

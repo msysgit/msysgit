@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a simple form with a bunch
 # of entry widgets.
-#
-# RCS: @(#) $Id: form.tcl,v 1.4 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

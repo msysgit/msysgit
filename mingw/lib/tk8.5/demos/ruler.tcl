@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a canvas widget that displays a ruler
 # with tab stops that can be set, moved, and deleted.
-#
-# RCS: @(#) $Id: ruler.tcl,v 1.7 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

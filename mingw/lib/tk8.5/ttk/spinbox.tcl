@@ -1,6 +1,4 @@
 #
-# $Id: spinbox.tcl,v 1.3.2.2 2010/08/26 02:06:10 hobbs Exp $
-#
 # ttk::spinbox bindings
 #
 

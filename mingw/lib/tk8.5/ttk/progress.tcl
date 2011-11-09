@@ -1,6 +1,4 @@
 #
-# $Id: progress.tcl,v 1.1 2006/10/31 01:42:27 hobbs Exp $
-#
 # Ttk widget set: progress bar utilities.
 #
 

@@ -4,8 +4,6 @@
 # It also implements keyboard traversal of menus and implements a few
 # other utility procedures related to menus.
 #
-# RCS: @(#) $Id: menu.tcl,v 1.26.2.6 2010/01/09 00:51:38 patthoyts Exp $
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -408,6 +406,8 @@ proc ::tk::MenuUnpost menu {
 
     after cancel [array get Priv menuActivatedTimer]
     unset -nocomplain Priv(menuActivated)
+    after cancel [array get Priv menuDeactivatedTimer]
+    unset -nocomplain Priv(menuDeactivated)
 
     catch {
 	if {$mb ne ""} {
@@ -563,13 +563,17 @@ proc ::tk::MenuMotion {menu x y state} {
         set index [$menu index @$x,$y]
         if {[info exists Priv(menuActivated)] \
                 && $index ne "none" \
-                && $index ne $activeindex \
-                && [$menu type $index] eq "cascade"} {
+                && $index ne $activeindex} {
             set mode [option get $menu clickToFocus ClickToFocus]
-            if {$mode eq "" || ([string is boolean $mode] && !$mode)} {
-                set delay [expr {[$menu cget -type] eq "menubar"? 0 : 50}]
-                set Priv(menuActivatedTimer) \
-                    [after $delay [list $menu postcascade active]]
+            if {[string is false $mode]} {
+                set delay [expr {[$menu cget -type] eq "menubar" ? 0 : 50}]
+                if {[$menu type $index] eq "cascade"} {
+                    set Priv(menuActivatedTimer) \
+                        [after $delay [list $menu postcascade active]]
+                } else {
+                    set Priv(menuDeactivatedTimer) \
+                        [after $delay [list $menu postcascade none]]
+                }
             }
         }
     }
@@ -1218,24 +1222,35 @@ proc ::tk::PostOverPoint {menu x y {entry {}}}  {
 	}
 	incr x [expr {-[winfo reqwidth $menu]/2}]
     }
-    if {$tcl_platform(platform) == "windows"} {
+
+    if {$tcl_platform(platform) eq "windows"} {
+	# osVersion is not available in safe interps
+	set ver 5
+	if {[info exists tcl_platform(osVersion)]} {
+	    scan $tcl_platform(osVersion) %d ver
+	}
+
 	# We need to fix some problems with menu posting on Windows,
 	# where, if the menu would overlap top or bottom of screen,
 	# Windows puts it in the wrong place for us.  We must also
 	# subtract an extra amount for half the height of the current
 	# entry.  To be safe we subtract an extra 10.
-	set yoffset [expr {[winfo screenheight $menu] \
-		- $y - [winfo reqheight $menu] - 10}]
-	if {$yoffset < 0} {
-	    # The bottom of the menu is offscreen, so adjust upwards
-	    incr y $yoffset
-	    if {$y < 0} { set y 0 }
-	}
-	# If we're off the top of the screen (either because we were
-	# originally or because we just adjusted too far upwards),
-	# then make the menu popup on the top edge.
-	if {$y < 0} {
-	    set y 0
+        # NOTE: this issue appears to have been resolved in the Window
+        # manager provided with Vista and Windows 7.
+	if {$ver < 6} {
+	    set yoffset [expr {[winfo screenheight $menu] \
+				   - $y - [winfo reqheight $menu] - 10}]
+	    if {$yoffset < 0} {
+		# The bottom of the menu is offscreen, so adjust upwards
+		incr y $yoffset
+		if {$y < 0} { set y 0 }
+	    }
+	    # If we're off the top of the screen (either because we were
+	    # originally or because we just adjusted too far upwards),
+	    # then make the menu popup on the top edge.
+	    if {$y < 0} {
+		set y 0
+	    }
 	}
     }
     $menu post $x $y

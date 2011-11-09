@@ -3,8 +3,6 @@
 # This demonstration script creates a collection of widgets that
 # allow you to load a file into a text widget, then perform searches
 # on that file.
-#
-# RCS: @(#) $Id: search.tcl,v 1.4 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

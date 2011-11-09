@@ -1,6 +1,4 @@
 #
-# $Id: button.tcl,v 1.2.4.1 2010/08/26 02:06:10 hobbs Exp $
-#
 # Bindings for Buttons, Checkbuttons, and Radiobuttons.
 #
 # Notes: <Button1-Leave>, <Button1-Enter> only control the "pressed"
@@ -28,7 +26,7 @@ bind TButton <<Invoke>> 	{ ttk::button::activate %W }
 bind TButton <ButtonPress-1> \
     { %W instate !disabled { ttk::clickToFocus %W; %W state pressed } }
 bind TButton <ButtonRelease-1> \
-    { %W instate {pressed !disabled} { %W state !pressed; %W invoke } }
+    { %W instate pressed { %W state !pressed; %W instate !disabled { %W invoke } } }
 bind TButton <Button1-Leave> \
     { %W state !pressed }
 bind TButton <Button1-Enter> \

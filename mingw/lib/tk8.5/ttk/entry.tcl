@@ -1,6 +1,4 @@
 #
-# $Id: entry.tcl,v 1.4.2.2 2010/09/01 16:40:15 jenglish Exp $
-#
 # DERIVED FROM: tk/library/entry.tcl r1.22
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.

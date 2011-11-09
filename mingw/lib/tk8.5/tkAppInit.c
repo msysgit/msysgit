@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id: tkAppInit.c,v 1.8 2007/02/22 13:56:33 dkf Exp $
  */
 
 #include "tk.h"

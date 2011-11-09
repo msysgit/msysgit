@@ -10,8 +10,6 @@
 # file in addition to this one.
 #
 # The information in this file is specific to a single platform.
-#
-# RCS: @(#) $Id: tkConfig.sh.in,v 1.3 2003/03/19 03:21:22 mdejong Exp $
 
 TK_DLL_FILE="tk85.dll"
 
@@ -19,7 +17,7 @@ TK_DLL_FILE="tk85.dll"
 TK_VERSION='8.5'
 TK_MAJOR_VERSION='8'
 TK_MINOR_VERSION='5'
-TK_PATCH_LEVEL='.9'
+TK_PATCH_LEVEL='.11'
 
 # -D flags for use with the C compiler.
 TK_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -Dinline=__inline -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_UXTHEME_H=1 -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
@@ -49,7 +47,7 @@ TK_LIB_FLAG='-ltk85'
 
 # String to pass to linker to pick up the Tk library from its
 # build directory.
-TK_BUILD_LIB_SPEC='-L/src/tcltk/tk8.5.9/win -ltk85'
+TK_BUILD_LIB_SPEC='-L/src/tcltk/tk8.5.11/win -ltk85'
 
 # String to pass to linker to pick up the Tk library from its
 # installed directory.
@@ -61,7 +59,7 @@ TK_LIB_SPEC='-L/mingw/lib -ltk85'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tk was
 # compiled.
-TK_SRC_DIR='/src/tcltk/tk8.5.9'
+TK_SRC_DIR='/src/tcltk/tk8.5.11'
 
 # Needed if you want to make a 'fat' shared library library
 # containing tk objects or link a different wish.
@@ -76,14 +74,14 @@ TK_STUB_LIB_FLAG='-ltkstub85'
 
 # String to pass to linker to pick up the Tk stub library from its
 # build directory.
-TK_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tk8.5.9/win -ltkstub85'
+TK_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tk8.5.11/win -ltkstub85'
 
 # String to pass to linker to pick up the Tk stub library from its
 # installed directory.
 TK_STUB_LIB_SPEC='-L/mingw/lib -ltkstub85'
 
 # Path to the Tk stub library in the build directory.
-TK_BUILD_STUB_LIB_PATH='/src/tcltk/tk8.5.9/win/tkstub85.lib'
+TK_BUILD_STUB_LIB_PATH='/src/tcltk/tk8.5.11/win/tkstub85.lib'
 
 # Path to the Tk stub library in the install directory.
 TK_STUB_LIB_PATH='/mingw/lib/tkstub85.lib'
