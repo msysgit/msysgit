@@ -26,6 +26,8 @@ test -d $DIR || {
 } || die "Could not check out $FILE"
 
 (cd $DIR &&
+export am_cv_proto_iconv_arg1= &&
+export am_cv_proto_iconv="extern size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);" &&
 ./configure --prefix=/mingw &&
 make &&
 index=$(/share/msysGit/pre-install.sh) &&
