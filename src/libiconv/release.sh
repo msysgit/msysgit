@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=1.13.1
+VERSION=1.14
 DIR=libiconv-$VERSION
 URL=http://ftp.gnu.org/pub/gnu/libiconv/$DIR.tar.gz
 FILE=${URL##*/}
