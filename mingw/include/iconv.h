@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2003, 2005-2006, 2008-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2003, 2005-2006, 2008-2011 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -21,7 +21,7 @@
 #ifndef _LIBICONV_H
 #define _LIBICONV_H
 
-#define _LIBICONV_VERSION 0x010D    /* version number: (major<<8) + minor */
+#define _LIBICONV_VERSION 0x010E    /* version number: (major<<8) + minor */
 extern __declspec (dllimport) int _libiconv_version; /* Likewise */
 
 /* We would like to #include any system header file which could define
@@ -80,13 +80,18 @@ extern iconv_t iconv_open (const char* tocode, const char* fromcode);
 #ifndef LIBICONV_PLUG
 #define iconv libiconv
 #endif
-extern size_t iconv (iconv_t cd, const char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);
+extern size_t iconv (iconv_t cd,  char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);
 
 /* Frees resources allocated for conversion descriptor ‘cd’. */
 #ifndef LIBICONV_PLUG
 #define iconv_close libiconv_close
 #endif
 extern int iconv_close (iconv_t cd);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #ifndef LIBICONV_PLUG
@@ -104,6 +109,10 @@ extern int iconv_close (iconv_t cd);
 #include <time.h>
 #endif
 #include <wchar.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* A type that holds all memory needed by a conversion descriptor.
@@ -221,13 +230,12 @@ extern const char * iconv_canonicalize (const char * name);
    prefixes should be directory names without trailing slash (i.e. use ""
    instead of "/").  */
 extern void libiconv_set_relocation_prefix (const char *orig_prefix,
-					    const char *curr_prefix);
-
-#endif
-
+                                            const char *curr_prefix);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 
