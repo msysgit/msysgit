@@ -38,7 +38,7 @@ echo "Copying files" &&
  git --git-dir=$MSYSGITROOT/doc/git/html/.git archive HEAD | tar xf -) &&
 (cd $MSYSGITROOT && tar cf - \
 $(ls {bin,libexec/git-core}/git* | grep -v 'cvs\|shell\|archimport\|instaweb') \
-bin/{antiword.exe,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\
+bin/{antiword.exe,docx2txt,astextplain,awk,basename.exe,bash.exe,bison.exe,yacc,\
 bunzip2,bzip2.exe,c_rehash,\
 cat.exe,chmod.exe,clear,cmp.exe,cp.exe,cut.exe,cvs.exe,date.exe,diff.exe,\
 dirname.exe,\
