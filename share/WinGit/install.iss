@@ -938,10 +938,6 @@ begin
             // so we continue.
         end;
 
-        // Set SVN_SSH as specified by the user, but with escaped backslashes and quotes.
-        StringChangeEx(EnvSSH[0],'\','\\',True);
-        EnvSSH[0]:=AddQuotes(EnvSSH[0]);
-
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#__LINE__}: Unable to set the SVN_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
