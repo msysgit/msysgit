@@ -661,10 +661,10 @@ begin
     ProcessesRefresh:=TNewButton.Create(WizardForm);
     with ProcessesRefresh do begin
         Parent:=WizardForm;
-        Width:=WizardForm.NextButton.Width;
-        Height:=WizardForm.NextButton.Height;
-        Top:=WizardForm.NextButton.Top;
-        Left:=WizardForm.ClientWidth-WizardForm.NextButton.Left-WizardForm.NextButton.Width;
+        Width:=WizardForm.CancelButton.Width;
+        Height:=WizardForm.CancelButton.Height;
+        Top:=WizardForm.CancelButton.Top;
+        Left:=WizardForm.ClientWidth-(WizardForm.CancelButton.Left+WizardForm.CancelButton.Width);
         Caption:='&Refresh';
         OnClick:=@RefreshProcessList;
     end;
