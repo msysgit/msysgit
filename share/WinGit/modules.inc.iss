@@ -478,7 +478,7 @@ external 'RmEndSession@Rstrtmgr.dll stdcall delayload';
 function RmRegisterResources(dwSessionHandle:DWORD;hFiles:UINT;rgsFilenames:TArrayOfString;nApplications:UINT;rgApplications:array of RM_UNIQUE_PROCESS;nServices:UINT;rgsServiceNames:TArrayOfString):DWORD;
 external 'RmRegisterResources@Rstrtmgr.dll stdcall delayload';
 
-function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded:UINT;var pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
+function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded,pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
 external 'RmGetList@Rstrtmgr.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use one of the specified modules.
