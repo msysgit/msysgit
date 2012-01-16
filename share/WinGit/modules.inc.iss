@@ -518,24 +518,21 @@ begin
 
         if (Success=ERROR_SUCCESS) and (Needed>0) then begin
             for i:=0 to Needed-1 do begin
-                // Optionally, only list non-critical stand-alone processes that do not require a forced shutdown.
-                //if (AppList[i].ApplicationType=RmMainWindow) or (AppList[i].ApplicationType=RmExplorer) or (AppList[i].ApplicationType=RmConsole) then begin
-                    Process:=OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,False,AppList[i].Process.dwProcessId);
-                    if Process<>0 then begin
-                        SetLength(Path,MAX_PATH);
-                        PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
-                        SetLength(Path,PathLength);
+                Process:=OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,False,AppList[i].Process.dwProcessId);
+                if Process<>0 then begin
+                    SetLength(Path,MAX_PATH);
+                    PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
+                    SetLength(Path,PathLength);
 
-                        Have:=GetArrayLength(Processes);
-                        SetArrayLength(Processes,Have+1);
-                        Processes[Have].ID:=AppList[i].Process.dwProcessId;
-                        Processes[Have].Path:=Path;
-                        Processes[Have].Name:=ArrayToString(AppList[i].strAppName);
-                        Processes[Have].Restartable:=AppList[i].bRestartable;
+                    Have:=GetArrayLength(Processes);
+                    SetArrayLength(Processes,Have+1);
+                    Processes[Have].ID:=AppList[i].Process.dwProcessId;
+                    Processes[Have].Path:=Path;
+                    Processes[Have].Name:=ArrayToString(AppList[i].strAppName);
+                    Processes[Have].Restartable:=AppList[i].bRestartable;
 
-                        CloseHandle(Process);
-                    end;
-                //end;
+                    CloseHandle(Process);
+                end;
             end;
             Result:=True;
         end;
