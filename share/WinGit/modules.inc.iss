@@ -207,7 +207,7 @@ external 'Module32NextA@Kernel32.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModules_Win95(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_Win95(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Success:Boolean;
     ProcSnap:THandle;
@@ -218,7 +218,7 @@ var
     i:Longint;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     ProcSnap:=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
     if ProcSnap=INVALID_HANDLE_VALUE then begin
@@ -275,12 +275,12 @@ begin
 
     CloseHandle(ProcSnap);
 
-    Result:=True;
+    Result:=1;
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -355,7 +355,7 @@ external 'GetModuleFileNameExA@Psapi.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use one of the specified modules.
 // Each module may be a filename to a DLL with or without path.
-function FindProcessesUsingModules_Win2000(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_Win2000(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     ProcList,ModList:IdList;
     p,m,i:Longint;
@@ -364,7 +364,7 @@ var
     PathLength:DWORD;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     if not GetProcessList(ProcList) then begin
         Exit;
@@ -407,12 +407,12 @@ begin
         end;
     end;
 
-    Result:=True;
+    Result:=1;
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -448,6 +448,9 @@ const
     RmStatusShutdownMasked = $0040;
     RmStatusRestartMasked  = $0080;
 
+    RmForceShutdown          = $0001;
+    RmShutdownOnlyRegistered = $0010;
+
 type
     SessionKey=array[1..CCH_RM_SESSION_KEY+1] of Char;
 
@@ -468,6 +471,7 @@ type
         TSSessionId:DWORD;
         bRestartable:BOOL;
     end;
+    RM_WRITE_STATUS_CALLBACK=DWORD;
 
 function RmStartSession(var pSessionHandle:DWORD;dwSessionFlags:DWORD;strSessionKey:SessionKey):DWORD;
 external 'RmStartSession@Rstrtmgr.dll stdcall delayload';
@@ -481,9 +485,15 @@ external 'RmRegisterResources@Rstrtmgr.dll stdcall delayload';
 function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded,pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
 external 'RmGetList@Rstrtmgr.dll stdcall delayload';
 
+function RmShutdown(dwSessionHandle:DWORD;lActionFlags:ULONG;fnStatus:RM_WRITE_STATUS_CALLBACK):DWORD;
+external 'RmShutdown@Rstrtmgr.dll stdcall delayload';
+
+function RmRestart(dwSessionHandle:DWORD;dwRestartFlags:DWORD;fnStatus:RM_WRITE_STATUS_CALLBACK):DWORD;
+external 'RmRestart@Rstrtmgr.dll stdcall delayload';
+
 // Returns a list of running processes that currectly use one of the specified modules.
 // Each module has to be a full path and filename to a DLL.
-function FindProcessesUsingModules_WinVista(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_WinVista(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Handle:DWORD;
     Name:SessionKey;
@@ -498,7 +508,7 @@ var
     Success:DWORD;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     // NULL-terminate the array of chars.
     Name[CCH_RM_SESSION_KEY+1]:=#0;
@@ -534,16 +544,14 @@ begin
                     CloseHandle(Process);
                 end;
             end;
-            Result:=True;
+            Result:=Handle;
         end;
     end;
-
-    RmEndSession(Handle);
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module has to be a full path and filename to a DLL.
-function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -557,8 +565,9 @@ end;
 }
 
 // Returns a list of running processes that currectly use one of the specified modules.
-// Automatically calls the best implementation for the running OS.
-function FindProcessesUsingModules(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+// Automatically calls the best implementation for the running OS. The return value is
+// non-zero on success, and equals the Restart Manager session handle on Vista and above.
+function FindProcessesUsingModules(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Version:TWindowsVersion;
 begin
@@ -574,8 +583,9 @@ begin
 end;
 
 // Returns a list of running processes that currectly use the specified module.
-// Automatically calls the best implementation for the running OS.
-function FindProcessesUsingModule(Module:String;var Processes:ProcessList):Boolean;
+// Automatically calls the best implementation for the running OS. The return value is
+// non-zero on success, and equals the Restart Manager session handle on Vista and above.
+function FindProcessesUsingModule(Module:String;var Processes:ProcessList):DWORD;
 var
     Version:TWindowsVersion;
 begin

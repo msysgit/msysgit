@@ -204,6 +204,7 @@ var
     RdbCRLF:array[GC_LFOnly..GC_CRLFCommitAsIs] of TRadioButton;
 
     // Wizard page and variables for the processes page.
+    SessionHandle:DWORD;
     Processes:ProcessList;
     ProcessesPage:TWizardPage;
     ProcessesListBox:TListBox;
@@ -266,38 +267,55 @@ end;
 
 procedure RefreshProcessList(Sender:TObject);
 var
+    Version:TWindowsVersion;
     Modules:TArrayOfString;
     ProcsCloseRequired,ProcsCloseOptional:ProcessList;
-    Found:Boolean;
     i:Longint;
     Caption:String;
+    ManualClosingRequired:Boolean;
 begin
-    SetArrayLength(Modules,2);
-    Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
-    Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
-    Found:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
+    GetWindowsVersionEx(Version);
 
-    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseOptional) or Found;
+    // Use the Restart Manager API when installing the shell extension on Windows Vista and above.
+    if Version.Major>=6 then begin
+        SetArrayLength(Modules,3);
+        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        Modules[2]:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,Processes);
+    end else begin
+        SetArrayLength(Modules,2);
+        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
 
-    // Misuse the "Restartable" flag to indicate which processes are required
-    // to be closed before setup can continue, and which just should be closed
-    // in order to make changes take effect immediately.
-    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseOptional));
-    for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
-        Processes[i]:=ProcsCloseRequired[i];
-        Processes[i].Restartable:=False;
+        SessionHandle:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseOptional) or SessionHandle;
+
+        // Misuse the "Restartable" flag to indicate which processes are required
+        // to be closed before setup can continue, and which just should be closed
+        // in order to make changes take effect immediately.
+        SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseOptional));
+        for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
+            Processes[i]:=ProcsCloseRequired[i];
+            Processes[i].Restartable:=False;
+        end;
+        for i:=0 to GetArrayLength(ProcsCloseOptional)-1 do begin
+            Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseOptional[i];
+            Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
+        end;
     end;
-    for i:=0 to GetArrayLength(ProcsCloseOptional)-1 do begin
-        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseOptional[i];
-        Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
-    end;
+
+    ManualClosingRequired:=False;
 
     ProcessesListBox.Items.Clear;
-    if (Sender=NIL) or Found then begin
+    if (Sender=NIL) or (SessionHandle>0) then begin
         for i:=0 to GetArrayLength(Processes)-1 do begin
             Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID);
-            if not Processes[i].Restartable then begin
+            if Processes[i].Restartable then begin
+                Caption:=Caption+', closing is optional';
+            end else begin
                 Caption:=Caption+', closing is required';
+                ManualClosingRequired:=True;
             end;
             Caption:=Caption+')';
             ProcessesListBox.Items.Append(Caption);
@@ -305,7 +323,7 @@ begin
     end;
 
     if ContinueButton<>NIL then begin
-        ContinueButton.Enabled:=(GetArrayLength(ProcsCloseRequired)=0);
+        ContinueButton.Enabled:=not ManualClosingRequired;
     end;
 end;
 
@@ -712,6 +730,7 @@ end;
 function NextButtonClick(CurPageID:Integer):Boolean;
 var
     i:Integer;
+    Version:TWindowsVersion;
 begin
     Result:=True;
 
@@ -735,22 +754,26 @@ begin
         Result:=(GetArrayLength(Processes)=0);
 
         if not Result then begin
-            Result:=(MsgBox(
-                'If you continue without closing the listed applications, you will need to log off and on again before changes take effect.' + #13 + #13 +
-                'Are you sure you want to continue anyway?',
-                mbConfirmation,
-                MB_YESNO
-            )=IDYES);
+            GetWindowsVersionEx(Version);
+            if Version.Major>=6 then begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications they will be closed and restarted automatically.' + #13 + #13 +
+                    'Are you sure you want to continue?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end else begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications you will need to log off and on again before changes take effect.' + #13 + #13 +
+                    'Are you sure you want to continue anyway?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end;
         end;
     end;
 end;
 
-// AfterInstall
-//
-// Even though the name of this procedure suggests otherwise most of the
-// code below is only executed once after the regular installation code
-// is finished. This happens because of the if-guard right in the
-// beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,DllPath,FileName,TempName,Cmd,Msg:String;
@@ -760,6 +783,18 @@ var
     FindRec:TFindRec;
     RootKey:Integer;
 begin
+    if CurStep=ssInstall then begin
+        // Shutdown locking processes just before the actual installation starts.
+        if SessionHandle>0 then try
+            RmShutdown(SessionHandle,RmShutdownOnlyRegistered,0);
+        except
+            Log('Line {#__LINE__}: RmShutdown not supported.');
+        end;
+
+        Exit;
+    end;
+
+    // Make sure the code below is only executed just after the actual installation finishes.
     if CurStep<>ssPostInstall then begin
         Exit;
     end;
@@ -1114,6 +1149,17 @@ begin
         if not ReplaceInUseFile(FileName,FileName+'.new',True) then begin
             Log('Line {#__LINE__}: Replacing file "'+FileName+'" failed.');
         end;
+    end;
+
+    {
+        Restart any processes that were shut down via the Restart Manager
+    }
+
+    if SessionHandle>0 then try
+        RmRestart(SessionHandle,0,0);
+        RmEndSession(SessionHandle);
+    except
+        Log('Line {#__LINE__}: RmRestart not supported.');
     end;
 end;
 
