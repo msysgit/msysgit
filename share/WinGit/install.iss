@@ -267,7 +267,7 @@ end;
 procedure RefreshProcessList(Sender:TObject);
 var
     Modules:TArrayOfString;
-    ProcsCloseRequired,ProcsCloseRestart:ProcessList;
+    ProcsCloseRequired,ProcsCloseOptional:ProcessList;
     Found:Boolean;
     i:Longint;
     Caption:String;
@@ -277,18 +277,18 @@ begin
     Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
     Found:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
 
-    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseRestart) or Found;
+    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseOptional) or Found;
 
     // Misuse the "Restartable" flag to indicate which processes are required
     // to be closed before setup can continue, and which just should be closed
     // in order to make changes take effect immediately.
-    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseRestart));
+    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseOptional));
     for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
         Processes[i]:=ProcsCloseRequired[i];
         Processes[i].Restartable:=False;
     end;
-    for i:=0 to GetArrayLength(ProcsCloseRestart)-1 do begin
-        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseRestart[i];
+    for i:=0 to GetArrayLength(ProcsCloseOptional)-1 do begin
+        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseOptional[i];
         Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
     end;
 
