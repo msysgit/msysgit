@@ -29,7 +29,7 @@ DefaultDirName={pf}\{#APP_NAME}
 DefaultGroupName={#APP_NAME}
 DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
-PrivilegesRequired=none
+PrivilegesRequired=lowest
 UninstallDisplayIcon=etc\git.ico
 
 ; Cosmetic
