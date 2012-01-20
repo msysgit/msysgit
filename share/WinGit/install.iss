@@ -278,15 +278,17 @@ begin
 
     // Use the Restart Manager API when installing the shell extension on Windows Vista and above.
     if Version.Major>=6 then begin
+        SetArrayLength(Modules,4);
+        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        Modules[2]:=ExpandConstant('{app}\bin\tk85.dll');
+        Modules[3]:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,Processes);
+    end else begin
         SetArrayLength(Modules,3);
         Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
         Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
-        Modules[2]:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
-        SessionHandle:=FindProcessesUsingModules(Modules,Processes);
-    end else begin
-        SetArrayLength(Modules,2);
-        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
-        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        Modules[2]:=ExpandConstant('{app}\bin\tk85.dll');
         SessionHandle:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
 
         SessionHandle:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseOptional) or SessionHandle;
