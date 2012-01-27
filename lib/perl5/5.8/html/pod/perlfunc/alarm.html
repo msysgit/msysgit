@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>alarm - schedule a SIGALRM</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;alarm - schedule a SIGALRM</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>alarm - schedule a SIGALRM</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>alarm SECONDS
+
+
+</p>
+<p>alarm</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Arranges to have a SIGALRM delivered to this process after the
+specified number of wallclock seconds has elapsed.  If SECONDS is not
+specified, the value stored in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> is used. (On some machines,
+unfortunately, the elapsed time may be up to one second less or more
+than you specified because of how seconds are counted, and process
+scheduling may delay the delivery of the signal even further.)</p>
+<p>Only one timer may be counting at once.  Each call disables the
+previous timer, and an argument of <code>0</code> may be supplied to cancel the
+previous timer without starting a new one.  The returned value is the
+amount of time remaining on the previous timer.</p>
+<p>For delays of finer granularity than one second, you may use Perl's
+four-argument version of <code>select()</code> leaving the first three arguments
+undefined, or you might be able to use the <code>syscall</code> interface to
+access <code>setitimer(2)</code> if your system supports it.  The Time::HiRes
+module (from CPAN, and starting from Perl 5.8 part of the standard
+distribution) may also prove useful.</p>
+<p>It is usually a mistake to intermix <code>alarm</code> and <code>sleep</code> calls.
+(<code>sleep</code> may be internally implemented in your system with <code>alarm</code>)</p>
+<p>If you want to use <code>alarm</code> to time out a system call you need to use an
+<code>eval</code>/<code>die</code> pair.  You can't rely on the alarm causing the system call to
+fail with <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> set to <code>EINTR</code> because Perl sets up signal handlers to
+restart system calls on some systems.  Using <code>eval</code>/<code>die</code> always works,
+modulo the caveats given in <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/signals.html">Signals in the perlipc manpage</a>.</p>
+<pre>
+    eval {
+        local $SIG{ALRM} = sub { die &quot;alarm\n&quot; }; # NB: \n required
+        alarm $timeout;
+        $nread = sysread SOCKET, $buffer, $size;
+        alarm 0;
+    };
+    if ($@) {
+        die unless $@ eq &quot;alarm\n&quot;;   # propagate unexpected errors
+        # timed out
+    }
+    else {
+        # didn't
+    }</pre>
+<p>For more information see <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;alarm - schedule a SIGALRM</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

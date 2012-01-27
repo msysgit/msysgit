@@ -1,0 +1,482 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Math::Complex - complex numbers and associated mathematical functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Math::Complex - complex numbers and associated mathematical functions</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#operations">OPERATIONS</a></li>
+	<li><a href="#creation">CREATION</a></li>
+	<li><a href="#displaying">DISPLAYING</a></li>
+	<ul>
+
+		<li><a href="#changed_in_perl_5_6">CHANGED IN PERL 5.6</a></li>
+	</ul>
+
+	<li><a href="#usage">USAGE</a></li>
+	<li><a href="#errors_due_to_division_by_zero_or_logarithm_of_zero">ERRORS DUE TO DIVISION BY ZERO OR LOGARITHM OF ZERO</a></li>
+	<li><a href="#errors_due_to_indigestible_arguments">ERRORS DUE TO INDIGESTIBLE ARGUMENTS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<hr />
+<h1><a name="name">NAME</a></h1>
+<p>Math::Complex - complex numbers and associated mathematical functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use Math::Complex;</pre>
+<pre>
+        $z = Math::Complex-&gt;make(5, 6);
+        $t = 4 - 3*i + $z;
+        $j = cplxe(1, 2*pi/3);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package lets you create and manipulate complex numbers. By default,
+<em>Perl</em> limits itself to real numbers, but an extra <code>use</code> statement brings
+full complex support, along with a full set of mathematical functions
+typically associated with and/or extended to complex numbers.</p>
+<p>If you wonder what complex numbers are, they were invented to be able to solve
+the following equation:</p>
+<pre>
+        x*x = -1</pre>
+<p>and by definition, the solution is noted <em>i</em> (engineers use <em>j</em> instead since
+<em>i</em> usually denotes an intensity, but the name does not matter). The number
+<em>i</em> is a pure <em>imaginary</em> number.</p>
+<p>The arithmetics with pure imaginary numbers works just like you would expect
+it with real numbers... you just have to remember that</p>
+<pre>
+        i*i = -1</pre>
+<p>so you have:</p>
+<pre>
+        5i + 7i = i * (5 + 7) = 12i
+        4i - 3i = i * (4 - 3) = i
+        4i * 2i = -8
+        6i / 2i = 3
+        1 / i = -i</pre>
+<p>Complex numbers are numbers that have both a real part and an imaginary
+part, and are usually noted:</p>
+<pre>
+        a + bi</pre>
+<p>where <code>a</code> is the <em>real</em> part and <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_b"><code>b</code></a> is the <em>imaginary</em> part. The
+arithmetic with complex numbers is straightforward. You have to
+keep track of the real and the imaginary parts, but otherwise the
+rules used for real numbers just apply:</p>
+<pre>
+        (4 + 3i) + (5 - 2i) = (4 + 5) + i(3 - 2) = 9 + i
+        (2 + i) * (4 - i) = 2*4 + 4i -2i -i*i = 8 + 2i + 1 = 9 + 2i</pre>
+<p>A graphical representation of complex numbers is possible in a plane
+(also called the <em>complex plane</em>, but it's really a 2D plane).
+The number</p>
+<pre>
+        z = a + bi</pre>
+<p>is the point whose coordinates are (a, b). Actually, it would
+be the vector originating from (0, 0) to (a, b). It follows that the addition
+of two complex numbers is a vectorial addition.</p>
+<p>Since there is a bijection between a point in the 2D plane and a complex
+number (i.e. the mapping is unique and reciprocal), a complex number
+can also be uniquely identified with polar coordinates:</p>
+<pre>
+        [rho, theta]</pre>
+<p>where <code>rho</code> is the distance to the origin, and <code>theta</code> the angle between
+the vector and the <em>x</em> axis. There is a notation for this using the
+exponential form, which is:</p>
+<pre>
+        rho * exp(i * theta)</pre>
+<p>where <em>i</em> is the famous imaginary number introduced above. Conversion
+between this form and the cartesian form <code>a + bi</code> is immediate:</p>
+<pre>
+        a = rho * cos(theta)
+        b = rho * sin(theta)</pre>
+<p>which is also expressed by this formula:</p>
+<pre>
+        z = rho * exp(i * theta) = rho * (cos theta + i * sin theta)</pre>
+<p>In other words, it's the projection of the vector onto the <em>x</em> and <em>y</em>
+axes. Mathematicians call <em>rho</em> the <em>norm</em> or <em>modulus</em> and <em>theta</em>
+the <em>argument</em> of the complex number. The <em>norm</em> of <code>z</code> will be
+noted <code>abs(z)</code>.</p>
+<p>The polar notation (also known as the trigonometric
+representation) is much more handy for performing multiplications and
+divisions of complex numbers, whilst the cartesian notation is better
+suited for additions and subtractions. Real numbers are on the <em>x</em>
+axis, and therefore <em>theta</em> is zero or <em>pi</em>.</p>
+<p>All the common operations that can be performed on a real number have
+been defined to work on complex numbers as well, and are merely
+<em>extensions</em> of the operations defined on real numbers. This means
+they keep their natural meaning when there is no imaginary part, provided
+the number is within their definition set.</p>
+<p>For instance, the <code>sqrt</code> routine which computes the square root of
+its argument is only defined for non-negative real numbers and yields a
+non-negative real number (it is an application from <strong>R+</strong> to <strong>R+</strong>).
+If we allow it to return a complex number, then it can be extended to
+negative real numbers to become an application from <strong>R</strong> to <strong>C</strong> (the
+set of complex numbers):</p>
+<pre>
+        sqrt(x) = x &gt;= 0 ? sqrt(x) : sqrt(-x)*i</pre>
+<p>It can also be extended to be an application from <strong>C</strong> to <strong>C</strong>,
+whilst its restriction to <strong>R</strong> behaves as defined above by using
+the following definition:</p>
+<pre>
+        sqrt(z = [r,t]) = sqrt(r) * exp(i * t/2)</pre>
+<p>Indeed, a negative real number can be noted <code>[x,pi]</code> (the modulus
+<em>x</em> is always non-negative, so <code>[x,pi]</code> is really <code>-x</code>, a negative
+number) and the above definition states that</p>
+<pre>
+        sqrt([x,pi]) = sqrt(x) * exp(i*pi/2) = [sqrt(x),pi/2] = sqrt(x)*i</pre>
+<p>which is exactly what we had defined for negative real numbers above.
+The <code>sqrt</code> returns only one of the solutions: if you want the both,
+use the <code>root</code> function.</p>
+<p>All the common mathematical functions defined on real numbers that
+are extended to complex numbers share that same property of working
+<em>as usual</em> when the imaginary part is zero (otherwise, it would not
+be called an extension, would it?).</p>
+<p>A <em>new</em> operation possible on a complex number that is
+the identity for real numbers is called the <em>conjugate</em>, and is noted
+with a horizontal bar above the number, or <code>~z</code> here.</p>
+<pre>
+         z = a + bi
+        ~z = a - bi</pre>
+<p>Simple... Now look:</p>
+<pre>
+        z * ~z = (a + bi) * (a - bi) = a*a + b*b</pre>
+<p>We saw that the norm of <code>z</code> was noted <code>abs(z)</code> and was defined as the
+distance to the origin, also known as:</p>
+<pre>
+        rho = abs(z) = sqrt(a*a + b*b)</pre>
+<p>so</p>
+<pre>
+        z * ~z = abs(z) ** 2</pre>
+<p>If z is a pure real number (i.e. <code>b == 0</code>), then the above yields:</p>
+<pre>
+        a * a = abs(a) ** 2</pre>
+<p>which is true (<code>abs</code> has the regular meaning for real number, i.e. stands
+for the absolute value). This example explains why the norm of <code>z</code> is
+noted <code>abs(z)</code>: it extends the <code>abs</code> function to complex numbers, yet
+is the regular <code>abs</code> we know when the complex number actually has no
+imaginary part... This justifies <em>a posteriori</em> our use of the <code>abs</code>
+notation for the norm.</p>
+<p>
+</p>
+<hr />
+<h1><a name="operations">OPERATIONS</a></h1>
+<p>Given the following notations:</p>
+<pre>
+        z1 = a + bi = r1 * exp(i * t1)
+        z2 = c + di = r2 * exp(i * t2)
+        z = &lt;any complex or real number&gt;</pre>
+<p>the following (overloaded) operations are supported on complex numbers:</p>
+<pre>
+        z1 + z2 = (a + c) + i(b + d)
+        z1 - z2 = (a - c) + i(b - d)
+        z1 * z2 = (r1 * r2) * exp(i * (t1 + t2))
+        z1 / z2 = (r1 / r2) * exp(i * (t1 - t2))
+        z1 ** z2 = exp(z2 * log z1)
+        ~z = a - bi
+        abs(z) = r1 = sqrt(a*a + b*b)
+        sqrt(z) = sqrt(r1) * exp(i * t/2)
+        exp(z) = exp(a) * exp(i * b)
+        log(z) = log(r1) + i*t
+        sin(z) = 1/2i (exp(i * z1) - exp(-i * z))
+        cos(z) = 1/2 (exp(i * z1) + exp(-i * z))
+        atan2(y, x) = atan(y / x) # Minding the right quadrant, note the order.</pre>
+<p>The definition used for complex arguments of <code>atan2()</code> is</p>
+<pre>
+       -i log((x + iy)/sqrt(x*x+y*y))</pre>
+<p>The following extra operations are supported on both real and complex
+numbers:</p>
+<pre>
+        Re(z) = a
+        Im(z) = b
+        arg(z) = t
+        abs(z) = r</pre>
+<pre>
+        cbrt(z) = z ** (1/3)
+        log10(z) = log(z) / log(10)
+        logn(z, n) = log(z) / log(n)</pre>
+<pre>
+        tan(z) = sin(z) / cos(z)</pre>
+<pre>
+        csc(z) = 1 / sin(z)
+        sec(z) = 1 / cos(z)
+        cot(z) = 1 / tan(z)</pre>
+<pre>
+        asin(z) = -i * log(i*z + sqrt(1-z*z))
+        acos(z) = -i * log(z + i*sqrt(1-z*z))
+        atan(z) = i/2 * log((i+z) / (i-z))</pre>
+<pre>
+        acsc(z) = asin(1 / z)
+        asec(z) = acos(1 / z)
+        acot(z) = atan(1 / z) = -i/2 * log((i+z) / (z-i))</pre>
+<pre>
+        sinh(z) = 1/2 (exp(z) - exp(-z))
+        cosh(z) = 1/2 (exp(z) + exp(-z))
+        tanh(z) = sinh(z) / cosh(z) = (exp(z) - exp(-z)) / (exp(z) + exp(-z))</pre>
+<pre>
+        csch(z) = 1 / sinh(z)
+        sech(z) = 1 / cosh(z)
+        coth(z) = 1 / tanh(z)</pre>
+<pre>
+        asinh(z) = log(z + sqrt(z*z+1))
+        acosh(z) = log(z + sqrt(z*z-1))
+        atanh(z) = 1/2 * log((1+z) / (1-z))</pre>
+<pre>
+        acsch(z) = asinh(1 / z)
+        asech(z) = acosh(1 / z)
+        acoth(z) = atanh(1 / z) = 1/2 * log((1+z) / (z-1))</pre>
+<p><em>arg</em>, <em>abs</em>, <em>log</em>, <em>csc</em>, <em>cot</em>, <em>acsc</em>, <em>acot</em>, <em>csch</em>,
+<em>coth</em>, <em>acosech</em>, <em>acotanh</em>, have aliases <em>rho</em>, <em>theta</em>, <em>ln</em>,
+<em>cosec</em>, <em>cotan</em>, <em>acosec</em>, <em>acotan</em>, <em>cosech</em>, <em>cotanh</em>,
+<em>acosech</em>, <em>acotanh</em>, respectively.  <code>Re</code>, <code>Im</code>, <code>arg</code>, <code>abs</code>,
+<code>rho</code>, and <code>theta</code> can be used also as mutators.  The <code>cbrt</code>
+returns only one of the solutions: if you want all three, use the
+<code>root</code> function.</p>
+<p>The <em>root</em> function is available to compute all the <em>n</em>
+roots of some complex, where <em>n</em> is a strictly positive integer.
+There are exactly <em>n</em> such roots, returned as a list. Getting the
+number mathematicians call <code>j</code> such that:</p>
+<pre>
+        1 + j + j*j = 0;</pre>
+<p>is a simple matter of writing:</p>
+<pre>
+        $j = ((root(1, 3))[1];</pre>
+<p>The <em>k</em>th root for <code>z = [r,t]</code> is given by:</p>
+<pre>
+        (root(z, n))[k] = r**(1/n) * exp(i * (t + 2*k*pi)/n)</pre>
+<p>You can return the <em>k</em>th root directly by <code>root(z, n, k)</code>,
+indexing starting from <em>zero</em> and ending at <em>n - 1</em>.</p>
+<p>The <em>spaceship</em> comparison operator, &lt;=&gt;, is also defined. In
+order to ensure its restriction to real numbers is conform to what you
+would expect, the comparison is run on the real part of the complex
+number first, and imaginary parts are compared only when the real
+parts match.</p>
+<p>
+</p>
+<hr />
+<h1><a name="creation">CREATION</a></h1>
+<p>To create a complex number, use either:</p>
+<pre>
+        $z = Math::Complex-&gt;make(3, 4);
+        $z = cplx(3, 4);</pre>
+<p>if you know the cartesian form of the number, or</p>
+<pre>
+        $z = 3 + 4*i;</pre>
+<p>if you like. To create a number using the polar form, use either:</p>
+<pre>
+        $z = Math::Complex-&gt;emake(5, pi/3);
+        $x = cplxe(5, pi/3);</pre>
+<p>instead. The first argument is the modulus, the second is the angle
+(in radians, the full circle is 2*pi).  (Mnemonic: <code>e</code> is used as a
+notation for complex numbers in the polar form).</p>
+<p>It is possible to write:</p>
+<pre>
+        $x = cplxe(-3, pi/4);</pre>
+<p>but that will be silently converted into <code>[3,-3pi/4]</code>, since the
+modulus must be non-negative (it represents the distance to the origin
+in the complex plane).</p>
+<p>It is also possible to have a complex number as either argument of the
+<code>make</code>, <code>emake</code>, <code>cplx</code>, and <code>cplxe</code>: the appropriate component of
+the argument will be used.</p>
+<pre>
+        $z1 = cplx(-2,  1);
+        $z2 = cplx($z1, 4);</pre>
+<p>The <code>new</code>, <code>make</code>, <code>emake</code>, <code>cplx</code>, and <code>cplxe</code> will also
+understand a single (string) argument of the forms</p>
+<pre>
+        2-3i
+        -3i
+        [2,3]
+        [2,-3pi/4]
+        [2]</pre>
+<p>in which case the appropriate cartesian and exponential components
+will be parsed from the string and used to create new complex numbers.
+The imaginary component and the theta, respectively, will default to zero.</p>
+<p>The <code>new</code>, <code>make</code>, <code>emake</code>, <code>cplx</code>, and <code>cplxe</code> will also
+understand the case of no arguments: this means plain zero or (0, 0).</p>
+<p>
+</p>
+<hr />
+<h1><a name="displaying">DISPLAYING</a></h1>
+<p>When printed, a complex number is usually shown under its cartesian
+style <em>a+bi</em>, but there are legitimate cases where the polar style
+<em>[r,t]</em> is more appropriate.  The process of converting the complex
+number into a string that can be displayed is known as <em>stringification</em>.</p>
+<p>By calling the class method <code>Math::Complex::display_format</code> and
+supplying either <code>&quot;polar&quot;</code> or <code>&quot;cartesian&quot;</code> as an argument, you
+override the default display style, which is <code>&quot;cartesian&quot;</code>. Not
+supplying any argument returns the current settings.</p>
+<p>This default can be overridden on a per-number basis by calling the
+<code>display_format</code> method instead. As before, not supplying any argument
+returns the current display style for this number. Otherwise whatever you
+specify will be the new display style for <em>this</em> particular number.</p>
+<p>For instance:</p>
+<pre>
+        use Math::Complex;</pre>
+<pre>
+        Math::Complex::display_format('polar');
+        $j = (root(1, 3))[1];
+        print &quot;j = $j\n&quot;;               # Prints &quot;j = [1,2pi/3]&quot;
+        $j-&gt;display_format('cartesian');
+        print &quot;j = $j\n&quot;;               # Prints &quot;j = -0.5+0.866025403784439i&quot;</pre>
+<p>The polar style attempts to emphasize arguments like <em>k*pi/n</em>
+(where <em>n</em> is a positive integer and <em>k</em> an integer within [-9, +9]),
+this is called <em>polar pretty-printing</em>.</p>
+<p>For the reverse of stringifying, see the <code>make</code> and <code>emake</code>.</p>
+<p>
+</p>
+<h2><a name="changed_in_perl_5_6">CHANGED IN PERL 5.6</a></h2>
+<p>The <code>display_format</code> class method and the corresponding
+<code>display_format</code> object method can now be called using
+a parameter hash instead of just a one parameter.</p>
+<p>The old display format style, which can have values <code>&quot;cartesian&quot;</code> or
+<code>&quot;polar&quot;</code>, can be changed using the <code>&quot;style&quot;</code> parameter.</p>
+<pre>
+        $j-&gt;display_format(style =&gt; &quot;polar&quot;);</pre>
+<p>The one parameter calling convention also still works.</p>
+<pre>
+        $j-&gt;display_format(&quot;polar&quot;);</pre>
+<p>There are two new display parameters.</p>
+<p>The first one is <code>&quot;format&quot;</code>, which is a sprintf()-style format string
+to be used for both numeric parts of the complex number(s).  The is
+somewhat system-dependent but most often it corresponds to <code>&quot;%.15g&quot;</code>.
+You can revert to the default by setting the <code>format</code> to <code>undef</code>.</p>
+<pre>
+        # the $j from the above example</pre>
+<pre>
+        $j-&gt;display_format('format' =&gt; '%.5f');
+        print &quot;j = $j\n&quot;;               # Prints &quot;j = -0.50000+0.86603i&quot;
+        $j-&gt;display_format('format' =&gt; undef);
+        print &quot;j = $j\n&quot;;               # Prints &quot;j = -0.5+0.86603i&quot;</pre>
+<p>Notice that this affects also the return values of the
+<code>display_format</code> methods: in list context the whole parameter hash
+will be returned, as opposed to only the style parameter value.
+This is a potential incompatibility with earlier versions if you
+have been calling the <code>display_format</code> method in list context.</p>
+<p>The second new display parameter is <code>&quot;polar_pretty_print&quot;</code>, which can
+be set to true or false, the default being true.  See the previous
+section for what this means.</p>
+<p>
+</p>
+<hr />
+<h1><a name="usage">USAGE</a></h1>
+<p>Thanks to overloading, the handling of arithmetics with complex numbers
+is simple and almost transparent.</p>
+<p>Here are some examples:</p>
+<pre>
+        use Math::Complex;</pre>
+<pre>
+        $j = cplxe(1, 2*pi/3);  # $j ** 3 == 1
+        print &quot;j = $j, j**3 = &quot;, $j ** 3, &quot;\n&quot;;
+        print &quot;1 + j + j**2 = &quot;, 1 + $j + $j**2, &quot;\n&quot;;</pre>
+<pre>
+        $z = -16 + 0*i;                 # Force it to be a complex
+        print &quot;sqrt($z) = &quot;, sqrt($z), &quot;\n&quot;;</pre>
+<pre>
+        $k = exp(i * 2*pi/3);
+        print &quot;$j - $k = &quot;, $j - $k, &quot;\n&quot;;</pre>
+<pre>
+        $z-&gt;Re(3);                      # Re, Im, arg, abs,
+        $j-&gt;arg(2);                     # (the last two aka rho, theta)
+                                        # can be used also as mutators.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="errors_due_to_division_by_zero_or_logarithm_of_zero">ERRORS DUE TO DIVISION BY ZERO OR LOGARITHM OF ZERO</a></h1>
+<p>The division (/) and the following functions</p>
+<pre>
+        log     ln      log10   logn
+        tan     sec     csc     cot
+        atan    asec    acsc    acot
+        tanh    sech    csch    coth
+        atanh   asech   acsch   acoth</pre>
+<p>cannot be computed for all arguments because that would mean dividing
+by zero or taking logarithm of zero. These situations cause fatal
+runtime errors looking like this</p>
+<pre>
+        cot(0): Division by zero.
+        (Because in the definition of cot(0), the divisor sin(0) is 0)
+        Died at ...</pre>
+<p>or</p>
+<pre>
+        atanh(-1): Logarithm of zero.
+        Died at...</pre>
+<p>For the <code>csc</code>, <code>cot</code>, <code>asec</code>, <code>acsc</code>, <code>acot</code>, <code>csch</code>, <code>coth</code>,
+<code>asech</code>, <code>acsch</code>, the argument cannot be <code>0</code> (zero).  For the
+logarithmic functions and the <code>atanh</code>, <code>acoth</code>, the argument cannot
+be <code>1</code> (one).  For the <code>atanh</code>, <code>acoth</code>, the argument cannot be
+<code>-1</code> (minus one).  For the <code>atan</code>, <code>acot</code>, the argument cannot be
+<code>i</code> (the imaginary unit).  For the <code>atan</code>, <code>acoth</code>, the argument
+cannot be <code>-i</code> (the negative imaginary unit).  For the <code>tan</code>,
+<code>sec</code>, <code>tanh</code>, the argument cannot be <em>pi/2 + k * pi</em>, where <em>k</em>
+is any integer.  atan2(0, 0) is undefined, and if the complex arguments
+are used for atan2(), a division by zero will happen if z1**2+z2**2 == 0.</p>
+<p>Note that because we are operating on approximations of real numbers,
+these errors can happen when merely `too close' to the singularities
+listed above.</p>
+<p>
+</p>
+<hr />
+<h1><a name="errors_due_to_indigestible_arguments">ERRORS DUE TO INDIGESTIBLE ARGUMENTS</a></h1>
+<p>The <code>make</code> and <code>emake</code> accept both real and complex arguments.
+When they cannot recognize the arguments they will die with error
+messages like the following</p>
+<pre>
+    Math::Complex::make: Cannot take real part of ...
+    Math::Complex::make: Cannot take real part of ...
+    Math::Complex::emake: Cannot take rho of ...
+    Math::Complex::emake: Cannot take theta of ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Saying <code>use Math::Complex;</code> exports many mathematical routines in the
+caller environment and even overrides some (<code>sqrt</code>, <code>log</code>, <code>atan2</code>).
+This is construed as a feature by the Authors, actually... ;-)</p>
+<p>All routines expect to be given real or complex numbers. Don't attempt to
+use BigFloat, since Perl has currently no rule to disambiguate a '+'
+operation (for instance) between two overloaded entities.</p>
+<p>In Cray UNICOS there is some strange numerical instability that results
+in root(), cos(), sin(), cosh(), sinh(), losing accuracy fast.  Beware.
+The bug may be in UNICOS math libs, in UNICOS C compiler, in Math::Complex.
+Whatever it is, it does not manifest itself anywhere else where Perl runs.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Daniel S. Lewart &lt;<em><a href="mailto:d-lewart@uiuc.edu">d-lewart@uiuc.edu</a></em>&gt;</p>
+<p>Original authors Raphael Manfredi &lt;<em><a href="mailto:Raphael_Manfredi@pobox.com">Raphael_Manfredi@pobox.com</a></em>&gt; and
+Jarkko Hietaniemi &lt;<em><a href="mailto:jhi@iki.fi">jhi@iki.fi</a></em>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Math::Complex - complex numbers and associated mathematical functions</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

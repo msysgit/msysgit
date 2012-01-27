@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Devel::SelfStubber - generate stubs for a SelfLoading module</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::SelfStubber - generate stubs for a SelfLoading module</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Devel::SelfStubber - generate stubs for a SelfLoading module</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>To generate just the stubs:</p>
+<pre>
+    use Devel::SelfStubber;
+    Devel::SelfStubber-&gt;stub('MODULENAME','MY_LIB_DIR');</pre>
+<p>or to generate the whole module with stubs inserted correctly</p>
+<pre>
+    use Devel::SelfStubber;
+    $Devel::SelfStubber::JUST_STUBS=0;
+    Devel::SelfStubber-&gt;stub('MODULENAME','MY_LIB_DIR');</pre>
+<p>MODULENAME is the Perl module name, e.g. Devel::SelfStubber,
+NOT 'Devel/SelfStubber' or 'Devel/SelfStubber.pm'.</p>
+<p>MY_LIB_DIR defaults to '.' if not present.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Devel::SelfStubber prints the stubs you need to put in the module
+before the __DATA__ token (or you can get it to print the entire
+module with stubs correctly placed). The stubs ensure that if
+a method is called, it will get loaded. They are needed specifically
+for inherited autoloaded methods.</p>
+<p>This is best explained using the following example:</p>
+<p>Assume four classes, A,B,C &amp; D.</p>
+<p>A is the root class, B is a subclass of A, C is a subclass of B,
+and D is another subclass of A.</p>
+<pre>
+                        A
+                       / \
+                      B   D
+                     /
+                    C</pre>
+<p>If D calls an autoloaded method 'foo' which is defined in class A,
+then the method is loaded into class A, then executed. If C then
+calls method 'foo', and that method was reimplemented in class
+B, but set to be autoloaded, then the lookup mechanism never gets to
+the AUTOLOAD mechanism in B because it first finds the method
+already loaded in A, and so erroneously uses that. If the method
+foo had been stubbed in B, then the lookup mechanism would have
+found the stub, and correctly loaded and used the sub from B.</p>
+<p>So, for classes and subclasses to have inheritance correctly
+work with autoloading, you need to ensure stubs are loaded.</p>
+<p>The SelfLoader can load stubs automatically at module initialization
+with the statement 'SelfLoader-&gt;load_stubs()';, but you may wish to
+avoid having the stub loading overhead associated with your
+initialization (though note that the SelfLoader::load_stubs method
+will be called sooner or later - at latest when the first sub
+is being autoloaded). In this case, you can put the sub stubs
+before the __DATA__ token. This can be done manually, but this
+module allows automatic generation of the stubs.</p>
+<p>By default it just prints the stubs, but you can set the
+global $Devel::SelfStubber::JUST_STUBS to 0 and it will
+print out the entire module with the stubs positioned correctly.</p>
+<p>At the very least, this is useful to see what the SelfLoader
+thinks are stubs - in order to ensure future versions of the
+SelfStubber remain in step with the SelfLoader, the
+SelfStubber actually uses the SelfLoader to determine which
+stubs are needed.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::SelfStubber - generate stubs for a SelfLoading module</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

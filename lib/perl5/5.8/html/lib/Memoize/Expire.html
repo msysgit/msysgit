@@ -1,0 +1,272 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Memoize::Expire - Plug-in module for automatic expiration of memoized values</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Memoize::Expire - Plug-in module for automatic expiration of memoized values</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#interface">INTERFACE</a></li>
+	<li><a href="#alternatives">ALTERNATIVES</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Memoize::Expire - Plug-in module for automatic expiration of memoized values</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Memoize;
+  use Memoize::Expire;
+  tie my %cache =&gt; 'Memoize::Expire',
+                     LIFETIME =&gt; $lifetime,    # In seconds
+                     NUM_USES =&gt; $n_uses;</pre>
+<pre>
+  memoize 'function', SCALAR_CACHE =&gt; [HASH =&gt; \%cache ];</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Memoize::Expire is a plug-in module for Memoize.  It allows the cached
+values for memoized functions to expire automatically.  This manual
+assumes you are already familiar with the Memoize module.  If not, you
+should study that manual carefully first, paying particular attention
+to the HASH feature.</p>
+<p>Memoize::Expire is a layer of software that you can insert in between
+Memoize itself and whatever underlying package implements the cache.
+The layer presents a hash variable whose values expire whenever they
+get too old, have been used too often, or both. You tell <code>Memoize</code> to
+use this forgetful hash as its cache instead of the default, which is
+an ordinary hash.</p>
+<p>To specify a real-time timeout, supply the <code>LIFETIME</code> option with a
+numeric value.  Cached data will expire after this many seconds, and
+will be looked up afresh when it expires.  When a data item is looked
+up afresh, its lifetime is reset.</p>
+<p>If you specify <code>NUM_USES</code> with an argument of <em>n</em>, then each cached
+data item will be discarded and looked up afresh after the <em>n</em>th time
+you access it.  When a data item is looked up afresh, its number of
+uses is reset.</p>
+<p>If you specify both arguments, data will be discarded from the cache
+when either expiration condition holds.</p>
+<p>Memoize::Expire uses a real hash internally to store the cached data.
+You can use the <code>HASH</code> option to Memoize::Expire to supply a tied
+hash in place of the ordinary hash that Memoize::Expire will normally
+use.  You can use this feature to add Memoize::Expire as a layer in
+between a persistent disk hash and Memoize.  If you do this, you get a
+persistent disk cache whose entries expire automatically.  For
+example:</p>
+<pre>
+  #   Memoize
+  #      |
+  #   Memoize::Expire  enforces data expiration policy
+  #      |
+  #   DB_File  implements persistence of data in a disk file
+  #      |
+  #   Disk file</pre>
+<pre>
+  use Memoize;
+  use Memoize::Expire;
+  use DB_File;</pre>
+<pre>
+  # Set up persistence
+  tie my %disk_cache =&gt; 'DB_File', $filename, O_CREAT|O_RDWR, 0666];</pre>
+<pre>
+  # Set up expiration policy, supplying persistent hash as a target
+  tie my %cache =&gt; 'Memoize::Expire', 
+                     LIFETIME =&gt; $lifetime,    # In seconds
+                     NUM_USES =&gt; $n_uses,
+                     HASH =&gt; \%disk_cache;</pre>
+<pre>
+  # Set up memoization, supplying expiring persistent hash for cache
+  memoize 'function', SCALAR_CACHE =&gt; [ HASH =&gt; \%cache ];</pre>
+<p>
+</p>
+<hr />
+<h1><a name="interface">INTERFACE</a></h1>
+<p>There is nothing special about Memoize::Expire.  It is just an
+example.  If you don't like the policy that it implements, you are
+free to write your own expiration policy module that implements
+whatever policy you desire.  Here is how to do that.  Let us suppose
+that your module will be named MyExpirePolicy.</p>
+<p>Short summary: You need to create a package that defines four methods:</p>
+<dl>
+<dt><strong><a name="item_tiehash">TIEHASH</a></strong>
+
+<dd>
+<p>Construct and return cache object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_exists">EXISTS</a></strong>
+
+<dd>
+<p>Given a function argument, is the corresponding function value in the
+cache, and if so, is it fresh enough to use?</p>
+</dd>
+</li>
+<dt><strong><a name="item_fetch">FETCH</a></strong>
+
+<dd>
+<p>Given a function argument, look up the corresponding function value in
+the cache and return it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_store">STORE</a></strong>
+
+<dd>
+<p>Given a function argument and the corresponding function value, store
+them into the cache.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clear">CLEAR</a></strong>
+
+<dd>
+<p>(Optional.)  Flush the cache completely.</p>
+</dd>
+</li>
+</dl>
+<p>The user who wants the memoization cache to be expired according to
+your policy will say so by writing</p>
+<pre>
+  tie my %cache =&gt; 'MyExpirePolicy', args...;
+  memoize 'function', SCALAR_CACHE =&gt; [HASH =&gt; \%cache];</pre>
+<p>This will invoke <a href="#item_tiehash"><code>MyExpirePolicy-&gt;TIEHASH(args)</code></a>.
+MyExpirePolicy::TIEHASH should do whatever is appropriate to set up
+the cache, and it should return the cache object to the caller.</p>
+<p>For example, MyExpirePolicy::TIEHASH might create an object that
+contains a regular Perl hash (which it will to store the cached
+values) and some extra information about the arguments and how old the
+data is and things like that.  Let us call this object `C'.</p>
+<p>When Memoize needs to check to see if an entry is in the cache
+already, it will invoke <a href="#item_exists"><code>C-&gt;EXISTS(key)</code></a>.  <code>key</code> is the normalized
+function argument.  MyExpirePolicy::EXISTS should return 0 if the key
+is not in the cache, or if it has expired, and 1 if an unexpired value
+is in the cache.  It should <em>not</em> return <code>undef</code>, because there is a
+bug in some versions of Perl that will cause a spurious FETCH if the
+EXISTS method returns <code>undef</code>.</p>
+<p>If your EXISTS function returns true, Memoize will try to fetch the
+cached value by invoking <a href="#item_fetch"><code>C-&gt;FETCH(key)</code></a>.  MyExpirePolicy::FETCH should
+return the cached value.  Otherwise, Memoize will call the memoized
+function to compute the appropriate value, and will store it into the
+cache by calling <a href="#item_store"><code>C-&gt;STORE(key, value)</code></a>.</p>
+<p>Here is a very brief example of a policy module that expires each
+cache item after ten seconds.</p>
+<pre>
+        package Memoize::TenSecondExpire;</pre>
+<pre>
+        sub TIEHASH {
+          my ($package, %args) = @_;
+          my $cache = $args{HASH} || {};
+          bless $cache =&gt; $package;
+        }</pre>
+<pre>
+        sub EXISTS {
+          my ($cache, $key) = @_;
+          if (exists $cache-&gt;{$key} &amp;&amp; 
+              $cache-&gt;{$key}{EXPIRE_TIME} &gt; time) {
+            return 1
+          } else {
+            return 0;  # Do NOT return `undef' here.
+          }
+        }</pre>
+<pre>
+        sub FETCH {
+          my ($cache, $key) = @_;
+          return $cache-&gt;{$key}{VALUE};
+        }</pre>
+<pre>
+        sub STORE {
+          my ($cache, $key, $newvalue) = @_;
+          $cache-&gt;{$key}{VALUE} = $newvalue;
+          $cache-&gt;{$key}{EXPIRE_TIME} = time + 10;
+        }</pre>
+<p>To use this expiration policy, the user would say</p>
+<pre>
+        use Memoize;
+        tie my %cache10sec =&gt; 'Memoize::TenSecondExpire';
+        memoize 'function', SCALAR_CACHE =&gt; [HASH =&gt; \%cache10sec];</pre>
+<p>Memoize would then call <code>function</code> whenever a cached value was
+entirely absent or was older than ten seconds.</p>
+<p>You should always support a <code>HASH</code> argument to <a href="#item_tiehash"><code>TIEHASH</code></a> that ties
+the underlying cache so that the user can specify that the cache is
+also persistent or that it has some other interesting semantics.  The
+example above demonstrates how to do this, as does <code>Memoize::Expire</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="alternatives">ALTERNATIVES</a></h1>
+<p>Brent Powers has a <code>Memoize::ExpireLRU</code> module that was designed to
+work with Memoize and provides expiration of least-recently-used data.
+The cache is held at a fixed number of entries, and when new data
+comes in, the least-recently used data is expired.  See
+<a href="http://search.cpan.org/search?mode=module&query=ExpireLRU">http://search.cpan.org/search</a>.</p>
+<p>Joshua Chamas's Tie::Cache module may be useful as an expiration
+manager.  (If you try this, let me know how it works out.)</p>
+<p>If you develop any useful expiration managers that you think should be
+distributed with Memoize, please let me know.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>This module is experimental, and may contain bugs.  Please report bugs
+to the address below.</p>
+<p>Number-of-uses is stored as a 16-bit unsigned integer, so can't exceed
+65535.</p>
+<p>Because of clock granularity, expiration times may occur up to one
+second sooner than you expect.  For example, suppose you store a value
+with a lifetime of ten seconds, and you store it at 12:00:00.998 on a
+certain day.  Memoize will look at the clock and see 12:00:00.  Then
+9.01 seconds later, at 12:00:10.008 you try to read it back.  Memoize
+will look at the clock and see 12:00:10 and conclude that the value
+has expired.  This will probably not occur if you have
+<code>Time::HiRes</code> installed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Mark-Jason Dominus (mjd-perl-memoize+@plover.com)</p>
+<p>Mike Cariaso provided valuable insight into the best way to solve this
+problem.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><code>perl(1)</code></p>
+<p>The Memoize man page.</p>
+<p><a href="http://www.plover.com/~mjd/perl/Memoize/">http://www.plover.com/~mjd/perl/Memoize/</a>  (for news and updates)</p>
+<p>I maintain a mailing list on which I occasionally announce new
+versions of Memoize.  The list is for announcements only, not
+discussion.  To join, send an empty message to
+<a href="mailto:mjd-perl-memoize-request@Plover.com.">mjd-perl-memoize-request@Plover.com.</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Memoize::Expire - Plug-in module for automatic expiration of memoized values</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

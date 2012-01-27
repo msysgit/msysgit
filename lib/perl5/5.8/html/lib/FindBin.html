@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>FindBin - Locate directory of original perl script</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;FindBin - Locate directory of original perl script</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#exportable_variables">EXPORTABLE VARIABLES</a></li>
+	<li><a href="#known_issues">KNOWN ISSUES</a></li>
+	<li><a href="#known_bugs">KNOWN BUGS</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>FindBin - Locate directory of original perl script</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use FindBin;
+ use lib &quot;$FindBin::Bin/../lib&quot;;</pre>
+<pre>
+ or</pre>
+<pre>
+ use FindBin qw($Bin);
+ use lib &quot;$Bin/../lib&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Locates the full path to the script bin directory to allow the use
+of paths relative to the bin directory.</p>
+<p>This allows a user to setup a directory tree for some software with
+directories <code>&lt;root&gt;/bin</code> and <code>&lt;root&gt;/lib</code>, and then the above
+example will allow the use of modules in the lib directory without knowing
+where the software tree is installed.</p>
+<p>If perl is invoked using the <strong>-e</strong> option or the perl script is read from
+<code>STDIN</code> then FindBin sets both <code>$Bin</code> and <code>$RealBin</code> to the current
+directory.</p>
+<p>
+</p>
+<hr />
+<h1><a name="exportable_variables">EXPORTABLE VARIABLES</a></h1>
+<pre>
+ $Bin         - path to bin directory from where script was invoked
+ $Script      - basename of script from which perl was invoked
+ $RealBin     - $Bin with all links resolved
+ $RealScript  - $Script with all links resolved</pre>
+<p>
+</p>
+<hr />
+<h1><a name="known_issues">KNOWN ISSUES</a></h1>
+<p>If there are two modules using <code>FindBin</code> from different directories
+under the same interpreter, this won't work. Since <code>FindBin</code> uses a
+<code>BEGIN</code> block, it'll be executed only once, and only the first caller
+will get it right. This is a problem under mod_perl and other persistent
+Perl environments, where you shouldn't use this module. Which also means
+that you should avoid using <code>FindBin</code> in modules that you plan to put
+on CPAN. To make sure that <code>FindBin</code> will work is to call the <code>again</code>
+function:</p>
+<pre>
+  use FindBin;
+  FindBin::again(); # or FindBin-&gt;again;</pre>
+<p>In former versions of FindBin there was no <code>again</code> function. The
+workaround was to force the <code>BEGIN</code> block to be executed again:</p>
+<pre>
+  delete $INC{'FindBin.pm'};
+  require FindBin;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="known_bugs">KNOWN BUGS</a></h1>
+<p>If perl is invoked as</p>
+<pre>
+   perl filename</pre>
+<p>and <em>filename</em> does not have executable rights and a program called
+<em>filename</em> exists in the users <code>$ENV{PATH}</code> which satisfies both <strong>-x</strong>
+and <strong>-T</strong> then FindBin assumes that it was invoked via the
+<code>$ENV{PATH}</code>.</p>
+<p>Workaround is to invoke perl as</p>
+<pre>
+ perl ./filename</pre>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>FindBin is supported as part of the core perl distribution. Please send bug
+reports to &lt;<em><a href="mailto:perlbug@perl.org">perlbug@perl.org</a></em>&gt; using the perlbug program
+included with perl.</p>
+<p>Graham Barr &lt;<em><a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a></em>&gt;
+Nick Ing-Simmons &lt;<em><a href="mailto:nik@tiuk.ti.com">nik@tiuk.ti.com</a></em>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1995 Graham Barr &amp; Nick Ing-Simmons. All rights reserved.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;FindBin - Locate directory of original perl script</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

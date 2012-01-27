@@ -1,0 +1,290 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Harness::Straps - detailed analysis of test results</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Harness::Straps - detailed analysis of test results</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#construction">CONSTRUCTION</a></li>
+	<ul>
+
+		<li><a href="#new__"><code>new()</code></a></li>
+		<li><a href="#_strap__init">$strap-&gt;_init</a></li>
+	</ul>
+
+	<li><a href="#analysis">ANALYSIS</a></li>
+	<ul>
+
+		<li><a href="#_strap_analyze___name____output_lines__">$strap-&gt;analyze( $name, \@output_lines )</a></li>
+		<li><a href="#_strap_analyze_fh___name___test_filehandle__">$strap-&gt;analyze_fh( $name, $test_filehandle )</a></li>
+		<li><a href="#_strap_analyze_file___test_file__">$strap-&gt;analyze_file( $test_file )</a></li>
+		<li><a href="#_strap__command_line___file__">$strap-&gt;_command_line( $file )</a></li>
+		<li><a href="#_strap__command__">$strap-&gt;<code>_command()</code></a></li>
+		<li><a href="#_strap__switches___file__">$strap-&gt;_switches( $file )</a></li>
+		<li><a href="#_strap__cleaned_switches___switches_from_user__">$strap-&gt;_cleaned_switches( @switches_from_user )</a></li>
+		<li><a href="#_strap__inc2perl5lib">$strap-&gt;_INC2PERL5LIB</a></li>
+		<li><a href="#_strap__filtered_inc__">$strap-&gt;<code>_filtered_INC()</code></a></li>
+		<li><a href="#_strap__restore_perl5lib__">$strap-&gt;<code>_restore_PERL5LIB()</code></a></li>
+	</ul>
+
+	<li><a href="#parsing">Parsing</a></li>
+	<ul>
+
+		<li><a href="#_is_diagnostic"><code>_is_diagnostic</code></a></li>
+		<li><a href="#_is_header"><code>_is_header</code></a></li>
+		<li><a href="#_is_bail_out"><code>_is_bail_out</code></a></li>
+		<li><a href="#_reset_file_state"><code>_reset_file_state</code></a></li>
+	</ul>
+
+	<li><a href="#results">Results</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Harness::Straps - detailed analysis of test results</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Test::Harness::Straps;</pre>
+<pre>
+  my $strap = Test::Harness::Straps-&gt;new;</pre>
+<pre>
+  # Various ways to interpret a test
+  my %results = $strap-&gt;analyze($name, \@test_output);
+  my %results = $strap-&gt;analyze_fh($name, $test_filehandle);
+  my %results = $strap-&gt;analyze_file($test_file);</pre>
+<pre>
+  # UNIMPLEMENTED
+  my %total = $strap-&gt;total_results;</pre>
+<pre>
+  # Altering the behavior of the strap  UNIMPLEMENTED
+  my $verbose_output = $strap-&gt;dump_verbose();
+  $strap-&gt;dump_verbose_fh($output_filehandle);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>THIS IS ALPHA SOFTWARE</strong> in that the interface is subject to change
+in incompatible ways.  It is otherwise stable.</p>
+<p>Test::Harness is limited to printing out its results.  This makes
+analysis of the test results difficult for anything but a human.  To
+make it easier for programs to work with test results, we provide
+Test::Harness::Straps.  Instead of printing the results, straps
+provide them as raw data.  You can also configure how the tests are to
+be run.</p>
+<p>The interface is currently incomplete.  <em>Please</em> contact the author
+if you'd like a feature added or something change or just have
+comments.</p>
+<p>
+</p>
+<hr />
+<h1><a name="construction">CONSTRUCTION</a></h1>
+<p>
+</p>
+<h2><a name="new__"><code>new()</code></a></h2>
+<pre>
+  my $strap = Test::Harness::Straps-&gt;new;</pre>
+<p>Initialize a new strap.</p>
+<p>
+</p>
+<h2><a name="_strap__init">$strap-&gt;_init</a></h2>
+<pre>
+  $strap-&gt;_init;</pre>
+<p>Initialize the internal state of a strap to make it ready for parsing.</p>
+<p>
+</p>
+<hr />
+<h1><a name="analysis">ANALYSIS</a></h1>
+<p>
+</p>
+<h2><a name="_strap_analyze___name____output_lines__">$strap-&gt;analyze( $name, \@output_lines )</a></h2>
+<pre>
+    my %results = $strap-&gt;analyze($name, \@test_output);</pre>
+<p>Analyzes the output of a single test, assigning it the given <code>$name</code>
+for use in the total report.  Returns the <code>%results</code> of the test.
+See <em>Results</em>.</p>
+<p><code>@test_output</code> should be the raw output from the test, including
+newlines.</p>
+<p>
+</p>
+<h2><a name="_strap_analyze_fh___name___test_filehandle__">$strap-&gt;analyze_fh( $name, $test_filehandle )</a></h2>
+<pre>
+    my %results = $strap-&gt;analyze_fh($name, $test_filehandle);</pre>
+<p>Like <code>analyze</code>, but it reads from the given filehandle.</p>
+<p>
+</p>
+<h2><a name="_strap_analyze_file___test_file__">$strap-&gt;analyze_file( $test_file )</a></h2>
+<pre>
+    my %results = $strap-&gt;analyze_file($test_file);</pre>
+<p>Like <code>analyze</code>, but it runs the given <code>$test_file</code> and parses its
+results.  It will also use that name for the total report.</p>
+<p>
+</p>
+<h2><a name="_strap__command_line___file__">$strap-&gt;_command_line( $file )</a></h2>
+<p>Returns the full command line that will be run to test <em>$file</em>.</p>
+<p>
+</p>
+<h2><a name="_strap__command__">$strap-&gt;<code>_command()</code></a></h2>
+<p>Returns the command that runs the test.  Combine this with <code>_switches()</code>
+to build a command line.</p>
+<p>Typically this is <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___x"><code>$^X</code></a>, but you can set <code>$ENV{HARNESS_PERL}</code>
+to use a different Perl than what you're running the harness under.
+This might be to run a threaded Perl, for example.</p>
+<p>You can also overload this method if you've built your own strap subclass,
+such as a PHP interpreter for a PHP-based strap.</p>
+<p>
+</p>
+<h2><a name="_strap__switches___file__">$strap-&gt;_switches( $file )</a></h2>
+<p>Formats and returns the switches necessary to run the test.</p>
+<p>
+</p>
+<h2><a name="_strap__cleaned_switches___switches_from_user__">$strap-&gt;_cleaned_switches( @switches_from_user )</a></h2>
+<p>Returns only defined, non-blank, trimmed switches from the parms passed.</p>
+<p>
+</p>
+<h2><a name="_strap__inc2perl5lib">$strap-&gt;_INC2PERL5LIB</a></h2>
+<pre>
+  local $ENV{PERL5LIB} = $self-&gt;_INC2PERL5LIB;</pre>
+<p>Takes the current value of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> and turns it into something suitable
+for putting onto <code>PERL5LIB</code>.</p>
+<p>
+</p>
+<h2><a name="_strap__filtered_inc__">$strap-&gt;<code>_filtered_INC()</code></a></h2>
+<pre>
+  my @filtered_inc = $self-&gt;_filtered_INC;</pre>
+<p>Shortens <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> by removing redundant and unnecessary entries.
+Necessary for OSes with limited command line lengths, like VMS.</p>
+<p>
+</p>
+<h2><a name="_strap__restore_perl5lib__">$strap-&gt;<code>_restore_PERL5LIB()</code></a></h2>
+<pre>
+  $self-&gt;_restore_PERL5LIB;</pre>
+<p>This restores the original value of the <code>PERL5LIB</code> environment variable.
+Necessary on VMS, otherwise a no-op.</p>
+<p>
+</p>
+<hr />
+<h1><a name="parsing">Parsing</a></h1>
+<p>Methods for identifying what sort of line you're looking at.</p>
+<p>
+</p>
+<h2><a name="_is_diagnostic"><code>_is_diagnostic</code></a></h2>
+<pre>
+    my $is_diagnostic = $strap-&gt;_is_diagnostic($line, \$comment);</pre>
+<p>Checks if the given line is a comment.  If so, it will place it into
+<code>$comment</code> (sans #).</p>
+<p>
+</p>
+<h2><a name="_is_header"><code>_is_header</code></a></h2>
+<pre>
+  my $is_header = $strap-&gt;_is_header($line);</pre>
+<p>Checks if the given line is a header (1..M) line.  If so, it places how
+many tests there will be in <code>$strap-&gt;{max}</code>, a list of which tests
+are todo in <code>$strap-&gt;{todo}</code> and if the whole test was skipped
+<code>$strap-&gt;{skip_all}</code> contains the reason.</p>
+<p>
+</p>
+<h2><a name="_is_bail_out"><code>_is_bail_out</code></a></h2>
+<pre>
+  my $is_bail_out = $strap-&gt;_is_bail_out($line, \$reason);</pre>
+<p>Checks if the line is a ``Bail out!''.  Places the reason for bailing
+(if any) in $reason.</p>
+<p>
+</p>
+<h2><a name="_reset_file_state"><code>_reset_file_state</code></a></h2>
+<pre>
+  $strap-&gt;_reset_file_state;</pre>
+<p>Resets things like <code>$strap-&gt;{max}</code> , <code>$strap-&gt;{skip_all}</code>,
+etc. so it's ready to parse the next file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="results">Results</a></h1>
+<p>The <code>%results</code> returned from <code>analyze()</code> contain the following
+information:</p>
+<pre>
+  passing           true if the whole test is considered a pass 
+                    (or skipped), false if its a failure</pre>
+<pre>
+  exit              the exit code of the test run, if from a file
+  wait              the wait code of the test run, if from a file</pre>
+<pre>
+  max               total tests which should have been run
+  seen              total tests actually seen
+  skip_all          if the whole test was skipped, this will 
+                      contain the reason.</pre>
+<pre>
+  ok                number of tests which passed 
+                      (including todo and skips)</pre>
+<pre>
+  todo              number of todo tests seen
+  bonus             number of todo tests which 
+                      unexpectedly passed</pre>
+<pre>
+  skip              number of tests skipped</pre>
+<p>So a successful test should have max == seen == ok.</p>
+<p>There is one final item, the details.</p>
+<pre>
+  details           an array ref reporting the result of 
+                    each test looks like this:</pre>
+<pre>
+    $results{details}[$test_num - 1] = 
+            { ok          =&gt; is the test considered ok?
+              actual_ok   =&gt; did it literally say 'ok'?
+              name        =&gt; name of the test (if any)
+              diagnostics =&gt; test diagnostics (if any)
+              type        =&gt; 'skip' or 'todo' (if any)
+              reason      =&gt; reason for the above (if any)
+            };</pre>
+<p>Element 0 of the details is test #1.  I tried it with element 1 being
+#1 and 0 being empty, this is less awkward.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>See <em>examples/mini_harness.plx</em> for an example of use.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Michael G Schwern <code>&lt;schwern@pobox.com&gt;</code>, currently maintained by
+Andy Lester <code>&lt;andy@petdance.com&gt;</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Harness::Straps - detailed analysis of test results</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

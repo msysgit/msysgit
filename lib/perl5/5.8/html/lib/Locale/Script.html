@@ -1,0 +1,312 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Locale::Script - ISO codes for script identification</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Script - ISO codes for script identification</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#special_codes">SPECIAL CODES</a></li>
+	</ul>
+
+	<li><a href="#conversion_routines">CONVERSION ROUTINES</a></li>
+	<li><a href="#query_routines">QUERY ROUTINES</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Locale::Script - ISO codes for script identification (ISO 15924)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Locale::Script;
+    use Locale::Constants;
+    
+    $script  = code2script('ph');                       # 'Phoenician'
+    $code    = script2code('Tibetan');                  # 'bo'
+    $code3   = script2code('Tibetan',
+                           LOCALE_CODE_ALPHA_3);        # 'bod'
+    $codeN   = script2code('Tibetan',
+                           LOCALE_CODE_ALPHA_NUMERIC);  # 330
+    
+    @codes   = all_script_codes();
+    @scripts = all_script_names();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Locale::Script</code> module provides access to the ISO
+codes for identifying scripts, as defined in ISO 15924.
+For example, Egyptian hieroglyphs are denoted by the two-letter
+code 'eg', the three-letter code 'egy', and the numeric code 050.</p>
+<p>You can either access the codes via the conversion routines
+(described below), or with the two functions which return lists
+of all script codes or all script names.</p>
+<p>There are three different code sets you can use for identifying
+scripts:</p>
+<dl>
+<dt><strong><a name="item_alpha_2d2"><strong>alpha-2</strong></a></strong>
+
+<dd>
+<p>Two letter codes, such as 'bo' for Tibetan.
+This code set is identified with the symbol <code>LOCALE_CODE_ALPHA_2</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_alpha_2d3"><strong>alpha-3</strong></a></strong>
+
+<dd>
+<p>Three letter codes, such as 'ell' for Greek.
+This code set is identified with the symbol <code>LOCALE_CODE_ALPHA_3</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_numeric"><strong>numeric</strong></a></strong>
+
+<dd>
+<p>Numeric codes, such as 410 for Hiragana.
+This code set is identified with the symbol <code>LOCALE_CODE_NUMERIC</code>.</p>
+</dd>
+</li>
+</dl>
+<p>All of the routines take an optional additional argument
+which specifies the code set to use.
+If not specified, it defaults to the two-letter codes.
+This is partly for backwards compatibility (previous versions
+of Locale modules only supported the alpha-2 codes), and
+partly because they are the most widely used codes.</p>
+<p>The alpha-2 and alpha-3 codes are not case-dependent,
+so you can use 'BO', 'Bo', 'bO' or 'bo' for Tibetan.
+When a code is returned by one of the functions in
+this module, it will always be lower-case.</p>
+<p>
+</p>
+<h2><a name="special_codes">SPECIAL CODES</a></h2>
+<p>The standard defines various special codes.</p>
+<ul>
+<li>
+<p>The standard reserves codes in the ranges <strong>qa</strong> - <strong>qt</strong>,
+<strong>qaa</strong> - <strong>qat</strong>, and <strong>900</strong> - <strong>919</strong>, for private use.</p>
+</li>
+<li>
+<p><strong>zx</strong>, <strong>zxx</strong>, and <strong>997</strong>, are the codes for unwritten languages.</p>
+</li>
+<li>
+<p><strong>zy</strong>, <strong>zyy</strong>, and <strong>998</strong>, are the codes for an undetermined script.</p>
+</li>
+<li>
+<p><strong>zz</strong>, <strong>zzz</strong>, and <strong>999</strong>, are the codes for an uncoded script.</p>
+</li>
+</ul>
+<p>The private codes are not recognised by Locale::Script,
+but the others are.</p>
+<p>
+</p>
+<hr />
+<h1><a name="conversion_routines">CONVERSION ROUTINES</a></h1>
+<p>There are three conversion routines: <a href="#item_code2script"><code>code2script()</code></a>, <a href="#item_script2code"><code>script2code()</code></a>,
+and <a href="#item_script_code2code"><code>script_code2code()</code></a>.</p>
+<dl>
+<dt><strong><a name="item_code2script">code2script( CODE, [ CODESET ] )</a></strong>
+
+<dd>
+<p>This function takes a script code and returns a string
+which contains the name of the script identified.
+If the code is not a valid script code, as defined by ISO 15924,
+then <code>undef</code> will be returned:</p>
+</dd>
+<dd>
+<pre>
+    $script = code2script('cy');   # Cyrillic</pre>
+</dd>
+</li>
+<dt><strong><a name="item_script2code">script2code( STRING, [ CODESET ] )</a></strong>
+
+<dd>
+<p>This function takes a script name and returns the corresponding
+script code, if such exists.
+If the argument could not be identified as a script name,
+then <code>undef</code> will be returned:</p>
+</dd>
+<dd>
+<pre>
+    $code = script2code('Gothic', LOCALE_CODE_ALPHA_3);
+    # $code will now be 'gth'</pre>
+</dd>
+<dd>
+<p>The case of the script name is not important.
+See the section <a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a> below.</p>
+</dd>
+</li>
+<dt><strong><a name="item_script_code2code">script_code2code( CODE, CODESET, CODESET )</a></strong>
+
+<dd>
+<p>This function takes a script code from one code set,
+and returns the corresponding code from another code set.</p>
+</dd>
+<dd>
+<pre>
+    $alpha2 = script_code2code('jwi',
+                 LOCALE_CODE_ALPHA_3 =&gt; LOCALE_CODE_ALPHA_2);
+    # $alpha2 will now be 'jw' (Javanese)</pre>
+</dd>
+<dd>
+<p>If the code passed is not a valid script code in
+the first code set, or if there isn't a code for the
+corresponding script in the second code set,
+then <code>undef</code> will be returned.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="query_routines">QUERY ROUTINES</a></h1>
+<p>There are two function which can be used to obtain a list of all codes,
+or all script names:</p>
+<dl>
+<dt><strong><a name="item_all_script_codes"><code>all_script_codes ( [ CODESET ] )</code></a></strong>
+
+<dd>
+<p>Returns a list of all two-letter script codes.
+The codes are guaranteed to be all lower-case,
+and not in any particular order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_all_script_names"><code>all_script_names ( [ CODESET ] )</code></a></strong>
+
+<dd>
+<p>Returns a list of all script names for which there is a corresponding
+script code in the specified code set.
+The names are capitalised, and not returned in any particular order.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>The following example illustrates use of the <a href="#item_code2script"><code>code2script()</code></a> function.
+The user is prompted for a script code, and then told the corresponding
+script name:</p>
+<pre>
+    $| = 1;   # turn off buffering
+    
+    print &quot;Enter script code: &quot;;
+    chop($code = &lt;STDIN&gt;);
+    $script = code2script($code, LOCALE_CODE_ALPHA_2);
+    if (defined $script)
+    {
+        print &quot;$code = $script\n&quot;;
+    }
+    else
+    {
+        print &quot;'$code' is not a valid script code!\n&quot;;
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></h1>
+<ul>
+<li>
+<p>When using <a href="#item_script2code"><code>script2code()</code></a>, the script name must currently appear
+exactly as it does in the source of the module. For example,</p>
+<pre>
+    script2code('Egyptian hieroglyphs')</pre>
+<p>will return <strong>eg</strong>, as expected. But the following will all return <code>undef</code>:</p>
+<pre>
+    script2code('hieroglyphs')
+    script2code('Egyptian Hieroglypics')</pre>
+<p>If there's need for it, a future version could have variants
+for script names.</p>
+</li>
+<li>
+<p>In the current implementation, all data is read in when the
+module is loaded, and then held in memory.
+A lazy implementation would be more memory friendly.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_locale_3a_3alanguage">Locale::Language</a></strong>
+
+<dd>
+<p>ISO two letter codes for identification of language (ISO 639).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3acurrency">Locale::Currency</a></strong>
+
+<dd>
+<p>ISO three letter codes for identification of currencies
+and funds (ISO 4217).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3acountry">Locale::Country</a></strong>
+
+<dd>
+<p>ISO three letter codes for identification of countries (ISO 3166)</p>
+</dd>
+</li>
+<dt><strong><a name="item_iso_15924">ISO 15924</a></strong>
+
+<dd>
+<p>The ISO standard which defines these codes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eevertype_2ecom_2fstandards_2fis"><a href="http://www.evertype.com/standards/iso15924/">http://www.evertype.com/standards/iso15924/</a></a></strong>
+
+<dd>
+<p>Home page for ISO 15924.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Neil Bowers &lt;<a href="mailto:neil@bowers.com">neil@bowers.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 2002-2004 Neil Bowers.</p>
+<p>This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Script - ISO codes for script identification</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>die - raise an exception or bail out</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;die - raise an exception or bail out</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>die - raise an exception or bail out</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>die LIST
+     </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Outside an <code>eval</code>, prints the value of LIST to <code>STDERR</code> and
+exits with the current value of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> (errno).  If <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> is <code>0</code>,
+exits with the value of <code>($? &gt;&gt; 8)</code> (backtick `command`
+status).  If <code>($? &gt;&gt; 8)</code> is <code>0</code>, exits with <code>255</code>.  Inside
+an <code>eval(),</code> the error message is stuffed into <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> and the
+<code>eval</code> is terminated with the undefined value.  This makes
+<code>die</code> the way to raise an exception.</p>
+<p>Equivalent examples:</p>
+<pre>
+    die &quot;Can't cd to spool: $!\n&quot; unless chdir '/usr/spool/news';
+    chdir '/usr/spool/news' or die &quot;Can't cd to spool: $!\n&quot;</pre>
+<p>If the last element of LIST does not end in a newline, the current
+script line number and input line number (if any) are also printed,
+and a newline is supplied.  Note that the ``input line number'' (also
+known as ``chunk'') is subject to whatever notion of ``line'' happens to
+be currently in effect, and is also available as the special variable
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$.</code></a>.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#__">$/ in the perlvar manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#__">$. in the perlvar manpage</a>.</p>
+<p>Hint: sometimes appending <code>&quot;, stopped&quot;</code> to your message will cause it
+to make better sense when the string <code>&quot;at foo line 123&quot;</code> is appended.
+Suppose you are running script ``canasta''.</p>
+<pre>
+    die &quot;/etc/games is no good&quot;;
+    die &quot;/etc/games is no good, stopped&quot;;</pre>
+<p>produce, respectively</p>
+<pre>
+    /etc/games is no good at canasta line 123.
+    /etc/games is no good, stopped at canasta line 123.</pre>
+<p>See also exit(), warn(), and the Carp module.</p>
+<p>If LIST is empty and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> already contains a value (typically from a
+previous eval) that value is reused after appending <code>&quot;\t...propagated&quot;</code>.
+This is useful for propagating exceptions:</p>
+<pre>
+    eval { ... };
+    die unless $@ =~ /Expected exception/;</pre>
+<p>If LIST is empty and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> contains an object reference that has a
+<code>PROPAGATE</code> method, that method will be called with additional file
+and line number parameters.  The return value replaces the value in
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a>.  i.e. as if <code>$@ = eval { $@-&gt;PROPAGATE(__FILE__, __LINE__) };</code>
+were called.</p>
+<p>If <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> is empty then the string <code>&quot;Died&quot;</code> is used.</p>
+<p><code>die()</code> can also be called with a reference argument.  If this happens to be
+trapped within an eval(), $@ contains the reference.  This behavior permits
+a more elaborate exception handling implementation using objects that
+maintain arbitrary state about the nature of the exception.  Such a scheme
+is sometimes preferable to matching particular string values of $@ using
+regular expressions.  Here's an example:</p>
+<pre>
+    use Scalar::Util 'blessed';</pre>
+<pre>
+    eval { ... ; die Some::Module::Exception-&gt;new( FOO =&gt; &quot;bar&quot; ) };
+    if ($@) {
+        if (blessed($@) &amp;&amp; $@-&gt;isa(&quot;Some::Module::Exception&quot;)) {
+            # handle Some::Module::Exception
+        }
+        else {
+            # handle all other possible exceptions
+        }
+    }</pre>
+<p>Because perl will stringify uncaught exception messages before displaying
+them, you may want to overload stringification operations on such custom
+exception objects.  See <a href="/usr/lib/perl5/5.8/html/./lib/overload.html">the overload manpage</a> for details about that.</p>
+<p>You can arrange for a callback to be run just before the <code>die</code>
+does its deed, by setting the <code>$SIG{__DIE__}</code> hook.  The associated
+handler will be called with the error text and can change the error
+message, if it sees fit, by calling <code>die</code> again.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_sig_expr_">$SIG{expr} in the perlvar manpage</a> for details on setting <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__sig"><code>%SIG</code></a> entries, and
+<a href="#eval_block">eval BLOCK</a> for some examples.  Although this feature was 
+to be run only right before your program was to exit, this is not
+currently the case--the <code>$SIG{__DIE__}</code> hook is currently called
+even inside eval()ed blocks/strings!  If one wants the hook to do
+nothing in such situations, put</p>
+<pre>
+        die @_ if $^S;</pre>
+<p>as the first line of the handler (see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#__s">$^S in the perlvar manpage</a>).  Because
+this promotes strange action at a distance, this counterintuitive
+behavior may be fixed in a future release.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;die - raise an exception or bail out</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

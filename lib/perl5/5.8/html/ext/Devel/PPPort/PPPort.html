@@ -1,0 +1,957 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Devel::PPPort - Perl/Pollution/Portability</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::PPPort - Perl/Pollution/Portability</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#why_use_ppport_h">Why use ppport.h?</a></li>
+		<li><a href="#how_to_use_ppport_h">How to use ppport.h</a></li>
+		<li><a href="#running_ppport_h">Running ppport.h</a></li>
+	</ul>
+
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#writefile">WriteFile</a></li>
+	</ul>
+
+	<li><a href="#compatibility">COMPATIBILITY</a></li>
+	<ul>
+
+		<li><a href="#provided_perl_compatibility_api">Provided Perl compatibility API</a></li>
+		<li><a href="#perl_api_not_supported_by_ppport_h">Perl API not supported by ppport.h</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Devel::PPPort - Perl/Pollution/Portability</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    Devel::PPPort::WriteFile();   # defaults to ./ppport.h
+    Devel::PPPort::WriteFile('someheader.h');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Perl's API has changed over time, gaining new features, new functions,
+increasing its flexibility, and reducing the impact on the C namespace
+environment (reduced pollution). The header file written by this module,
+typically <em>ppport.h</em>, attempts to bring some of the newer Perl API
+features to older versions of Perl, so that you can worry less about
+keeping track of old releases, but users can still reap the benefit.</p>
+<p><code>Devel::PPPort</code> contains a single function, called <code>WriteFile</code>. Its
+only purpose is to write the <em>ppport.h</em> C header file. This file
+contains a series of macros and, if explicitly requested, functions that
+allow XS modules to be built using older versions of Perl. Currently,
+Perl versions from 5.003 to 5.9.3 are supported.</p>
+<p>This module is used by <code>h2xs</code> to write the file <em>ppport.h</em>.</p>
+<p>
+</p>
+<h2><a name="why_use_ppport_h">Why use ppport.h?</a></h2>
+<p>You should use <em>ppport.h</em> in modern code so that your code will work
+with the widest range of Perl interpreters possible, without significant
+additional work.</p>
+<p>You should attempt older code to fully use <em>ppport.h</em>, because the
+reduced pollution of newer Perl versions is an important thing. It's so
+important that the old polluting ways of original Perl modules will not be
+supported very far into the future, and your module will almost certainly
+break! By adapting to it now, you'll gain compatibility and a sense of
+having done the electronic ecology some good.</p>
+<p>
+</p>
+<h2><a name="how_to_use_ppport_h">How to use ppport.h</a></h2>
+<p>Don't direct the users of your module to download <code>Devel::PPPort</code>.
+They are most probably no XS writers. Also, don't make <em>ppport.h</em>
+optional. Rather, just take the most recent copy of <em>ppport.h</em> that
+you can find (e.g. by generating it with the latest <code>Devel::PPPort</code>
+release from CPAN), copy it into your project, adjust your project to
+use it, and distribute the header along with your module.</p>
+<p>
+</p>
+<h2><a name="running_ppport_h">Running ppport.h</a></h2>
+<p>But <em>ppport.h</em> is more than just a C header. It's also a Perl script
+that can check your source code. It will suggest hints and portability
+notes, and can even make suggestions on how to change your code. You
+can run it like any other Perl program:</p>
+<pre>
+    perl ppport.h [options] [files]</pre>
+<p>It also has embedded documentation, so you can use</p>
+<pre>
+    <a href="/usr/lib/perl5/5.8/html/./pod/perldoc.html">perldoc</a> ppport.h</pre>
+<p>to find out more about how to use it.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="writefile">WriteFile</a></h2>
+<p><code>WriteFile</code> takes one optional argument. When called with one
+argument, it expects to be passed a filename. When called with
+no arguments, it defaults to the filename <em>ppport.h</em>.</p>
+<p>The function returns a true value if the file was written successfully.
+Otherwise it returns a false value.</p>
+<p>
+</p>
+<hr />
+<h1><a name="compatibility">COMPATIBILITY</a></h1>
+<p><em>ppport.h</em> supports Perl versions from 5.003 to 5.9.3
+in threaded and non-threaded configurations.</p>
+<p>
+</p>
+<h2><a name="provided_perl_compatibility_api">Provided Perl compatibility API</a></h2>
+<p>The header file written by this module, typically <em>ppport.h</em>, provides
+access to the following elements of the Perl API that is not available
+in older Perl releases:</p>
+<pre>
+    _aMY_CXT
+    _pMY_CXT
+    aMY_CXT
+    aMY_CXT_
+    aTHX
+    aTHX_
+    AvFILLp
+    boolSV
+    call_argv
+    call_method
+    call_pv
+    call_sv
+    CopFILE
+    CopFILE_set
+    CopFILEAV
+    CopFILEGV
+    CopFILEGV_set
+    CopFILESV
+    CopSTASH
+    CopSTASH_eq
+    CopSTASH_set
+    CopSTASHPV
+    CopSTASHPV_set
+    CopyD
+    dAX
+    DEFSV
+    dITEMS
+    dMY_CXT
+    dMY_CXT_SV
+    dNOOP
+    dTHR
+    dTHX
+    dTHXa
+    dTHXoa
+    dUNDERBAR
+    dXCPT
+    dXSTARG
+    END_EXTERN_C
+    ERRSV
+    eval_pv
+    eval_sv
+    EXTERN_C
+    get_av
+    get_cv
+    get_hv
+    get_sv
+    grok_bin
+    grok_hex
+    grok_number
+    GROK_NUMERIC_RADIX
+    grok_numeric_radix
+    grok_oct
+    gv_stashpvn
+    IN_LOCALE
+    IN_LOCALE_COMPILETIME
+    IN_LOCALE_RUNTIME
+    IN_PERL_COMPILETIME
+    INT2PTR
+    IS_NUMBER_GREATER_THAN_UV_MAX
+    IS_NUMBER_IN_UV
+    IS_NUMBER_INFINITY
+    IS_NUMBER_NAN
+    IS_NUMBER_NEG
+    IS_NUMBER_NOT_INT
+    IVdf
+    IVSIZE
+    IVTYPE
+    memEQ
+    memNE
+    MoveD
+    mPUSHi
+    mPUSHn
+    mPUSHp
+    mPUSHu
+    mXPUSHi
+    mXPUSHn
+    mXPUSHp
+    mXPUSHu
+    MY_CXT
+    MY_CXT_CLONE
+    MY_CXT_INIT
+    newCONSTSUB
+    newRV_inc
+    newRV_noinc
+    newSVpvn
+    newSVuv
+    NOOP
+    NUM2PTR
+    NVef
+    NVff
+    NVgf
+    NVTYPE
+    PERL_BCDVERSION
+    PERL_GCC_BRACE_GROUPS_FORBIDDEN
+    PERL_INT_MAX
+    PERL_INT_MIN
+    PERL_LONG_MAX
+    PERL_LONG_MIN
+    PERL_MAGIC_arylen
+    PERL_MAGIC_backref
+    PERL_MAGIC_bm
+    PERL_MAGIC_collxfrm
+    PERL_MAGIC_dbfile
+    PERL_MAGIC_dbline
+    PERL_MAGIC_defelem
+    PERL_MAGIC_env
+    PERL_MAGIC_envelem
+    PERL_MAGIC_ext
+    PERL_MAGIC_fm
+    PERL_MAGIC_glob
+    PERL_MAGIC_isa
+    PERL_MAGIC_isaelem
+    PERL_MAGIC_mutex
+    PERL_MAGIC_nkeys
+    PERL_MAGIC_overload
+    PERL_MAGIC_overload_elem
+    PERL_MAGIC_overload_table
+    PERL_MAGIC_pos
+    PERL_MAGIC_qr
+    PERL_MAGIC_regdata
+    PERL_MAGIC_regdatum
+    PERL_MAGIC_regex_global
+    PERL_MAGIC_shared
+    PERL_MAGIC_shared_scalar
+    PERL_MAGIC_sig
+    PERL_MAGIC_sigelem
+    PERL_MAGIC_substr
+    PERL_MAGIC_sv
+    PERL_MAGIC_taint
+    PERL_MAGIC_tied
+    PERL_MAGIC_tiedelem
+    PERL_MAGIC_tiedscalar
+    PERL_MAGIC_utf8
+    PERL_MAGIC_uvar
+    PERL_MAGIC_uvar_elem
+    PERL_MAGIC_vec
+    PERL_MAGIC_vstring
+    PERL_QUAD_MAX
+    PERL_QUAD_MIN
+    PERL_REVISION
+    PERL_SCAN_ALLOW_UNDERSCORES
+    PERL_SCAN_DISALLOW_PREFIX
+    PERL_SCAN_GREATER_THAN_UV_MAX
+    PERL_SCAN_SILENT_ILLDIGIT
+    PERL_SHORT_MAX
+    PERL_SHORT_MIN
+    PERL_SUBVERSION
+    PERL_UCHAR_MAX
+    PERL_UCHAR_MIN
+    PERL_UINT_MAX
+    PERL_UINT_MIN
+    PERL_ULONG_MAX
+    PERL_ULONG_MIN
+    PERL_UNUSED_DECL
+    PERL_UQUAD_MAX
+    PERL_UQUAD_MIN
+    PERL_USHORT_MAX
+    PERL_USHORT_MIN
+    PERL_VERSION
+    PL_compiling
+    PL_copline
+    PL_curcop
+    PL_curstash
+    PL_DBsingle
+    PL_DBsub
+    PL_debstash
+    PL_defgv
+    PL_diehook
+    PL_dirty
+    PL_dowarn
+    PL_errgv
+    PL_hexdigit
+    PL_hints
+    PL_na
+    PL_no_modify
+    PL_perl_destruct_level
+    PL_perldb
+    PL_ppaddr
+    PL_rsfp
+    PL_rsfp_filters
+    PL_stack_base
+    PL_stack_sp
+    PL_stdingv
+    PL_Sv
+    PL_sv_arenaroot
+    PL_sv_no
+    PL_sv_undef
+    PL_sv_yes
+    PL_tainted
+    PL_tainting
+    pMY_CXT
+    pMY_CXT_
+    Poison
+    pTHX
+    pTHX_
+    PTR2IV
+    PTR2NV
+    PTR2ul
+    PTR2UV
+    PTRV
+    PUSHmortal
+    PUSHu
+    SAVE_DEFSV
+    START_EXTERN_C
+    START_MY_CXT
+    STMT_END
+    STMT_START
+    sv_2pv_nolen
+    sv_2pvbyte
+    sv_2uv
+    sv_catpv_mg
+    sv_catpvf_mg
+    sv_catpvf_mg_nocontext
+    sv_catpvn_mg
+    sv_catpvn_nomg
+    sv_catsv_mg
+    sv_catsv_nomg
+    sv_pvn
+    sv_pvn_force
+    sv_pvn_nomg
+    sv_setiv_mg
+    sv_setnv_mg
+    sv_setpv_mg
+    sv_setpvf_mg
+    sv_setpvf_mg_nocontext
+    sv_setpvn_mg
+    sv_setsv_mg
+    sv_setsv_nomg
+    sv_setuv
+    sv_setuv_mg
+    sv_usepvn_mg
+    sv_uv
+    sv_vcatpvf
+    sv_vcatpvf_mg
+    sv_vsetpvf
+    sv_vsetpvf_mg
+    SvGETMAGIC
+    SvIV_nomg
+    SvPV_force_nomg
+    SvPV_nolen
+    SvPV_nomg
+    SvPVbyte
+    SvUV
+    SvUV_nomg
+    SvUVX
+    SvUVx
+    SvUVXx
+    UNDERBAR
+    UVof
+    UVSIZE
+    UVTYPE
+    UVuf
+    UVXf
+    UVxf
+    vnewSVpvf
+    XCPT_CATCH
+    XCPT_RETHROW
+    XCPT_TRY_END
+    XCPT_TRY_START
+    XPUSHmortal
+    XPUSHu
+    XSRETURN_UV
+    XST_mUV
+    ZeroD</pre>
+<p>
+</p>
+<h2><a name="perl_api_not_supported_by_ppport_h">Perl API not supported by ppport.h</a></h2>
+<p>There is still a big part of the API not supported by <em>ppport.h</em>.
+Either because it doesn't make sense to back-port that part of the API,
+or simply because it hasn't been implemented yet. Patches welcome!</p>
+<p>Here's a list of the currently unsupported API, and also the version of
+Perl below which it is unsupported:</p>
+<dl>
+<dt><strong><a name="item_perl_5_2e9_2e3">perl 5.9.3</a></strong>
+
+<dd>
+<pre>
+  SvMAGIC_set
+  SvRV_set
+  SvSTASH_set
+  SvUV_set
+  av_arylen_p
+  dAXMARK
+  hv_eiter_p
+  hv_eiter_set
+  hv_name_set
+  hv_placeholders_get
+  hv_placeholders_p
+  hv_placeholders_set
+  hv_riter_p
+  hv_riter_set
+  is_utf8_string_loclen
+  newSVhek
+  newWHILEOP
+  stashpv_hvname_match</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e9_2e2">perl 5.9.2</a></strong>
+
+<dd>
+<pre>
+  SvPVbyte_force
+  find_rundefsvoffset
+  gv_fetchpvn_flags
+  gv_fetchsv
+  op_refcnt_lock
+  op_refcnt_unlock
+  savesvpv
+  vnormal</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e9_2e1">perl 5.9.1</a></strong>
+
+<dd>
+<pre>
+  hv_assert
+  hv_clear_placeholders
+  hv_scalar
+  scan_version
+  sv_2iv_flags
+  sv_2uv_flags</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e9_2e0">perl 5.9.0</a></strong>
+
+<dd>
+<pre>
+  new_version
+  save_set_svflags
+  upg_version
+  vcmp
+  vnumify
+  vstringify</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e8_2e3">perl 5.8.3</a></strong>
+
+<dd>
+<pre>
+  SvIsCOW
+  SvIsCOW_shared_hash</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e8_2e1">perl 5.8.1</a></strong>
+
+<dd>
+<pre>
+  SvVOK
+  doing_taint
+  is_utf8_string_loc
+  packlist
+  save_bool
+  savestack_grow_cnt
+  scan_vstring
+  sv_cat_decode
+  sv_compile_2op
+  sv_setpviv
+  sv_setpviv_mg
+  unpackstring</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e8_2e0">perl 5.8.0</a></strong>
+
+<dd>
+<pre>
+  hv_iternext_flags
+  hv_store_flags
+  is_utf8_idcont
+  nothreadhook</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e7_2e3">perl 5.7.3</a></strong>
+
+<dd>
+<pre>
+  PerlIO_clearerr
+  PerlIO_close
+  PerlIO_eof
+  PerlIO_error
+  PerlIO_fileno
+  PerlIO_fill
+  PerlIO_flush
+  PerlIO_get_base
+  PerlIO_get_bufsiz
+  PerlIO_get_cnt
+  PerlIO_get_ptr
+  PerlIO_read
+  PerlIO_seek
+  PerlIO_set_cnt
+  PerlIO_set_ptrcnt
+  PerlIO_setlinebuf
+  PerlIO_stderr
+  PerlIO_stdin
+  PerlIO_stdout
+  PerlIO_tell
+  PerlIO_unread
+  PerlIO_write
+  SvLOCK
+  SvSHARE
+  SvUNLOCK
+  atfork_lock
+  atfork_unlock
+  custom_op_desc
+  custom_op_name
+  deb
+  debstack
+  debstackptrs
+  gv_fetchmeth_autoload
+  ibcmp_utf8
+  my_fork
+  my_socketpair
+  pack_cat
+  perl_destruct
+  pv_uni_display
+  regclass_swash
+  save_shared_pvref
+  savesharedpv
+  sortsv
+  sv_copypv
+  sv_magicext
+  sv_nolocking
+  sv_nosharing
+  sv_nounlocking
+  sv_recode_to_utf8
+  sv_uni_display
+  to_uni_fold
+  to_uni_lower
+  to_uni_title
+  to_uni_upper
+  to_utf8_case
+  to_utf8_fold
+  to_utf8_lower
+  to_utf8_title
+  to_utf8_upper
+  unpack_str
+  uvchr_to_utf8_flags
+  uvuni_to_utf8_flags
+  vdeb</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e7_2e2">perl 5.7.2</a></strong>
+
+<dd>
+<pre>
+  calloc
+  getcwd_sv
+  init_tm
+  malloc
+  mfree
+  mini_mktime
+  my_atof2
+  my_strftime
+  op_null
+  realloc
+  sv_2pv_flags
+  sv_catpvn_flags
+  sv_catsv_flags
+  sv_pvn_force_flags
+  sv_setsv_flags
+  sv_utf8_upgrade_flags
+  swash_fetch</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e7_2e1">perl 5.7.1</a></strong>
+
+<dd>
+<pre>
+  POPpbytex
+  SvUOK
+  bytes_from_utf8
+  csighandler
+  despatch_signals
+  do_openn
+  gv_handler
+  is_lvalue_sub
+  my_popen_list
+  newSVpvn_share
+  save_mortalizesv
+  save_padsv
+  scan_num
+  sv_force_normal_flags
+  sv_setref_uv
+  sv_unref_flags
+  sv_utf8_upgrade
+  utf8_length
+  utf8_to_uvchr
+  utf8_to_uvuni
+  utf8n_to_uvchr
+  utf8n_to_uvuni
+  uvchr_to_utf8
+  uvuni_to_utf8</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e6_2e1">perl 5.6.1</a></strong>
+
+<dd>
+<pre>
+  apply_attrs_string
+  bytes_to_utf8
+  gv_efullname4
+  gv_fullname4
+  is_utf8_string
+  save_generic_pvref
+  utf16_to_utf8
+  utf16_to_utf8_reversed
+  utf8_to_bytes</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e6_2e0">perl 5.6.0</a></strong>
+
+<dd>
+<pre>
+  SvIOK_UV
+  SvIOK_notUV
+  SvIOK_only_UV
+  SvPOK_only_UTF8
+  SvPVbyte_nolen
+  SvPVbytex
+  SvPVbytex_force
+  SvPVutf8
+  SvPVutf8_force
+  SvPVutf8_nolen
+  SvPVutf8x
+  SvPVutf8x_force
+  SvUTF8
+  SvUTF8_off
+  SvUTF8_on
+  av_delete
+  av_exists
+  call_atexit
+  cast_i32
+  cast_iv
+  cast_ulong
+  cast_uv
+  do_gv_dump
+  do_gvgv_dump
+  do_hv_dump
+  do_magic_dump
+  do_op_dump
+  do_open9
+  do_pmop_dump
+  do_sv_dump
+  dump_all
+  dump_eval
+  dump_form
+  dump_indent
+  dump_packsubs
+  dump_sub
+  dump_vindent
+  get_context
+  get_ppaddr
+  gv_dump
+  init_i18nl10n
+  init_i18nl14n
+  is_uni_alnum
+  is_uni_alnum_lc
+  is_uni_alnumc
+  is_uni_alnumc_lc
+  is_uni_alpha
+  is_uni_alpha_lc
+  is_uni_ascii
+  is_uni_ascii_lc
+  is_uni_cntrl
+  is_uni_cntrl_lc
+  is_uni_digit
+  is_uni_digit_lc
+  is_uni_graph
+  is_uni_graph_lc
+  is_uni_idfirst
+  is_uni_idfirst_lc
+  is_uni_lower
+  is_uni_lower_lc
+  is_uni_print
+  is_uni_print_lc
+  is_uni_punct
+  is_uni_punct_lc
+  is_uni_space
+  is_uni_space_lc
+  is_uni_upper
+  is_uni_upper_lc
+  is_uni_xdigit
+  is_uni_xdigit_lc
+  is_utf8_alnum
+  is_utf8_alnumc
+  is_utf8_alpha
+  is_utf8_ascii
+  is_utf8_char
+  is_utf8_cntrl
+  is_utf8_digit
+  is_utf8_graph
+  is_utf8_idfirst
+  is_utf8_lower
+  is_utf8_mark
+  is_utf8_print
+  is_utf8_punct
+  is_utf8_space
+  is_utf8_upper
+  is_utf8_xdigit
+  load_module
+  magic_dump
+  mess
+  my_atof
+  my_fflush_all
+  newANONATTRSUB
+  newATTRSUB
+  newMYSUB
+  newPADOP
+  newXS
+  newXSproto
+  new_collate
+  new_ctype
+  new_numeric
+  op_dump
+  perl_parse
+  pmop_dump
+  pv_display
+  re_intuit_start
+  re_intuit_string
+  reginitcolors
+  require_pv
+  safesyscalloc
+  safesysfree
+  safesysmalloc
+  safesysrealloc
+  save_I8
+  save_alloc
+  save_destructor
+  save_destructor_x
+  save_re_context
+  save_vptr
+  scan_bin
+  set_context
+  set_numeric_local
+  set_numeric_radix
+  set_numeric_standard
+  str_to_version
+  sv_2pvutf8
+  sv_2pvutf8_nolen
+  sv_force_normal
+  sv_len_utf8
+  sv_pos_b2u
+  sv_pos_u2b
+  sv_pv
+  sv_pvbyte
+  sv_pvbyten
+  sv_pvbyten_force
+  sv_pvutf8
+  sv_pvutf8n
+  sv_pvutf8n_force
+  sv_rvweaken
+  sv_utf8_decode
+  sv_utf8_downgrade
+  sv_utf8_encode
+  swash_init
+  tmps_grow
+  to_uni_lower_lc
+  to_uni_title_lc
+  to_uni_upper_lc
+  utf8_distance
+  utf8_hop
+  vcroak
+  vform
+  vload_module
+  vmess
+  vwarn
+  vwarner
+  warner</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e005_03">perl 5.005_03</a></strong>
+
+<dd>
+<pre>
+  POPpx
+  get_vtbl
+  save_generic_svref</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e005">perl 5.005</a></strong>
+
+<dd>
+<pre>
+  PL_modglobal
+  cx_dump
+  debop
+  debprofdump
+  fbm_compile
+  fbm_instr
+  get_op_descs
+  get_op_names
+  init_stacks
+  mg_length
+  mg_size
+  newHVhv
+  new_stackinfo
+  regdump
+  regexec_flags
+  regnext
+  runops_debug
+  runops_standard
+  save_hints
+  save_iv
+  save_threadsv
+  screaminstr
+  sv_iv
+  sv_nv
+  sv_peek
+  sv_true</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e004_05">perl 5.004_05</a></strong>
+
+<dd>
+<pre>
+  do_binmode
+  save_aelem
+  save_helem</pre>
+</dd>
+<dt><strong><a name="item_perl_5_2e004">perl 5.004</a></strong>
+
+<dd>
+<pre>
+  GIMME_V
+  G_VOID
+  HEf_SVKEY
+  HeHASH
+  HeKEY
+  HeKLEN
+  HePV
+  HeSVKEY
+  HeSVKEY_force
+  HeSVKEY_set
+  HeVAL
+  SvSetMagicSV
+  SvSetMagicSV_nosteal
+  SvSetSV_nosteal
+  SvTAINTED
+  SvTAINTED_off
+  SvTAINTED_on
+  block_gimme
+  call_list
+  cv_const_sv
+  delimcpy
+  do_open
+  form
+  gv_autoload4
+  gv_efullname3
+  gv_fetchmethod_autoload
+  gv_fullname3
+  hv_delayfree_ent
+  hv_delete_ent
+  hv_exists_ent
+  hv_fetch_ent
+  hv_free_ent
+  hv_iterkeysv
+  hv_ksplit
+  hv_store_ent
+  ibcmp_locale
+  my_failure_exit
+  my_memcmp
+  my_pclose
+  my_popen
+  newSVpvf
+  rsignal
+  rsignal_state
+  save_I16
+  save_gp
+  start_subparse
+  sv_catpvf
+  sv_catpvf_mg
+  sv_cmp_locale
+  sv_derived_from
+  sv_gets
+  sv_setpvf
+  sv_setpvf_mg
+  sv_taint
+  sv_tainted
+  sv_untaint
+  sv_vcatpvf
+  sv_vcatpvf_mg
+  sv_vcatpvfn
+  sv_vsetpvf
+  sv_vsetpvf_mg
+  sv_vsetpvfn
+  unsharepvn
+  vnewSVpvf</pre>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>If you find any bugs, <code>Devel::PPPort</code> doesn't seem to build on your
+system or any of its tests fail, please use the CPAN Request Tracker
+at <a href="http://rt.cpan.org/">http://rt.cpan.org/</a> to create a ticket for the module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<ul>
+<li>
+<p>Version 1.x of Devel::PPPort was written by Kenneth Albanowski.</p>
+</li>
+<li>
+<p>Version 2.x was ported to the Perl core by Paul Marquess.</p>
+</li>
+<li>
+<p>Version 3.x was ported back to CPAN by Marcus Holland-Moritz.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.</p>
+<p>Version 2.x, Copyright (C) 2001, Paul Marquess.</p>
+<p>Version 1.x, Copyright (C) 1999, Kenneth Albanowski.</p>
+<p>This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>See <a href="/usr/lib/perl5/5.8/html/./utils/h2xs.html">the h2xs manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/Cwd/ppport.h.html">the ppport.h manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::PPPort - Perl/Pollution/Portability</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

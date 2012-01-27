@@ -1,0 +1,302 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>threads::shared - Perl extension for sharing data structures between threads</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;threads::shared - Perl extension for sharing data structures between threads</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#export">EXPORT</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>threads::shared - Perl extension for sharing data structures between threads</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use threads;
+  use threads::shared;</pre>
+<pre>
+  my $var : shared;
+  $var = $scalar_value;
+  $var = $shared_ref_value;
+  $var = &amp;share($simple_unshared_ref_value);
+  $var = &amp;share(new Foo);</pre>
+<pre>
+  my($scalar, @array, %hash);
+  share($scalar);
+  share(@array);
+  share(%hash);
+  my $bar = &amp;share([]);
+  $hash{bar} = &amp;share({});</pre>
+<pre>
+  { lock(%hash); ...  }</pre>
+<pre>
+  cond_wait($scalar);
+  cond_timedwait($scalar, time() + 30);
+  cond_broadcast(@array);
+  cond_signal(%hash);</pre>
+<pre>
+  my $lockvar : shared;
+  # condition var != lock var
+  cond_wait($var, $lockvar);
+  cond_timedwait($var, time()+30, $lockvar);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>By default, variables are private to each thread, and each newly created
+thread gets a private copy of each existing variable.  This module allows
+you to share variables across different threads (and pseudoforks on Win32).
+It is used together with the threads module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="export">EXPORT</a></h1>
+<p><a href="#item_share"><code>share</code></a>, <a href="#item_cond_wait"><code>cond_wait</code></a>, <code>cond_timedwait</code>, <a href="#item_cond_signal"><code>cond_signal</code></a>, <a href="#item_cond_broadcast"><code>cond_broadcast</code></a></p>
+<p>Note that if this module is imported when <code>threads</code> has not yet been
+loaded, then these functions all become no-ops. This makes it possible
+to write modules that will work in both threaded and non-threaded
+environments.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<dl>
+<dt><strong><a name="item_share">share VARIABLE</a></strong>
+
+<dd>
+<p><a href="#item_share"><code>share</code></a> takes a value and marks it as shared. You can share a scalar,
+array, hash, scalar ref, array ref or hash ref.  <a href="#item_share"><code>share</code></a> will return
+the shared rvalue but always as a reference.</p>
+</dd>
+<dd>
+<p><a href="#item_share"><code>share</code></a> will traverse up references exactly <em>one</em> level.
+<a href="#item_share"><code>share(\$a)</code></a> is equivalent to <a href="#item_share"><code>share($a)</code></a>, while <a href="#item_share"><code>share(\\$a)</code></a> is not.
+This means that you must create nested shared data structures by first
+creating individual shared leaf notes, then adding them to a shared hash
+or array.</p>
+</dd>
+<dd>
+<p>A variable can also be marked as shared at compile time by using the
+<code>shared</code> attribute: <code>my $var : shared</code>.</p>
+</dd>
+<dd>
+<p>If you want to share a newly created reference unfortunately you
+need to use <a href="#item_share"><code>&amp;share([])</code></a> and <a href="#item_share"><code>&amp;share({})</code></a> syntax due to problems
+with Perl's prototyping.</p>
+</dd>
+<dd>
+<p>The only values that can be assigned to a shared scalar are other scalar
+values, or shared refs, eg</p>
+</dd>
+<dd>
+<pre>
+    my $var : shared;
+    $var = 1;              # ok
+    $var = &amp;share([]);     # ok
+    $var = [];             # error
+    $var = A-&gt;new;         # error
+    $var = &amp;share(A-&gt;new); # ok as long as the A object is not nested</pre>
+</dd>
+<dd>
+<p>Note that it is often not wise to share an object unless the class itself
+has been written to support sharing; for example, an object's destructor
+may get called multiple times, one for each thread's scope exit.</p>
+</dd>
+</li>
+<dt><strong><a name="item_lock">lock VARIABLE</a></strong>
+
+<dd>
+<p><a href="#item_lock"><code>lock</code></a> places a lock on a variable until the lock goes out of scope.
+If the variable is locked by another thread, the <a href="#item_lock"><code>lock</code></a> call will
+block until it's available. <a href="#item_lock"><code>lock</code></a> is recursive, so multiple calls
+to <a href="#item_lock"><code>lock</code></a> are safe -- the variable will remain locked until the
+outermost lock on the variable goes out of scope.</p>
+</dd>
+<dd>
+<p>If a container object, such as a hash or array, is locked, all the
+elements of that container are not locked. For example, if a thread
+does a <code>lock @a</code>, any other thread doing a <a href="#item_lock"><code>lock($a[12])</code></a> won't block.</p>
+</dd>
+<dd>
+<p><a href="#item_lock"><code>lock</code></a> will traverse up references exactly <em>one</em> level.
+<a href="#item_lock"><code>lock(\$a)</code></a> is equivalent to <a href="#item_lock"><code>lock($a)</code></a>, while <a href="#item_lock"><code>lock(\\$a)</code></a> is not.</p>
+</dd>
+<dd>
+<p>Note that you cannot explicitly unlock a variable; you can only wait
+for the lock to go out of scope. If you need more fine-grained
+control, see <a href="/usr/lib/perl5/5.8/html/./lib/Thread/Semaphore.html">the Thread::Semaphore manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cond_wait">cond_wait VARIABLE</a></strong>
+
+<dt><strong>cond_wait CONDVAR, LOCKVAR</strong>
+
+<dd>
+<p>The <a href="#item_cond_wait"><code>cond_wait</code></a> function takes a <strong>locked</strong> variable as a parameter,
+unlocks the variable, and blocks until another thread does a
+<a href="#item_cond_signal"><code>cond_signal</code></a> or <a href="#item_cond_broadcast"><code>cond_broadcast</code></a> for that same locked variable.
+The variable that <a href="#item_cond_wait"><code>cond_wait</code></a> blocked on is relocked after the
+<a href="#item_cond_wait"><code>cond_wait</code></a> is satisfied.  If there are multiple threads
+<a href="#item_cond_wait"><code>cond_wait</code></a>ing on the same variable, all but one will reblock waiting
+to reacquire the lock on the variable. (So if you're only using
+<a href="#item_cond_wait"><code>cond_wait</code></a> for synchronisation, give up the lock as soon as
+possible). The two actions of unlocking the variable and entering the
+blocked wait state are atomic, the two actions of exiting from the
+blocked wait state and relocking the variable are not.</p>
+</dd>
+<dd>
+<p>In its second form, <a href="#item_cond_wait"><code>cond_wait</code></a> takes a shared, <strong>unlocked</strong> variable
+followed by a shared, <strong>locked</strong> variable.  The second variable is
+unlocked and thread execution suspended until another thread signals
+the first variable.</p>
+</dd>
+<dd>
+<p>It is important to note that the variable can be notified even if
+no thread <a href="#item_cond_signal"><code>cond_signal</code></a> or <a href="#item_cond_broadcast"><code>cond_broadcast</code></a> on the variable.
+It is therefore important to check the value of the variable and
+go back to waiting if the requirement is not fulfilled.  For example,
+to pause until a shared counter drops to zero:</p>
+</dd>
+<dd>
+<pre>
+    { lock($counter); cond_wait($count) until $counter == 0; }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_cond_timedwait_variable_2c_abs_timeout">cond_timedwait VARIABLE, ABS_TIMEOUT</a></strong>
+
+<dt><strong><a name="item_cond_timedwait_condvar_2c_abs_timeout_2c_lockvar">cond_timedwait CONDVAR, ABS_TIMEOUT, LOCKVAR</a></strong>
+
+<dd>
+<p>In its two-argument form, <code>cond_timedwait</code> takes a <strong>locked</strong> variable
+and an absolute timeout as parameters, unlocks the variable, and blocks
+until the timeout is reached or another thread signals the variable.  A
+false value is returned if the timeout is reached, and a true value
+otherwise.  In either case, the variable is re-locked upon return.</p>
+</dd>
+<dd>
+<p>Like <a href="#item_cond_wait"><code>cond_wait</code></a>, this function may take a shared, <strong>locked</strong> variable
+as an additional parameter; in this case the first parameter is an
+<strong>unlocked</strong> condition variable protected by a distinct lock variable.</p>
+</dd>
+<dd>
+<p>Again like <a href="#item_cond_wait"><code>cond_wait</code></a>, waking up and reacquiring the lock are not
+atomic, and you should always check your desired condition after this
+function returns.  Since the timeout is an absolute value, however, it
+does not have to be recalculated with each pass:</p>
+</dd>
+<dd>
+<pre>
+    lock($var);
+    my $abs = time() + 15;
+    until ($ok = desired_condition($var)) {
+      last if !cond_timedwait($var, $abs);
+    }
+    # we got it if $ok, otherwise we timed out!</pre>
+</dd>
+</li>
+<dt><strong><a name="item_cond_signal">cond_signal VARIABLE</a></strong>
+
+<dd>
+<p>The <a href="#item_cond_signal"><code>cond_signal</code></a> function takes a <strong>locked</strong> variable as a parameter
+and unblocks one thread that's <a href="#item_cond_wait"><code>cond_wait</code></a>ing on that variable. If
+more than one thread is blocked in a <a href="#item_cond_wait"><code>cond_wait</code></a> on that variable,
+only one (and which one is indeterminate) will be unblocked.</p>
+</dd>
+<dd>
+<p>If there are no threads blocked in a <a href="#item_cond_wait"><code>cond_wait</code></a> on the variable,
+the signal is discarded. By always locking before signaling, you can
+(with care), avoid signaling before another thread has entered cond_wait().</p>
+</dd>
+<dd>
+<p><a href="#item_cond_signal"><code>cond_signal</code></a> will normally generate a warning if you attempt to use it
+on an unlocked variable. On the rare occasions where doing this may be
+sensible, you can skip the warning with</p>
+</dd>
+<dd>
+<pre>
+    { no warnings 'threads'; cond_signal($foo) }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_cond_broadcast">cond_broadcast VARIABLE</a></strong>
+
+<dd>
+<p>The <a href="#item_cond_broadcast"><code>cond_broadcast</code></a> function works similarly to <a href="#item_cond_signal"><code>cond_signal</code></a>.
+<a href="#item_cond_broadcast"><code>cond_broadcast</code></a>, though, will unblock <strong>all</strong> the threads that are
+blocked in a <a href="#item_cond_wait"><code>cond_wait</code></a> on the locked variable, rather than only one.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>threads::shared is designed to disable itself silently if threads are
+not available. If you want access to threads, you must <code>use threads</code>
+before you <code>use threads::shared</code>.  threads will emit a warning if you
+use it after threads::shared.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p><code>bless</code> is not supported on shared references. In the current version,
+<code>bless</code> will only bless the thread local reference and the blessing
+will not propagate to the other threads. This is expected to be
+implemented in a future version of Perl.</p>
+<p>Does not support splice on arrays!</p>
+<p>Taking references to the elements of shared arrays and hashes does not
+autovivify the elements, and neither does slicing a shared array/hash
+over non-existent indices/keys autovivify the elements.</p>
+<p><a href="#item_share"><code>share()</code></a> allows you to <code>share $hashref-&gt;{key}</code> without giving any error
+message.  But the <code>$hashref-&gt;{key}</code> is <strong>not</strong> shared, causing the error
+``locking can only be used on shared values'' to occur when you attempt to
+<code>lock $hasref-&gt;{key}</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Arthur Bergman &lt;arthur at contiller.se&gt;</p>
+<p>threads::shared is released under the same license as Perl</p>
+<p>Documentation borrowed from the old Thread.pm</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/threads/threads.html">the threads manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlthrtut.html">the perlthrtut manpage</a>, <a href="http://www.perl.com/pub/a/2002/06/11/threads.html">http://www.perl.com/pub/a/2002/06/11/threads.html</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;threads::shared - Perl extension for sharing data structures between threads</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

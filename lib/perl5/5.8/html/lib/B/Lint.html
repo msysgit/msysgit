@@ -1,0 +1,207 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>B::Lint - Perl lint</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::Lint - Perl lint</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#options_and_lint_checks">OPTIONS AND LINT CHECKS</a></li>
+	<li><a href="#non_lintcheck_options">NON LINT-CHECK OPTIONS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>B::Lint - Perl lint</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>perl -MO=Lint[,OPTIONS] foo.pl</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The B::Lint module is equivalent to an extended version of the <strong>-w</strong>
+option of <strong>perl</strong>. It is named after the program <em>lint</em> which carries
+out a similar process for C programs.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options_and_lint_checks">OPTIONS AND LINT CHECKS</a></h1>
+<p>Option words are separated by commas (not whitespace) and follow the
+usual conventions of compiler backend options. Following any options
+(indicated by a leading <strong>-</strong>) come lint check arguments. Each such
+argument (apart from the special <strong>all</strong> and <strong>none</strong> options) is a
+word representing one possible lint check (turning on that check) or
+is <strong>no-foo</strong> (turning off that check). Before processing the check
+arguments, a standard list of checks is turned on. Later options
+override earlier ones. Available options are:</p>
+<dl>
+<dt><strong><a name="item_context"><strong>context</strong></a></strong>
+
+<dd>
+<p>Produces a warning whenever an array is used in an implicit scalar
+context. For example, both of the lines</p>
+</dd>
+<dd>
+<pre>
+    $foo = length(@bar);
+    $foo = @bar;</pre>
+</dd>
+<dd>
+<p>will elicit a warning. Using an explicit <strong>scalar()</strong> silences the
+warning. For example,</p>
+</dd>
+<dd>
+<pre>
+    $foo = scalar(@bar);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_implicit_2dread_and_implicit_2dwrite"><strong>implicit-read</strong> and <strong>implicit-write</strong></a></strong>
+
+<dd>
+<p>These options produce a warning whenever an operation implicitly
+reads or (respectively) writes to one of Perl's special variables.
+For example, <strong>implicit-read</strong> will warn about these:</p>
+</dd>
+<dd>
+<pre>
+    /foo/;</pre>
+</dd>
+<dd>
+<p>and <strong>implicit-write</strong> will warn about these:</p>
+</dd>
+<dd>
+<pre>
+    s/foo/bar/;</pre>
+</dd>
+<dd>
+<p>Both <strong>implicit-read</strong> and <strong>implicit-write</strong> warn about this:</p>
+</dd>
+<dd>
+<pre>
+    for (@a) { ... }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_bare_2dsubs"><strong>bare-subs</strong></a></strong>
+
+<dd>
+<p>This option warns whenever a bareword is implicitly quoted, but is also
+the name of a subroutine in the current package. Typical mistakes that it will
+trap are:</p>
+</dd>
+<dd>
+<pre>
+    use constant foo =&gt; 'bar';
+    @a = ( foo =&gt; 1 );
+    $b{foo} = 2;</pre>
+</dd>
+<dd>
+<p>Neither of these will do what a naive user would expect.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dollar_2dunderscore"><strong>dollar-underscore</strong></a></strong>
+
+<dd>
+<p>This option warns whenever <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> is used either explicitly anywhere or
+as the implicit argument of a <strong>print</strong> statement.</p>
+</dd>
+</li>
+<dt><strong><a name="item_private_2dnames"><strong>private-names</strong></a></strong>
+
+<dd>
+<p>This option warns on each use of any variable, subroutine or
+method name that lives in a non-current package but begins with
+an underscore (``_''). Warnings aren't issued for the special case
+of the single character name ``_'' by itself (e.g. <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>).</p>
+</dd>
+</li>
+<dt><strong><a name="item_undefined_2dsubs"><strong>undefined-subs</strong></a></strong>
+
+<dd>
+<p>This option warns whenever an undefined subroutine is invoked.
+This option will only catch explicitly invoked subroutines such
+as <code>foo()</code> and not indirect invocations such as <code>&amp;$subref()</code>
+or <code>$obj-&gt;meth()</code>. Note that some programs or modules delay
+definition of subs until runtime by means of the AUTOLOAD
+mechanism.</p>
+</dd>
+</li>
+<dt><strong><a name="item_regexp_2dvariables"><strong>regexp-variables</strong></a></strong>
+
+<dd>
+<p>This option warns whenever one of the regexp variables <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$`</code></a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&amp;</code></a> or <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$'</code></a>
+is used. Any occurrence of any of these variables in your
+program can slow your whole program down. See <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a> for
+details.</p>
+</dd>
+</li>
+<dt><strong><a name="item_all"><strong>all</strong></a></strong>
+
+<dd>
+<p>Turn all warnings on.</p>
+</dd>
+</li>
+<dt><strong><a name="item_none"><strong>none</strong></a></strong>
+
+<dd>
+<p>Turn all warnings off.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="non_lintcheck_options">NON LINT-CHECK OPTIONS</a></h1>
+<dl>
+<dt><strong><a name="item__2du_package"><strong>-u Package</strong></a></strong>
+
+<dd>
+<p>Normally, Lint only checks the main code of the program together
+with all subs defined in package main. The <strong>-u</strong> option lets you
+include other package names whose subs are then checked by Lint.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>This is only a very preliminary version.</p>
+<p>This module doesn't work correctly on thread-enabled perls.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Malcolm Beattie, <a href="mailto:mbeattie@sable.ox.ac.uk.">mbeattie@sable.ox.ac.uk.</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::Lint - Perl lint</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

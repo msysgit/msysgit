@@ -1,0 +1,364 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perldos - Perl under DOS, W31, W95.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perldos - Perl under DOS, W31, W95.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#prerequisites_for_compiling_perl_on_dos">Prerequisites for Compiling Perl on DOS</a></li>
+		<li><a href="#shortcomings_of_perl_under_dos">Shortcomings of Perl under DOS</a></li>
+		<li><a href="#building_perl_on_dos">Building Perl on DOS</a></li>
+		<li><a href="#testing_perl_on_dos">Testing Perl on DOS</a></li>
+		<li><a href="#installation_of_perl_on_dos">Installation of Perl on DOS</a></li>
+	</ul>
+
+	<li><a href="#building_and_installing_modules_on_dos">BUILDING AND INSTALLING MODULES ON DOS</a></li>
+	<ul>
+
+		<li><a href="#building_prerequisites_for_perl_on_dos">Building Prerequisites for Perl on DOS</a></li>
+		<li><a href="#unpacking_cpan_modules_on_dos">Unpacking CPAN Modules on DOS</a></li>
+		<li><a href="#building_nonxs_modules_on_dos">Building Non-XS Modules on DOS</a></li>
+		<li><a href="#building_xs_modules_on_dos">Building XS Modules on DOS</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perldos - Perl under DOS, W31, W95.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>These are instructions for building Perl under DOS (or w??), using
+DJGPP v2.03 or later.  Under w95 long filenames are supported.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Before you start, you should glance through the README file
+found in the top-level directory where the Perl distribution
+was extracted.  Make sure you read and understand the terms under
+which this software is being distributed.</p>
+<p>This port currently supports MakeMaker (the set of modules that
+is used to build extensions to perl).  Therefore, you should be
+able to build and install most extensions found in the CPAN sites.</p>
+<p>Detailed instructions on how to build and install perl extension
+modules, including XS-type modules, is included.  See 'BUILDING AND
+INSTALLING MODULES'.</p>
+<p>
+</p>
+<h2><a name="prerequisites_for_compiling_perl_on_dos">Prerequisites for Compiling Perl on DOS</a></h2>
+<dl>
+<dt><strong><a name="item_djgpp">DJGPP</a></strong>
+
+<dd>
+<p>DJGPP is a port of GNU C/C++ compiler and development tools to 32-bit,
+protected-mode environment on Intel 32-bit CPUs running MS-DOS and compatible
+operating systems, by DJ Delorie &lt;<a href="mailto:dj@delorie.com">dj@delorie.com</a>&gt; and friends.</p>
+</dd>
+<dd>
+<p>For more details (FAQ), check out the home of DJGPP at:</p>
+</dd>
+<dd>
+<pre>
+        <a href="http://www.delorie.com/djgpp/">http://www.delorie.com/djgpp/</a></pre>
+</dd>
+<dd>
+<p>If you have questions about DJGPP, try posting to the DJGPP newsgroup:
+comp.os.msdos.djgpp, or use the email gateway <a href="mailto:djgpp@delorie.com.">djgpp@delorie.com.</a></p>
+</dd>
+<dd>
+<p>You can find the full DJGPP distribution on any SimTel.Net mirror all over
+the world. Like:</p>
+</dd>
+<dd>
+<pre>
+        <a href="ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2">ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2</a>*</pre>
+</dd>
+<dd>
+<p>You need the following files to build perl (or add new modules):</p>
+</dd>
+<dd>
+<pre>
+        v2/djdev203.zip
+        v2gnu/bnu2112b.zip
+        v2gnu/gcc2953b.zip
+        v2gnu/bsh204b.zip
+        v2gnu/mak3791b.zip
+        v2gnu/fil40b.zip
+        v2gnu/sed3028b.zip
+        v2gnu/txt20b.zip
+        v2gnu/dif272b.zip
+        v2gnu/grep24b.zip
+        v2gnu/shl20jb.zip
+        v2gnu/gwk306b.zip
+        v2misc/csdpmi5b.zip</pre>
+</dd>
+<dd>
+<p>or possibly any newer version.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pthreads">Pthreads</a></strong>
+
+<dd>
+<p>Thread support is not tested in this version of the djgpp perl.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="shortcomings_of_perl_under_dos">Shortcomings of Perl under DOS</a></h2>
+<p>Perl under DOS lacks some features of perl under UNIX because of
+deficiencies in the UNIX-emulation, most notably:</p>
+<ul>
+<li>
+<p><code>fork()</code> and <code>pipe()</code></p>
+</li>
+<li>
+<p>some features of the UNIX filesystem regarding link count and file dates</p>
+</li>
+<li>
+<p>in-place operation is a little bit broken with short filenames</p>
+</li>
+<li>
+<p>sockets</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="building_perl_on_dos">Building Perl on DOS</a></h2>
+<ul>
+<li>
+<p>Unpack the source package <em>perl5.8*.tar.gz</em> with djtarx. If you want
+to use long file names under w95 and also to get Perl to pass all its
+tests, don't forget to use</p>
+<pre>
+        set LFN=y
+        set FNCASE=y</pre>
+<p>before unpacking the archive.</p>
+</li>
+<li>
+<p>Create a ``symlink'' or copy your bash.exe to sh.exe in your <code>($DJDIR)/bin</code>
+directory.</p>
+<pre>
+        ln -s bash.exe sh.exe</pre>
+<p>[If you have the recommended version of bash for DJGPP, this is already
+done for you.]</p>
+<p>And make the <code>SHELL</code> environment variable point to this <em>sh.exe</em>:</p>
+<pre>
+        set SHELL=c:/djgpp/bin/sh.exe (use full path name!)</pre>
+<p>You can do this in <em>djgpp.env</em> too. Add this line BEFORE any section
+definition:</p>
+<pre>
+        +SHELL=%DJDIR%/bin/sh.exe</pre>
+</li>
+<li>
+<p>If you have <em>split.exe</em> and <em>gsplit.exe</em> in your path, then rename 
+<em>split.exe</em> to <em>djsplit.exe</em>, and <em>gsplit.exe</em> to <em>split.exe</em>.
+Copy or link <em>gecho.exe</em> to <em>echo.exe</em> if you don't have <em>echo.exe</em>.
+Copy or link <em>gawk.exe</em> to <em>awk.exe</em> if you don't have <em>awk.exe</em>.</p>
+<p>[If you have the recommended versions of djdev, shell utilities and
+gawk, all these are already done for you, and you will not need to do
+anything.]</p>
+</li>
+<li>
+<p>Chdir to the djgpp subdirectory of perl toplevel and type the following
+commands:</p>
+<pre>
+        set FNCASE=y
+        configure.bat</pre>
+<p>This will do some preprocessing then run the Configure script for you.
+The Configure script is interactive, but in most cases you just need to
+press ENTER.  The ``set'' command ensures that DJGPP preserves the letter
+case of file names when reading directories.  If you already issued this
+set command when unpacking the archive, and you are in the same DOS
+session as when you unpacked the archive, you don't have to issue the
+set command again.  This command is necessary *before* you start to 
+(re)configure or (re)build perl in order to ensure both that perl builds 
+correctly and that building XS-type modules can succeed.  See the DJGPP 
+info entry for ``_preserve_fncase'' for more information:</p>
+<pre>
+        info libc alphabetical _preserve_fncase</pre>
+<p>If the script says that your package is incomplete, and asks whether
+to continue, just answer with Y (this can only happen if you don't use
+long filenames or forget to issue ``set FNCASE=y'' first).</p>
+<p>When Configure asks about the extensions, I suggest IO and Fcntl,
+and if you want database handling then SDBM_File or GDBM_File
+(you need to install gdbm for this one). If you want to use the
+POSIX extension (this is the default), make sure that the stack
+size of your <em>cc1.exe</em> is at least 512kbyte (you can check this
+with: <code>stubedit cc1.exe</code>).</p>
+<p>You can use the Configure script in non-interactive mode too.
+When I built my <em>perl.exe</em>, I used something like this:</p>
+<pre>
+        configure.bat -des</pre>
+<p>You can find more info about Configure's command line switches in
+the <em>INSTALL</em> file.</p>
+<p>When the script ends, and you want to change some values in the
+generated <em>config.sh</em> file, then run</p>
+<pre>
+        sh Configure -S</pre>
+<p>after you made your modifications.</p>
+<p>IMPORTANT: if you use this <code>-S</code> switch, be sure to delete the CONFIG
+environment variable before running the script:</p>
+<pre>
+        set CONFIG=</pre>
+</li>
+<li>
+<p>Now you can compile Perl. Type:</p>
+<pre>
+        make</pre>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="testing_perl_on_dos">Testing Perl on DOS</a></h2>
+<p>Type:</p>
+<pre>
+        make test</pre>
+<p>If you're lucky you should see ``All tests successful''. But there can be
+a few failed subtests (less than 5 hopefully) depending on some external
+conditions (e.g. some subtests fail under linux/dosemu or plain dos
+with short filenames only).</p>
+<p>
+</p>
+<h2><a name="installation_of_perl_on_dos">Installation of Perl on DOS</a></h2>
+<p>Type:</p>
+<pre>
+        make install</pre>
+<p>This will copy the newly compiled perl and libraries into your DJGPP
+directory structure. Perl.exe and the utilities go into <code>($DJDIR)/bin</code>,
+and the library goes under <code>($DJDIR)/lib/perl5</code>. The pod documentation
+goes under <code>($DJDIR)/lib/perl5/pod</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="building_and_installing_modules_on_dos">BUILDING AND INSTALLING MODULES ON DOS</a></h1>
+<p>
+</p>
+<h2><a name="building_prerequisites_for_perl_on_dos">Building Prerequisites for Perl on DOS</a></h2>
+<p>For building and installing non-XS modules, all you need is a working
+perl under DJGPP.  Non-XS modules do not require re-linking the perl
+binary, and so are simpler to build and install.</p>
+<p>XS-type modules do require re-linking the perl binary, because part of
+an XS module is written in ``C'', and has to be linked together with the
+perl binary to be executed.  This is required because perl under DJGPP
+is built with the ``static link'' option, due to the lack of ``dynamic
+linking'' in the DJGPP environment.</p>
+<p>Because XS modules require re-linking of the perl binary, you need both
+the perl binary distribution and the perl source distribution to build
+an XS extension module.  In addition, you will have to have built your
+perl binary from the source distribution so that all of the components
+of the perl binary are available for the required link step.</p>
+<p>
+</p>
+<h2><a name="unpacking_cpan_modules_on_dos">Unpacking CPAN Modules on DOS</a></h2>
+<p>First, download the module package from CPAN (e.g., the ``Comma Separated
+Value'' text package, Text-CSV-0.01.tar.gz).  Then expand the contents of
+the package into some location on your disk.  Most CPAN modules are
+built with an internal directory structure, so it is usually safe to
+expand it in the root of your DJGPP installation.  Some people prefer to
+locate source trees under /usr/src (i.e., <code>($DJDIR)/usr/src</code>), but you may
+put it wherever seems most logical to you, *EXCEPT* under the same
+directory as your perl source code.  There are special rules that apply
+to modules which live in the perl source tree that do not apply to most
+of the modules in CPAN.</p>
+<p>Unlike other DJGPP packages, which are normal ``zip'' files, most CPAN
+module packages are ``gzipped tarballs''.  Recent versions of WinZip will
+safely unpack and expand them, *UNLESS* they have zero-length files.  It
+is a known WinZip bug (as of v7.0) that it will not extract zero-length
+files.</p>
+<p>From the command line, you can use the djtar utility provided with DJGPP
+to unpack and expand these files.  For example:</p>
+<pre>
+        C:\djgpp&gt;djtarx -v Text-CSV-0.01.tar.gz</pre>
+<p>This will create the new directory <code>($DJDIR)/Text-CSV-0.01</code>, filling
+it with the source for this module.</p>
+<p>
+</p>
+<h2><a name="building_nonxs_modules_on_dos">Building Non-XS Modules on DOS</a></h2>
+<p>To build a non-XS module, you can use the standard module-building
+instructions distributed with perl modules.</p>
+<pre>
+    perl Makefile.PL
+    make
+    make test
+    make install</pre>
+<p>This is sufficient because non-XS modules install only ``.pm'' files and
+(sometimes) pod and/or man documentation.  No re-linking of the perl
+binary is needed to build, install or use non-XS modules.</p>
+<p>
+</p>
+<h2><a name="building_xs_modules_on_dos">Building XS Modules on DOS</a></h2>
+<p>To build an XS module, you must use the standard module-building
+instructions distributed with perl modules *PLUS* three extra
+instructions specific to the DJGPP ``static link'' build environment.</p>
+<pre>
+    set FNCASE=y
+    perl Makefile.PL
+    make
+    make perl
+    make test
+    make -f Makefile.aperl inst_perl MAP_TARGET=perl.exe
+    make install</pre>
+<p>The first extra instruction sets DJGPP's FNCASE environment variable so
+that the new perl binary which you must build for an XS-type module will
+build correctly.  The second extra instruction re-builds the perl binary
+in your module directory before you run ``make test'', so that you are
+testing with the new module code you built with ``make''.  The third extra
+instruction installs the perl binary from your module directory into the
+standard DJGPP binary directory, <code>($DJDIR)/bin</code>, replacing your
+previous perl binary.</p>
+<p>Note that the MAP_TARGET value *must* have the ``.exe'' extension or you
+will not create a ``perl.exe'' to replace the one in <code>($DJDIR)/bin</code>.</p>
+<p>When you are done, the XS-module install process will have added information
+to your ``perllocal'' information telling that the perl binary has been replaced,
+and what module was installed.  You can view this information at any time
+by using the command:</p>
+<pre>
+        perl -S <a href="/usr/lib/perl5/5.8/html/./pod/perldoc.html">perldoc</a> perllocal</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Laszlo Molnar, <em><a href="mailto:laszlo.molnar@eth.ericsson.se">laszlo.molnar@eth.ericsson.se</a></em> [Installing/building perl]</p>
+<p>Peter J. Farley III <em><a href="mailto:pjfarley@banet.net">pjfarley@banet.net</a></em> [Building/installing modules]</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>perl(1).</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perldos - Perl under DOS, W31, W95.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

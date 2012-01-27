@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Net::netent - by-name interface to Perl's built-in getnet* functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::netent - by-name interface to Perl's built-in getnet* functions</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Net::netent - by-name interface to Perl's built-in getnet*() functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use Net::netent qw(:FIELDS);
+ getnetbyname(&quot;loopback&quot;)               or die &quot;bad net&quot;;
+ printf &quot;%s is %08X\n&quot;, $n_name, $n_net;</pre>
+<pre>
+ use Net::netent;</pre>
+<pre>
+ $n = getnetbyname(&quot;loopback&quot;)          or die &quot;bad net&quot;;
+ { # there's gotta be a better way, eh?
+     @bytes = unpack(&quot;C4&quot;, pack(&quot;N&quot;, $n-&gt;net));
+     shift @bytes while @bytes &amp;&amp; $bytes[0] == 0;
+ }
+ printf &quot;%s is %08X [%d.%d.%d.%d]\n&quot;, $n-&gt;name, $n-&gt;net, @bytes;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module's default exports override the core <code>getnetbyname()</code> and
+<code>getnetbyaddr()</code> functions, replacing them with versions that return
+``Net::netent'' objects.  This object has methods that return the similarly
+named structure field name from the C's netent structure from <em>netdb.h</em>;
+namely name, aliases, addrtype, and net.  The aliases 
+method returns an array reference, the rest scalars.</p>
+<p>You may also import all the structure fields directly into your namespace
+as regular variables using the :FIELDS import tag.  (Note that this still
+overrides your core functions.)  Access these fields as variables named
+with a preceding <code>n_</code>.  Thus, <code>$net_obj-&gt;name()</code> corresponds to
+$n_name if you import the fields.  Array references are available as
+regular array variables, so for example <code>@{ $net_obj-&gt;aliases()
+}</code> would be simply @n_aliases.</p>
+<p>The <code>getnet()</code> function is a simple front-end that forwards a numeric
+argument to getnetbyaddr(), and the rest
+to getnetbyname().</p>
+<p>To access this functionality without the core overrides,
+pass the <code>use</code> an empty import list, and then access
+function functions with their full qualified names.
+On the other hand, the built-ins are still available
+via the <code>CORE::</code> pseudo-package.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>The <code>getnet()</code> functions do this in the Perl core:</p>
+<pre>
+    sv_setiv(sv, (I32)nent-&gt;n_net);</pre>
+<p>The <code>gethost()</code> functions do this in the Perl core:</p>
+<pre>
+    sv_setpvn(sv, hent-&gt;h_addr, len);</pre>
+<p>That means that the address comes back in binary for the
+host functions, and as a regular perl integer for the net ones.
+This seems a bug, but here's how to deal with it:</p>
+<pre>
+ use strict;
+ use Socket;
+ use Net::netent;</pre>
+<pre>
+ @ARGV = ('loopback') unless @ARGV;</pre>
+<pre>
+ my($n, $net);</pre>
+<pre>
+ for $net ( @ARGV ) {</pre>
+<pre>
+     unless ($n = getnetbyname($net)) {
+        warn &quot;$0: no such net: $net\n&quot;;
+        next;
+     }</pre>
+<pre>
+     printf &quot;\n%s is %s%s\n&quot;, 
+            $net, 
+            lc($n-&gt;name) eq lc($net) ? &quot;&quot; : &quot;*really* &quot;,
+            $n-&gt;name;</pre>
+<pre>
+     print &quot;\taliases are &quot;, join(&quot;, &quot;, @{$n-&gt;aliases}), &quot;\n&quot;
+                if @{$n-&gt;aliases};</pre>
+<pre>
+     # this is stupid; first, why is this not in binary?
+     # second, why am i going through these convolutions
+     # to make it looks right
+     {
+        my @a = unpack(&quot;C4&quot;, pack(&quot;N&quot;, $n-&gt;net));
+        shift @a while @a &amp;&amp; $a[0] == 0;
+        printf &quot;\taddr is %s [%d.%d.%d.%d]\n&quot;, $n-&gt;net, @a;
+     }</pre>
+<pre>
+     if ($n = getnetbyaddr($n-&gt;net)) {
+        if (lc($n-&gt;name) ne lc($net)) {
+            printf &quot;\tThat addr reverses to net %s!\n&quot;, $n-&gt;name;
+            $net = $n-&gt;name;
+            redo;
+        } 
+     }
+ }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>While this class is currently implemented using the Class::Struct
+module to build a struct-like class, you shouldn't rely upon this.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tom Christiansen</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::netent - by-name interface to Perl's built-in getnet* functions</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

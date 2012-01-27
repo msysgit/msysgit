@@ -1,0 +1,381 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Math::BigRat - Arbitrary big rational numbers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Math::BigRat - Arbitrary big rational numbers</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#math_library">MATH LIBRARY</a></li>
+	</ul>
+
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#new__"><code>new()</code></a></li>
+		<li><a href="#numerator__"><code>numerator()</code></a></li>
+		<li><a href="#denominator__"><code>denominator()</code></a></li>
+		<li><a href="#parts__"><code>parts()</code></a></li>
+		<li><a href="#as_int__"><code>as_int()</code></a></li>
+		<li><a href="#as_hex__"><code>as_hex()</code></a></li>
+		<li><a href="#as_bin__"><code>as_bin()</code></a></li>
+		<li><a href="#bfac__"><code>bfac()</code></a></li>
+		<li><a href="#blog__"><code>blog()</code></a></li>
+		<li><a href="#bround___round___bfround__"><code>bround()/round()/bfround()</code></a></li>
+		<li><a href="#bmod__"><code>bmod()</code></a></li>
+		<li><a href="#is_one__"><code>is_one()</code></a></li>
+		<li><a href="#is_zero__"><code>is_zero()</code></a></li>
+		<li><a href="#is_pos__"><code>is_pos()</code></a></li>
+		<li><a href="#is_neg__"><code>is_neg()</code></a></li>
+		<li><a href="#is_int__"><code>is_int()</code></a></li>
+		<li><a href="#is_odd__"><code>is_odd()</code></a></li>
+		<li><a href="#is_even__"><code>is_even()</code></a></li>
+		<li><a href="#bceil__"><code>bceil()</code></a></li>
+		<li><a href="#bfloor__"><code>bfloor()</code></a></li>
+		<li><a href="#bsqrt__"><code>bsqrt()</code></a></li>
+		<li><a href="#config">config</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#license">LICENSE</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Math::BigRat - Arbitrary big rational numbers</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use Math::BigRat;</pre>
+<pre>
+        my $x = Math::BigRat-&gt;new('3/7'); $x += '5/9';</pre>
+<pre>
+        print $x-&gt;bstr(),&quot;\n&quot;;
+        print $x ** 2,&quot;\n&quot;;</pre>
+<pre>
+        my $y = Math::BigRat-&gt;new('inf');
+        print &quot;$y &quot;, ($y-&gt;is_inf ? 'is' : 'is not') , &quot; infinity\n&quot;;</pre>
+<pre>
+        my $z = Math::BigRat-&gt;new(144); $z-&gt;bsqrt();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Math::BigRat complements Math::BigInt and Math::BigFloat by providing support
+for arbitrary big rational numbers.</p>
+<p>
+</p>
+<h2><a name="math_library">MATH LIBRARY</a></h2>
+<p>Math with the numbers is done (by default) by a module called
+Math::BigInt::Calc. This is equivalent to saying:</p>
+<pre>
+        use Math::BigRat lib =&gt; 'Calc';</pre>
+<p>You can change this by using:</p>
+<pre>
+        use Math::BigRat lib =&gt; 'BitVect';</pre>
+<p>The following would first try to find Math::BigInt::Foo, then
+Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:</p>
+<pre>
+        use Math::BigRat lib =&gt; 'Foo,Math::BigInt::Bar';</pre>
+<p>Calc.pm uses as internal format an array of elements of some decimal base
+(usually 1e7, but this might be different for some systems) with the least
+significant digit first, while BitVect.pm uses a bit vector of base 2, most
+significant bit first. Other modules might use even different means of
+representing the numbers. See the respective module documentation for further
+details.</p>
+<p>Currently the following replacement libraries exist, search for them at CPAN:</p>
+<pre>
+        Math::BigInt::BitVect
+        Math::BigInt::GMP
+        Math::BigInt::Pari
+        Math::BigInt::FastCalc</pre>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>Any methods not listed here are dervied from Math::BigFloat (or
+Math::BigInt), so make sure you check these two modules for further
+information.</p>
+<p>
+</p>
+<h2><a name="new__"><code>new()</code></a></h2>
+<pre>
+        $x = Math::BigRat-&gt;new('1/3');</pre>
+<p>Create a new Math::BigRat object. Input can come in various forms:</p>
+<pre>
+        $x = Math::BigRat-&gt;new(123);                            # scalars
+        $x = Math::BigRat-&gt;new('inf');                          # infinity
+        $x = Math::BigRat-&gt;new('123.3');                        # float
+        $x = Math::BigRat-&gt;new('1/3');                          # simple string
+        $x = Math::BigRat-&gt;new('1 / 3');                        # spaced
+        $x = Math::BigRat-&gt;new('1 / 0.1');                      # w/ floats
+        $x = Math::BigRat-&gt;new(Math::BigInt-&gt;new(3));           # BigInt
+        $x = Math::BigRat-&gt;new(Math::BigFloat-&gt;new('3.1'));     # BigFloat
+        $x = Math::BigRat-&gt;new(Math::BigInt::Lite-&gt;new('2'));   # BigLite</pre>
+<pre>
+        # You can also give D and N as different objects:
+        $x = Math::BigRat-&gt;new(
+                Math::BigInt-&gt;new(-123),
+                Math::BigInt-&gt;new(7),
+                );                      # =&gt; -123/7</pre>
+<p>
+</p>
+<h2><a name="numerator__"><code>numerator()</code></a></h2>
+<pre>
+        $n = $x-&gt;numerator();</pre>
+<p>Returns a copy of the numerator (the part above the line) as signed BigInt.</p>
+<p>
+</p>
+<h2><a name="denominator__"><code>denominator()</code></a></h2>
+<pre>
+
+        $d = $x-&gt;denominator();</pre>
+<p>Returns a copy of the denominator (the part under the line) as positive BigInt.</p>
+<p>
+</p>
+<h2><a name="parts__"><code>parts()</code></a></h2>
+<pre>
+        ($n,$d) = $x-&gt;parts();</pre>
+<p>Return a list consisting of (signed) numerator and (unsigned) denominator as
+BigInts.</p>
+<p>
+</p>
+<h2><a name="as_int__"><code>as_int()</code></a></h2>
+<pre>
+        $x = Math::BigRat-&gt;new('13/7');
+        print $x-&gt;as_int(),&quot;\n&quot;;                # '1'</pre>
+<p>Returns a copy of the object as BigInt, truncated to an integer.</p>
+<p><code>as_number()</code> is an alias for <code>as_int()</code>.</p>
+<p>
+</p>
+<h2><a name="as_hex__"><code>as_hex()</code></a></h2>
+<pre>
+        $x = Math::BigRat-&gt;new('13');
+        print $x-&gt;as_hex(),&quot;\n&quot;;                # '0xd'</pre>
+<p>Returns the BigRat as hexadecimal string. Works only for integers.</p>
+<p>
+</p>
+<h2><a name="as_bin__"><code>as_bin()</code></a></h2>
+<pre>
+        $x = Math::BigRat-&gt;new('13');
+        print $x-&gt;as_bin(),&quot;\n&quot;;                # '0x1101'</pre>
+<p>Returns the BigRat as binary string. Works only for integers.</p>
+<p>
+</p>
+<h2><a name="bfac__"><code>bfac()</code></a></h2>
+<pre>
+        $x-&gt;bfac();</pre>
+<p>Calculates the factorial of $x. For instance:</p>
+<pre>
+        print Math::BigRat-&gt;new('3/1')-&gt;bfac(),&quot;\n&quot;;    # 1*2*3
+        print Math::BigRat-&gt;new('5/1')-&gt;bfac(),&quot;\n&quot;;    # 1*2*3*4*5</pre>
+<p>Works currently only for integers.</p>
+<p>
+</p>
+<h2><a name="blog__"><code>blog()</code></a></h2>
+<p>Is not yet implemented.</p>
+<p>
+</p>
+<h2><a name="bround___round___bfround__"><code>bround()/round()/bfround()</code></a></h2>
+<p>Are not yet implemented.</p>
+<p>
+</p>
+<h2><a name="bmod__"><a href="#item_bmod"><code>bmod()</code></a></a></h2>
+<pre>
+        use Math::BigRat;
+        my $x = Math::BigRat-&gt;new('7/4');
+        my $y = Math::BigRat-&gt;new('4/3');
+        print $x-&gt;bmod($y);</pre>
+<p>Set $x to the remainder of the division of $x by $y.</p>
+<p>
+</p>
+<h2><a name="is_one__"><code>is_one()</code></a></h2>
+<pre>
+        print &quot;$x is 1\n&quot; if $x-&gt;is_one();</pre>
+<p>Return true if $x is exactly one, otherwise false.</p>
+<p>
+</p>
+<h2><a name="is_zero__"><code>is_zero()</code></a></h2>
+<pre>
+        print &quot;$x is 0\n&quot; if $x-&gt;is_zero();</pre>
+<p>Return true if $x is exactly zero, otherwise false.</p>
+<p>
+</p>
+<h2><a name="is_pos__"><code>is_pos()</code></a></h2>
+<pre>
+        print &quot;$x is &gt;= 0\n&quot; if $x-&gt;is_positive();</pre>
+<p>Return true if $x is positive (greater than or equal to zero), otherwise
+false. Please note that '+inf' is also positive, while 'NaN' and '-inf' aren't.</p>
+<p><code>is_positive()</code> is an alias for <code>is_pos()</code>.</p>
+<p>
+</p>
+<h2><a name="is_neg__"><code>is_neg()</code></a></h2>
+<pre>
+        print &quot;$x is &lt; 0\n&quot; if $x-&gt;is_negative();</pre>
+<p>Return true if $x is negative (smaller than zero), otherwise false. Please
+note that '-inf' is also negative, while 'NaN' and '+inf' aren't.</p>
+<p><code>is_negative()</code> is an alias for <code>is_neg()</code>.</p>
+<p>
+</p>
+<h2><a name="is_int__"><code>is_int()</code></a></h2>
+<pre>
+        print &quot;$x is an integer\n&quot; if $x-&gt;is_int();</pre>
+<p>Return true if $x has a denominator of 1 (e.g. no fraction parts), otherwise
+false. Please note that '-inf', 'inf' and 'NaN' aren't integer.</p>
+<p>
+</p>
+<h2><a name="is_odd__"><code>is_odd()</code></a></h2>
+<pre>
+        print &quot;$x is odd\n&quot; if $x-&gt;is_odd();</pre>
+<p>Return true if $x is odd, otherwise false.</p>
+<p>
+</p>
+<h2><a name="is_even__"><code>is_even()</code></a></h2>
+<pre>
+        print &quot;$x is even\n&quot; if $x-&gt;is_even();</pre>
+<p>Return true if $x is even, otherwise false.</p>
+<p>
+</p>
+<h2><a name="bceil__"><code>bceil()</code></a></h2>
+<pre>
+        $x-&gt;bceil();</pre>
+<p>Set $x to the next bigger integer value (e.g. truncate the number to integer
+and then increment it by one).</p>
+<p>
+</p>
+<h2><a name="bfloor__"><code>bfloor()</code></a></h2>
+<pre>
+
+        $x-&gt;bfloor();</pre>
+<p>Truncate $x to an integer value.</p>
+<p>
+</p>
+<h2><a name="bsqrt__"><code>bsqrt()</code></a></h2>
+<pre>
+
+        $x-&gt;bsqrt();</pre>
+<p>Calculate the square root of $x.</p>
+<p>
+</p>
+<h2><a name="config">config</a></h2>
+<pre>
+        use Data::Dumper;</pre>
+<pre>
+        print Dumper ( Math::BigRat-&gt;config() );
+        print Math::BigRat-&gt;config()-&gt;{lib},&quot;\n&quot;;</pre>
+<p>Returns a hash containing the configuration, e.g. the version number, lib
+loaded etc. The following hash keys are currently filled in with the
+appropriate information.</p>
+<pre>
+        key             RO/RW   Description
+                                Example
+        ============================================================
+        lib             RO      Name of the Math library
+                                Math::BigInt::Calc
+        lib_version     RO      Version of 'lib'
+                                0.30
+        class           RO      The class of config you just called
+                                Math::BigRat
+        version         RO      version number of the class you used
+                                0.10
+        upgrade         RW      To which class numbers are upgraded
+                                undef
+        downgrade       RW      To which class numbers are downgraded
+                                undef
+        precision       RW      Global precision
+                                undef
+        accuracy        RW      Global accuracy
+                                undef
+        round_mode      RW      Global round mode
+                                even
+        div_scale       RW      Fallback acccuracy for div
+                                40
+        trap_nan        RW      Trap creation of NaN (undef = no)
+                                undef
+        trap_inf        RW      Trap creation of +inf/-inf (undef = no)
+                                undef</pre>
+<p>By passing a reference to a hash you may set the configuration values. This
+works only for values that a marked with a <code>RW</code> above, anything else is
+read-only.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Some things are not yet implemented, or only implemented half-way:</p>
+<dl>
+<dt><strong><a name="item_handling">inf handling (partial)</a></strong>
+
+<dt><strong>NaN handling (partial)</strong>
+
+<dt><strong><a name="item_rounding">rounding (not implemented except for bceil/bfloor)</a></strong>
+
+<dt><strong><a name="item__x">$x ** $y where $y is not an integer</a></strong>
+
+<dt><strong><a name="item_bmod">bmod(), blog(), <code>bmodinv()</code> and <code>bmodpow()</code> (partial)</a></strong>
+
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="license">LICENSE</a></h1>
+<p>This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
+
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Math/BigFloat.html">the Math::BigFloat manpage</a> and <a href="/usr/lib/perl5/5.8/html/Math/Big.html">the Math::Big manpage</a> as well as <a href="/usr/lib/perl5/5.8/html/Math/BigInt/BitVect.html">the Math::BigInt::BitVect manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/Math/BigInt/Pari.html">the Math::BigInt::Pari manpage</a> and  <a href="/usr/lib/perl5/5.8/html/Math/BigInt/GMP.html">the Math::BigInt::GMP manpage</a>.
+
+</p>
+<p>See <a href="http://search.cpan.org/search?dist=bignum">http://search.cpan.org/search</a> for a way to use
+Math::BigRat.
+
+</p>
+<p>The package at <a href="http://search.cpan.org/search?dist=Math%3A%3ABigRat">http://search.cpan.org/search</a>
+may contain more documentation and examples as well as testcases.
+
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>(C) by Tels <a href="http://bloodgate.com/">http://bloodgate.com/</a> 2001 - 2005.
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Math::BigRat - Arbitrary big rational numbers</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

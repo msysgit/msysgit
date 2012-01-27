@@ -1,0 +1,491 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Unicode::Normalize - Unicode Normalization Forms</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unicode::Normalize - Unicode Normalization Forms</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#normalization_forms">Normalization Forms</a></li>
+		<li><a href="#decomposition_and_composition">Decomposition and Composition</a></li>
+		<li><a href="#quick_check">Quick Check</a></li>
+		<li><a href="#character_data">Character Data</a></li>
+	</ul>
+
+	<li><a href="#export">EXPORT</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Unicode::Normalize - Unicode Normalization Forms</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>(1) using function names exported by default:</p>
+<pre>
+  use Unicode::Normalize;</pre>
+<pre>
+  $NFD_string  = NFD($string);  # Normalization Form D
+  $NFC_string  = NFC($string);  # Normalization Form C
+  $NFKD_string = NFKD($string); # Normalization Form KD
+  $NFKC_string = NFKC($string); # Normalization Form KC</pre>
+<p>(2) using function names exported on request:</p>
+<pre>
+  use Unicode::Normalize 'normalize';</pre>
+<pre>
+  $NFD_string  = normalize('D',  $string);  # Normalization Form D
+  $NFC_string  = normalize('C',  $string);  # Normalization Form C
+  $NFKD_string = normalize('KD', $string);  # Normalization Form KD
+  $NFKC_string = normalize('KC', $string);  # Normalization Form KC</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Parameters:</p>
+<p><code>$string</code> is used as a string under character semantics
+(see <em>perlunicode</em>).</p>
+<p><code>$codepoint</code> should be an unsigned integer
+representing a Unicode code point.</p>
+<p>Note: Between XSUB and pure Perl, there is an incompatibility
+about the interpretation of <code>$codepoint</code> as a decimal number.
+XSUB converts <code>$codepoint</code> to an unsigned integer, but pure Perl does not.
+Do not use a floating point nor a negative sign in <code>$codepoint</code>.</p>
+<p>
+</p>
+<h2><a name="normalization_forms">Normalization Forms</a></h2>
+<dl>
+<dt><strong><a name="item_nfd"><code>$NFD_string = NFD($string)</code></a></strong>
+
+<dd>
+<p>returns the Normalization Form D (formed by canonical decomposition).</p>
+</dd>
+</li>
+<dt><strong><a name="item_nfc"><code>$NFC_string = NFC($string)</code></a></strong>
+
+<dd>
+<p>returns the Normalization Form C (formed by canonical decomposition
+followed by canonical composition).</p>
+</dd>
+</li>
+<dt><strong><a name="item_nfkd"><code>$NFKD_string = NFKD($string)</code></a></strong>
+
+<dd>
+<p>returns the Normalization Form KD (formed by compatibility decomposition).</p>
+</dd>
+</li>
+<dt><strong><a name="item_nfkc"><code>$NFKC_string = NFKC($string)</code></a></strong>
+
+<dd>
+<p>returns the Normalization Form KC (formed by compatibility decomposition
+followed by <strong>canonical</strong> composition).</p>
+</dd>
+</li>
+<dt><strong><a name="item_fcd"><code>$FCD_string = FCD($string)</code></a></strong>
+
+<dd>
+<p>If the given string is in FCD (``Fast C or D'' form; cf. UTN #5),
+returns it without modification; otherwise returns an FCD string.</p>
+</dd>
+<dd>
+<p>Note: FCD is not always unique, then plural forms may be equivalent
+each other. <a href="#item_fcd"><code>FCD()</code></a> will return one of these equivalent forms.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fcc"><code>$FCC_string = FCC($string)</code></a></strong>
+
+<dd>
+<p>returns the FCC form (``Fast C Contiguous''; cf. UTN #5).</p>
+</dd>
+<dd>
+<p>Note: FCC is unique, as well as four normalization forms (NF*).</p>
+</dd>
+</li>
+<dt><strong><a name="item_normalize"><code>$normalized_string = normalize($form_name, $string)</code></a></strong>
+
+<dd>
+<p>As <code>$form_name</code>, one of the following names must be given.</p>
+</dd>
+<dd>
+<pre>
+  'C'  or 'NFC'  for Normalization Form C  (UAX #15)
+  'D'  or 'NFD'  for Normalization Form D  (UAX #15)
+  'KC' or 'NFKC' for Normalization Form KC (UAX #15)
+  'KD' or 'NFKD' for Normalization Form KD (UAX #15)</pre>
+</dd>
+<dd>
+<pre>
+  'FCD'          for &quot;Fast C or D&quot; Form  (UTN #5)
+  'FCC'          for &quot;Fast C Contiguous&quot; (UTN #5)</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="decomposition_and_composition">Decomposition and Composition</a></h2>
+<dl>
+<dt><strong><a name="item_decompose"><code>$decomposed_string = decompose($string)</code></a></strong>
+
+<dt><strong><code>$decomposed_string = decompose($string, $useCompatMapping)</code></strong>
+
+<dd>
+<p>Decomposes the specified string and returns the result.</p>
+</dd>
+<dd>
+<p>If the second parameter (a boolean) is omitted or false, decomposes it
+using the Canonical Decomposition Mapping.
+If true, decomposes it using the Compatibility Decomposition Mapping.</p>
+</dd>
+<dd>
+<p>The string returned is not always in NFD/NFKD.
+Reordering may be required.</p>
+</dd>
+<dd>
+<pre>
+    $NFD_string  = reorder(decompose($string));       # eq. to NFD()
+    $NFKD_string = reorder(decompose($string, TRUE)); # eq. to NFKD()</pre>
+</dd>
+</li>
+<dt><strong><a name="item_reorder"><code>$reordered_string  = reorder($string)</code></a></strong>
+
+<dd>
+<p>Reorders the combining characters and the like in the canonical ordering
+and returns the result.</p>
+</dd>
+<dd>
+<p>E.g., when you have a list of NFD/NFKD strings,
+you can get the concatenated NFD/NFKD string from them, saying</p>
+</dd>
+<dd>
+<pre>
+    $concat_NFD  = reorder(join '', @NFD_strings);
+    $concat_NFKD = reorder(join '', @NFKD_strings);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_compose"><code>$composed_string   = compose($string)</code></a></strong>
+
+<dd>
+<p>Returns the string where composable pairs are composed.</p>
+</dd>
+<dd>
+<p>E.g., when you have a NFD/NFKD string,
+you can get its NFC/NFKC string, saying</p>
+</dd>
+<dd>
+<pre>
+    $NFC_string  = compose($NFD_string);
+    $NFKC_string = compose($NFKD_string);</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="quick_check">Quick Check</a></h2>
+<p>(see Annex 8, UAX #15; and <em>DerivedNormalizationProps.txt</em>)</p>
+<p>The following functions check whether the string is in that normalization form.</p>
+<p>The result returned will be:</p>
+<pre>
+    YES     The string is in that normalization form.
+    NO      The string is not in that normalization form.
+    MAYBE   Dubious. Maybe yes, maybe no.</pre>
+<dl>
+<dt><strong><a name="item_checknfd"><code>$result = checkNFD($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_checknfc"><code>$result = checkNFC($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>;
+<code>undef</code> if <code>MAYBE</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_checknfkd"><code>$result = checkNFKD($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_checknfkc"><code>$result = checkNFKC($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>;
+<code>undef</code> if <code>MAYBE</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_checkfcd"><code>$result = checkFCD($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_checkfcc"><code>$result = checkFCC($string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>;
+<code>undef</code> if <code>MAYBE</code>.</p>
+</dd>
+<dd>
+<p>If a string is not in FCD, it must not be in FCC.
+So <a href="#item_checkfcc"><code>checkFCC($not_FCD_string)</code></a> should return <code>NO</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_check"><code>$result = check($form_name, $string)</code></a></strong>
+
+<dd>
+<p>returns true (<code>1</code>) if <code>YES</code>; false (<code>empty string</code>) if <code>NO</code>;
+<code>undef</code> if <code>MAYBE</code>.</p>
+</dd>
+<dd>
+<p>As <code>$form_name</code>, one of the following names must be given.</p>
+</dd>
+<dd>
+<pre>
+  'C'  or 'NFC'  for Normalization Form C  (UAX #15)
+  'D'  or 'NFD'  for Normalization Form D  (UAX #15)
+  'KC' or 'NFKC' for Normalization Form KC (UAX #15)
+  'KD' or 'NFKD' for Normalization Form KD (UAX #15)</pre>
+</dd>
+<dd>
+<pre>
+  'FCD'          for &quot;Fast C or D&quot; Form  (UTN #5)
+  'FCC'          for &quot;Fast C Contiguous&quot; (UTN #5)</pre>
+</dd>
+</li>
+</dl>
+<p><strong>Note</strong></p>
+<p>In the cases of NFD, NFKD, and FCD, the answer must be
+either <code>YES</code> or <code>NO</code>. The answer <code>MAYBE</code> may be returned
+in the cases of NFC, NFKC, and FCC.</p>
+<p>A <code>MAYBE</code> string should contain at least one combining character
+or the like. For example, <code>COMBINING ACUTE ACCENT</code> has
+the MAYBE_NFC/MAYBE_NFKC property.</p>
+<p>Both <a href="#item_checknfc"><code>checkNFC(&quot;A\N{COMBINING ACUTE ACCENT}&quot;)</code></a>
+and <a href="#item_checknfc"><code>checkNFC(&quot;B\N{COMBINING ACUTE ACCENT}&quot;)</code></a> will return <code>MAYBE</code>.
+<code>&quot;A\N{COMBINING ACUTE ACCENT}&quot;</code> is not in NFC
+(its NFC is <code>&quot;\N{LATIN CAPITAL LETTER A WITH ACUTE}&quot;</code>),
+while <code>&quot;B\N{COMBINING ACUTE ACCENT}&quot;</code> is in NFC.</p>
+<p>If you want to check exactly, compare the string with its NFC/NFKC/FCC.</p>
+<pre>
+    if ($string eq NFC($string)) {
+        # $string is exactly normalized in NFC;
+    } else {
+        # $string is not normalized in NFC;
+    }</pre>
+<pre>
+    if ($string eq NFKC($string)) {
+        # $string is exactly normalized in NFKC;
+    } else {
+        # $string is not normalized in NFKC;
+    }</pre>
+<p>
+</p>
+<h2><a name="character_data">Character Data</a></h2>
+<p>These functions are interface of character data used internally.
+If you want only to get Unicode normalization forms, you don't need
+call them yourself.</p>
+<dl>
+<dt><strong><a name="item_getcanon"><code>$canonical_decomposed = getCanon($codepoint)</code></a></strong>
+
+<dd>
+<p>If the character of the specified codepoint is canonically
+decomposable (including Hangul Syllables),
+returns the <strong>completely decomposed</strong> string canonically equivalent to it.</p>
+</dd>
+<dd>
+<p>If it is not decomposable, returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getcompat"><code>$compatibility_decomposed = getCompat($codepoint)</code></a></strong>
+
+<dd>
+<p>If the character of the specified codepoint is compatibility
+decomposable (including Hangul Syllables),
+returns the <strong>completely decomposed</strong> string compatibility equivalent to it.</p>
+</dd>
+<dd>
+<p>If it is not decomposable, returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getcomposite"><code>$codepoint_composite = getComposite($codepoint_here, $codepoint_next)</code></a></strong>
+
+<dd>
+<p>If two characters here and next (as codepoints) are composable
+(including Hangul Jamo/Syllables and Composition Exclusions),
+returns the codepoint of the composite.</p>
+</dd>
+<dd>
+<p>If they are not composable, returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getcombinclass"><code>$combining_class = getCombinClass($codepoint)</code></a></strong>
+
+<dd>
+<p>Returns the combining class of the character as an integer.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isexclusion"><code>$is_exclusion = isExclusion($codepoint)</code></a></strong>
+
+<dd>
+<p>Returns a boolean whether the character of the specified codepoint
+is a composition exclusion.</p>
+</dd>
+</li>
+<dt><strong><a name="item_issingleton"><code>$is_singleton = isSingleton($codepoint)</code></a></strong>
+
+<dd>
+<p>Returns a boolean whether the character of the specified codepoint is
+a singleton.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isnonstdecomp"><code>$is_non_starter_decomposition = isNonStDecomp($codepoint)</code></a></strong>
+
+<dd>
+<p>Returns a boolean whether the canonical decomposition
+of the character of the specified codepoint
+is a Non-Starter Decomposition.</p>
+</dd>
+</li>
+<dt><strong><a name="item_iscomp2nd"><code>$may_be_composed_with_prev_char = isComp2nd($codepoint)</code></a></strong>
+
+<dd>
+<p>Returns a boolean whether the character of the specified codepoint
+may be composed with the previous one in a certain composition
+(including Hangul Compositions, but excluding
+Composition Exclusions and Non-Starter Decompositions).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="export">EXPORT</a></h1>
+<p><a href="#item_nfc"><code>NFC</code></a>, <a href="#item_nfd"><code>NFD</code></a>, <a href="#item_nfkc"><code>NFKC</code></a>, <a href="#item_nfkd"><code>NFKD</code></a>: by default.</p>
+<p><a href="#item_normalize"><code>normalize</code></a> and other some functions: on request.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<dl>
+<dt><strong><a name="item_perl_27s_version_vs_2e_unicode_version">Perl's version vs. Unicode version</a></strong>
+
+<dd>
+<p>Since this module refers to perl core's Unicode database in the directory
+<em>/lib/unicore</em> (or formerly <em>/lib/unicode</em>), the Unicode version of
+normalization implemented by this module depends on your perl's version.</p>
+</dd>
+<dd>
+<pre>
+    perl's version         implemented Unicode version
+       5.6.1                  3.0.1
+       5.7.2                  3.1.0
+       5.7.3                  3.1.1 (same normalized form as that of 3.1.0)
+       5.8.0                  3.2.0
+     5.8.1-5.8.3              4.0.0
+     5.8.4-5.8.6 (latest)     4.0.1 (same normalized form as that of 4.0.0)</pre>
+</dd>
+</li>
+<dt><strong><a name="item_correction_of_decomposition_mapping">Correction of decomposition mapping</a></strong>
+
+<dd>
+<p>In older Unicode versions, a small number of characters (all of which are
+CJK compatibility ideographs as far as they have been found) may have
+an erroneous decomposition mapping (see <em>NormalizationCorrections.txt</em>).
+Anyhow, this module will neither refer to <em>NormalizationCorrections.txt</em>
+nor provide any specific version of normalization. Therefore this module
+running on an older perl with an older Unicode database may use
+the erroneous decomposition mapping blindly conforming to the Unicode database.</p>
+</dd>
+</li>
+<dt><strong><a name="item_revised_definition_of_canonical_composition">Revised definition of canonical composition</a></strong>
+
+<dd>
+<p>In Unicode 4.1.0, the definition D2 of canonical composition (which
+affects NFC and NFKC) has been changed (see Public Review Issue #29
+and recent UAX #15). This module has used the newer definition
+since the version 0.07 (Oct 31, 2001).
+This module does not support normalization according to the older
+definition, even if the Unicode version implemented by perl is
+lower than 4.1.0.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>SADAHIRO Tomoyuki &lt;<a href="mailto:SADAHIRO@cpan.org">SADAHIRO@cpan.org</a>&gt;</p>
+<p><code>Copyright(C)</code> 2001-2005, SADAHIRO Tomoyuki. Japan. All rights reserved.</p>
+<p>This module is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eunicode_2eorg_2freports_2ftr15_"><a href="http://www.unicode.org/reports/tr15/">http://www.unicode.org/reports/tr15/</a></a></strong>
+
+<dd>
+<p>Unicode Normalization Forms - UAX #15</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eunicode_2eorg_2fpublic_2funidat"><a href="http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt">http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt</a></a></strong>
+
+<dd>
+<p>Derived Normalization Properties</p>
+</dd>
+</li>
+<dt><strong><a href="http://www.unicode.org/Public/UNIDATA/NormalizationCorrections.txt">http://www.unicode.org/Public/UNIDATA/NormalizationCorrections.txt</a></strong>
+
+<dd>
+<p>Normalization Corrections</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eunicode_2eorg_2freview_2fpr_2d2"><a href="http://www.unicode.org/review/pr-29.html">http://www.unicode.org/review/pr-29.html</a></a></strong>
+
+<dd>
+<p>Public Review Issue #29: Normalization Issue</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eunicode_2eorg_2fnotes_2ftn5_2f"><a href="http://www.unicode.org/notes/tn5/">http://www.unicode.org/notes/tn5/</a></a></strong>
+
+<dd>
+<p>Canonical Equivalence in Applications - UTN #5</p>
+</dd>
+</li>
+</dl>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unicode::Normalize - Unicode Normalization Forms</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

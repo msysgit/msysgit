@@ -1,0 +1,293 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode::Encoding - Encode Implementation Base Class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Encoding - Encode Implementation Base Class</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#methods_you_should_implement">Methods you should implement</a></li>
+		<li><a href="#other_methods_defined_in_encode__encodings">Other methods defined in Encode::Encodings</a></li>
+		<li><a href="#example__encode__rot13">Example: Encode::ROT13</a></li>
+	</ul>
+
+	<li><a href="#why_the_heck_encode_api_is_different">Why the heck Encode API is different?</a></li>
+	<ul>
+
+		<li><a href="#compiled_encodings">Compiled Encodings</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode::Encoding - Encode Implementation Base Class</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  package Encode::MyEncoding;
+  use base qw(Encode::Encoding);</pre>
+<pre>
+  __PACKAGE__-&gt;Define(qw(myCanonical myAlias));</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>As mentioned in <a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a>, encodings are (in the current
+implementation at least) defined as objects. The mapping of encoding
+name to object is via the <code>%Encode::Encoding</code> hash.  Though you can
+directly manipulate this hash, it is strongly encouraged to use this
+base class module and add <a href="#item_encode"><code>encode()</code></a> and <a href="#item_decode"><code>decode()</code></a> methods.</p>
+<p>
+</p>
+<h2><a name="methods_you_should_implement">Methods you should implement</a></h2>
+<p>You are strongly encouraged to implement methods below, at least
+either <a href="#item_encode"><code>encode()</code></a> or decode().</p>
+<dl>
+<dt><strong><a name="item_encode">-&gt;encode($string [,$check])</a></strong>
+
+<dd>
+<p>MUST return the octet sequence representing <em>$string</em>.</p>
+</dd>
+<ul>
+<li>
+<p>If <em>$check</em> is true, it SHOULD modify <em>$string</em> in place to remove
+the converted part (i.e.  the whole string unless there is an error).
+If <a href="#item_perlio_ok"><code>perlio_ok()</code></a> is true, SHOULD becomes MUST.</p>
+</li>
+<li>
+<p>If an error occurs, it SHOULD return the octet sequence for the
+fragment of string that has been converted and modify $string in-place
+to remove the converted part leaving it starting with the problem
+fragment.  If <a href="#item_perlio_ok"><code>perlio_ok()</code></a> is true, SHOULD becomes MUST.</p>
+</li>
+<li>
+<p>If <em>$check</em> is is false then <a href="#item_encode"><code>encode</code></a> MUST  make a ``best effort'' to
+convert the string - for example, by using a replacement character.</p>
+</li>
+</ul>
+<dt><strong><a name="item_decode">-&gt;decode($octets [,$check])</a></strong>
+
+<dd>
+<p>MUST return the string that <em>$octets</em> represents.</p>
+</dd>
+<ul>
+<li>
+<p>If <em>$check</em> is true, it SHOULD modify <em>$octets</em> in place to remove
+the converted part (i.e.  the whole sequence unless there is an
+error).  If <a href="#item_perlio_ok"><code>perlio_ok()</code></a> is true, SHOULD becomes MUST.</p>
+</li>
+<li>
+<p>If an error occurs, it SHOULD return the fragment of string that has
+been converted and modify $octets in-place to remove the converted
+part leaving it starting with the problem fragment.  If <a href="#item_perlio_ok"><code>perlio_ok()</code></a> is
+true, SHOULD becomes MUST.</p>
+</li>
+<li>
+<p>If <em>$check</em> is false then <a href="#item_decode"><code>decode</code></a> should make a ``best effort'' to
+convert the string - for example by using Unicode's ``\x{FFFD}'' as a
+replacement character.</p>
+</li>
+</ul>
+</dl>
+<p>If you want your encoding to work with <a href="/usr/lib/perl5/5.8/html/./ext/Encode/encoding.html">the encoding manpage</a> pragma, you should
+also implement the method below.</p>
+<dl>
+<dt><strong><a name="item_cat_decode">-&gt;cat_decode($destination, $octets, $offset, $terminator [,$check])</a></strong>
+
+<dd>
+<p>MUST decode <em>$octets</em> with <em>$offset</em> and concatenate it to <em>$destination</em>.
+Decoding will terminate when $terminator (a string) appears in output.
+<em>$offset</em> will be modified to the last $octets position at end of decode.
+Returns true if $terminator appears output, else returns false.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="other_methods_defined_in_encode__encodings">Other methods defined in Encode::Encodings</a></h2>
+<p>You do not have to override methods shown below unless you have to.</p>
+<dl>
+<dt><strong><a name="item_name">-&gt;name</a></strong>
+
+<dd>
+<p>Predefined As:</p>
+</dd>
+<dd>
+<pre>
+  sub name  { return shift-&gt;{'Name'} }</pre>
+</dd>
+<dd>
+<p>MUST return the string representing the canonical name of the encoding.</p>
+</dd>
+</li>
+<dt><strong><a name="item_renew">-&gt;renew</a></strong>
+
+<dd>
+<p>Predefined As:</p>
+</dd>
+<dd>
+<pre>
+  sub renew {
+    my $self = shift;
+    my $clone = bless { %$self } =&gt; ref($self);
+    $clone-&gt;{renewed}++;
+    return $clone;
+  }</pre>
+</dd>
+<dd>
+<p>This method reconstructs the encoding object if necessary.  If you need
+to store the state during encoding, this is where you clone your object.</p>
+</dd>
+<dd>
+<p>PerlIO ALWAYS calls this method to make sure it has its own private
+encoding object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_renewed">-&gt;renewed</a></strong>
+
+<dd>
+<p>Predefined As:</p>
+</dd>
+<dd>
+<pre>
+  sub renewed { $_[0]-&gt;{renewed} || 0 }</pre>
+</dd>
+<dd>
+<p>Tells whether the object is renewed (and how many times).  Some
+modules emit <code>Use of uninitialized value in null operation</code> warning
+unless the value is numeric so return 0 for false.</p>
+</dd>
+</li>
+<dt><strong><a name="item_perlio_ok">-&gt;<code>perlio_ok()</code></a></strong>
+
+<dd>
+<p>Predefined As:</p>
+</dd>
+<dd>
+<pre>
+  sub perlio_ok { 
+      eval{ require PerlIO::encoding };
+      return $@ ? 0 : 1;
+  }</pre>
+</dd>
+<dd>
+<p>If your encoding does not support PerlIO for some reasons, just;</p>
+</dd>
+<dd>
+<pre>
+ sub perlio_ok { 0 }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_needs_lines">-&gt;<code>needs_lines()</code></a></strong>
+
+<dd>
+<p>Predefined As:</p>
+</dd>
+<dd>
+<pre>
+  sub needs_lines { 0 };</pre>
+</dd>
+<dd>
+<p>If your encoding can work with PerlIO but needs line buffering, you
+MUST define this method so it returns true.  7bit ISO-2022 encodings
+are one example that needs this.  When this method is missing, false
+is assumed.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="example__encode__rot13">Example: Encode::ROT13</a></h2>
+<pre>
+  package Encode::ROT13;
+  use strict;
+  use base qw(Encode::Encoding);</pre>
+<pre>
+  __PACKAGE__-&gt;Define('rot13');</pre>
+<pre>
+  sub encode($$;$){
+      my ($obj, $str, $chk) = @_;
+      $str =~ tr/A-Za-z/N-ZA-Mn-za-m/;
+      $_[1] = '' if $chk; # this is what in-place edit means
+      return $str;
+  }</pre>
+<pre>
+  # Jr pna or ynml yvxr guvf;
+  *decode = \&amp;encode;</pre>
+<pre>
+  1;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="why_the_heck_encode_api_is_different">Why the heck Encode API is different?</a></h1>
+<p>It should be noted that the <em>$check</em> behaviour is different from the
+outer public API. The logic is that the ``unchecked'' case is useful
+when the encoding is part of a stream which may be reporting errors
+(e.g. STDERR).  In such cases, it is desirable to get everything
+through somehow without causing additional errors which obscure the
+original one. Also, the encoding is best placed to know what the
+correct replacement character is, so if that is the desired behaviour
+then letting low level code do it is the most efficient.</p>
+<p>By contrast, if <em>$check</em> is true, the scheme above allows the
+encoding to do as much as it can and tell the layer above how much
+that was. What is lacking at present is a mechanism to report what
+went wrong. The most likely interface will be an additional method
+call to the object, or perhaps (to avoid forcing per-stream objects
+on otherwise stateless encodings) an additional parameter.</p>
+<p>It is also highly desirable that encoding classes inherit from
+<code>Encode::Encoding</code> as a base class. This allows that class to define
+additional behaviour for all encoding objects.</p>
+<pre>
+  package Encode::MyEncoding;
+  use base qw(Encode::Encoding);</pre>
+<pre>
+  __PACKAGE__-&gt;Define(qw(myCanonical myAlias));</pre>
+<p>to create an object with <code>bless {Name =&gt; ...}, $class</code>, and call
+define_encoding.  They inherit their <a href="#item_name"><code>name</code></a> method from
+<code>Encode::Encoding</code>.</p>
+<p>
+</p>
+<h2><a name="compiled_encodings">Compiled Encodings</a></h2>
+<p>For the sake of speed and efficiency, most of the encodings are now
+supported via a <em>compiled form</em>: XS modules generated from UCM
+files.   Encode provides the enc2xs tool to achieve that.  Please see
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/bin/enc2xs.html">the enc2xs manpage</a> for more details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/Encode/bin/enc2xs.html">the enc2xs manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Encoding - Encode Implementation Base Class</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

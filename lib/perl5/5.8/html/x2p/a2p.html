@@ -1,0 +1,229 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>a2p - Awk to Perl translator</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;a2p - Awk to Perl translator</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#options">OPTIONS</a></li>
+		<li><a href="#considerations">``Considerations''</a></li>
+	</ul>
+
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#files">FILES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>a2p - Awk to Perl translator</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p><strong>a2p</strong> [<em>options</em>] [<em>filename</em>]</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><em>A2p</em> takes an awk script specified on the command line (or from
+standard input) and produces a comparable <em>perl</em> script on the
+standard output.</p>
+<p>
+</p>
+<h2><a name="options">OPTIONS</a></h2>
+<p>Options include:</p>
+<dl>
+<dt><strong><a name="item__2dd_3cnumber_3e"><strong>-D&lt;number&gt;</strong></a></strong>
+
+<dd>
+<p>sets debugging flags.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2df_3ccharacter_3e"><strong>-F&lt;character&gt;</strong></a></strong>
+
+<dd>
+<p>tells a2p that this awk script is always invoked with this <strong>-F</strong>
+switch.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dn_3cfieldlist_3e"><strong>-n&lt;fieldlist&gt;</strong></a></strong>
+
+<dd>
+<p>specifies the names of the input fields if input does not have to be
+split into an array.  If you were translating an awk script that
+processes the password file, you might say:</p>
+</dd>
+<dd>
+<pre>
+        a2p -7 -nlogin.password.uid.gid.gcos.shell.home</pre>
+</dd>
+<dd>
+<p>Any delimiter can be used to separate the field names.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2d_3cnumber_3e"><strong>-&lt;number&gt;</strong></a></strong>
+
+<dd>
+<p>causes a2p to assume that input will always have that many fields.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2do"><strong>-o</strong></a></strong>
+
+<dd>
+<p>tells a2p to use old awk behavior.  The only current differences are:</p>
+</dd>
+<ul>
+<li>
+<p>Old awk always has a line loop, even if there are no line
+actions, whereas new awk does not.</p>
+</li>
+<li>
+<p>In old awk, sprintf is extremely greedy about its arguments.
+For example, given the statement</p>
+<pre>
+        print sprintf(some_args), extra_args;</pre>
+<p>old awk considers <em>extra_args</em> to be arguments to <code>sprintf</code>; new awk
+considers them arguments to <code>print</code>.</p>
+</li>
+</ul>
+</dl>
+<p>
+</p>
+<h2><a name="considerations">``Considerations''</a></h2>
+<p>A2p cannot do as good a job translating as a human would, but it
+usually does pretty well.  There are some areas where you may want to
+examine the perl script produced and tweak it some.  Here are some of
+them, in no particular order.</p>
+<p>There is an awk idiom of putting <code>int()</code> around a string expression to
+force numeric interpretation, even though the argument is always
+integer anyway.  This is generally unneeded in perl, but a2p can't
+tell if the argument is always going to be integer, so it leaves it
+in.  You may wish to remove it.</p>
+<p>Perl differentiates numeric comparison from string comparison.  Awk
+has one operator for both that decides at run time which comparison to
+do.  A2p does not try to do a complete job of awk emulation at this
+point.  Instead it guesses which one you want.  It's almost always
+right, but it can be spoofed.  All such guesses are marked with the
+comment ``<code>#???</code>''.  You should go through and check them.  You might
+want to run at least once with the <strong>-w</strong> switch to perl, which will
+warn you if you use == where you should have used eq.</p>
+<p>Perl does not attempt to emulate the behavior of awk in which
+nonexistent array elements spring into existence simply by being
+referenced.  If somehow you are relying on this mechanism to create
+null entries for a subsequent for...in, they won't be there in perl.</p>
+<p>If a2p makes a split line that assigns to a list of variables that
+looks like (Fld1, Fld2, Fld3...) you may want to rerun a2p using the
+<strong>-n</strong> option mentioned above.  This will let you name the fields
+throughout the script.  If it splits to an array instead, the script
+is probably referring to the number of fields somewhere.</p>
+<p>The exit statement in awk doesn't necessarily exit; it goes to the END
+block if there is one.  Awk scripts that do contortions within the END
+block to bypass the block under such circumstances can be simplified
+by removing the conditional in the END block and just exiting directly
+from the perl script.</p>
+<p>Perl has two kinds of array, numerically-indexed and associative.
+Perl associative arrays are called ``hashes''.  Awk arrays are usually
+translated to hashes, but if you happen to know that the index is
+always going to be numeric you could change the {...} to [...].
+Iteration over a hash is done using the <code>keys()</code> function, but iteration
+over an array is NOT.  You might need to modify any loop that iterates
+over such an array.</p>
+<p>Awk starts by assuming OFMT has the value %.6g.  Perl starts by
+assuming its equivalent, $#, to have the value %.20g.  You'll want to
+set $# explicitly if you use the default value of OFMT.</p>
+<p>Near the top of the line loop will be the split operation that is
+implicit in the awk script.  There are times when you can move this
+down past some conditionals that test the entire record so that the
+split is not done as often.</p>
+<p>For aesthetic reasons you may wish to change the array base $[ from 1
+back to perl's default of 0, but remember to change all array
+subscripts AND all <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item_substr"><code>substr()</code></a> and <code>index()</code> operations to match.</p>
+<p>Cute comments that say ``# Here is a workaround because awk is dumb''
+are passed through unmodified.</p>
+<p>Awk scripts are often embedded in a shell script that pipes stuff into
+and out of awk.  Often the shell script wrapper can be incorporated
+into the perl script, since perl can start up pipes into and out of
+itself, and can do other things that awk can't do by itself.</p>
+<p>Scripts that refer to the special variables RSTART and RLENGTH can
+often be simplified by referring to the variables $`, $&amp; and $', as
+long as they are within the scope of the pattern match that sets them.</p>
+<p>The produced perl script may have subroutines defined to deal with
+awk's semantics regarding getline and print.  Since a2p usually picks
+correctness over efficiency.  it is almost always possible to rewrite
+such code to be more efficient by discarding the semantic sugar.</p>
+<p>For efficiency, you may wish to remove the keyword from any return
+statement that is the last statement executed in a subroutine.  A2p
+catches the most common case, but doesn't analyze embedded blocks for
+subtler cases.</p>
+<p>ARGV[0] translates to $ARGV0, but ARGV[n] translates to $ARGV[$n].  A
+loop that tries to iterate over ARGV[0] won't find it.</p>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<p>A2p uses no environment variables.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Larry Wall &lt;<em><a href="mailto:larry@wall.org">larry@wall.org</a></em>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="files">FILES</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<pre>
+ perl   The perl compiler/interpreter
+ 
+ s2p    sed to perl translator</pre>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>It would be possible to emulate awk's behavior in selecting string
+versus numeric operations at run time by inspection of the operands,
+but it would be gross and inefficient.  Besides, a2p almost always
+guesses right.</p>
+<p>Storage for the awk syntax tree is currently static, and can run out.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;a2p - Awk to Perl translator</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

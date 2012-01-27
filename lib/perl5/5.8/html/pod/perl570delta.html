@@ -1,0 +1,825 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perl570delta - what's new for perl v5.7.0</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perl570delta - what's new for perl v5.7.0</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#security_vulnerability_closed">Security Vulnerability Closed</a></li>
+	<li><a href="#incompatible_changes">Incompatible Changes</a></li>
+	<li><a href="#core_enhancements">Core Enhancements</a></li>
+	<li><a href="#modules_and_pragmata">Modules and Pragmata</a></li>
+	<ul>
+
+		<li><a href="#new_modules">New Modules</a></li>
+		<li><a href="#updated_and_improved_modules_and_pragmata">Updated And Improved Modules and Pragmata</a></li>
+	</ul>
+
+	<li><a href="#utility_changes">Utility Changes</a></li>
+	<li><a href="#new_documentation">New Documentation</a></li>
+	<li><a href="#performance_enhancements">Performance Enhancements</a></li>
+	<li><a href="#installation_and_configuration_improvements">Installation and Configuration Improvements</a></li>
+	<ul>
+
+		<li><a href="#generic_improvements">Generic Improvements</a></li>
+	</ul>
+
+	<li><a href="#selected_bug_fixes">Selected Bug Fixes</a></li>
+	<ul>
+
+		<li><a href="#platform_specific_changes_and_fixes">Platform Specific Changes and Fixes</a></li>
+	</ul>
+
+	<li><a href="#new_or_changed_diagnostics">New or Changed Diagnostics</a></li>
+	<li><a href="#changed_internals">Changed Internals</a></li>
+	<li><a href="#known_problems">Known Problems</a></li>
+	<ul>
+
+		<li><a href="#unicode_support_still_far_from_perfect">Unicode Support Still Far From Perfect</a></li>
+		<li><a href="#ebcdic_still_a_lost_platform">EBCDIC Still A Lost Platform</a></li>
+		<li><a href="#building_extensions_can_fail_because_of_largefiles">Building Extensions Can Fail Because Of Largefiles</a></li>
+		<li><a href="#ftmpsecurity_tests_warn__system_possibly_insecure_">ftmp-security tests warn 'system possibly insecure'</a></li>
+		<li><a href="#test_lib_posix_subtest_9_fails_in_lp64configured_hpux">Test lib/posix Subtest 9 Fails In LP64-Configured HP-UX</a></li>
+		<li><a href="#long_doubles_still_don_t_work_in_solaris">Long Doubles Still Don't Work In Solaris</a></li>
+		<li><a href="#linux_with_sfio_fails_op_misc_test_48">Linux With Sfio Fails op/misc Test 48</a></li>
+		<li><a href="#storable_tests_fail_in_some_platforms">Storable tests fail in some platforms</a></li>
+		<li><a href="#threads_are_still_experimental">Threads Are Still Experimental</a></li>
+		<li><a href="#the_compiler_suite_is_still_experimental">The Compiler Suite Is Still Experimental</a></li>
+	</ul>
+
+	<li><a href="#reporting_bugs">Reporting Bugs</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perl570delta - what's new for perl v5.7.0</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This document describes differences between the 5.6.0 release and
+the 5.7.0 release.</p>
+<p>
+</p>
+<hr />
+<h1><a name="security_vulnerability_closed">Security Vulnerability Closed</a></h1>
+<p>A potential security vulnerability in the optional suidperl component
+of Perl has been identified.  suidperl is neither built nor installed
+by default.  As of September the 2nd, 2000, the only known vulnerable
+platform is Linux, most likely all Linux distributions.  CERT and
+various vendors have been alerted about the vulnerability.</p>
+<p>The problem was caused by Perl trying to report a suspected security
+exploit attempt using an external program, /bin/mail.  On Linux
+platforms the /bin/mail program had an undocumented feature which
+when combined with suidperl gave access to a root shell, resulting in
+a serious compromise instead of reporting the exploit attempt.  If you
+don't have /bin/mail, or if you have 'safe setuid scripts', or if
+suidperl is not installed, you are safe.</p>
+<p>The exploit attempt reporting feature has been completely removed from
+the Perl 5.7.0 release, so that particular vulnerability isn't there
+anymore.  However, further security vulnerabilities are,
+unfortunately, always possible.  The suidperl code is being reviewed
+and if deemed too risky to continue to be supported, it may be
+completely removed from future releases.  In any case, suidperl should
+only be used by security experts who know exactly what they are doing
+and why they are using suidperl instead of some other solution such as
+sudo ( see <a href="http://www.courtesan.com/sudo/">http://www.courtesan.com/sudo/</a> ).</p>
+<p>
+</p>
+<hr />
+<h1><a name="incompatible_changes">Incompatible Changes</a></h1>
+<ul>
+<li>
+<p>Arrays now always interpolate into double-quoted strings:
+constructs like ``foo@bar'' now always assume <code>@bar</code> is an array,
+whether or not the compiler has seen use of <code>@bar</code>.</p>
+</li>
+<li>
+<p>The semantics of bless(REF, REF) were unclear and until someone proves
+it to make some sense, it is forbidden.</p>
+</li>
+<li>
+<p>A reference to a reference now stringify as ``REF(0x81485ec)'' instead
+of ``SCALAR(0x81485ec)'' in order to be more consistent with the return
+value of ref().</p>
+</li>
+<li>
+<p>The very dusty examples in the eg/ directory have been removed.
+Suggestions for new shiny examples welcome but the main issue is that
+the examples need to be documented, tested and (most importantly)
+maintained.</p>
+</li>
+<li>
+<p>The obsolete chat2 library that should never have been allowed
+to escape the laboratory has been decommissioned.</p>
+</li>
+<li>
+<p>The unimplemented POSIX regex features [[.cc.]] and [[=c=]] are still
+recognised but now cause fatal errors.  The previous behaviour of
+ignoring them by default and warning if requested was unacceptable
+since it, in a way, falsely promised that the features could be used.</p>
+</li>
+<li>
+<p>The (bogus) escape sequences \8 and \9 now give an optional warning
+(``Unrecognized escape passed through'').  There is no need to \-escape
+any <code>\w</code> character.</p>
+</li>
+<li>
+<p><code>lstat(FILEHANDLE)</code> now gives a warning because the operation makes no sense.
+In future releases this may become a fatal error.</p>
+</li>
+<li>
+<p>The long deprecated uppercase aliases for the string comparison
+operators (EQ, NE, LT, LE, GE, GT) have now been removed.</p>
+</li>
+<li>
+<p>The regular expression captured submatches ($1, $2, ...) are now
+more consistently unset if the match fails, instead of leaving false
+data lying around in them.</p>
+</li>
+<li>
+<p>The tr///C and tr///U features have been removed and will not return;
+the interface was a mistake.  Sorry about that.  For similar
+functionality, see pack('U0', ...) and pack('C0', ...).</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="core_enhancements">Core Enhancements</a></h1>
+<ul>
+<li>
+<p><code>perl -d:Module=arg,arg,arg</code> now works (previously one couldn't pass
+in multiple arguments.)</p>
+</li>
+<li>
+<p>my __PACKAGE__ $obj now works.</p>
+</li>
+<li>
+<p><code>no Module;</code> now works even if there is no ``sub unimport'' in the Module.</p>
+</li>
+<li>
+<p>The numerical comparison operators return <code>undef</code> if either operand
+is a NaN.  Previously the behaviour was unspecified.</p>
+</li>
+<li>
+<p><code>pack('U0a*', ...)</code> can now be used to force a string to UTF-8.</p>
+</li>
+<li>
+<p><code>prototype(\&amp;)</code> is now available.</p>
+</li>
+<li>
+<p>There is now an UNTIE method.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="modules_and_pragmata">Modules and Pragmata</a></h1>
+<p>
+</p>
+<h2><a name="new_modules">New Modules</a></h2>
+<ul>
+<li>
+<p>File::Temp allows one to create temporary files and directories in an
+easy, portable, and secure way.</p>
+</li>
+<li>
+<p>Storable gives persistence to Perl data structures by allowing the
+storage and retrieval of Perl data to and from files in a fast and
+compact binary format.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="updated_and_improved_modules_and_pragmata">Updated And Improved Modules and Pragmata</a></h2>
+<ul>
+<li>
+<p>The following independently supported modules have been updated to
+newer versions from CPAN: CGI, CPAN, DB_File, File::Spec, Getopt::Long,
+the podlators bundle, Pod::LaTeX, Pod::Parser, Term::ANSIColor, Test.</p>
+</li>
+<li>
+<p>Bug fixes and minor enhancements have been applied to B::Deparse,
+Data::Dumper, IO::Poll, IO::Socket::INET, Math::BigFloat,
+Math::Complex, Math::Trig, Net::protoent, the re pragma, SelfLoader,
+Sys::SysLog, Test::Harness, Text::Wrap, UNIVERSAL, and the warnings
+pragma.</p>
+</li>
+<li>
+<p>The attributes::reftype() now works on tied arguments.</p>
+</li>
+<li>
+<p>AutoLoader can now be disabled with <code>no AutoLoader;</code>,</p>
+</li>
+<li>
+<p>The English module can now be used without the infamous performance
+hit by saying</p>
+<pre>
+        use English '-no_performance_hit';</pre>
+<p>(Assuming, of course, that one doesn't need the troublesome variables
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$`</code></a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&amp;</code></a>, or <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$'</code></a>.)  Also, introduced <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__last_match_start"><code>@LAST_MATCH_START</code></a> and
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__last_match_end"><code>@LAST_MATCH_END</code></a> English aliases for <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>@-</code></a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@+</code></a>.</p>
+</li>
+<li>
+<p>File::Find now has pre- and post-processing callbacks.  It also
+correctly changes directories when chasing symbolic links.  Callbacks
+(naughtily) exiting with ``next;'' instead of ``return;'' now work.</p>
+</li>
+<li>
+<p>File::Glob::glob() renamed to File::Glob::bsd_glob() to avoid
+prototype mismatch with CORE::glob().</p>
+</li>
+<li>
+<p>IPC::Open3 now allows the use of numeric file descriptors.</p>
+</li>
+<li>
+<p>use lib now works identically to @INC.  Removing directories
+with 'no lib' now works.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>%INC</code></a> now localised in a Safe compartment so that use/require work.</p>
+</li>
+<li>
+<p>The Shell module now has an OO interface.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="utility_changes">Utility Changes</a></h1>
+<ul>
+<li>
+<p>The Emacs perl mode (emacs/cperl-mode.el) has been updated to version
+4.31.</p>
+</li>
+<li>
+<p>Perlbug is now much more robust.  It also sends the bug report to
+perl.org, not perl.com.</p>
+</li>
+<li>
+<p>The perlcc utility has been rewritten and its user interface (that is,
+command line) is much more like that of the UNIX C compiler, cc.</p>
+</li>
+<li>
+<p>The xsubpp utility for extension writers now understands POD
+documentation embedded in the *.xs files.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="new_documentation">New Documentation</a></h1>
+<ul>
+<li>
+<p>perl56delta details the changes between the 5.005 release and the
+5.6.0 release.</p>
+</li>
+<li>
+<p>perldebtut is a Perl debugging tutorial.</p>
+</li>
+<li>
+<p>perlebcdic contains considerations for running Perl on EBCDIC platforms.
+Note that unfortunately EBCDIC platforms that used to supported back in
+Perl 5.005 are still unsupported by Perl 5.7.0; the plan, however, is to
+bring them back to the fold.</p>
+</li>
+<li>
+<p>perlnewmod tells about writing and submitting a new module.</p>
+</li>
+<li>
+<p>perlposix-bc explains using Perl on the POSIX-BC platform
+(an EBCDIC mainframe platform).</p>
+</li>
+<li>
+<p>perlretut is a regular expression tutorial.</p>
+</li>
+<li>
+<p>perlrequick is a regular expressions quick-start guide.
+Yes, much quicker than perlretut.</p>
+</li>
+<li>
+<p>perlutil explains the command line utilities packaged with the Perl
+distribution.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="performance_enhancements">Performance Enhancements</a></h1>
+<ul>
+<li>
+<p><code>map()</code> that changes the size of the list should now work faster.</p>
+</li>
+<li>
+<p><code>sort()</code> has been changed to use mergesort internally as opposed to the
+earlier quicksort.  For very small lists this may result in slightly
+slower sorting times, but in general the speedup should be at least
+20%.  Additional bonuses are that the worst case behaviour of <code>sort()</code>
+is now better (in computer science terms it now runs in time O(N log N),
+as opposed to quicksort's <code>Theta(N**2)</code> worst-case run time behaviour),
+and that <code>sort()</code> is now stable (meaning that elements with identical
+keys will stay ordered as they were before the sort).</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="installation_and_configuration_improvements">Installation and Configuration Improvements</a></h1>
+<p>
+</p>
+<h2><a name="generic_improvements">Generic Improvements</a></h2>
+<ul>
+<li>
+<p>INSTALL now explains how you can configure Perl to use 64-bit
+integers even on non-64-bit platforms.</p>
+</li>
+<li>
+<p>Policy.sh policy change: if you are reusing a Policy.sh file
+(see INSTALL) and you use Configure -Dprefix=/foo/bar and in the old
+Policy $prefix eq $siteprefix and $prefix eq $vendorprefix, all of
+them will now be changed to the new prefix, /foo/bar.  (Previously
+only $prefix changed.)  If you do not like this new behaviour,
+specify prefix, siteprefix, and vendorprefix explicitly.</p>
+</li>
+<li>
+<p>A new optional location for Perl libraries, otherlibdirs, is available.
+It can be used for example for vendor add-ons without disturbing Perl's
+own library directories.</p>
+</li>
+<li>
+<p>In many platforms the vendor-supplied 'cc' is too stripped-down to
+build Perl (basically, 'cc' doesn't do ANSI C).  If this seems
+to be the case and 'cc' does not seem to be the GNU C compiler
+'gcc', an automatic attempt is made to find and use 'gcc' instead.</p>
+</li>
+<li>
+<p>gcc needs to closely track the operating system release to avoid
+build problems. If Configure finds that gcc was built for a different
+operating system release than is running, it now gives a clearly visible
+warning that there may be trouble ahead.</p>
+</li>
+<li>
+<p>If binary compatibility with the 5.005 release is not wanted, Configure
+no longer suggests including the 5.005 modules in @INC.</p>
+</li>
+<li>
+<p>Configure <code>-S</code> can now run non-interactively.</p>
+</li>
+<li>
+<p>configure.gnu now works with options with whitespace in them.</p>
+</li>
+<li>
+<p>installperl now outputs everything to STDERR.</p>
+</li>
+<li>
+<p>$Config{byteorder} is now computed dynamically (this is more robust
+with ``fat binaries'' where an executable image contains binaries for
+more than one binary platform.)</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="selected_bug_fixes">Selected Bug Fixes</a></h1>
+<ul>
+<li>
+<p>Several debugger fixes: exit code now reflects the script exit code,
+condition <code>&quot;0&quot;</code> now treated correctly, the <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_d"><code>d</code></a> command now checks
+line number, the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$.</code></a> no longer gets corrupted, all debugger output now
+goes correctly to the socket if RemotePort is set.</p>
+</li>
+<li>
+<p><code>*foo{FORMAT}</code> now works.</p>
+</li>
+<li>
+<p>Lexical warnings now propagating correctly between scopes.</p>
+</li>
+<li>
+<p>Line renumbering with eval and <code>#line</code> now works.</p>
+</li>
+<li>
+<p>Fixed numerous memory leaks, especially in eval ``''.</p>
+</li>
+<li>
+<p>Modulus of unsigned numbers now works (4063328477 % 65535 used to
+return 27406, instead of 27047).</p>
+</li>
+<li>
+<p>Some ``not a number'' warnings introduced in 5.6.0 eliminated to be
+more compatible with 5.005.  Infinity is now recognised as a number.</p>
+</li>
+<li>
+<p><code>our()</code> variables will not cause ``will not stay shared'' warnings.</p>
+</li>
+<li>
+<p>pack ``Z'' now correctly terminates the string with ``\0''.</p>
+</li>
+<li>
+<p>Fix password routines which in some shadow password platforms
+(e.g. HP-UX) caused <code>getpwent()</code> to return every other entry.</p>
+</li>
+<li>
+<p><code>printf()</code> no longer resets the numeric locale to ``C''.</p>
+</li>
+<li>
+<p><code>q(a\\b)</code> now parses correctly as <code>'a\\b'</code>.</p>
+</li>
+<li>
+<p>Printing quads (64-bit integers) with printf/sprintf now works
+without the q L ll prefixes (assuming you are on a quad-capable platform).</p>
+</li>
+<li>
+<p>Regular expressions on references and overloaded scalars now work.</p>
+</li>
+<li>
+<p><code>scalar()</code> now forces scalar context even when used in void context.</p>
+</li>
+<li>
+<p><code>sort()</code> arguments are now compiled in the right wantarray context
+(they were accidentally using the context of the <code>sort()</code> itself).</p>
+</li>
+<li>
+<p>Changed the POSIX character class <code>[[:space:]]</code> to include the (very
+rare) vertical tab character.  Added a new POSIX-ish character class
+<code>[[:blank:]]</code> which stands for horizontal whitespace (currently,
+the space and the tab).</p>
+</li>
+<li>
+<p>$AUTOLOAD, sort(), lock(), and spawning subprocesses
+in multiple threads simultaneously are now thread-safe.</p>
+</li>
+<li>
+<p>Allow read-only string on left hand side of non-modifying tr///.</p>
+</li>
+<li>
+<p>Several Unicode fixes (but still not perfect).</p>
+<ul>
+<li>
+<p>BOMs (byte order marks) in the beginning of Perl files
+(scripts, modules) should now be transparently skipped.
+UTF-16 (UCS-2) encoded Perl files should now be read correctly.</p>
+</li>
+<li>
+<p>The character tables have been updated to Unicode 3.0.1.</p>
+</li>
+<li>
+<p><code>chr()</code> for values greater than 127 now create utf8 when under use
+utf8.</p>
+</li>
+<li>
+<p>Comparing with utf8 data does not magically upgrade non-utf8 data into
+utf8.</p>
+</li>
+<li>
+<p><code>IsAlnum</code>, <code>IsAlpha</code>, and <code>IsWord</code> now match titlecase.</p>
+</li>
+<li>
+<p>Concatenation with the <code>.</code> operator or via variable interpolation,
+<code>eq</code>, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item_substr"><code>substr</code></a>, <code>reverse</code>, <code>quotemeta</code>, the <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>x</code></a> operator,
+substitution with <code>s///</code>, single-quoted UTF-8, should now work--in
+theory.</p>
+</li>
+<li>
+<p>The <code>tr///</code> operator now works <em>slightly</em> better but is still rather
+broken.  Note that the <code>tr///CU</code> functionality has been removed (but
+see pack('U0', ...)).</p>
+</li>
+<li>
+<p><code>vec()</code> now refuses to deal with characters &gt;255.</p>
+</li>
+<li>
+<p>Zero entries were missing from the Unicode classes like <code>IsDigit</code>.</p>
+</li>
+</ul>
+<li>
+<p>UNIVERSAL::isa no longer caches methods incorrectly.  (This broke
+the Tk extension with 5.6.0.)</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="platform_specific_changes_and_fixes">Platform Specific Changes and Fixes</a></h2>
+<ul>
+<li>
+<p>BSDI 4.*</p>
+<p>Perl now works on post-4.0 BSD/OSes.</p>
+</li>
+<li>
+<p>All BSDs</p>
+<p>Setting <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__0"><code>$0</code></a> now works (as much as possible; see perlvar for details).</p>
+</li>
+<li>
+<p>Cygwin</p>
+<p>Numerous updates; currently synchronised with Cygwin 1.1.4.</p>
+</li>
+<li>
+<p>EPOC</p>
+<p>EPOC update after Perl 5.6.0.  See README.epoc.</p>
+</li>
+<li>
+<p>FreeBSD 3.*</p>
+<p>Perl now works on post-3.0 FreeBSDs.</p>
+</li>
+<li>
+<p>HP-UX</p>
+<p>README.hpux updated; <code>Configure -Duse64bitall</code> now almost works.</p>
+</li>
+<li>
+<p>IRIX</p>
+<p>Numerous compilation flag and hint enhancements; accidental mixing
+of 32-bit and 64-bit libraries (a doomed attempt) made much harder.</p>
+</li>
+<li>
+<p>Linux</p>
+<p>Long doubles should now work (see INSTALL).</p>
+</li>
+<li>
+<p>Mac OS Classic</p>
+<p>Compilation of the standard Perl distribution in Mac OS Classic should
+now work if you have the Metrowerks development environment and the
+missing Mac-specific toolkit bits.  Contact the macperl mailing list
+for details.</p>
+</li>
+<li>
+<p>MPE/iX</p>
+<p>MPE/iX update after Perl 5.6.0.  See README.mpeix.</p>
+</li>
+<li>
+<p>NetBSD/sparc</p>
+<p>Perl now works on NetBSD/sparc.</p>
+</li>
+<li>
+<p>OS/2</p>
+<p>Now works with usethreads (see INSTALL).</p>
+</li>
+<li>
+<p>Solaris</p>
+<p>64-bitness using the Sun Workshop compiler now works.</p>
+</li>
+<li>
+<p>Tru64 (aka Digital UNIX, aka DEC OSF/1)</p>
+<p>The operating system version letter now recorded in $Config{osvers}.
+Allow compiling with gcc (previously explicitly forbidden).  Compiling
+with gcc still not recommended because buggy code results, even with
+gcc 2.95.2.</p>
+</li>
+<li>
+<p>Unicos</p>
+<p>Fixed various alignment problems that lead into core dumps either
+during build or later; no longer dies on math errors at runtime;
+now using full quad integers (64 bits), previously was using 
+only 46 bit integers for speed.</p>
+</li>
+<li>
+<p>VMS</p>
+<p><code>chdir()</code> now works better despite a CRT bug; now works with MULTIPLICITY
+(see INSTALL); now works with Perl's malloc.</p>
+</li>
+<li>
+<p>Windows</p>
+<ul>
+<li>
+<p><code>accept()</code> no longer leaks memory.</p>
+</li>
+<li>
+<p>Better <code>chdir()</code> return value for a non-existent directory.</p>
+</li>
+<li>
+<p>New %ENV entries now propagate to subprocesses.</p>
+</li>
+<li>
+<p>$ENV{LIB} now used to search for libs under Visual C.</p>
+</li>
+<li>
+<p>A failed (pseudo)fork now returns undef and sets errno to EAGAIN.</p>
+</li>
+<li>
+<p>Allow REG_EXPAND_SZ keys in the registry.</p>
+</li>
+<li>
+<p>Can now <code>send()</code> from all threads, not just the first one.</p>
+</li>
+<li>
+<p>Fake signal handling reenabled, bugs and all.</p>
+</li>
+<li>
+<p>Less stack reserved per thread so that more threads can run
+concurrently. (Still 16M per thread.)</p>
+</li>
+<li>
+<p><code>File::Spec-&gt;tmpdir()</code> now prefers C:/temp over /tmp
+(works better when perl is running as service).</p>
+</li>
+<li>
+<p>Better UNC path handling under ithreads.</p>
+</li>
+<li>
+<p><code>wait()</code> and <code>waitpid()</code> now work much better.</p>
+</li>
+<li>
+<p>winsock handle leak fixed.</p>
+</li>
+</ul>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="new_or_changed_diagnostics">New or Changed Diagnostics</a></h1>
+<p>All regular expression compilation error messages are now hopefully
+easier to understand both because the error message now comes before
+the failed regex and because the point of failure is now clearly
+marked.</p>
+<p>The various ``opened only for'', ``on closed'', ``never opened'' warnings
+drop the <code>main::</code> prefix for filehandles in the <code>main</code> package,
+for example <code>STDIN</code> instead of &lt;main::STDIN&gt;.</p>
+<p>The ``Unrecognized escape'' warning has been extended to include <code>\8</code>,
+<code>\9</code>, and <code>\_</code>.  There is no need to escape any of the <code>\w</code> characters.</p>
+<p>
+</p>
+<hr />
+<h1><a name="changed_internals">Changed Internals</a></h1>
+<ul>
+<li>
+<p>perlapi.pod (a companion to perlguts) now attempts to document the
+internal API.</p>
+</li>
+<li>
+<p>You can now build a really minimal perl called microperl.
+Building microperl does not require even running Configure;
+<code>make -f Makefile.micro</code> should be enough.  Beware: microperl makes
+many assumptions, some of which may be too bold; the resulting
+executable may crash or otherwise misbehave in wondrous ways.
+For careful hackers only.</p>
+</li>
+<li>
+<p>Added rsignal(), whichsig(), <code>do_join()</code> to the publicised API.</p>
+</li>
+<li>
+<p>Made possible to propagate customised exceptions via croak()ing.</p>
+</li>
+<li>
+<p>Added is_utf8_char(), is_utf8_string(), bytes_to_utf8(), and utf8_to_bytes().</p>
+</li>
+<li>
+<p>Now xsubs can have attributes just like subs.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="known_problems">Known Problems</a></h1>
+<p>
+</p>
+<h2><a name="unicode_support_still_far_from_perfect">Unicode Support Still Far From Perfect</a></h2>
+<p>We're working on it.  Stay tuned.</p>
+<p>
+</p>
+<h2><a name="ebcdic_still_a_lost_platform">EBCDIC Still A Lost Platform</a></h2>
+<p>The plan is to bring them back.</p>
+<p>
+</p>
+<h2><a name="building_extensions_can_fail_because_of_largefiles">Building Extensions Can Fail Because Of Largefiles</a></h2>
+<p>Certain extensions like mod_perl and BSD::Resource are known to have
+issues with `largefiles', a change brought by Perl 5.6.0 in which file
+offsets default to 64 bits wide, where supported.  Modules may fail to
+compile at all or compile and work incorrectly.  Currently there is no
+good solution for the problem, but Configure now provides appropriate
+non-largefile ccflags, ldflags, libswanted, and libs in the %Config
+hash (e.g., $Config{ccflags_nolargefiles}) so the extensions that are
+having problems can try configuring themselves without the
+largefileness.  This is admittedly not a clean solution, and the
+solution may not even work at all.  One potential failure is whether
+one can (or, if one can, whether it's a good idea) link together at
+all binaries with different ideas about file offsets, all this is
+platform-dependent.</p>
+<p>
+</p>
+<h2><a name="ftmpsecurity_tests_warn__system_possibly_insecure_">ftmp-security tests warn 'system possibly insecure'</a></h2>
+<p>Don't panic.  Read INSTALL 'make test' section instead.</p>
+<p>
+</p>
+<h2><a name="test_lib_posix_subtest_9_fails_in_lp64configured_hpux">Test lib/posix Subtest 9 Fails In LP64-Configured HP-UX</a></h2>
+<p>If perl is configured with -Duse64bitall, the successful result of the
+subtest 10 of lib/posix may arrive before the successful result of the
+subtest 9, which confuses the test harness so much that it thinks the
+subtest 9 failed.</p>
+<p>
+</p>
+<h2><a name="long_doubles_still_don_t_work_in_solaris">Long Doubles Still Don't Work In Solaris</a></h2>
+<p>The experimental long double support is still very much so in Solaris.
+(Other platforms like Linux and Tru64 are beginning to solidify in
+this area.)</p>
+<p>
+</p>
+<h2><a name="linux_with_sfio_fails_op_misc_test_48">Linux With Sfio Fails op/misc Test 48</a></h2>
+<p>No known fix.</p>
+<p>
+</p>
+<h2><a name="storable_tests_fail_in_some_platforms">Storable tests fail in some platforms</a></h2>
+<p>If any Storable tests fail the use of Storable is not advisable.</p>
+<ul>
+<li>
+<p>Many Storable tests fail on AIX configured with 64 bit integers.</p>
+<p>So far unidentified problems break Storable in AIX if Perl is
+configured to use 64 bit integers.  AIX in 32-bit mode works and
+other 64-bit platforms work with Storable.</p>
+</li>
+<li>
+<p>DOS DJGPP may hang when testing Storable.</p>
+</li>
+<li>
+<p>st-06compat fails in UNICOS and UNICOS/mk.</p>
+<p>This means that you cannot read old (pre-Storable-0.7) Storable images
+made in other platforms.</p>
+</li>
+<li>
+<p>st-store.t and st-retrieve may fail with Compaq C 6.2 on OpenVMS Alpha 7.2.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="threads_are_still_experimental">Threads Are Still Experimental</a></h2>
+<p>Multithreading is still an experimental feature.  Some platforms
+emit the following message for lib/thr5005</p>
+<pre>
+    #
+    # This is a KNOWN FAILURE, and one of the reasons why threading
+    # is still an experimental feature.  It is here to stop people
+    # from deploying threads in production. ;-)
+    #</pre>
+<p>and another known thread-related warning is</p>
+<pre>
+   pragma/overload......Unbalanced saves: 3 more saves than restores
+   panic: magic_mutexfree during global destruction.
+   ok
+   lib/selfloader.......Unbalanced saves: 3 more saves than restores
+   panic: magic_mutexfree during global destruction.
+   ok
+   lib/st-dclone........Unbalanced saves: 3 more saves than restores
+   panic: magic_mutexfree during global destruction.
+   ok</pre>
+<p>
+</p>
+<h2><a name="the_compiler_suite_is_still_experimental">The Compiler Suite Is Still Experimental</a></h2>
+<p>The compiler suite is slowly getting better but is nowhere near
+working order yet.  The backend part that has seen perhaps the most
+progress is the bytecode compiler.</p>
+<p>
+</p>
+<hr />
+<h1><a name="reporting_bugs">Reporting Bugs</a></h1>
+<p>If you find what you think is a bug, you might check the articles
+recently posted to the comp.lang.perl.misc newsgroup and the perl
+bug database at <a href="http://bugs.perl.org/">http://bugs.perl.org/</a>  There may also be
+information at <a href="http://www.perl.com/perl/">http://www.perl.com/perl/</a> , the Perl Home Page.</p>
+<p>If you believe you have an unreported bug, please run the <strong>perlbug</strong>
+program included with your release.  Be sure to trim your bug down
+to a tiny but sufficient test case.  Your bug report, along with the
+output of <code>perl -V</code>, will be sent off to <a href="mailto:perlbug@perl.org">perlbug@perl.org</a> to be
+analysed by the Perl porting team.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>The <em>Changes</em> file for exhaustive details on what changed.</p>
+<p>The <em>INSTALL</em> file for how to build Perl.</p>
+<p>The <em>README</em> file for general stuff.</p>
+<p>The <em>Artistic</em> and <em>Copying</em> files for copyright information.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Written by Jarkko Hietaniemi &lt;<em><a href="mailto:jhi@iki.fi">jhi@iki.fi</a></em>&gt;, with many contributions
+from The Perl Porters and Perl Users submitting feedback and patches.</p>
+<p>Send omissions or corrections to &lt;<em><a href="mailto:perlbug@perl.org">perlbug@perl.org</a></em>&gt;.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perl570delta - what's new for perl v5.7.0</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

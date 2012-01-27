@@ -1,0 +1,217 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Locale::Language - ISO two letter codes for language identification</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Language - ISO two letter codes for language identification</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#conversion_routines">CONVERSION ROUTINES</a></li>
+	<li><a href="#query_routines">QUERY ROUTINES</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Locale::Language - ISO two letter codes for language identification (ISO 639)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Locale::Language;
+    
+    $lang = code2language('en');        # $lang gets 'English'
+    $code = language2code('French');    # $code gets 'fr'
+    
+    @codes   = all_language_codes();
+    @names   = all_language_names();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Locale::Language</code> module provides access to the ISO two-letter
+codes for identifying languages, as defined in ISO 639. You can either
+access the codes via the <a href="#conversion_routines">conversion routines</a> (described below),
+or via the two functions which return lists of all language codes or
+all language names.</p>
+<p>
+</p>
+<hr />
+<h1><a name="conversion_routines">CONVERSION ROUTINES</a></h1>
+<p>There are two conversion routines: <a href="#item_code2language"><code>code2language()</code></a> and <a href="#item_language2code"><code>language2code()</code></a>.</p>
+<dl>
+<dt><strong><a name="item_code2language"><code>code2language()</code></a></strong>
+
+<dd>
+<p>This function takes a two letter language code and returns a string
+which contains the name of the language identified. If the code is
+not a valid language code, as defined by ISO 639, then <code>undef</code>
+will be returned.</p>
+</dd>
+<dd>
+<pre>
+    $lang = code2language($code);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_language2code"><code>language2code()</code></a></strong>
+
+<dd>
+<p>This function takes a language name and returns the corresponding
+two letter language code, if such exists.
+If the argument could not be identified as a language name,
+then <code>undef</code> will be returned.</p>
+</dd>
+<dd>
+<pre>
+    $code = language2code('French');</pre>
+</dd>
+<dd>
+<p>The case of the language name is not important.
+See the section <a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a> below.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="query_routines">QUERY ROUTINES</a></h1>
+<p>There are two function which can be used to obtain a list of all
+language codes, or all language names:</p>
+<dl>
+<dt><strong><a name="item_all_language_codes"><code>all_language_codes()</code></a></strong>
+
+<dd>
+<p>Returns a list of all two-letter language codes.
+The codes are guaranteed to be all lower-case,
+and not in any particular order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_all_language_names"><code>all_language_names()</code></a></strong>
+
+<dd>
+<p>Returns a list of all language names for which there is a corresponding
+two-letter language code. The names are capitalised, and not returned
+in any particular order.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>The following example illustrates use of the <a href="#item_code2language"><code>code2language()</code></a> function.
+The user is prompted for a language code, and then told the corresponding
+language name:</p>
+<pre>
+    $| = 1;    # turn off buffering
+    
+    print &quot;Enter language code: &quot;;
+    chop($code = &lt;STDIN&gt;);
+    $lang = code2language($code);
+    if (defined $lang)
+    {
+        print &quot;$code = $lang\n&quot;;
+    }
+    else
+    {
+        print &quot;'$code' is not a valid language code!\n&quot;;
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></h1>
+<ul>
+<li>
+<p>In the current implementation, all data is read in when the
+module is loaded, and then held in memory.
+A lazy implementation would be more memory friendly.</p>
+</li>
+<li>
+<p>Currently just supports the two letter language codes -
+there are also three-letter codes, and numbers.
+Would these be of any use to anyone?</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_locale_3a_3acountry">Locale::Country</a></strong>
+
+<dd>
+<p>ISO codes for identification of country (ISO 3166).
+Supports 2-letter, 3-letter, and numeric country codes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3ascript">Locale::Script</a></strong>
+
+<dd>
+<p>ISO codes for identification of written scripts (ISO 15924).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3acurrency">Locale::Currency</a></strong>
+
+<dd>
+<p>ISO three letter codes for identification of currencies and funds (ISO 4217).</p>
+</dd>
+</li>
+<dt><strong><a name="item_1988">ISO 639:1988 (E/F)</a></strong>
+
+<dd>
+<p>Code for the representation of names of languages.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2flcweb_2eloc_2egov_2fstandards_2fiso63"><a href="http://lcweb.loc.gov/standards/iso639-2/langhome.html">http://lcweb.loc.gov/standards/iso639-2/langhome.html</a></a></strong>
+
+<dd>
+<p>Home page for ISO 639-2.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Neil Bowers &lt;<a href="mailto:neil@bowers.com">neil@bowers.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (C) 2002-2004, Neil Bowers.</p>
+<p>Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).</p>
+<p>This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Language - ISO two letter codes for language identification</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

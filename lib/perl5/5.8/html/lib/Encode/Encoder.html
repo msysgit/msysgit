@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode::Encoder -- Object Oriented Encoder</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Encoder -- Object Oriented Encoder</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#abstract">ABSTRACT</a></li>
+	<li><a href="#description">Description</a></li>
+	<ul>
+
+		<li><a href="#predefined_methods">Predefined Methods</a></li>
+		<li><a href="#example__base64_transcoder">Example: base64 transcoder</a></li>
+		<li><a href="#operator_overloading">Operator Overloading</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode::Encoder -- Object Oriented Encoder</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Encode::Encoder;
+  # Encode::encode(&quot;ISO-8859-1&quot;, $data); 
+  Encode::Encoder-&gt;new($data)-&gt;iso_8859_1; # OOP way
+  # shortcut
+  use Encode::Encoder qw(encoder);
+  encoder($data)-&gt;iso_8859_1;
+  # you can stack them!
+  encoder($data)-&gt;iso_8859_1-&gt;base64;  # provided base64() is defined
+  # you can use it as a decoder as well
+  encoder($base64)-&gt;bytes('base64')-&gt;latin1;
+  # stringified
+  print encoder($data)-&gt;utf8-&gt;latin1;  # prints the string in latin1
+  # numified
+  encoder(&quot;\x{abcd}\x{ef}g&quot;)-&gt;utf8 == 6; # true. bytes::length($data)</pre>
+<p>
+</p>
+<hr />
+<h1><a name="abstract">ABSTRACT</a></h1>
+<p><strong>Encode::Encoder</strong> allows you to use Encode in an object-oriented
+style.  This is not only more intuitive than a functional approach,
+but also handier when you want to stack encodings.  Suppose you want
+your UTF-8 string converted to Latin1 then Base64: you can simply say</p>
+<pre>
+  my $base64 = encoder($utf8)-&gt;latin1-&gt;base64;</pre>
+<p>instead of</p>
+<pre>
+  my $latin1 = encode(&quot;latin1&quot;, $utf8);
+  my $base64 = encode_base64($utf8);</pre>
+<p>or the lazier and more convoluted</p>
+<pre>
+  my $base64 = encode_base64(encode(&quot;latin1&quot;, $utf8));</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">Description</a></h1>
+<p>Here is how to use this module.</p>
+<ul>
+<li>
+<p>There are at least two instance variables stored in a hash reference,
+{data} and {encoding}.</p>
+</li>
+<li>
+<p>When there is no method, it takes the method name as the name of the
+encoding and encodes the instance <em>data</em> with <em>encoding</em>.  If successful,
+the instance <em>encoding</em> is set accordingly.</p>
+</li>
+<li>
+<p>You can retrieve the result via -&gt;data but usually you don't have to 
+because the stringify operator (``'') is overridden to do exactly that.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="predefined_methods">Predefined Methods</a></h2>
+<p>This module predefines the methods below:</p>
+<dl>
+<dt><strong><a name="item_new">$e = Encode::Encoder-&gt;new([$data, $encoding]);</a></strong>
+
+<dd>
+<p>returns an encoder object.  Its data is initialized with $data if
+present, and its encoding is set to $encoding if present.</p>
+</dd>
+<dd>
+<p>When $encoding is omitted, it defaults to utf8 if $data is already in
+utf8 or ``'' (empty string) otherwise.</p>
+</dd>
+</li>
+<dt><strong><a name="item_encoder"><code>encoder()</code></a></strong>
+
+<dd>
+<p>is an alias of Encode::Encoder-&gt;new().  This one is exported on demand.</p>
+</dd>
+</li>
+<dt><strong><a name="item_data">$e-&gt;<code>data([$data])</code></a></strong>
+
+<dd>
+<p>When $data is present, sets the instance data to $data and returns the
+object itself.  Otherwise, the current instance data is returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_encoding">$e-&gt;<code>encoding([$encoding])</code></a></strong>
+
+<dd>
+<p>When $encoding is present, sets the instance encoding to $encoding and
+returns the object itself.  Otherwise, the current instance encoding is
+returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bytes">$e-&gt;<code>bytes([$encoding])</code></a></strong>
+
+<dd>
+<p>decodes instance data from $encoding, or the instance encoding if
+omitted.  If the conversion is successful, the instance encoding
+will be set to ``''.</p>
+</dd>
+<dd>
+<p>The name <em>bytes</em> was deliberately picked to avoid namespace tainting
+-- this module may be used as a base class so method names that appear
+in Encode::Encoding are avoided.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="example__base64_transcoder">Example: base64 transcoder</a></h2>
+<p>This module is designed to work with <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a>.
+To make the Base64 transcoder example above really work, you could
+write a module like this:</p>
+<pre>
+  package Encode::Base64;
+  use base 'Encode::Encoding';
+  __PACKAGE__-&gt;Define('base64');
+  use MIME::Base64;
+  sub encode{ 
+      my ($obj, $data) = @_; 
+      return encode_base64($data);
+  }
+  sub decode{
+      my ($obj, $data) = @_; 
+      return decode_base64($data);
+  }
+  1;
+  __END__</pre>
+<p>And your caller module would be something like this:</p>
+<pre>
+  use Encode::Encoder;
+  use Encode::Base64;</pre>
+<pre>
+  # now you can really do the following</pre>
+<pre>
+  encoder($data)-&gt;iso_8859_1-&gt;base64;
+  encoder($base64)-&gt;bytes('base64')-&gt;latin1;</pre>
+<p>
+</p>
+<h2><a name="operator_overloading">Operator Overloading</a></h2>
+<p>This module overloads two operators, stringify (``'') and numify (0+).</p>
+<p>Stringify dumps the data inside the object.</p>
+<p>Numify returns the number of bytes in the instance data.</p>
+<p>They come in handy when you want to print or find the size of data.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Encoder -- Object Oriented Encoder</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

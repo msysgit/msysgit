@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Named Pipes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Named Pipes</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#named_pipes">Named Pipes</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="named_pipes">Named Pipes</a></h1>
+<p>A named pipe (often referred to as a FIFO) is an old Unix IPC
+mechanism for processes communicating on the same machine.  It works
+just like a regular, connected anonymous pipes, except that the
+processes rendezvous using a filename and don't have to be related.</p>
+<p>To create a named pipe, use the <code>POSIX::mkfifo()</code> function.</p>
+<pre>
+    use POSIX qw(mkfifo);
+    mkfifo($path, 0700) or die &quot;mkfifo $path failed: $!&quot;;</pre>
+<p>You can also use the Unix command <code>mknod(1)</code> or on some
+systems, mkfifo(1).  These may not be in your normal path.</p>
+<pre>
+    # system return val is backwards, so &amp;&amp; not ||
+    #
+    $ENV{PATH} .= &quot;:/etc:/usr/etc&quot;;
+    if  (      system('mknod',  $path, 'p')
+            &amp;&amp; system('mkfifo', $path) )
+    {
+        die &quot;mk{nod,fifo} $path failed&quot;;
+    }</pre>
+<p>A fifo is convenient when you want to connect a process to an unrelated
+one.  When you open a fifo, the program will block until there's something
+on the other end.</p>
+<p>For example, let's say you'd like to have your <em>.signature</em> file be a
+named pipe that has a Perl program on the other end.  Now every time any
+program (like a mailer, news reader, finger program, etc.) tries to read
+from that file, the reading program will block and your program will
+supply the new signature.  We'll use the pipe-checking file test <strong>-p</strong>
+to find out whether anyone (or anything) has accidentally removed our fifo.</p>
+<pre>
+    chdir; # go home
+    $FIFO = '.signature';</pre>
+<pre>
+    while (1) {
+        unless (-p $FIFO) {
+            unlink $FIFO;
+            require POSIX;
+            POSIX::mkfifo($FIFO, 0700)
+                or die &quot;can't mkfifo $FIFO: $!&quot;;
+        }</pre>
+<pre>
+        # next line blocks until there's a reader
+        open (FIFO, &quot;&gt; $FIFO&quot;) || die &quot;can't write $FIFO: $!&quot;;
+        print FIFO &quot;John Smith (smith\@host.org)\n&quot;, `fortune -s`;
+        close FIFO;
+        sleep 2;    # to avoid dup signals
+    }</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/handling_the_sighup_signal_in_daemons.html">Handling the SIGHUP Signal in Daemons in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/deferred_signals__safe_signals_.html">Deferred Signals (Safe Signals) in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Named Pipes</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

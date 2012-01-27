@@ -1,0 +1,277 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ExtUtils::Liblist - determine libraries to use and how to use them</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Liblist - determine libraries to use and how to use them</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#extralibs">EXTRALIBS</a></li>
+		<li><a href="#ldloadlibs_and_ld_run_path">LDLOADLIBS and LD_RUN_PATH</a></li>
+		<li><a href="#bsloadlibs">BSLOADLIBS</a></li>
+	</ul>
+
+	<li><a href="#portability">PORTABILITY</a></li>
+	<ul>
+
+		<li><a href="#vms_implementation">VMS implementation</a></li>
+		<li><a href="#win32_implementation">Win32 implementation</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ExtUtils::Liblist - determine libraries to use and how to use them</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  require ExtUtils::Liblist;</pre>
+<pre>
+  $MM-&gt;ext($potential_libs, $verbose, $need_names);</pre>
+<pre>
+  # Usually you can get away with:
+  ExtUtils::Liblist-&gt;ext($potential_libs, $verbose, $need_names)</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This utility takes a list of libraries in the form <code>-llib1 -llib2
+-llib3</code> and returns lines suitable for inclusion in an extension
+Makefile.  Extra library paths may be included with the form
+<code>-L/another/path</code> this will affect the searches for all subsequent
+libraries.</p>
+<p>It returns an array of four or five scalar values: EXTRALIBS,
+BSLOADLIBS, LDLOADLIBS, LD_RUN_PATH, and, optionally, a reference to
+the array of the filenames of actual libraries.  Some of these don't
+mean anything unless on Unix.  See the details about those platform
+specifics below.  The list of the filenames is returned only if
+$need_names argument is true.</p>
+<p>Dependent libraries can be linked in one of three ways:</p>
+<ul>
+<li><strong><a name="item_for_static_extensions">For static extensions</a></strong>
+
+<p>by the ld command when the perl binary is linked with the extension
+library. See EXTRALIBS below.</p>
+</li>
+<li><strong><a name="item_for_dynamic_extensions_at_build_2flink_time">For dynamic extensions at build/link time</a></strong>
+
+<p>by the ld command when the shared object is built/linked. See
+LDLOADLIBS below.</p>
+</li>
+<li><strong><a name="item_for_dynamic_extensions_at_load_time">For dynamic extensions at load time</a></strong>
+
+<p>by the DynaLoader when the shared object is loaded. See BSLOADLIBS
+below.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="extralibs">EXTRALIBS</a></h2>
+<p>List of libraries that need to be linked with when linking a perl
+binary which includes this extension. Only those libraries that
+actually exist are included.  These are written to a file and used
+when linking perl.</p>
+<p>
+</p>
+<h2><a name="ldloadlibs_and_ld_run_path">LDLOADLIBS and LD_RUN_PATH</a></h2>
+<p>List of those libraries which can or must be linked into the shared
+library when created using ld. These may be static or dynamic
+libraries.  LD_RUN_PATH is a colon separated list of the directories
+in LDLOADLIBS. It is passed as an environment variable to the process
+that links the shared library.</p>
+<p>
+</p>
+<h2><a name="bsloadlibs">BSLOADLIBS</a></h2>
+<p>List of those libraries that are needed but can be linked in
+dynamically at run time on this platform.  SunOS/Solaris does not need
+this because ld records the information (from LDLOADLIBS) into the
+object file.  This list is used to create a .bs (bootstrap) file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="portability">PORTABILITY</a></h1>
+<p>This module deals with a lot of system dependencies and has quite a
+few architecture specific <code>if</code>s in the code.</p>
+<p>
+</p>
+<h2><a name="vms_implementation">VMS implementation</a></h2>
+<p>The version of <code>ext()</code> which is executed under VMS differs from the
+Unix-OS/2 version in several respects:</p>
+<ul>
+<li>
+<p>Input library and path specifications are accepted with or without the
+<code>-l</code> and <code>-L</code> prefixes used by Unix linkers.  If neither prefix is
+present, a token is considered a directory to search if it is in fact
+a directory, and a library to search for otherwise.  Authors who wish
+their extensions to be portable to Unix or OS/2 should use the Unix
+prefixes, since the Unix-OS/2 version of <code>ext()</code> requires them.</p>
+</li>
+<li>
+<p>Wherever possible, shareable images are preferred to object libraries,
+and object libraries to plain object files.  In accordance with VMS
+naming conventions, <code>ext()</code> looks for files named <em>lib</em>shr and <em>lib</em>rtl;
+it also looks for <em>lib</em>lib and lib<em>lib</em> to accommodate Unix conventions
+used in some ported software.</p>
+</li>
+<li>
+<p>For each library that is found, an appropriate directive for a linker options
+file is generated.  The return values are space-separated strings of
+these directives, rather than elements used on the linker command line.</p>
+</li>
+<li>
+<p>LDLOADLIBS contains both the libraries found based on <code>$potential_libs</code> and
+the CRTLs, if any, specified in Config.pm.  EXTRALIBS contains just those
+libraries found based on <code>$potential_libs</code>.  BSLOADLIBS and LD_RUN_PATH
+are always empty.</p>
+</li>
+</ul>
+<p>In addition, an attempt is made to recognize several common Unix library
+names, and filter them out or convert them to their VMS equivalents, as
+appropriate.</p>
+<p>In general, the VMS version of <code>ext()</code> should properly handle input from
+extensions originally designed for a Unix or VMS environment.  If you
+encounter problems, or discover cases where the search could be improved,
+please let us know.</p>
+<p>
+</p>
+<h2><a name="win32_implementation">Win32 implementation</a></h2>
+<p>The version of <code>ext()</code> which is executed under Win32 differs from the
+Unix-OS/2 version in several respects:</p>
+<ul>
+<li>
+<p>If <code>$potential_libs</code> is empty, the return value will be empty.
+Otherwise, the libraries specified by <code>$Config{perllibs}</code> (see Config.pm)
+will be appended to the list of <code>$potential_libs</code>.  The libraries
+will be searched for in the directories specified in <code>$potential_libs</code>,
+<code>$Config{libpth}</code>, and in <code>$Config{installarchlib}/CORE</code>.
+For each library that is found,  a space-separated list of fully qualified
+library pathnames is generated.</p>
+</li>
+<li>
+<p>Input library and path specifications are accepted with or without the
+<code>-l</code> and <code>-L</code> prefixes used by Unix linkers.</p>
+<p>An entry of the form <code>-La:\foo</code> specifies the <code>a:\foo</code> directory to look
+for the libraries that follow.</p>
+<p>An entry of the form <code>-lfoo</code> specifies the library <code>foo</code>, which may be
+spelled differently depending on what kind of compiler you are using.  If
+you are using GCC, it gets translated to <code>libfoo.a</code>, but for other win32
+compilers, it becomes <code>foo.lib</code>.  If no files are found by those translated
+names, one more attempt is made to find them using either <code>foo.a</code> or
+<code>libfoo.lib</code>, depending on whether GCC or some other win32 compiler is
+being used, respectively.</p>
+<p>If neither the <code>-L</code> or <code>-l</code> prefix is present in an entry, the entry is
+considered a directory to search if it is in fact a directory, and a
+library to search for otherwise.  The <code>$Config{lib_ext}</code> suffix will
+be appended to any entries that are not directories and don't already have
+the suffix.</p>
+<p>Note that the <code>-L</code> and <code>-l</code> prefixes are <strong>not required</strong>, but authors
+who wish their extensions to be portable to Unix or OS/2 should use the
+prefixes, since the Unix-OS/2 version of <code>ext()</code> requires them.</p>
+</li>
+<li>
+<p>Entries cannot be plain object files, as many Win32 compilers will
+not handle object files in the place of libraries.</p>
+</li>
+<li>
+<p>Entries in <code>$potential_libs</code> beginning with a colon and followed by
+alphanumeric characters are treated as flags.  Unknown flags will be ignored.</p>
+<p>An entry that matches <code>/:nodefault/i</code> disables the appending of default
+libraries found in <code>$Config{perllibs}</code> (this should be only needed very rarely).</p>
+<p>An entry that matches <code>/:nosearch/i</code> disables all searching for
+the libraries specified after it.  Translation of <code>-Lfoo</code> and
+<code>-lfoo</code> still happens as appropriate (depending on compiler being used,
+as reflected by <code>$Config{cc}</code>), but the entries are not verified to be
+valid files or directories.</p>
+<p>An entry that matches <code>/:search/i</code> reenables searching for
+the libraries specified after it.  You can put it at the end to
+enable searching for default libraries specified by <code>$Config{perllibs}</code>.</p>
+</li>
+<li>
+<p>The libraries specified may be a mixture of static libraries and
+import libraries (to link with DLLs).  Since both kinds are used
+pretty transparently on the Win32 platform, we do not attempt to
+distinguish between them.</p>
+</li>
+<li>
+<p>LDLOADLIBS and EXTRALIBS are always identical under Win32, and BSLOADLIBS
+and LD_RUN_PATH are always empty (this may change in future).</p>
+</li>
+<li>
+<p>You must make sure that any paths and path components are properly
+surrounded with double-quotes if they contain spaces. For example,
+<code>$potential_libs</code> could be (literally):</p>
+<pre>
+        &quot;-Lc:\Program Files\vc\lib&quot; msvcrt.lib &quot;la test\foo bar.lib&quot;</pre>
+<p>Note how the first and last entries are protected by quotes in order
+to protect the spaces.</p>
+</li>
+<li>
+<p>Since this module is most often used only indirectly from extension
+<code>Makefile.PL</code> files, here is an example <code>Makefile.PL</code> entry to add
+a library to the build process for an extension:</p>
+<pre>
+        LIBS =&gt; ['-lgl']</pre>
+<p>When using GCC, that entry specifies that MakeMaker should first look
+for <code>libgl.a</code> (followed by <code>gl.a</code>) in all the locations specified by
+<code>$Config{libpth}</code>.</p>
+<p>When using a compiler other than GCC, the above entry will search for
+<code>gl.lib</code> (followed by <code>libgl.lib</code>).</p>
+<p>If the library happens to be in a location not in <code>$Config{libpth}</code>,
+you need:</p>
+<pre>
+        LIBS =&gt; ['-Lc:\gllibs -lgl']</pre>
+<p>Here is a less often used example:</p>
+<pre>
+        LIBS =&gt; ['-lgl', ':nosearch -Ld:\mesalibs -lmesa -luser32']</pre>
+<p>This specifies a search for library <code>gl</code> as before.  If that search
+fails to find the library, it looks at the next item in the list. The
+<code>:nosearch</code> flag will prevent searching for the libraries that follow,
+so it simply returns the value as <code>-Ld:\mesalibs -lmesa -luser32</code>,
+since GCC can use that value as is with its linker.</p>
+<p>When using the Visual C compiler, the second item is returned as
+<code>-libpath:d:\mesalibs mesa.lib user32.lib</code>.</p>
+<p>When using the Borland compiler, the second item is returned as
+<code>-Ld:\mesalibs mesa.lib user32.lib</code>, and MakeMaker takes care of
+moving the <code>-Ld:\mesalibs</code> to the correct place in the linker
+command line.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html">the ExtUtils::MakeMaker manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Liblist - determine libraries to use and how to use them</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>lib - manipulate @INC at compile time</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;lib - manipulate @INC at compile time</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#adding_directories_to__inc">Adding directories to @INC</a></li>
+		<li><a href="#deleting_directories_from__inc">Deleting directories from @INC</a></li>
+		<li><a href="#restoring_original__inc">Restoring original @INC</a></li>
+	</ul>
+
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>lib - manipulate @INC at compile time</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use lib LIST;</pre>
+<pre>
+    no lib LIST;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a small simple module which simplifies the manipulation of @INC
+at compile time.</p>
+<p>It is typically used to add extra directories to perl's search path so
+that later <code>use</code> or <code>require</code> statements will find modules which are
+not located on perl's default search path.</p>
+<p>
+</p>
+<h2><a name="adding_directories_to__inc">Adding directories to @INC</a></h2>
+<p>The parameters to <code>use lib</code> are added to the start of the perl search
+path. Saying</p>
+<pre>
+    use lib LIST;</pre>
+<p>is <em>almost</em> the same as saying</p>
+<pre>
+    BEGIN { unshift(@INC, LIST) }</pre>
+<p>For each directory in LIST (called $dir here) the lib module also
+checks to see if a directory called $dir/$archname/auto exists.
+If so the $dir/$archname directory is assumed to be a corresponding
+architecture specific directory and is added to @INC in front of $dir.</p>
+<p>To avoid memory leaks, all trailing duplicate entries in @INC are
+removed.</p>
+<p>
+</p>
+<h2><a name="deleting_directories_from__inc">Deleting directories from @INC</a></h2>
+<p>You should normally only add directories to @INC.  If you need to
+delete directories from @INC take care to only delete those which you
+added yourself or which you are certain are not needed by other modules
+in your script.  Other modules may have added directories which they
+need for correct operation.</p>
+<p>The <code>no lib</code> statement deletes all instances of each named directory
+from @INC.</p>
+<p>For each directory in LIST (called $dir here) the lib module also
+checks to see if a directory called $dir/$archname/auto exists.
+If so the $dir/$archname directory is assumed to be a corresponding
+architecture specific directory and is also deleted from @INC.</p>
+<p>
+</p>
+<h2><a name="restoring_original__inc">Restoring original @INC</a></h2>
+<p>When the lib module is first loaded it records the current value of @INC
+in an array <code>@lib::ORIG_INC</code>. To restore @INC to that value you
+can say</p>
+<pre>
+    @INC = @lib::ORIG_INC;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>In order to keep lib.pm small and simple, it only works with Unix
+filepaths.  This doesn't mean it only works on Unix, but non-Unix
+users must first translate their file paths to Unix conventions.</p>
+<pre>
+    # VMS users wanting to put [.stuff.moo] into 
+    # their @INC would write
+    use lib 'stuff/moo';</pre>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>In the future, this module will likely use File::Spec for determining
+paths, as it does now for Mac OS (where Unix-style or Mac-style paths
+work, and Unix-style paths are converted properly to Mac-style paths
+before being added to @INC).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>FindBin - optional module which deals with paths relative to the source file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tim Bunce, 2nd June 1995.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;lib - manipulate @INC at compile time</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

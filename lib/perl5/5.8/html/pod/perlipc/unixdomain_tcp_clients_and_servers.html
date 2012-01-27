@@ -1,0 +1,165 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Unix-Domain TCP Clients and Servers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unix-Domain TCP Clients and Servers</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#unixdomain_tcp_clients_and_servers">Unix-Domain TCP Clients and Servers</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="unixdomain_tcp_clients_and_servers">Unix-Domain TCP Clients and Servers</a></h2>
+<p>That's fine for Internet-domain clients and servers, but what about local
+communications?  While you can use the same setup, sometimes you don't
+want to.  Unix-domain sockets are local to the current host, and are often
+used internally to implement pipes.  Unlike Internet domain sockets, Unix
+domain sockets can show up in the file system with an <code>ls(1)</code> listing.</p>
+<pre>
+    % ls -l /dev/log
+    srw-rw-rw-  1 root            0 Oct 31 07:23 /dev/log</pre>
+<p>You can test for these with Perl's <strong>-S</strong> file test:</p>
+<pre>
+    unless ( -S '/dev/log' ) {
+        die &quot;something's wicked with the log system&quot;;
+    }</pre>
+<p>Here's a sample Unix-domain client:</p>
+<pre>
+    #!/usr/bin/perl -w
+    use Socket;
+    use strict;
+    my ($rendezvous, $line);</pre>
+<pre>
+    $rendezvous = shift || 'catsock';
+    socket(SOCK, PF_UNIX, SOCK_STREAM, 0)       || die &quot;socket: $!&quot;;
+    connect(SOCK, sockaddr_un($rendezvous))     || die &quot;connect: $!&quot;;
+    while (defined($line = &lt;SOCK&gt;)) {
+        print $line;
+    }
+    exit;</pre>
+<p>And here's a corresponding server.  You don't have to worry about silly
+network terminators here because Unix domain sockets are guaranteed
+to be on the localhost, and thus everything works right.</p>
+<pre>
+    #!/usr/bin/perl -Tw
+    use strict;
+    use Socket;
+    use Carp;</pre>
+<pre>
+    BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }
+    sub spawn;  # forward declaration
+    sub logmsg { print &quot;$0 $$: @_ at &quot;, scalar localtime, &quot;\n&quot; }</pre>
+<pre>
+    my $NAME = 'catsock';
+    my $uaddr = sockaddr_un($NAME);
+    my $proto = getprotobyname('tcp');</pre>
+<pre>
+    socket(Server,PF_UNIX,SOCK_STREAM,0)        || die &quot;socket: $!&quot;;
+    unlink($NAME);
+    bind  (Server, $uaddr)                      || die &quot;bind: $!&quot;;
+    listen(Server,SOMAXCONN)                    || die &quot;listen: $!&quot;;</pre>
+<pre>
+    logmsg &quot;server started on $NAME&quot;;</pre>
+<pre>
+    my $waitedpid;</pre>
+<pre>
+    use POSIX &quot;:sys_wait_h&quot;;
+    sub REAPER {
+        my $child;
+        while (($waitedpid = waitpid(-1,WNOHANG)) &gt; 0) {
+            logmsg &quot;reaped $waitedpid&quot; . ($? ? &quot; with exit $?&quot; : '');
+        }
+        $SIG{CHLD} = \&amp;REAPER;  # loathe sysV
+    }</pre>
+<pre>
+    $SIG{CHLD} = \&amp;REAPER;</pre>
+<pre>
+    for ( $waitedpid = 0;
+          accept(Client,Server) || $waitedpid;
+          $waitedpid = 0, close Client)
+    {
+        next if $waitedpid;
+        logmsg &quot;connection on $NAME&quot;;
+        spawn sub {
+            print &quot;Hello there, it's now &quot;, scalar localtime, &quot;\n&quot;;
+            exec '/usr/games/fortune' or die &quot;can't exec fortune: $!&quot;;
+        };
+    }</pre>
+<pre>
+    sub spawn {
+        my $coderef = shift;</pre>
+<pre>
+        unless (@_ == 0 &amp;&amp; $coderef &amp;&amp; ref($coderef) eq 'CODE') {
+            confess &quot;usage: spawn CODEREF&quot;;
+        }</pre>
+<pre>
+        my $pid;
+        if (!defined($pid = fork)) {
+            logmsg &quot;cannot fork: $!&quot;;
+            return;
+        } elsif ($pid) {
+            logmsg &quot;begat $pid&quot;;
+            return; # I'm the parent
+        }
+        # else I'm the child -- go spawn</pre>
+<pre>
+        open(STDIN,  &quot;&lt;&amp;Client&quot;)   || die &quot;can't dup client to stdin&quot;;
+        open(STDOUT, &quot;&gt;&amp;Client&quot;)   || die &quot;can't dup client to stdout&quot;;
+        ## open(STDERR, &quot;&gt;&amp;STDOUT&quot;) || die &quot;can't dup stdout to stderr&quot;;
+        exit &amp;$coderef();
+    }</pre>
+<p>As you see, it's remarkably similar to the Internet domain TCP server, so
+much so, in fact, that we've omitted several duplicate functions--spawn(),
+logmsg(), ctime(), and REAPER()--which are exactly the same as in the
+other server.</p>
+<p>So why would you ever want to use a Unix domain socket instead of a
+simpler named pipe?  Because a named pipe doesn't give you sessions.  You
+can't tell one process's data from another's.  With socket programming,
+you get a separate session for each client: that's why <code>accept()</code> takes two
+arguments.</p>
+<p>For example, let's say that you have a long running database server daemon
+that you want folks from the World Wide Web to be able to access, but only
+if they go through a CGI interface.  You'd have a small, simple CGI
+program that does whatever checks and logging you feel like, and then acts
+as a Unix-domain client and connects to your private server.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/internet_tcp_clients_and_servers.html">Internet TCP Clients and Servers in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/tcp_clients_with_io__socket.html">TCP Clients with IO::Socket in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unix-Domain TCP Clients and Servers</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

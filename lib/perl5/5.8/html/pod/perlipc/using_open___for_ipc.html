@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Using open for IPC</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Using open for IPC</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#using_open___for_ipc">Using <code>open()</code> for IPC</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="using_open___for_ipc">Using <code>open()</code> for IPC</a></h1>
+<p>Perl's basic <code>open()</code> statement can also be used for unidirectional
+interprocess communication by either appending or prepending a pipe
+symbol to the second argument to open().  Here's how to start
+something up in a child process you intend to write to:</p>
+<pre>
+    open(SPOOLER, &quot;| cat -v | lpr -h 2&gt;/dev/null&quot;)
+                    || die &quot;can't fork: $!&quot;;
+    local $SIG{PIPE} = sub { die &quot;spooler pipe broke&quot; };
+    print SPOOLER &quot;stuff\n&quot;;
+    close SPOOLER || die &quot;bad spool: $! $?&quot;;</pre>
+<p>And here's how to start up a child process you intend to read from:</p>
+<pre>
+    open(STATUS, &quot;netstat -an 2&gt;&amp;1 |&quot;)
+                    || die &quot;can't fork: $!&quot;;
+    while (&lt;STATUS&gt;) {
+        next if /^(tcp|udp)/;
+        print;
+    }
+    close STATUS || die &quot;bad netstat: $! $?&quot;;</pre>
+<p>If one can be sure that a particular program is a Perl script that is
+expecting filenames in @ARGV, the clever programmer can write something
+like this:</p>
+<pre>
+    % program f1 &quot;cmd1|&quot; - f2 &quot;cmd2|&quot; f3 &lt; tmpfile</pre>
+<p>and irrespective of which shell it's called from, the Perl program will
+read from the file <em>f1</em>, the process <em>cmd1</em>, standard input (<em>tmpfile</em>
+in this case), the <em>f2</em> file, the <em>cmd2</em> command, and finally the <em>f3</em>
+file.  Pretty nifty, eh?</p>
+<p>You might notice that you could use backticks for much the
+same effect as opening a pipe for reading:</p>
+<pre>
+    print grep { !/^(tcp|udp)/ } `netstat -an 2&gt;&amp;1`;
+    die &quot;bad netstat&quot; if $?;</pre>
+<p>While this is true on the surface, it's much more efficient to process the
+file one line or record at a time because then you don't have to read the
+whole thing into memory at once.  It also gives you finer control of the
+whole process, letting you to kill off the child process early if you'd
+like.</p>
+<p>Be careful to check both the <code>open()</code> and the <code>close()</code> return values.  If
+you're <em>writing</em> to a pipe, you should also trap SIGPIPE.  Otherwise,
+think of what happens when you start up a pipe to a command that doesn't
+exist: the <code>open()</code> will in all likelihood succeed (it only reflects the
+fork()'s success), but then your output will fail--spectacularly.  Perl
+can't know whether the command worked because your command is actually
+running in a separate process whose <code>exec()</code> might have failed.  Therefore,
+while readers of bogus commands return just a quick end of file, writers
+to bogus command will trigger a signal they'd better be prepared to
+handle.  Consider:</p>
+<pre>
+    open(FH, &quot;|bogus&quot;)  or die &quot;can't fork: $!&quot;;
+    print FH &quot;bang\n&quot;   or die &quot;can't write: $!&quot;;
+    close FH            or die &quot;can't close: $!&quot;;</pre>
+<p>That won't blow up until the close, and it will blow up with a SIGPIPE.
+To catch it, you could use this:</p>
+<pre>
+    $SIG{PIPE} = 'IGNORE';
+    open(FH, &quot;|bogus&quot;)  or die &quot;can't fork: $!&quot;;
+    print FH &quot;bang\n&quot;   or die &quot;can't write: $!&quot;;
+    close FH            or die &quot;can't close: status=$?&quot;;</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/deferred_signals__safe_signals_.html">Deferred Signals (Safe Signals) in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/filehandles.html">Filehandles in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Using open for IPC</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

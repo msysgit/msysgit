@@ -1,0 +1,366 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>open - open a file, pipe, or descriptor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;open - open a file, pipe, or descriptor</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>open - open a file, pipe, or descriptor</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>open FILEHANDLE,EXPR
+   </p>
+<p>open FILEHANDLE,MODE,EXPR</p>
+<p>open FILEHANDLE,MODE,EXPR,LIST</p>
+<p>open FILEHANDLE,MODE,REFERENCE</p>
+<p>open FILEHANDLE</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Opens the file whose filename is given by EXPR, and associates it with
+FILEHANDLE.</p>
+<p>(The following is a comprehensive reference to open(): for a gentler
+introduction you may consider <a href="/usr/lib/perl5/5.8/html/./pod/perlopentut.html">the perlopentut manpage</a>.)</p>
+<p>If FILEHANDLE is an undefined scalar variable (or array or hash element)
+the variable is assigned a reference to a new anonymous filehandle,
+otherwise if FILEHANDLE is an expression, its value is used as the name of
+the real filehandle wanted.  (This is considered a symbolic reference, so
+<code>use strict 'refs'</code> should <em>not</em> be in effect.)</p>
+<p>If EXPR is omitted, the scalar variable of the same name as the
+FILEHANDLE contains the filename.  (Note that lexical variables--those
+declared with <code>my</code>--will not work for this purpose; so if you're
+using <code>my</code>, specify EXPR in your call to open.)</p>
+<p>If three or more arguments are specified then the mode of opening and
+the file name are separate. If MODE is <code>'&lt;'</code> or nothing, the file
+is opened for input.  If MODE is <code>'&gt;'</code>, the file is truncated and
+opened for output, being created if necessary.  If MODE is <code>'&gt;&gt;'</code>,
+the file is opened for appending, again being created if necessary.</p>
+<p>You can put a <code>'+'</code> in front of the <code>'&gt;'</code> or <code>'&lt;'</code> to
+indicate that you want both read and write access to the file; thus
+<code>'+&lt;'</code> is almost always preferred for read/write updates--the <code>&lt;
+'+</code>' &gt;&gt; mode would clobber the file first.  You can't usually use
+either read-write mode for updating textfiles, since they have
+variable length records.  See the <strong>-i</strong> switch in <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html">the perlrun manpage</a> for a
+better approach.  The file is created with permissions of <code>0666</code>
+modified by the process' <code>umask</code> value.</p>
+<p>These various prefixes correspond to the <code>fopen(3)</code> modes of <code>'r'</code>,
+<code>'r+'</code>, <code>'w'</code>, <code>'w+'</code>, <code>'a'</code>, and <code>'a+'</code>.</p>
+<p>In the 2-arguments (and 1-argument) form of the call the mode and
+filename should be concatenated (in this order), possibly separated by
+spaces.  It is possible to omit the mode in these forms if the mode is
+<code>'&lt;'</code>.</p>
+<p>If the filename begins with <code>'|'</code>, the filename is interpreted as a
+command to which output is to be piped, and if the filename ends with a
+<code>'|'</code>, the filename is interpreted as a command which pipes output to
+us.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/using_open___for_ipc.html">Using open() for IPC in the perlipc manpage</a>
+for more examples of this.  (You are not allowed to <code>open</code> to a command
+that pipes both in <em>and</em> out, but see <a href="/usr/lib/perl5/5.8/html/./lib/IPC/Open2.html">the IPC::Open2 manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/IPC/Open3.html">the IPC::Open3 manpage</a>,
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/bidirectional_communication_with_another_process.html">Bidirectional Communication with Another Process in the perlipc manpage</a>
+for alternatives.)</p>
+<p>For three or more arguments if MODE is <code>'|-'</code>, the filename is
+interpreted as a command to which output is to be piped, and if MODE
+is <code>'-|'</code>, the filename is interpreted as a command which pipes
+output to us.  In the 2-arguments (and 1-argument) form one should
+replace dash (<code>'-'</code>) with the command.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/using_open___for_ipc.html">Using open() for IPC in the perlipc manpage</a> for more examples of this.
+(You are not allowed to <code>open</code> to a command that pipes both in <em>and</em>
+out, but see <a href="/usr/lib/perl5/5.8/html/./lib/IPC/Open2.html">the IPC::Open2 manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/IPC/Open3.html">the IPC::Open3 manpage</a>, and
+<a href="/usr/lib/perl5/5.8/html/./pod/perlipc/bidirectional_communication.html">Bidirectional Communication in the perlipc manpage</a> for alternatives.)</p>
+<p>In the three-or-more argument form of pipe opens, if LIST is specified
+(extra arguments after the command name) then LIST becomes arguments
+to the command invoked if the platform supports it.  The meaning of
+<code>open</code> with more than three arguments for non-pipe modes is not yet
+specified. Experimental ``layers'' may give extra LIST arguments
+meaning.</p>
+<p>In the 2-arguments (and 1-argument) form opening <code>'-'</code> opens STDIN
+and opening <code>'&gt;-'</code> opens STDOUT.</p>
+<p>You may use the three-argument form of open to specify IO ``layers''
+(sometimes also referred to as ``disciplines'') to be applied to the handle
+that affect how the input and output are processed (see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">the open manpage</a> and
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the PerlIO manpage</a> for more details). For example</p>
+<pre>
+  open(FH, &quot;&lt;:utf8&quot;, &quot;file&quot;)</pre>
+<p>will open the UTF-8 encoded file containing Unicode characters,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perluniintro.html">the perluniintro manpage</a>. Note that if layers are specified in the
+three-arg form then default layers stored in ${^OPEN} (see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a>;
+usually set by the <strong>open</strong> pragma or the switch <strong>-CioD</strong>) are ignored.</p>
+<p>Open returns nonzero upon success, the undefined value otherwise.  If
+the <code>open</code> involved a pipe, the return value happens to be the pid of
+the subprocess.</p>
+<p>If you're running Perl on a system that distinguishes between text
+files and binary files, then you should check out <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/binmode.html">binmode in the perlfunc manpage</a> for tips
+for dealing with this.  The key distinction between systems that need
+<code>binmode</code> and those that don't is their text file formats.  Systems
+like Unix, Mac OS, and Plan 9, which delimit lines with a single
+character, and which encode that character in C as <code>&quot;\n&quot;</code>, do not
+need <code>binmode</code>.  The rest need it.</p>
+<p>When opening a file, it's usually a bad idea to continue normal execution
+if the request failed, so <code>open</code> is frequently used in connection with
+<code>die</code>.  Even if <code>die</code> won't do what you want (say, in a CGI script,
+where you want to make a nicely formatted error message (but there are
+modules that can help with that problem)) you should always check
+the return value from opening a file.  The infrequent exception is when
+working with an unopened filehandle is actually what you want to do.</p>
+<p>As a special case the 3-arg form with a read/write mode and the third
+argument being <code>undef</code>:</p>
+<pre>
+    open(TMP, &quot;+&gt;&quot;, undef) or die ...</pre>
+<p>opens a filehandle to an anonymous temporary file.  Also using ``+&lt;''
+works for symmetry, but you really should consider writing something
+to the temporary file first.  You will need to <code>seek()</code> to do the
+reading.</p>
+<p>Since v5.8.0, perl has built using PerlIO by default.  Unless you've
+changed this (i.e. Configure -Uuseperlio), you can open file handles to
+``in memory'' files held in Perl scalars via:</p>
+<pre>
+    open($fh, '&gt;', \$variable) || ..</pre>
+<p>Though if you try to re-open <code>STDOUT</code> or <code>STDERR</code> as an ``in memory''
+file, you have to close it first:</p>
+<pre>
+    close STDOUT;
+    open STDOUT, '&gt;', \$variable or die &quot;Can't open STDOUT: $!&quot;;</pre>
+<p>Examples:</p>
+<pre>
+    $ARTICLE = 100;
+    open ARTICLE or die &quot;Can't find article $ARTICLE: $!\n&quot;;
+    while (&lt;ARTICLE&gt;) {...</pre>
+<pre>
+    open(LOG, '&gt;&gt;/usr/spool/news/twitlog');     # (log is reserved)
+    # if the open fails, output is discarded</pre>
+<pre>
+    open(DBASE, '+&lt;', 'dbase.mine')             # open for update
+        or die &quot;Can't open 'dbase.mine' for update: $!&quot;;</pre>
+<pre>
+    open(DBASE, '+&lt;dbase.mine')                 # ditto
+        or die &quot;Can't open 'dbase.mine' for update: $!&quot;;</pre>
+<pre>
+    open(ARTICLE, '-|', &quot;caesar &lt;$article&quot;)     # decrypt article
+        or die &quot;Can't start caesar: $!&quot;;</pre>
+<pre>
+    open(ARTICLE, &quot;caesar &lt;$article |&quot;)         # ditto
+        or die &quot;Can't start caesar: $!&quot;;</pre>
+<pre>
+    open(EXTRACT, &quot;|sort &gt;Tmp$$&quot;)               # $$ is our process id
+        or die &quot;Can't start sort: $!&quot;;</pre>
+<pre>
+    # in memory files
+    open(MEMORY,'&gt;', \$var)
+        or die &quot;Can't open memory file: $!&quot;;
+    print MEMORY &quot;foo!\n&quot;;                      # output will end up in $var</pre>
+<pre>
+    # process argument list of files along with any includes</pre>
+<pre>
+    foreach $file (@ARGV) {
+        process($file, 'fh00');
+    }</pre>
+<pre>
+    sub process {
+        my($filename, $input) = @_;
+        $input++;               # this is a string increment
+        unless (open($input, $filename)) {
+            print STDERR &quot;Can't open $filename: $!\n&quot;;
+            return;
+        }</pre>
+<pre>
+        local $_;
+        while (&lt;$input&gt;) {              # note use of indirection
+            if (/^#include &quot;(.*)&quot;/) {
+                process($1, $input);
+                next;
+            }
+            #...                # whatever
+        }
+    }</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perliol.html">the perliol manpage</a> for detailed info on PerlIO.</p>
+<p>You may also, in the Bourne shell tradition, specify an EXPR beginning
+with <code>'&gt;&amp;'</code>, in which case the rest of the string is interpreted
+as the name of a filehandle (or file descriptor, if numeric) to be
+duped (as <em>dup(2)</em>) and opened.  You may use <code>&amp;</code> after <code>&gt;</code>,
+<code>&gt;&gt;</code>, <code>&lt;</code>, <code>+&gt;</code>, <code>+&gt;&gt;</code>, and <code>+&lt;</code>.
+The mode you specify should match the mode of the original filehandle.
+(Duping a filehandle does not take into account any existing contents
+of IO buffers.) If you use the 3-arg form then you can pass either a
+number, the name of a filehandle or the normal ``reference to a glob''.</p>
+<p>Here is a script that saves, redirects, and restores <code>STDOUT</code> and
+<code>STDERR</code> using various methods:</p>
+<pre>
+    #!/usr/bin/perl
+    open my $oldout, &quot;&gt;&amp;STDOUT&quot;     or die &quot;Can't dup STDOUT: $!&quot;;
+    open OLDERR,     &quot;&gt;&amp;&quot;, \*STDERR or die &quot;Can't dup STDERR: $!&quot;;</pre>
+<pre>
+    open STDOUT, '&gt;', &quot;foo.out&quot; or die &quot;Can't redirect STDOUT: $!&quot;;
+    open STDERR, &quot;&gt;&amp;STDOUT&quot;     or die &quot;Can't dup STDOUT: $!&quot;;</pre>
+<pre>
+    select STDERR; $| = 1;      # make unbuffered
+    select STDOUT; $| = 1;      # make unbuffered</pre>
+<pre>
+    print STDOUT &quot;stdout 1\n&quot;;  # this works for
+    print STDERR &quot;stderr 1\n&quot;;  # subprocesses too</pre>
+<pre>
+    open STDOUT, &quot;&gt;&amp;&quot;, $oldout or die &quot;Can't dup \$oldout: $!&quot;;
+    open STDERR, &quot;&gt;&amp;OLDERR&quot;    or die &quot;Can't dup OLDERR: $!&quot;;</pre>
+<pre>
+    print STDOUT &quot;stdout 2\n&quot;;
+    print STDERR &quot;stderr 2\n&quot;;</pre>
+<p>If you specify <code>'&lt;&amp;=X'</code>, where <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>X</code></a> is a file descriptor number
+or a filehandle, then Perl will do an equivalent of C's <code>fdopen</code> of
+that file descriptor (and not call <em>dup(2)</em>); this is more
+parsimonious of file descriptors.  For example:</p>
+<pre>
+    # open for input, reusing the fileno of $fd
+    open(FILEHANDLE, &quot;&lt;&amp;=$fd&quot;)</pre>
+<p>or</p>
+<pre>
+    open(FILEHANDLE, &quot;&lt;&amp;=&quot;, $fd)</pre>
+<p>or</p>
+<pre>
+    # open for append, using the fileno of OLDFH
+    open(FH, &quot;&gt;&gt;&amp;=&quot;, OLDFH)</pre>
+<p>or</p>
+<pre>
+    open(FH, &quot;&gt;&gt;&amp;=OLDFH&quot;)</pre>
+<p>Being parsimonious on filehandles is also useful (besides being
+parsimonious) for example when something is dependent on file
+descriptors, like for example locking using flock().  If you do just
+<code>open(A, '&gt;&gt;&amp;B')</code>, the filehandle A will not have the same file
+descriptor as B, and therefore <code>flock(A)</code> will not flock(B), and vice
+versa.  But with <code>open(A, '&gt;&gt;&amp;=B')</code> the filehandles will share
+the same file descriptor.</p>
+<p>Note that if you are using Perls older than 5.8.0, Perl will be using
+the standard C libraries' <code>fdopen()</code> to implement the ``='' functionality.
+On many UNIX systems <code>fdopen()</code> fails when file descriptors exceed a
+certain value, typically 255.  For Perls 5.8.0 and later, PerlIO is
+most often the default.</p>
+<p>You can see whether Perl has been compiled with PerlIO or not by
+running <code>perl -V</code> and looking for <code>useperlio=</code> line.  If <code>useperlio</code>
+is <code>define</code>, you have PerlIO, otherwise you don't.</p>
+<p>If you open a pipe on the command <code>'-'</code>, i.e., either <code>'|-'</code> or <code>'-|'</code>
+with 2-arguments (or 1-argument) form of open(), then
+there is an implicit fork done, and the return value of open is the pid
+of the child within the parent process, and <code>0</code> within the child
+process.  (Use <code>defined($pid)</code> to determine whether the open was successful.)
+The filehandle behaves normally for the parent, but i/o to that
+filehandle is piped from/to the STDOUT/STDIN of the child process.
+In the child process the filehandle isn't opened--i/o happens from/to
+the new STDOUT or STDIN.  Typically this is used like the normal
+piped open when you want to exercise more control over just how the
+pipe command gets executed, such as when you are running setuid, and
+don't want to have to scan shell commands for metacharacters.
+The following triples are more or less equivalent:</p>
+<pre>
+    open(FOO, &quot;|tr '[a-z]' '[A-Z]'&quot;);
+    open(FOO, '|-', &quot;tr '[a-z]' '[A-Z]'&quot;);
+    open(FOO, '|-') || exec 'tr', '[a-z]', '[A-Z]';
+    open(FOO, '|-', &quot;tr&quot;, '[a-z]', '[A-Z]');</pre>
+<pre>
+    open(FOO, &quot;cat -n '$file'|&quot;);
+    open(FOO, '-|', &quot;cat -n '$file'&quot;);
+    open(FOO, '-|') || exec 'cat', '-n', $file;
+    open(FOO, '-|', &quot;cat&quot;, '-n', $file);</pre>
+<p>The last example in each block shows the pipe as ``list form'', which is
+not yet supported on all platforms.  A good rule of thumb is that if
+your platform has true <code>fork()</code> (in other words, if your platform is
+UNIX) you can use the list form.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/safe_pipe_opens.html">Safe Pipe Opens in the perlipc manpage</a> for more examples of this.</p>
+<p>Beginning with v5.6.0, Perl will attempt to flush all files opened for
+output before any operation that may do a fork, but this may not be
+supported on some platforms (see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a>).  To be safe, you may need
+to set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$|</code></a> ($AUTOFLUSH in English) or call the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item_autoflush"><code>autoflush()</code></a> method
+of <code>IO::Handle</code> on any open handles.</p>
+<p>On systems that support a close-on-exec flag on files, the flag will
+be set for the newly opened file descriptor as determined by the value
+of $^F.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#__f">$^F in the perlvar manpage</a>.</p>
+<p>Closing any piped filehandle causes the parent process to wait for the
+child to finish, and returns the status value in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a>.</p>
+<p>The filename passed to 2-argument (or 1-argument) form of <code>open()</code> will
+have leading and trailing whitespace deleted, and the normal
+redirection characters honored.  This property, known as ``magic open'',
+can often be used to good effect.  A user could specify a filename of
+<em>``rsh cat file |''</em>, or you could change certain filenames as needed:</p>
+<pre>
+    $filename =~ s/(.*\.gz)\s*$/gzip -dc &lt; $1|/;
+    open(FH, $filename) or die &quot;Can't open $filename: $!&quot;;</pre>
+<p>Use 3-argument form to open a file with arbitrary weird characters in it,</p>
+<pre>
+    open(FOO, '&lt;', $file);</pre>
+<p>otherwise it's necessary to protect any leading and trailing whitespace:</p>
+<pre>
+    $file =~ s#^(\s)#./$1#;
+    open(FOO, &quot;&lt; $file\0&quot;);</pre>
+<p>(this may not work on some bizarre filesystems).  One should
+conscientiously choose between the <em>magic</em> and 3-arguments form
+of open():</p>
+<pre>
+    open IN, $ARGV[0];</pre>
+<p>will allow the user to specify an argument of the form <code>&quot;rsh cat file |&quot;</code>,
+but will not work on a filename which happens to have a trailing space, while</p>
+<pre>
+    open IN, '&lt;', $ARGV[0];</pre>
+<p>will have exactly the opposite restrictions.</p>
+<p>If you want a ``real'' C <code>open</code> (see <em>open(2)</em> on your system), then you
+should use the <code>sysopen</code> function, which involves no such magic (but
+may use subtly different filemodes than Perl open(), which is mapped
+to C fopen()).  This is
+another way to protect your filenames from interpretation.  For example:</p>
+<pre>
+    use IO::Handle;
+    sysopen(HANDLE, $path, O_RDWR|O_CREAT|O_EXCL)
+        or die &quot;sysopen $path: $!&quot;;
+    $oldfh = select(HANDLE); $| = 1; select($oldfh);
+    print HANDLE &quot;stuff $$\n&quot;;
+    seek(HANDLE, 0, 0);
+    print &quot;File contains: &quot;, &lt;HANDLE&gt;;</pre>
+<p>Using the constructor from the <code>IO::Handle</code> package (or one of its
+subclasses, such as <code>IO::File</code> or <code>IO::Socket</code>), you can generate anonymous
+filehandles that have the scope of whatever variables hold references to
+them, and automatically close whenever and however you leave that scope:</p>
+<pre>
+    use IO::File;
+    #...
+    sub read_myfile_munged {
+        my $ALL = shift;
+        my $handle = new IO::File;
+        open($handle, &quot;myfile&quot;) or die &quot;myfile: $!&quot;;
+        $first = &lt;$handle&gt;
+            or return ();     # Automatically closed here.
+        mung $first or die &quot;mung failed&quot;;       # Or here.
+        return $first, &lt;$handle&gt; if $ALL;       # Or here.
+        $first;                                 # Or here.
+    }</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/seek.html">seek in the perlfunc manpage</a> for some details about mixing reading and writing.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;open - open a file, pipe, or descriptor</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,147 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>README.os400 - Perl version 5 on OS/400</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.os400 - Perl version 5 on OS/400</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#compiling_perl_for_os_400_pase">Compiling Perl for OS/400 PASE</a></li>
+		<li><a href="#installing_perl_in_os_400_pase">Installing Perl in OS/400 PASE</a></li>
+		<li><a href="#using_perl_in_os_400_pase">Using Perl in OS/400 PASE</a></li>
+		<li><a href="#known_problems">Known Problems</a></li>
+		<li><a href="#perl_on_ile">Perl on ILE</a></li>
+	</ul>
+
+	<li><a href="#authors">AUTHORS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>README.os400 - Perl version 5 on OS/400</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This document describes various features of IBM's OS/400 operating
+system that will affect how Perl version 5 (hereafter just Perl) is
+compiled and/or runs.</p>
+<p>By far the easiest way to build Perl for OS/400 is to use the PASE
+(Portable Application Solutions Environment), for more information see
+<a href="http://www.iseries.ibm.com/developer/factory/pase/index.html">http://www.iseries.ibm.com/developer/factory/pase/index.html</a>
+This environment allows one to use AIX APIs while programming, and it
+provides a runtime that allows AIX binaries to execute directly on the
+PowerPC iSeries.</p>
+<p>
+</p>
+<h2><a name="compiling_perl_for_os_400_pase">Compiling Perl for OS/400 PASE</a></h2>
+<p>The recommended way to build Perl for the OS/400 PASE is to build the
+Perl 5 source code (release 5.8.1 or later) under AIX.</p>
+<p>The trick is to give a special parameter to the Configure shell script
+when running it on AIX:</p>
+<pre>
+  sh Configure -DPASE ...</pre>
+<p>The default installation directory of Perl under PASE is /QOpenSys/perl.
+This can be modified if needed with Configure parameter -Dprefix=/some/dir.</p>
+<p>Starting from OS/400 V5R2 the IBM Visual Age compiler is supported
+on OS/400 PASE, so it is possible to build Perl natively on OS/400.  
+The easier way, however, is to compile in AIX, as just described.</p>
+<p>If you don't want to install the compiled Perl in AIX into /QOpenSys
+(for packaging it before copying it to PASE), you can use a Configure
+parameter: -Dinstallprefix=/tmp/QOpenSys/perl.  This will cause the
+``make install'' to install everything into that directory, while the
+installed files still think they are (will be) in /QOpenSys/perl.</p>
+<p>If building natively on PASE, please do the build under the /QOpenSys
+directory, since Perl is happier when built on a case sensitive filesystem.</p>
+<p>
+</p>
+<h2><a name="installing_perl_in_os_400_pase">Installing Perl in OS/400 PASE</a></h2>
+<p>If you are compiling on AIX, simply do a ``make install'' on the AIX box.
+Once the install finishes, tar up the /QOpenSys/perl directory.  Transfer
+the tarball to the OS/400 using FTP with the following commands:</p>
+<pre>
+  &gt; binary
+  &gt; site namefmt 1
+  &gt; put perl.tar /QOpenSys</pre>
+<p>Once you have it on, simply bring up a PASE shell and extract the tarball.</p>
+<p>If you are compiling in PASE, then ``make install'' is the only thing you
+will need to do.</p>
+<p>The default path for perl binary is /QOpenSys/perl/bin/perl.  You'll
+want to symlink /QOpenSys/usr/bin/perl to this file so you don't have
+to modify your path.</p>
+<p>
+</p>
+<h2><a name="using_perl_in_os_400_pase">Using Perl in OS/400 PASE</a></h2>
+<p>Perl in PASE may be used in the same manner as you would use Perl on AIX.</p>
+<p>Scripts starting with #!/usr/bin/perl should work if you have
+/QOpenSys/usr/bin/perl symlinked to your perl binary.  This will not
+work if you've done a setuid/setgid or have environment variable
+PASE_EXEC_QOPENSYS=``N''.  If you have V5R1, you'll need to get the
+latest PTFs to have this feature.  Scripts starting with
+#!/QOpenSys/perl/bin/perl should always work.</p>
+<p>
+</p>
+<h2><a name="known_problems">Known Problems</a></h2>
+<p>When compiling in PASE, there is no ``oslevel'' command.  Therefore,
+you may want to create a script called ``oslevel'' that echoes the
+level of AIX that your version of PASE runtime supports.  If you're
+unsure, consult your documentation or use ``4.3.3.0''.</p>
+<p>If you have test cases that fail, check for the existence of spool files.
+The test case may be trying to use a syscall that is not implemented
+in PASE.  To avoid the SIGILL, try setting the PASE_SYSCALL_NOSIGILL
+environment variable or have a handler for the SIGILL.  If you can
+compile programs for PASE, run the config script and edit config.sh
+when it gives you the option.  If you want to remove fchdir(), which
+isn't implement in V5R1, simply change the line that says:</p>
+<p>d_fchdir='define'</p>
+<p>to</p>
+<p>d_fchdir='undef'</p>
+<p>and then compile Perl.  The places where <code>fchdir()</code> is used have
+alternatives for systems that do not have <code>fchdir()</code> available.</p>
+<p>
+</p>
+<h2><a name="perl_on_ile">Perl on ILE</a></h2>
+<p>There exists a port of Perl to the ILE environment.  This port, however,
+is based quite an old release of Perl, Perl 5.00502 (August 1998).
+(As of July 2002 the latest release of Perl is 5.8.0, and even 5.6.1
+has been out since April 2001.)  If you need to run Perl on ILE, though,
+you may need this older port: <a href="http://www.cpan.org/ports/#os400">http://www.cpan.org/ports/#os400</a>
+Note that any Perl release later than 5.00502 has not been ported to ILE.</p>
+<p>If you need to use Perl in the ILE environment, you may want to consider
+using <code>Qp2RunPase()</code> to call the PASE version of Perl.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Jarkko Hietaniemi &lt;<a href="mailto:jhi@iki.fi">jhi@iki.fi</a>&gt;
+Bryan Logan &lt;<a href="mailto:bryanlog@us.ibm.com">bryanlog@us.ibm.com</a>&gt;
+David Larson &lt;<a href="mailto:larson1@us.ibm.com">larson1@us.ibm.com</a>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.os400 - Perl version 5 on OS/400</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

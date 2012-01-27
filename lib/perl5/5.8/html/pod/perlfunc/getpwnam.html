@@ -1,0 +1,139 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>getpwnam - get passwd record given user login name</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;getpwnam - get passwd record given user login name</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>getpwnam - get passwd record given user login name</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>getpwnam NAME
+    
+    
+    
+     
+     
+  </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>These routines perform the same functions as their counterparts in the
+system library.  In list context, the return values from the
+various get routines are as follows:</p>
+<pre>
+    ($name,$passwd,$uid,$gid,
+       $quota,$comment,$gcos,$dir,$shell,$expire) = getpw*
+    ($name,$passwd,$gid,$members) = getgr*
+    ($name,$aliases,$addrtype,$length,@addrs) = gethost*
+    ($name,$aliases,$addrtype,$net) = getnet*
+    ($name,$aliases,$proto) = getproto*
+    ($name,$aliases,$port,$proto) = getserv*</pre>
+<p>(If the entry doesn't exist you get a null list.)</p>
+<p>The exact meaning of the $gcos field varies but it usually contains
+the real name of the user (as opposed to the login name) and other
+information pertaining to the user.  Beware, however, that in many
+system users are able to change this information and therefore it
+cannot be trusted and therefore the $gcos is tainted (see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsec.html">the perlsec manpage</a>).  The $passwd and $shell, user's encrypted password and
+login shell, are also tainted, because of the same reason.</p>
+<p>In scalar context, you get the name, unless the function was a
+lookup by name, in which case you get the other thing, whatever it is.
+(If the entry doesn't exist you get the undefined value.)  For example:</p>
+<pre>
+    $uid   = getpwnam($name);
+    $name  = getpwuid($num);
+    $name  = getpwent();
+    $gid   = getgrnam($name);
+    $name  = getgrgid($num);
+    $name  = getgrent();
+    #etc.</pre>
+<p>In <em>getpw*()</em> the fields $quota, $comment, and $expire are special
+cases in the sense that in many systems they are unsupported.  If the
+$quota is unsupported, it is an empty scalar.  If it is supported, it
+usually encodes the disk quota.  If the $comment field is unsupported,
+it is an empty scalar.  If it is supported it usually encodes some
+administrative comment about the user.  In some systems the $quota
+field may be $change or $age, fields that have to do with password
+aging.  In some systems the $comment field may be $class.  The $expire
+field, if present, encodes the expiration period of the account or the
+password.  For the availability and the exact meaning of these fields
+in your system, please consult your <code>getpwnam(3)</code> documentation and your
+<em>pwd.h</em> file.  You can also find out from within Perl what your
+$quota and $comment fields mean and whether you have the $expire field
+by using the <code>Config</code> module and the values <code>d_pwquota</code>, <code>d_pwage</code>,
+<code>d_pwchange</code>, <code>d_pwcomment</code>, and <code>d_pwexpire</code>.  Shadow password
+files are only supported if your vendor has implemented them in the
+intuitive fashion that calling the regular C library routines gets the
+shadow versions if you're running under privilege or if there exists
+the <code>shadow(3)</code> functions as found in System V (this includes Solaris
+and Linux.)  Those systems that implement a proprietary shadow password
+facility are unlikely to be supported.</p>
+<p>The $members value returned by <em>getgr*()</em> is a space separated list of
+the login names of the members of the group.</p>
+<p>For the <em>gethost*()</em> functions, if the <code>h_errno</code> variable is supported in
+C, it will be returned to you via <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> if the function call fails.  The
+<code>@addrs</code> value returned by a successful call is a list of the raw
+addresses returned by the corresponding system library call.  In the
+Internet domain, each address is four bytes long and you can unpack it
+by saying something like:</p>
+<pre>
+    ($a,$b,$c,$d) = unpack('C4',$addr[0]);</pre>
+<p>The Socket library makes this slightly easier:</p>
+<pre>
+    use Socket;
+    $iaddr = inet_aton(&quot;127.1&quot;); # or whatever address
+    $name  = gethostbyaddr($iaddr, AF_INET);</pre>
+<pre>
+    # or going the other way
+    $straddr = inet_ntoa($iaddr);</pre>
+<p>If you get tired of remembering which element of the return list
+contains which return value, by-name interfaces are provided
+in standard modules: <code>File::stat</code>, <code>Net::hostent</code>, <code>Net::netent</code>,
+<code>Net::protoent</code>, <code>Net::servent</code>, <code>Time::gmtime</code>, <code>Time::localtime</code>,
+and <code>User::grent</code>.  These override the normal built-ins, supplying
+versions that return objects with the appropriate names
+for each field.  For example:</p>
+<pre>
+   use File::stat;
+   use User::pwent;
+   $is_his = (stat($filename)-&gt;uid == pwent($whoever)-&gt;uid);</pre>
+<p>Even though it looks like they're the same method calls (uid),
+they aren't, because a <code>File::stat</code> object is different from
+a <code>User::pwent</code> object.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;getpwnam - get passwd record given user login name</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

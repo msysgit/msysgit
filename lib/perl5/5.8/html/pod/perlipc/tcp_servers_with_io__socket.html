@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TCP Servers with IO::Socket</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;TCP Servers with IO::Socket</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#tcp_servers_with_io__socket">TCP Servers with IO::Socket</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="tcp_servers_with_io__socket">TCP Servers with IO::Socket</a></h1>
+<p>As always, setting up a server is little bit more involved than running a client.
+The model is that the server creates a special kind of socket that
+does nothing but listen on a particular port for incoming connections.
+It does this by calling the <code>IO::Socket::INET-&gt;new()</code> method with
+slightly different arguments than the client did.</p>
+<dl>
+<dt><strong><a name="item_proto">Proto</a></strong>
+
+<dd>
+<p>This is which protocol to use.  Like our clients, we'll
+still specify <code>&quot;tcp&quot;</code> here.</p>
+</dd>
+</li>
+<dt><strong><a name="item_localport">LocalPort</a></strong>
+
+<dd>
+<p>We specify a local
+port in the <a href="#item_localport"><code>LocalPort</code></a> argument, which we didn't do for the client.
+This is service name or port number for which you want to be the
+server. (Under Unix, ports under 1024 are restricted to the
+superuser.)  In our sample, we'll use port 9000, but you can use
+any port that's not currently in use on your system.  If you try
+to use one already in used, you'll get an ``Address already in use''
+message.  Under Unix, the <code>netstat -a</code> command will show
+which services current have servers.</p>
+</dd>
+</li>
+<dt><strong><a name="item_listen">Listen</a></strong>
+
+<dd>
+<p>The <a href="#item_listen"><code>Listen</code></a> parameter is set to the maximum number of
+pending connections we can accept until we turn away incoming clients.
+Think of it as a call-waiting queue for your telephone.
+The low-level Socket module has a special symbol for the system maximum, which
+is SOMAXCONN.</p>
+</dd>
+</li>
+<dt><strong><a name="item_reuse">Reuse</a></strong>
+
+<dd>
+<p>The <a href="#item_reuse"><code>Reuse</code></a> parameter is needed so that we restart our server
+manually without waiting a few minutes to allow system buffers to
+clear out.</p>
+</dd>
+</li>
+</dl>
+<p>Once the generic server socket has been created using the parameters
+listed above, the server then waits for a new client to connect
+to it.  The server blocks in the <code>accept</code> method, which eventually accepts a
+bidirectional connection from the remote client.  (Make sure to autoflush
+this handle to circumvent buffering.)</p>
+<p>To add to user-friendliness, our server prompts the user for commands.
+Most servers don't do this.  Because of the prompt without a newline,
+you'll have to use the <code>sysread</code> variant of the interactive client above.</p>
+<p>This server accepts one of five different commands, sending output
+back to the client.  Note that unlike most network servers, this one
+only handles one incoming client at a time.  Multithreaded servers are
+covered in Chapter 6 of the Camel.</p>
+<p>Here's the code.  We'll</p>
+<pre>
+ #!/usr/bin/perl -w
+ use IO::Socket;
+ use Net::hostent;              # for OO version of gethostbyaddr</pre>
+<pre>
+ $PORT = 9000;                  # pick something not in use</pre>
+<pre>
+ $server = IO::Socket::INET-&gt;new( Proto     =&gt; 'tcp',
+                                  LocalPort =&gt; $PORT,
+                                  Listen    =&gt; SOMAXCONN,
+                                  Reuse     =&gt; 1);</pre>
+<pre>
+ die &quot;can't setup server&quot; unless $server;
+ print &quot;[Server $0 accepting clients]\n&quot;;</pre>
+<pre>
+ while ($client = $server-&gt;accept()) {
+   $client-&gt;autoflush(1);
+   print $client &quot;Welcome to $0; type help for command list.\n&quot;;
+   $hostinfo = gethostbyaddr($client-&gt;peeraddr);
+   printf &quot;[Connect from %s]\n&quot;, $hostinfo ? $hostinfo-&gt;name : $client-&gt;peerhost;
+   print $client &quot;Command? &quot;;
+   while ( &lt;$client&gt;) {
+     next unless /\S/;       # blank line
+     if    (/quit|exit/i)    { last;                                     }
+     elsif (/date|time/i)    { printf $client &quot;%s\n&quot;, scalar localtime;  }
+     elsif (/who/i )         { print  $client `who 2&gt;&amp;1`;                }
+     elsif (/cookie/i )      { print  $client `/usr/games/fortune 2&gt;&amp;1`; }
+     elsif (/motd/i )        { print  $client `cat /etc/motd 2&gt;&amp;1`;      }
+     else {
+       print $client &quot;Commands: quit date who cookie motd\n&quot;;
+     }
+   } continue {
+      print $client &quot;Command? &quot;;
+   }
+   close $client;
+ }</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/interactive_client_with_io__socket.html">Interactive Client with IO::Socket in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/udp__message_passing.html">UDP: Message Passing in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;TCP Servers with IO::Socket</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

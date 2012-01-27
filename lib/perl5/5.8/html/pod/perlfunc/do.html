@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>do - turn a BLOCK into a TERM</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;do - turn a BLOCK into a TERM</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>do - turn a BLOCK into a TERM</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>do BLOCK
+ </p>
+<p>do <code>SUBROUTINE(LIST)</code>
+</p>
+<p>do EXPR
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Not really a function.  Returns the value of the last command in the
+sequence of commands indicated by BLOCK.  When modified by the <code>while</code> or
+<code>until</code> loop modifier, executes the BLOCK once before testing the loop
+condition. (On other statements the loop modifiers test the conditional
+first.)</p>
+<p><code>do BLOCK</code> does <em>not</em> count as a loop, so the loop control statements
+<code>next</code>, <code>last</code>, or <code>redo</code> cannot be used to leave or restart the block.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlsyn.html">the perlsyn manpage</a> for alternative strategies.</p>
+<p>This form of subroutine call is deprecated.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a>.</p>
+<p>Uses the value of EXPR as a filename and executes the contents of the
+file as a Perl script.</p>
+<pre>
+    do 'stat.pl';</pre>
+<p>is just like</p>
+<pre>
+    eval `cat stat.pl`;</pre>
+<p>except that it's more efficient and concise, keeps track of the current
+filename for error messages, searches the @INC directories, and updates
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>%INC</code></a> if the file is found.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#predefined_names">Predefined Names in the perlvar manpage</a> for these
+variables.  It also differs in that code evaluated with <code>do FILENAME</code>
+cannot see lexicals in the enclosing scope; <code>eval STRING</code> does.  It's the
+same, however, in that it does reparse the file every time you call it,
+so you probably don't want to do this inside a loop.</p>
+<p>If <code>do</code> cannot read the file, it returns undef and sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> to the
+error.  If <code>do</code> can read the file but cannot compile it, it
+returns undef and sets an error message in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a>.   If the file is
+successfully compiled, <code>do</code> returns the value of the last expression
+evaluated.</p>
+<p>Note that inclusion of library modules is better done with the
+<code>use</code> and <code>require</code> operators, which also do automatic error checking
+and raise an exception if there's a problem.</p>
+<p>You might like to use <code>do</code> to read in a program configuration
+file.  Manual error checking can be done this way:</p>
+<pre>
+    # read in config files: system first, then user
+    for $file (&quot;/share/prog/defaults.rc&quot;,
+               &quot;$ENV{HOME}/.someprogrc&quot;)
+   {
+        unless ($return = do $file) {
+            warn &quot;couldn't parse $file: $@&quot; if $@;
+            warn &quot;couldn't do $file: $!&quot;    unless defined $return;
+            warn &quot;couldn't run $file&quot;       unless $return;
+        }
+    }</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;do - turn a BLOCK into a TERM</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,293 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>B::CC - Perl compiler's optimized C translation backend</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::CC - Perl compiler's optimized C translation backend</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#options">OPTIONS</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#differences">DIFFERENCES</a></li>
+	<ul>
+
+		<li><a href="#loops">Loops</a></li>
+		<li><a href="#context_of___">Context of ``..''</a></li>
+		<li><a href="#arithmetic">Arithmetic</a></li>
+		<li><a href="#deprecated_features">Deprecated features</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>B::CC - Perl compiler's optimized C translation backend</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        perl -MO=CC[,OPTIONS] foo.pl</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This compiler backend takes Perl source and generates C source code
+corresponding to the flow of your program. In other words, this
+backend is somewhat a ``real'' compiler in the sense that many people
+think about compilers. Note however that, currently, it is a very
+poor compiler in that although it generates (mostly, or at least
+sometimes) correct code, it performs relatively few optimisations.
+This will change as the compiler develops. The result is that
+running an executable compiled with this backend may start up more
+quickly than running the original Perl program (a feature shared
+by the <strong>C</strong> compiler backend--see <em>B::C</em>) and may also execute
+slightly faster. This is by no means a good optimising compiler--yet.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options">OPTIONS</a></h1>
+<p>If there are any non-option arguments, they are taken to be
+names of objects to be saved (probably doesn't work properly yet).
+Without extra arguments, it saves the main program.</p>
+<dl>
+<dt><strong><a name="item__2dofilename"><strong>-ofilename</strong></a></strong>
+
+<dd>
+<p>Output to filename instead of STDOUT</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dv"><strong>-v</strong></a></strong>
+
+<dd>
+<p>Verbose compilation (currently gives a few compilation statistics).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2d_2d"><strong>--</strong></a></strong>
+
+<dd>
+<p>Force end of options</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dupackname"><strong>-uPackname</strong></a></strong>
+
+<dd>
+<p>Force apparently unused subs from package Packname to be compiled.
+This allows programs to use eval ``foo()'' even when sub foo is never
+seen to be used at compile time. The down side is that any subs which
+really are never used also have code generated. This option is
+necessary, for example, if you have a signal handler foo which you
+initialise with <code>$SIG{BAR} = &quot;foo&quot;</code>.  A better fix, though, is just
+to change it to <code>$SIG{BAR} = \&amp;foo</code>. You can have multiple <strong>-u</strong>
+options. The compiler tries to figure out which packages may possibly
+have subs in which need compiling but the current version doesn't do
+it very well. In particular, it is confused by nested packages (i.e.
+of the form <code>A::B</code>) where package <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_a"><code>A</code></a> does not contain any subs.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dmmodulename"><strong>-mModulename</strong></a></strong>
+
+<dd>
+<p>Instead of generating source for a runnable executable, generate
+source for an XSUB module. The boot_Modulename function (which
+DynaLoader can look for) does the appropriate initialisation and runs
+the main part of the Perl source that is being compiled.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dd"><strong>-D</strong></a></strong>
+
+<dd>
+<p>Debug options (concatenated or separate flags like <code>perl -D</code>).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddr"><strong>-Dr</strong></a></strong>
+
+<dd>
+<p>Writes debugging output to STDERR just as it's about to write to the
+program's runtime (otherwise writes debugging info as comments in
+its C output).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddo"><strong>-DO</strong></a></strong>
+
+<dd>
+<p>Outputs each OP as it's compiled</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dds"><strong>-Ds</strong></a></strong>
+
+<dd>
+<p>Outputs the contents of the shadow stack at each OP</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddp"><strong>-Dp</strong></a></strong>
+
+<dd>
+<p>Outputs the contents of the shadow pad of lexicals as it's loaded for
+each sub or the main program.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddq"><strong>-Dq</strong></a></strong>
+
+<dd>
+<p>Outputs the name of each fake PP function in the queue as it's about
+to process it.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddl"><strong>-Dl</strong></a></strong>
+
+<dd>
+<p>Output the filename and line number of each original line of Perl
+code as it's processed (<code>pp_nextstate</code>).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddt"><strong>-Dt</strong></a></strong>
+
+<dd>
+<p>Outputs timing information of compilation stages.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2df"><strong>-f</strong></a></strong>
+
+<dd>
+<p>Force optimisations on or off one at a time.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dffreetmps_2deach_2dbblock"><strong>-ffreetmps-each-bblock</strong></a></strong>
+
+<dd>
+<p>Delays FREETMPS from the end of each statement to the end of the each
+basic block.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dffreetmps_2deach_2dloop"><strong>-ffreetmps-each-loop</strong></a></strong>
+
+<dd>
+<p>Delays FREETMPS from the end of each statement to the end of the group
+of basic blocks forming a loop. At most one of the freetmps-each-*
+options can be used.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfomit_2dtaint"><strong>-fomit-taint</strong></a></strong>
+
+<dd>
+<p>Omits generating code for handling perl's tainting mechanism.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2don"><strong>-On</strong></a></strong>
+
+<dd>
+<p>Optimisation level (n = 0, 1, 2, ...). <strong>-O</strong> means <strong>-O1</strong>.
+Currently, <strong>-O1</strong> sets <strong>-ffreetmps-each-bblock</strong> and <strong>-O2</strong>
+sets <strong>-ffreetmps-each-loop</strong>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<pre>
+        perl -MO=CC,-O2,-ofoo.c foo.pl
+        perl cc_harness -o foo foo.c</pre>
+<p>Note that <code>cc_harness</code> lives in the <code>B</code> subdirectory of your perl
+library directory. The utility called <code>perlcc</code> may also be used to
+help make use of this compiler.</p>
+<pre>
+        perl -MO=CC,-mFoo,-oFoo.c Foo.pm
+        perl cc_harness -shared -c -o Foo.so Foo.c</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Plenty. Current status: experimental.</p>
+<p>
+</p>
+<hr />
+<h1><a name="differences">DIFFERENCES</a></h1>
+<p>These aren't really bugs but they are constructs which are heavily
+tied to perl's compile-and-go implementation and with which this
+compiler backend cannot cope.</p>
+<p>
+</p>
+<h2><a name="loops">Loops</a></h2>
+<p>Standard perl calculates the target of ``next'', ``last'', and ``redo''
+at run-time. The compiler calculates the targets at compile-time.
+For example, the program</p>
+<pre>
+    sub skip_on_odd { next NUMBER if $_[0] % 2 }
+    NUMBER: for ($i = 0; $i &lt; 5; $i++) {
+        skip_on_odd($i);
+        print $i;
+    }</pre>
+<p>produces the output</p>
+<pre>
+    024</pre>
+<p>with standard perl but gives a compile-time error with the compiler.</p>
+<p>
+</p>
+<h2><a name="context_of___">Context of ``..''</a></h2>
+<p>The context (scalar or array) of the ``..'' operator determines whether
+it behaves as a range or a flip/flop. Standard perl delays until
+runtime the decision of which context it is in but the compiler needs
+to know the context at compile-time. For example,</p>
+<pre>
+    @a = (4,6,1,0,0,1);
+    sub range { (shift @a)..(shift @a) }
+    print range();
+    while (@a) { print scalar(range()) }</pre>
+<p>generates the output</p>
+<pre>
+    456123E0</pre>
+<p>with standard Perl but gives a compile-time error with compiled Perl.</p>
+<p>
+</p>
+<h2><a name="arithmetic">Arithmetic</a></h2>
+<p>Compiled Perl programs use native C arithmetic much more frequently
+than standard perl. Operations on large numbers or on boundary
+cases may produce different behaviour.</p>
+<p>
+</p>
+<h2><a name="deprecated_features">Deprecated features</a></h2>
+<p>Features of standard perl such as <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$[</code></a> which have been deprecated
+in standard perl since Perl5 was released have not been implemented
+in the compiler.
+
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Malcolm Beattie, <code>mbeattie@sable.ox.ac.uk</code>
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::CC - Perl compiler's optimized C translation backend</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

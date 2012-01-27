@@ -1,0 +1,164 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>stat - get a file's status information</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;stat - get a file's status information</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>stat - get a file's status information</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>stat FILEHANDLE
+ </p>
+<p>stat EXPR</p>
+<p>stat</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Returns a 13-element list giving the status info for a file, either
+the file opened via FILEHANDLE, or named by EXPR.  If EXPR is omitted,
+it stats <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a>.  Returns a null list if the stat fails.  Typically used
+as follows:</p>
+<pre>
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+       $atime,$mtime,$ctime,$blksize,$blocks)
+           = stat($filename);</pre>
+<p>Not all fields are supported on all filesystem types.  Here are the
+meanings of the fields:</p>
+<pre>
+  0 dev      device number of filesystem
+  1 ino      inode number
+  2 mode     file mode  (type and permissions)
+  3 nlink    number of (hard) links to the file
+  4 uid      numeric user ID of file's owner
+  5 gid      numeric group ID of file's owner
+  6 rdev     the device identifier (special files only)
+  7 size     total size of file, in bytes
+  8 atime    last access time in seconds since the epoch
+  9 mtime    last modify time in seconds since the epoch
+ 10 ctime    inode change time in seconds since the epoch (*)
+ 11 blksize  preferred block size for file system I/O
+ 12 blocks   actual number of blocks allocated</pre>
+<p>(The epoch was at 00:00 January 1, 1970 GMT.)</p>
+<p>(*) Not all fields are supported on all filesystem types. Notably, the
+ctime field is non-portable.  In particular, you cannot expect it to be a
+``creation time'', see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html#files_and_filesystems">Files and Filesystems in the perlport manpage</a> for details.</p>
+<p>If <code>stat</code> is passed the special filehandle consisting of an underline, no
+stat is done, but the current contents of the stat structure from the
+last <code>stat</code>, <code>lstat</code>, or filetest are returned.  Example:</p>
+<pre>
+    if (-x $file &amp;&amp; (($d) = stat(_)) &amp;&amp; $d &lt; 0) {
+        print &quot;$file is executable NFS file\n&quot;;
+    }</pre>
+<p>(This works on machines only for which the device number is negative
+under NFS.)</p>
+<p>Because the mode contains both the file type and its permissions, you
+should mask off the file type portion and (s)printf using a <code>&quot;%o&quot;</code>
+if you want to see the real permissions.</p>
+<pre>
+    $mode = (stat($filename))[2];
+    printf &quot;Permissions are %04o\n&quot;, $mode &amp; 07777;</pre>
+<p>In scalar context, <code>stat</code> returns a boolean value indicating success
+or failure, and, if successful, sets the information associated with
+the special filehandle <code>_</code>.</p>
+<p>The File::stat module provides a convenient, by-name access mechanism:</p>
+<pre>
+    use File::stat;
+    $sb = stat($filename);
+    printf &quot;File is %s, size is %s, perm %04o, mtime %s\n&quot;,
+        $filename, $sb-&gt;size, $sb-&gt;mode &amp; 07777,
+        scalar localtime $sb-&gt;mtime;</pre>
+<p>You can import symbolic mode constants (<code>S_IF*</code>) and functions
+(<code>S_IS*</code>) from the Fcntl module:</p>
+<pre>
+    use Fcntl ':mode';</pre>
+<pre>
+    $mode = (stat($filename))[2];</pre>
+<pre>
+    $user_rwx      = ($mode &amp; S_IRWXU) &gt;&gt; 6;
+    $group_read    = ($mode &amp; S_IRGRP) &gt;&gt; 3;
+    $other_execute =  $mode &amp; S_IXOTH;</pre>
+<pre>
+    printf &quot;Permissions are %04o\n&quot;, S_IMODE($mode), &quot;\n&quot;;</pre>
+<pre>
+    $is_setuid     =  $mode &amp; S_ISUID;
+    $is_setgid     =  S_ISDIR($mode);</pre>
+<p>You could write the last two using the <code>-u</code> and <code>-d</code> operators.
+The commonly available <code>S_IF*</code> constants are</p>
+<pre>
+    # Permissions: read, write, execute, for user, group, others.</pre>
+<pre>
+    S_IRWXU S_IRUSR S_IWUSR S_IXUSR
+    S_IRWXG S_IRGRP S_IWGRP S_IXGRP
+    S_IRWXO S_IROTH S_IWOTH S_IXOTH</pre>
+<pre>
+    # Setuid/Setgid/Stickiness/SaveText.
+    # Note that the exact meaning of these is system dependent.</pre>
+<pre>
+    S_ISUID S_ISGID S_ISVTX S_ISTXT</pre>
+<pre>
+    # File types.  Not necessarily all are available on your system.</pre>
+<pre>
+    S_IFREG S_IFDIR S_IFLNK S_IFBLK S_IFCHR S_IFIFO S_IFSOCK S_IFWHT S_ENFMT</pre>
+<pre>
+    # The following are compatibility aliases for S_IRUSR, S_IWUSR, S_IXUSR.</pre>
+<pre>
+    S_IREAD S_IWRITE S_IEXEC</pre>
+<p>and the <code>S_IF*</code> functions are</p>
+<pre>
+    S_IMODE($mode)      the part of $mode containing the permission bits
+                        and the setuid/setgid/sticky bits</pre>
+<pre>
+    S_IFMT($mode)       the part of $mode containing the file type
+                        which can be bit-anded with e.g. S_IFREG
+                        or with the following functions</pre>
+<pre>
+    # The operators -f, -d, -l, -b, -c, -p, and -S.</pre>
+<pre>
+    S_ISREG($mode) S_ISDIR($mode) S_ISLNK($mode)
+    S_ISBLK($mode) S_ISCHR($mode) S_ISFIFO($mode) S_ISSOCK($mode)</pre>
+<pre>
+    # No direct -X operator counterpart, but for the first one
+    # the -g operator is often equivalent.  The ENFMT stands for
+    # record flocking enforcement, a platform-dependent feature.</pre>
+<pre>
+    S_ISENFMT($mode) S_ISWHT($mode)</pre>
+<p>See your native <code>chmod(2)</code> and <code>stat(2)</code> documentation for more details
+about the <code>S_*</code> constants.  To get status info for a symbolic link
+instead of the target file behind the link, use the <code>lstat</code> function.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;stat - get a file's status information</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

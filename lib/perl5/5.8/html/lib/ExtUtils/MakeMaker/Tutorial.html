@@ -1,0 +1,242 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ExtUtils::MakeMaker::Tutorial - Writing a module with MakeMaker</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::MakeMaker::Tutorial - Writing a module with MakeMaker</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#the_mantra">The Mantra</a></li>
+		<li><a href="#the_layout">The Layout</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ExtUtils::MakeMaker::Tutorial - Writing a module with MakeMaker</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use ExtUtils::MakeMaker;</pre>
+<pre>
+    WriteMakefile(
+        NAME            =&gt; 'Your::Module',
+        VERSION_FROM    =&gt; 'lib/Your/Module.pm'
+    );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a short tutorial on writing a simple module with MakeMaker.
+Its really not that hard.</p>
+<p>
+</p>
+<h2><a name="the_mantra">The Mantra</a></h2>
+<p>MakeMaker modules are installed using this simple mantra</p>
+<pre>
+        perl Makefile.PL
+        make
+        make test
+        make install</pre>
+<p>There are lots more commands and options, but the above will do it.</p>
+<p>
+</p>
+<h2><a name="the_layout">The Layout</a></h2>
+<p>The basic files in a module look something like this.</p>
+<pre>
+        Makefile.PL
+        MANIFEST
+        lib/Your/Module.pm</pre>
+<p>That's all that's strictly necessary.  There's additional files you might
+want:</p>
+<pre>
+        lib/Your/Other/Module.pm
+        t/some_test.t
+        t/some_other_test.t
+        Changes
+        README
+        INSTALL
+        MANIFEST.SKIP
+        bin/some_program</pre>
+<dl>
+<dt><strong><a name="item_makefile_2epl">Makefile.PL</a></strong>
+
+<dd>
+<p>When you run Makefile.PL, it makes a Makefile.  That's the whole point of
+MakeMaker.  The Makefile.PL is a simple program which loads
+ExtUtils::MakeMaker and runs the <code>WriteMakefile()</code> function to generate a
+Makefile.</p>
+</dd>
+<dd>
+<p>Here's an example of what you need for a simple module:</p>
+</dd>
+<dd>
+<pre>
+    use ExtUtils::MakeMaker;</pre>
+</dd>
+<dd>
+<pre>
+    WriteMakefile(
+        NAME            =&gt; 'Your::Module',
+        VERSION_FROM    =&gt; 'lib/Your/Module.pm'
+    );</pre>
+</dd>
+<dd>
+<p>NAME is the top-level namespace of your module.  VERSION_FROM is the file
+which contains the $VERSION variable for the entire distribution.  Typically
+this is the same as your top-level module.</p>
+</dd>
+</li>
+<dt><strong><a name="item_manifest">MANIFEST</a></strong>
+
+<dd>
+<p>A simple listing of all the files in your distribution.</p>
+</dd>
+<dd>
+<pre>
+        Makefile.PL
+        MANIFEST
+        lib/Your/Module.pm</pre>
+</dd>
+<dd>
+<p>File paths in a MANIFEST always use Unix conventions (ie. /) even if you're
+not on Unix.</p>
+</dd>
+<dd>
+<p>You can write this by hand or generate it with 'make manifest'.</p>
+</dd>
+<dd>
+<p>See <a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/Manifest.html">the ExtUtils::Manifest manpage</a> for more details.</p>
+</dd>
+</li>
+<dt><strong><a name="item_lib_2f">lib/</a></strong>
+
+<dd>
+<p>This is the directory where your .pm and .pod files you wish to have
+installed go.  They are layed out according to namespace.  So Foo::Bar
+is <em>lib/Foo/Bar.pm</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_2f">t/</a></strong>
+
+<dd>
+<p>Tests for your modules go here.  Each test filename ends with a .t.
+So <em>t/foo.t</em>/  'make test' will run these tests.  The directory is flat,
+you cannot, for example, have t/foo/bar.t run by 'make test'.</p>
+</dd>
+<dd>
+<p>Tests are run from the top level of your distribution.  So inside a test
+you would refer to ./lib to enter the lib directory, for example.</p>
+</dd>
+</li>
+<dt><strong><a name="item_changes">Changes</a></strong>
+
+<dd>
+<p>A log of changes you've made to this module.  The layout is free-form.
+Here's an example:</p>
+</dd>
+<dd>
+<pre>
+    1.01 Fri Apr 11 00:21:25 PDT 2003
+        - thing() does some stuff now
+        - fixed the wiggy bug in withit()</pre>
+</dd>
+<dd>
+<pre>
+    1.00 Mon Apr  7 00:57:15 PDT 2003
+        - &quot;Rain of Frogs&quot; now supported</pre>
+</dd>
+</li>
+<dt><strong><a name="item_readme">README</a></strong>
+
+<dd>
+<p>A short description of your module, what it does, why someone would use it
+and its limitations.  CPAN automatically pulls your README file out of
+the archive and makes it available to CPAN users, it is the first thing
+they will read to decide if your module is right for them.</p>
+</dd>
+</li>
+<dt><strong><a name="item_install">INSTALL</a></strong>
+
+<dd>
+<p>Instructions on how to install your module along with any dependencies.
+Suggested information to include here:</p>
+</dd>
+<dd>
+<pre>
+    any extra modules required for use
+    the minimum version of Perl required
+    if only works on certain operating systems</pre>
+</dd>
+</li>
+<dt><strong><a name="item_manifest_2eskip">MANIFEST.SKIP</a></strong>
+
+<dd>
+<p>A file full of regular expressions to exclude when using 'make
+manifest' to generate the MANIFEST.  These regular expressions
+are checked against each file path found in the distribution (so
+you're matching against ``t/foo.t'' not ``foo.t'').</p>
+</dd>
+<dd>
+<p>Here's a sample:</p>
+</dd>
+<dd>
+<pre>
+    ~$          # ignore emacs and vim backup files
+    .bak$       # ignore manual backups
+    \#          # ignore CVS old revision files and emacs temp files</pre>
+</dd>
+<dd>
+<p>Since # can be used for comments, # must be escaped.</p>
+</dd>
+<dd>
+<p>MakeMaker comes with a default MANIFEST.SKIP to avoid things like
+version control directories and backup files.  Specifying your own
+will override this default.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bin_2f">bin/</a></strong>
+
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlmodstyle.html">the perlmodstyle manpage</a> gives stylistic help writing a module.</p>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlnewmod.html">the perlnewmod manpage</a> gives more information about how to write a module.</p>
+<p>There are modules to help you through the process of writing a module:
+<a href="/usr/lib/perl5/5.8/html/ExtUtils/ModuleMaker.html">the ExtUtils::ModuleMaker manpage</a>, <a href="/usr/lib/perl5/5.8/html/Module/Install.html">the Module::Install manpage</a>, <em>PAR</em></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::MakeMaker::Tutorial - Writing a module with MakeMaker</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

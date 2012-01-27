@@ -1,0 +1,546 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlcompile - Introduction to the Perl Compiler-Translator</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlcompile - Introduction to the Perl Compiler-Translator</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#layout">Layout</a></li>
+	</ul>
+
+	<li><a href="#using_the_back_ends">Using The Back Ends</a></li>
+	<ul>
+
+		<li><a href="#the_cross_referencing_back_end">The Cross Referencing Back End</a></li>
+		<li><a href="#the_decompiling_back_end">The Decompiling Back End</a></li>
+		<li><a href="#the_lint_back_end">The Lint Back End</a></li>
+		<li><a href="#the_simple_c_back_end">The Simple C Back End</a></li>
+		<li><a href="#the_bytecode_back_end">The Bytecode Back End</a></li>
+		<li><a href="#the_optimized_c_back_end">The Optimized C Back End</a></li>
+	</ul>
+
+	<li><a href="#module_list_for_the_compiler_suite">Module List for the Compiler Suite</a></li>
+	<li><a href="#known_problems">KNOWN PROBLEMS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perlcompile - Introduction to the Perl Compiler-Translator</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Perl has always had a compiler: your source is compiled into an
+internal form (a parse tree) which is then optimized before being
+run.  Since version 5.005, Perl has shipped with a module
+capable of inspecting the optimized parse tree (<a href="#item_b"><code>B</code></a>), and this has
+been used to write many useful utilities, including a module that lets
+you turn your Perl into C source code that can be compiled into a
+native executable.</p>
+<p>The <a href="#item_b"><code>B</code></a> module provides access to the parse tree, and other modules
+(``back ends'') do things with the tree.  Some write it out as
+bytecode, C source code, or a semi-human-readable text.  Another
+traverses the parse tree to build a cross-reference of which
+subroutines, formats, and variables are used where.  Another checks
+your code for dubious constructs.  Yet another back end dumps the
+parse tree back out as Perl source, acting as a source code beautifier
+or deobfuscator.</p>
+<p>Because its original purpose was to be a way to produce C code
+corresponding to a Perl program, and in turn a native executable, the
+<a href="#item_b"><code>B</code></a> module and its associated back ends are known as ``the
+compiler'', even though they don't really compile anything.
+Different parts of the compiler are more accurately a ``translator'',
+or an ``inspector'', but people want Perl to have a ``compiler
+option'' not an ``inspector gadget''.  What can you do?</p>
+<p>This document covers the use of the Perl compiler: which modules
+it comprises, how to use the most important of the back end modules,
+what problems there are, and how to work around them.</p>
+<p>
+</p>
+<h2><a name="layout">Layout</a></h2>
+<p>The compiler back ends are in the <code>B::</code> hierarchy, and the front-end
+(the module that you, the user of the compiler, will sometimes
+interact with) is the O module.  Some back ends (e.g., <a href="#item_b_3a_3ac"><code>B::C</code></a>) have
+programs (e.g., <em>perlcc</em>) to hide the modules' complexity.</p>
+<p>Here are the important back ends to know about, with their status
+expressed as a number from 0 (outline for later implementation) to
+10 (if there's a bug in it, we're very surprised):</p>
+<dl>
+<dt><strong><a name="item_b_3a_3abytecode">B::Bytecode</a></strong>
+
+<dd>
+<p>Stores the parse tree in a machine-independent format, suitable
+for later reloading through the ByteLoader module.  Status: 5 (some
+things work, some things don't, some things are untested).</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3ac">B::C</a></strong>
+
+<dd>
+<p>Creates a C source file containing code to rebuild the parse tree
+and resume the interpreter.  Status: 6 (many things work adequately,
+including programs using Tk).</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3acc">B::CC</a></strong>
+
+<dd>
+<p>Creates a C source file corresponding to the run time code path in
+the parse tree.  This is the closest to a Perl-to-C translator there
+is, but the code it generates is almost incomprehensible because it
+translates the parse tree into a giant switch structure that
+manipulates Perl structures.  Eventual goal is to reduce (given
+sufficient type information in the Perl program) some of the
+Perl data structure manipulations into manipulations of C-level
+ints, floats, etc.  Status: 5 (some things work, including
+uncomplicated Tk examples).</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3alint">B::Lint</a></strong>
+
+<dd>
+<p>Complains if it finds dubious constructs in your source code.  Status:
+6 (it works adequately, but only has a very limited number of areas
+that it checks).</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3adeparse">B::Deparse</a></strong>
+
+<dd>
+<p>Recreates the Perl source, making an attempt to format it coherently.
+Status: 8 (it works nicely, but a few obscure things are missing).</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3axref">B::Xref</a></strong>
+
+<dd>
+<p>Reports on the declaration and use of subroutines and variables.
+Status: 8 (it works nicely, but still has a few lingering bugs).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="using_the_back_ends">Using The Back Ends</a></h1>
+<p>The following sections describe how to use the various compiler back
+ends.  They're presented roughly in order of maturity, so that the
+most stable and proven back ends are described first, and the most
+experimental and incomplete back ends are described last.</p>
+<p>The O module automatically enabled the <strong>-c</strong> flag to Perl, which
+prevents Perl from executing your code once it has been compiled.
+This is why all the back ends print:</p>
+<pre>
+  myperlprogram syntax OK</pre>
+<p>before producing any other output.</p>
+<p>
+</p>
+<h2><a name="the_cross_referencing_back_end">The Cross Referencing Back End</a></h2>
+<p>The cross referencing back end (B::Xref) produces a report on your program,
+breaking down declarations and uses of subroutines and variables (and
+formats) by file and subroutine.  For instance, here's part of the
+report from the <em>pod2man</em> program that comes with Perl:</p>
+<pre>
+  Subroutine clear_noremap
+    Package (lexical)
+      $ready_to_print   i1069, 1079
+    Package main
+      $&amp;                1086
+      $.                1086
+      $0                1086
+      $1                1087
+      $2                1085, 1085
+      $3                1085, 1085
+      $ARGV             1086
+      %HTML_Escapes     1085, 1085</pre>
+<p>This shows the variables used in the subroutine <code>clear_noremap</code>.  The
+variable <code>$ready_to_print</code> is a <code>my()</code> (lexical) variable,
+<strong>i</strong>ntroduced (first declared with <code>my())</code> on line 1069, and used on
+line 1079.  The variable <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&amp;</code></a> from the main package is used on 1086,
+and so on.</p>
+<p>A line number may be prefixed by a single letter:</p>
+<dl>
+<dt><strong><a name="item_i">i</a></strong>
+
+<dd>
+<p>Lexical variable introduced (declared with <code>my())</code> for the first time.</p>
+</dd>
+</li>
+<dt><strong><a name="item__26">&amp;</a></strong>
+
+<dd>
+<p>Subroutine or method call.</p>
+</dd>
+</li>
+<dt><strong><a name="item_s">s</a></strong>
+
+<dd>
+<p>Subroutine defined.</p>
+</dd>
+</li>
+<dt><strong><a name="item_r">r</a></strong>
+
+<dd>
+<p>Format defined.</p>
+</dd>
+</li>
+</dl>
+<p>The most useful option the cross referencer has is to save the report
+to a separate file.  For instance, to save the report on
+<em>myperlprogram</em> to the file <em>report</em>:</p>
+<pre>
+  $ perl -MO=Xref,-oreport myperlprogram</pre>
+<p>
+</p>
+<h2><a name="the_decompiling_back_end">The Decompiling Back End</a></h2>
+<p>The Deparse back end turns your Perl source back into Perl source.  It
+can reformat along the way, making it useful as a de-obfuscator.  The
+most basic way to use it is:</p>
+<pre>
+  $ perl -MO=Deparse myperlprogram</pre>
+<p>You'll notice immediately that Perl has no idea of how to paragraph
+your code.  You'll have to separate chunks of code from each other
+with newlines by hand.  However, watch what it will do with
+one-liners:</p>
+<pre>
+  $ perl -MO=Deparse -e '$op=shift||die &quot;usage: $0
+  code [...]&quot;;chomp(@ARGV=&lt;&gt;)unless@ARGV; for(@ARGV){$was=$_;eval$op;
+  die$@ if$@; rename$was,$_ unless$was eq $_}'
+  -e syntax OK
+  $op = shift @ARGV || die(&quot;usage: $0 code [...]&quot;);
+  chomp(@ARGV = &lt;ARGV&gt;) unless @ARGV;
+  foreach $_ (@ARGV) {
+      $was = $_;
+      eval $op;
+      die $@ if $@;
+      rename $was, $_ unless $was eq $_;
+  }</pre>
+<p>The decompiler has several options for the code it generates.  For
+instance, you can set the size of each indent from 4 (as above) to
+2 with:</p>
+<pre>
+  $ perl -MO=Deparse,-si2 myperlprogram</pre>
+<p>The <strong>-p</strong> option adds parentheses where normally they are omitted:</p>
+<pre>
+  $ perl -MO=Deparse -e 'print &quot;Hello, world\n&quot;'
+  -e syntax OK
+  print &quot;Hello, world\n&quot;;
+  $ perl -MO=Deparse,-p -e 'print &quot;Hello, world\n&quot;'
+  -e syntax OK
+  print(&quot;Hello, world\n&quot;);</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/B/B/Deparse.html">the B::Deparse manpage</a> for more information on the formatting options.</p>
+<p>
+</p>
+<h2><a name="the_lint_back_end">The Lint Back End</a></h2>
+<p>The lint back end (B::Lint) inspects programs for poor style.  One
+programmer's bad style is another programmer's useful tool, so options
+let you select what is complained about.</p>
+<p>To run the style checker across your source code:</p>
+<pre>
+  $ perl -MO=Lint myperlprogram</pre>
+<p>To disable context checks and undefined subroutines:</p>
+<pre>
+  $ perl -MO=Lint,-context,-undefined-subs myperlprogram</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/B/B/Lint.html">the B::Lint manpage</a> for information on the options.</p>
+<p>
+</p>
+<h2><a name="the_simple_c_back_end">The Simple C Back End</a></h2>
+<p>This module saves the internal compiled state of your Perl program
+to a C source file, which can be turned into a native executable
+for that particular platform using a C compiler.  The resulting
+program links against the Perl interpreter library, so it
+will not save you disk space (unless you build Perl with a shared
+library) or program size.  It may, however, save you startup time.</p>
+<p>The <code>perlcc</code> tool generates such executables by default.</p>
+<pre>
+  <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">perlcc</a> myperlprogram.pl</pre>
+<p>
+</p>
+<h2><a name="the_bytecode_back_end">The Bytecode Back End</a></h2>
+<p>This back end is only useful if you also have a way to load and
+execute the bytecode that it produces.  The ByteLoader module provides
+this functionality.</p>
+<p>To turn a Perl program into executable byte code, you can use <code>perlcc</code>
+with the <code>-B</code> switch:</p>
+<pre>
+  <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">perlcc</a> -B myperlprogram.pl</pre>
+<p>The byte code is machine independent, so once you have a compiled
+module or program, it is as portable as Perl source (assuming that
+the user of the module or program has a modern-enough Perl interpreter
+to decode the byte code).</p>
+<p>See <strong>B::Bytecode</strong> for information on options to control the
+optimization and nature of the code generated by the Bytecode module.</p>
+<p>
+</p>
+<h2><a name="the_optimized_c_back_end">The Optimized C Back End</a></h2>
+<p>The optimized C back end will turn your Perl program's run time
+code-path into an equivalent (but optimized) C program that manipulates
+the Perl data structures directly.  The program will still link against
+the Perl interpreter library, to allow for eval(), <code>s///e</code>,
+<code>require</code>, etc.</p>
+<p>The <code>perlcc</code> tool generates such executables when using the -O
+switch.  To compile a Perl program (ending in <code>.pl</code>
+or <code>.p</code>):</p>
+<pre>
+  <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">perlcc</a> -O myperlprogram.pl</pre>
+<p>To produce a shared library from a Perl module (ending in <code>.pm</code>):</p>
+<pre>
+  <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">perlcc</a> -O Myperlmodule.pm</pre>
+<p>For more information, see <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">the perlcc manpage</a> and <a href="/usr/lib/perl5/5.8/html/./ext/B/B/CC.html">the B::CC manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="module_list_for_the_compiler_suite">Module List for the Compiler Suite</a></h1>
+<dl>
+<dt><strong><a name="item_b">B</a></strong>
+
+<dd>
+<p>This module is the introspective (``reflective'' in Java terms)
+module, which allows a Perl program to inspect its innards.  The
+back end modules all use this module to gain access to the compiled
+parse tree.  You, the user of a back end module, will not need to
+interact with B.</p>
+</dd>
+</li>
+<dt><strong><a name="item_o">O</a></strong>
+
+<dd>
+<p>This module is the front-end to the compiler's back ends.  Normally
+called something like this:</p>
+</dd>
+<dd>
+<pre>
+  $ perl -MO=Deparse myperlprogram</pre>
+</dd>
+<dd>
+<p>This is like saying <code>use O 'Deparse'</code> in your Perl program.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3aasmdata">B::Asmdata</a></strong>
+
+<dd>
+<p>This module is used by the B::Assembler module, which is in turn used
+by the B::Bytecode module, which stores a parse-tree as
+bytecode for later loading.  It's not a back end itself, but rather a
+component of a back end.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3aassembler">B::Assembler</a></strong>
+
+<dd>
+<p>This module turns a parse-tree into data suitable for storing
+and later decoding back into a parse-tree.  It's not a back end
+itself, but rather a component of a back end.  It's used by the
+<em>assemble</em> program that produces bytecode.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3abblock">B::Bblock</a></strong>
+
+<dd>
+<p>This module is used by the B::CC back end.  It walks ``basic blocks''.
+A basic block is a series of operations which is known to execute from
+start to finish, with no possibility of branching or halting.</p>
+</dd>
+</li>
+<dt><strong>B::Bytecode</strong>
+
+<dd>
+<p>This module is a back end that generates bytecode from a
+program's parse tree.  This bytecode is written to a file, from where
+it can later be reconstructed back into a parse tree.  The goal is to
+do the expensive program compilation once, save the interpreter's
+state into a file, and then restore the state from the file when the
+program is to be executed.  See <a href="#the_bytecode_back_end">The Bytecode Back End</a>
+for details about usage.</p>
+</dd>
+</li>
+<dt><strong>B::C</strong>
+
+<dd>
+<p>This module writes out C code corresponding to the parse tree and
+other interpreter internal structures.  You compile the corresponding
+C file, and get an executable file that will restore the internal
+structures and the Perl interpreter will begin running the
+program.  See <a href="#the_simple_c_back_end">The Simple C Back End</a> for details about usage.</p>
+</dd>
+</li>
+<dt><strong>B::CC</strong>
+
+<dd>
+<p>This module writes out C code corresponding to your program's
+operations.  Unlike the B::C module, which merely stores the
+interpreter and its state in a C program, the B::CC module makes a
+C program that does not involve the interpreter.  As a consequence,
+programs translated into C by B::CC can execute faster than normal
+interpreted programs.  See <a href="#the_optimized_c_back_end">The Optimized C Back End</a> for
+details about usage.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3aconcise">B::Concise</a></strong>
+
+<dd>
+<p>This module prints a concise (but complete) version of the Perl parse
+tree.  Its output is more customizable than the one of B::Terse or
+B::Debug (and it can emulate them). This module useful for people who
+are writing their own back end, or who are learning about the Perl
+internals.  It's not useful to the average programmer.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3adebug">B::Debug</a></strong>
+
+<dd>
+<p>This module dumps the Perl parse tree in verbose detail to STDOUT.
+It's useful for people who are writing their own back end, or who
+are learning about the Perl internals.  It's not useful to the
+average programmer.</p>
+</dd>
+</li>
+<dt><strong>B::Deparse</strong>
+
+<dd>
+<p>This module produces Perl source code from the compiled parse tree.
+It is useful in debugging and deconstructing other people's code,
+also as a pretty-printer for your own source.  See
+<a href="#the_decompiling_back_end">The Decompiling Back End</a> for details about usage.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3adisassembler">B::Disassembler</a></strong>
+
+<dd>
+<p>This module turns bytecode back into a parse tree.  It's not a back
+end itself, but rather a component of a back end.  It's used by the
+<em>disassemble</em> program that comes with the bytecode.</p>
+</dd>
+</li>
+<dt><strong>B::Lint</strong>
+
+<dd>
+<p>This module inspects the compiled form of your source code for things
+which, while some people frown on them, aren't necessarily bad enough
+to justify a warning.  For instance, use of an array in scalar context
+without explicitly saying <code>scalar(@array)</code> is something that Lint
+can identify.  See <a href="#the_lint_back_end">The Lint Back End</a> for details about usage.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3ashowlex">B::Showlex</a></strong>
+
+<dd>
+<p>This module prints out the <code>my()</code> variables used in a function or a
+file.  To get a list of the <code>my()</code> variables used in the subroutine
+<code>mysub()</code> defined in the file myperlprogram:</p>
+</dd>
+<dd>
+<pre>
+  $ perl -MO=Showlex,mysub myperlprogram</pre>
+</dd>
+<dd>
+<p>To get a list of the <code>my()</code> variables used in the file myperlprogram:</p>
+</dd>
+<dd>
+<pre>
+  $ perl -MO=Showlex myperlprogram</pre>
+</dd>
+<dd>
+<p>[BROKEN]</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3astackobj">B::Stackobj</a></strong>
+
+<dd>
+<p>This module is used by the B::CC module.  It's not a back end itself,
+but rather a component of a back end.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3astash">B::Stash</a></strong>
+
+<dd>
+<p>This module is used by the <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">the perlcc manpage</a> program, which compiles a module
+into an executable.  B::Stash prints the symbol tables in use by a
+program, and is used to prevent B::CC from producing C code for the
+B::* and O modules.  It's not a back end itself, but rather a
+component of a back end.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b_3a_3aterse">B::Terse</a></strong>
+
+<dd>
+<p>This module prints the contents of the parse tree, but without as much
+information as B::Debug.  For comparison, <code>print &quot;Hello, world.&quot;</code>
+produced 96 lines of output from B::Debug, but only 6 from B::Terse.</p>
+</dd>
+<dd>
+<p>This module is useful for people who are writing their own back end,
+or who are learning about the Perl internals.  It's not useful to the
+average programmer.</p>
+</dd>
+</li>
+<dt><strong>B::Xref</strong>
+
+<dd>
+<p>This module prints a report on where the variables, subroutines, and
+formats are defined and used within a program and the modules it
+loads.  See <a href="#the_cross_referencing_back_end">The Cross Referencing Back End</a> for details about
+usage.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="known_problems">KNOWN PROBLEMS</a></h1>
+<p>The simple C backend currently only saves typeglobs with alphanumeric
+names.</p>
+<p>The optimized C backend outputs code for more modules than it should
+(e.g., DirHandle).  It also has little hope of properly handling
+<code>goto LABEL</code> outside the running subroutine (<code>goto &amp;sub</code> is okay).
+<code>goto LABEL</code> currently does not work at all in this backend.
+It also creates a huge initialization function that gives
+C compilers headaches.  Splitting the initialization function gives
+better results.  Other problems include: unsigned math does not
+work correctly; some opcodes are handled incorrectly by default
+opcode handling mechanism.</p>
+<p>BEGIN{} blocks are executed while compiling your code.  Any external
+state that is initialized in BEGIN{}, such as opening files, initiating
+database connections etc., do not behave properly.  To work around
+this, Perl has an INIT{} block that corresponds to code being executed
+before your program begins running but after your program has finished
+being compiled.  Execution order: BEGIN{}, (possible save of state
+through compiler back-end), INIT{}, program runs, END{}.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This document was originally written by Nathan Torkington, and is now
+maintained by the perl5-porters mailing list
+<em><a href="mailto:perl5-porters@perl.org">perl5-porters@perl.org</a></em>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlcompile - Introduction to the Perl Compiler-Translator</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

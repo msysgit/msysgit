@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>unpack - convert binary structure into normal perl variables</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;unpack - convert binary structure into normal perl variables</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>unpack - convert binary structure into normal perl variables</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>unpack TEMPLATE,EXPR
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>unpack</code> does the reverse of <code>pack</code>: it takes a string
+and expands it out into a list of values.
+(In scalar context, it returns merely the first value produced.)</p>
+<p>The string is broken into chunks described by the TEMPLATE.  Each chunk
+is converted separately to a value.  Typically, either the string is a result
+of <code>pack</code>, or the bytes of the string represent a C structure of some
+kind.</p>
+<p>The TEMPLATE has the same format as in the <code>pack</code> function.
+Here's a subroutine that does substring:</p>
+<pre>
+    sub substr {
+        my($what,$where,$howmuch) = @_;
+        unpack(&quot;x$where a$howmuch&quot;, $what);
+    }</pre>
+<p>and then there's</p>
+<pre>
+    sub ordinal { unpack(&quot;c&quot;,$_[0]); } # same as ord()</pre>
+<p>In addition to fields allowed in pack(), you may prefix a field with
+a %&lt;number&gt; to indicate that
+you want a &lt;number&gt;-bit checksum of the items instead of the items
+themselves.  Default is a 16-bit checksum.  Checksum is calculated by
+summing numeric values of expanded values (for string fields the sum of
+<code>ord($char)</code> is taken, for bit fields the sum of zeroes and ones).</p>
+<p>For example, the following
+computes the same number as the System V sum program:</p>
+<pre>
+    $checksum = do {
+        local $/;  # slurp!
+        unpack(&quot;%32C*&quot;,&lt;&gt;) % 65535;
+    };</pre>
+<p>The following efficiently counts the number of set bits in a bit vector:</p>
+<pre>
+    $setbits = unpack(&quot;%32b*&quot;, $selectmask);</pre>
+<p>The <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_p"><code>p</code></a> and <code>P</code> formats should be used with care.  Since Perl
+has no way of checking whether the value passed to <code>unpack()</code>
+corresponds to a valid memory location, passing a pointer value that's
+not known to be valid is likely to have disastrous consequences.</p>
+<p>If there are more pack codes or if the repeat count of a field or a group
+is larger than what the remainder of the input string allows, the result
+is not well defined: in some cases, the repeat count is decreased, or
+<code>unpack()</code> will produce null strings or zeroes, or terminate with an
+error. If the input string is longer than one described by the TEMPLATE,
+the rest is ignored.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/pack.html">pack in the perlfunc manpage</a> for more examples and notes.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;unpack - convert binary structure into normal perl variables</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

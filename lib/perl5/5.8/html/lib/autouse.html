@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>autouse - postpone load of modules until a function is used</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;autouse - postpone load of modules until a function is used</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#warning">WARNING</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>autouse - postpone load of modules until a function is used</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use autouse 'Carp' =&gt; qw(carp croak);
+  carp &quot;this carp was predeclared and autoused &quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>If the module <code>Module</code> is already loaded, then the declaration</p>
+<pre>
+  use autouse 'Module' =&gt; qw(func1 func2($;$));</pre>
+<p>is equivalent to</p>
+<pre>
+  use Module qw(func1 func2);</pre>
+<p>if <code>Module</code> defines <code>func2()</code> with prototype <code>($;$)</code>, and <code>func1()</code> has
+no prototypes.  (At least if <code>Module</code> uses <code>Exporter</code>'s <code>import</code>,
+otherwise it is a fatal error.)</p>
+<p>If the module <code>Module</code> is not loaded yet, then the above declaration
+declares functions <code>func1()</code> and <code>func2()</code> in the current package.  When
+these functions are called, they load the package <code>Module</code> if needed,
+and substitute themselves with the correct definitions.</p>
+<p>
+</p>
+<hr />
+<h1><a name="warning">WARNING</a></h1>
+<p>Using <code>autouse</code> will move important steps of your program's execution
+from compile time to runtime.  This can</p>
+<ul>
+<li>
+<p>Break the execution of your program if the module you <code>autouse</code>d has
+some initialization which it expects to be done early.</p>
+</li>
+<li>
+<p>hide bugs in your code since important checks (like correctness of
+prototypes) is moved from compile time to runtime.  In particular, if
+the prototype you specified on <code>autouse</code> line is wrong, you will not
+find it out until the corresponding function is executed.  This will be
+very unfortunate for functions which are not always called (note that
+for such functions <code>autouse</code>ing gives biggest win, for a workaround
+see below).</p>
+</li>
+</ul>
+<p>To alleviate the second problem (partially) it is advised to write
+your scripts like this:</p>
+<pre>
+  use Module;
+  use autouse Module =&gt; qw(carp($) croak(&amp;$));
+  carp &quot;this carp was predeclared and autoused &quot;;</pre>
+<p>The first line ensures that the errors in your argument specification
+are found early.  When you ship your application you should comment
+out the first line, since it makes the second one useless.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Ilya Zakharevich (<a href="mailto:ilya@math.ohio-state.edu">ilya@math.ohio-state.edu</a>)</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>perl(1).</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;autouse - postpone load of modules until a function is used</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

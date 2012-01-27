@@ -1,0 +1,257 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>constant - Perl pragma to declare constants</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;constant - Perl pragma to declare constants</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<ul>
+
+		<li><a href="#list_constants">List constants</a></li>
+		<li><a href="#defining_multiple_constants_at_once">Defining multiple constants at once</a></li>
+		<li><a href="#magic_constants">Magic constants</a></li>
+	</ul>
+
+	<li><a href="#technical_notes">TECHNICAL NOTES</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>constant - Perl pragma to declare constants</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use constant PI    =&gt; 4 * atan2(1, 1);
+    use constant DEBUG =&gt; 0;</pre>
+<pre>
+    print &quot;Pi equals &quot;, PI, &quot;...\n&quot; if DEBUG;</pre>
+<pre>
+    use constant {
+        SEC   =&gt; 0,
+        MIN   =&gt; 1,
+        HOUR  =&gt; 2,
+        MDAY  =&gt; 3,
+        MON   =&gt; 4,
+        YEAR  =&gt; 5,
+        WDAY  =&gt; 6,
+        YDAY  =&gt; 7,
+        ISDST =&gt; 8,
+    };</pre>
+<pre>
+    use constant WEEKDAYS =&gt; qw(
+        Sunday Monday Tuesday Wednesday Thursday Friday Saturday
+    );</pre>
+<pre>
+    print &quot;Today is &quot;, (WEEKDAYS)[ (localtime)[WDAY] ], &quot;.\n&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This will declare a symbol to be a constant with the given value.</p>
+<p>When you declare a constant such as <code>PI</code> using the method shown
+above, each machine your script runs upon can have as many digits
+of accuracy as it can use. Also, your program will be easier to
+read, more likely to be maintained (and maintained correctly), and
+far less likely to send a space probe to the wrong planet because
+nobody noticed the one equation in which you wrote <code>3.14195</code>.</p>
+<p>When a constant is used in an expression, perl replaces it with its
+value at compile time, and may then optimize the expression further.
+In particular, any code in an <code>if (CONSTANT)</code> block will be optimized
+away if the constant is false.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>As with all <code>use</code> directives, defining a constant happens at
+compile time. Thus, it's probably not correct to put a constant
+declaration inside of a conditional statement (like <code>if ($foo)
+{ use constant ... }</code>).</p>
+<p>Constants defined using this module cannot be interpolated into
+strings like variables.  However, concatenation works just fine:</p>
+<pre>
+    print &quot;Pi equals PI...\n&quot;;        # WRONG: does not expand &quot;PI&quot;
+    print &quot;Pi equals &quot;.PI.&quot;...\n&quot;;    # right</pre>
+<p>Even though a reference may be declared as a constant, the reference may
+point to data which may be changed, as this code shows.</p>
+<pre>
+    use constant ARRAY =&gt; [ 1,2,3,4 ];
+    print ARRAY-&gt;[1];
+    ARRAY-&gt;[1] = &quot; be changed&quot;;
+    print ARRAY-&gt;[1];</pre>
+<p>Dereferencing constant references incorrectly (such as using an array
+subscript on a constant hash reference, or vice versa) will be trapped at
+compile time.</p>
+<p>Constants belong to the package they are defined in.  To refer to a
+constant defined in another package, specify the full package name, as
+in <code>Some::Package::CONSTANT</code>.  Constants may be exported by modules,
+and may also be called as either class or instance methods, that is,
+as <code>Some::Package-&gt;CONSTANT</code> or as <code>$obj-&gt;CONSTANT</code> where
+<code>$obj</code> is an instance of <code>Some::Package</code>.  Subclasses may define
+their own constants to override those in their base class.</p>
+<p>The use of all caps for constant names is merely a convention,
+although it is recommended in order to make constants stand out
+and to help avoid collisions with other barewords, keywords, and
+subroutine names. Constant names must begin with a letter or
+underscore. Names beginning with a double underscore are reserved. Some
+poor choices for names will generate warnings, if warnings are enabled at
+compile time.</p>
+<p>
+</p>
+<h2><a name="list_constants">List constants</a></h2>
+<p>Constants may be lists of more (or less) than one value.  A constant
+with no values evaluates to <code>undef</code> in scalar context.  Note that
+constants with more than one value do <em>not</em> return their last value in
+scalar context as one might expect.  They currently return the number
+of values, but <strong>this may change in the future</strong>.  Do not use constants
+with multiple values in scalar context.</p>
+<p><strong>NOTE:</strong> This implies that the expression defining the value of a
+constant is evaluated in list context.  This may produce surprises:</p>
+<pre>
+    use constant TIMESTAMP =&gt; localtime;                # WRONG!
+    use constant TIMESTAMP =&gt; scalar localtime;         # right</pre>
+<p>The first line above defines <code>TIMESTAMP</code> as a 9-element list, as
+returned by <code>localtime()</code> in list context.  To set it to the string
+returned by <code>localtime()</code> in scalar context, an explicit <code>scalar</code>
+keyword is required.</p>
+<p>List constants are lists, not arrays.  To index or slice them, they
+must be placed in parentheses.</p>
+<pre>
+    my @workdays = WEEKDAYS[1 .. 5];            # WRONG!
+    my @workdays = (WEEKDAYS)[1 .. 5];          # right</pre>
+<p>
+</p>
+<h2><a name="defining_multiple_constants_at_once">Defining multiple constants at once</a></h2>
+<p>Instead of writing multiple <code>use constant</code> statements, you may define
+multiple constants in a single statement by giving, instead of the
+constant name, a reference to a hash where the keys are the names of
+the constants to be defined.  Obviously, all constants defined using
+this method must have a single value.</p>
+<pre>
+    use constant {
+        FOO =&gt; &quot;A single value&quot;,
+        BAR =&gt; &quot;This&quot;, &quot;won't&quot;, &quot;work!&quot;,        # Error!
+    };</pre>
+<p>This is a fundamental limitation of the way hashes are constructed in
+Perl.  The error messages produced when this happens will often be
+quite cryptic -- in the worst case there may be none at all, and
+you'll only later find that something is broken.</p>
+<p>When defining multiple constants, you cannot use the values of other
+constants defined in the same declaration.  This is because the
+calling package doesn't know about any constant within that group
+until <em>after</em> the <code>use</code> statement is finished.</p>
+<pre>
+    use constant {
+        BITMASK =&gt; 0xAFBAEBA8,
+        NEGMASK =&gt; ~BITMASK,                    # Error!
+    };</pre>
+<p>
+</p>
+<h2><a name="magic_constants">Magic constants</a></h2>
+<p>Magical values and references can be made into constants at compile
+time, allowing for way cool stuff like this.  (These error numbers
+aren't totally portable, alas.)</p>
+<pre>
+    use constant E2BIG =&gt; ($! = 7);
+    print   E2BIG, &quot;\n&quot;;        # something like &quot;Arg list too long&quot;
+    print 0+E2BIG, &quot;\n&quot;;        # &quot;7&quot;</pre>
+<p>You can't produce a tied constant by giving a tied scalar as the
+value.  References to tied variables, however, can be used as
+constants without any problems.</p>
+<p>
+</p>
+<hr />
+<h1><a name="technical_notes">TECHNICAL NOTES</a></h1>
+<p>In the current implementation, scalar constants are actually
+inlinable subroutines. As of version 5.004 of Perl, the appropriate
+scalar constant is inserted directly in place of some subroutine
+calls, thereby saving the overhead of a subroutine call. See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html#constant_functions">Constant Functions in the perlsub manpage</a> for details about how and when this
+happens.</p>
+<p>In the rare case in which you need to discover at run time whether a
+particular constant has been declared via this module, you may use
+this function to examine the hash <code>%constant::declared</code>. If the given
+constant name does not include a package name, the current package is
+used.</p>
+<pre>
+    sub declared ($) {
+        use constant 1.01;              # don't omit this!
+        my $name = shift;
+        $name =~ s/^::/main::/;
+        my $pkg = caller;
+        my $full_name = $name =~ /::/ ? $name : &quot;${pkg}::$name&quot;;
+        $constant::declared{$full_name};
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>In the current version of Perl, list constants are not inlined
+and some symbols may be redefined without generating a warning.</p>
+<p>It is not possible to have a subroutine or a keyword with the same
+name as a constant in the same package. This is probably a Good Thing.</p>
+<p>A constant with a name in the list <code>STDIN STDOUT STDERR ARGV ARGVOUT
+ENV INC SIG</code> is not allowed anywhere but in package <code>main::</code>, for
+technical reasons.</p>
+<p>Unlike constants in some languages, these cannot be overridden
+on the command line or via environment variables.</p>
+<p>You can get into trouble if you use constants in a context which
+automatically quotes barewords (as is true for any subroutine call).
+For example, you can't say <code>$hash{CONSTANT}</code> because <code>CONSTANT</code> will
+be interpreted as a string.  Use <code>$hash{CONSTANT()}</code> or
+<code>$hash{+CONSTANT}</code> to prevent the bareword quoting mechanism from
+kicking in.  Similarly, since the <code>=&gt;</code> operator quotes a bareword
+immediately to its left, you have to say <code>CONSTANT() =&gt; 'value'</code>
+(or simply use a comma in place of the big arrow) instead of
+<code>CONSTANT =&gt; 'value'</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tom Phoenix, &lt;<em><a href="mailto:rootbeer@redcat.com">rootbeer@redcat.com</a></em>&gt;, with help from
+many other folks.</p>
+<p>Multiple constant declarations at once added by Casey West,
+&lt;<em><a href="mailto:casey@geeknest.com">casey@geeknest.com</a></em>&gt;.</p>
+<p>Documentation mostly rewritten by Ilmari Karonen,
+&lt;<em><a href="mailto:perl@itz.pp.sci.fi">perl@itz.pp.sci.fi</a></em>&gt;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (C) 1997, 1999 Tom Phoenix</p>
+<p>This module is free software; you can redistribute it or modify it
+under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;constant - Perl pragma to declare constants</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

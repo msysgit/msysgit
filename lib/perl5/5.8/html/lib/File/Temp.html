@@ -1,0 +1,921 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File::Temp - return name and handle of a temporary file safely</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Temp - return name and handle of a temporary file safely</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#portability">PORTABILITY</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#objectoriented_interface">OBJECT-ORIENTED INTERFACE</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<li><a href="#mktemp_functions">MKTEMP FUNCTIONS</a></li>
+	<li><a href="#posix_functions">POSIX FUNCTIONS</a></li>
+	<li><a href="#additional_functions">ADDITIONAL FUNCTIONS</a></li>
+	<li><a href="#utility_functions">UTILITY FUNCTIONS</a></li>
+	<li><a href="#package_variables">PACKAGE VARIABLES</a></li>
+	<li><a href="#warning">WARNING</a></li>
+	<ul>
+
+		<li><a href="#temporary_files_and_nfs">Temporary files and NFS</a></li>
+		<li><a href="#forking">Forking</a></li>
+		<li><a href="#binmode">BINMODE</a></li>
+	</ul>
+
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>File::Temp - return name and handle of a temporary file safely</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use File::Temp qw/ tempfile tempdir /;</pre>
+<pre>
+  $fh = tempfile();
+  ($fh, $filename) = tempfile();</pre>
+<pre>
+  ($fh, $filename) = tempfile( $template, DIR =&gt; $dir);
+  ($fh, $filename) = tempfile( $template, SUFFIX =&gt; '.dat');</pre>
+<pre>
+  $dir = tempdir( CLEANUP =&gt; 1 );
+  ($fh, $filename) = tempfile( DIR =&gt; $dir );</pre>
+<p>Object interface:</p>
+<pre>
+  require File::Temp;
+  use File::Temp ();</pre>
+<pre>
+  $fh = new File::Temp($template);
+  $fname = $fh-&gt;filename;</pre>
+<pre>
+  $tmp = new File::Temp( UNLINK =&gt; 0, SUFFIX =&gt; '.dat' );
+  print $tmp &quot;Some data\n&quot;;
+  print &quot;Filename is $tmp\n&quot;;</pre>
+<p>The following interfaces are provided for compatibility with
+existing APIs. They should not be used in new code.</p>
+<p>MkTemp family:</p>
+<pre>
+  use File::Temp qw/ :mktemp  /;</pre>
+<pre>
+  ($fh, $file) = mkstemp( &quot;tmpfileXXXXX&quot; );
+  ($fh, $file) = mkstemps( &quot;tmpfileXXXXXX&quot;, $suffix);</pre>
+<pre>
+  $tmpdir = mkdtemp( $template );</pre>
+<pre>
+  $unopened_file = mktemp( $template );</pre>
+<p>POSIX functions:</p>
+<pre>
+  use File::Temp qw/ :POSIX /;</pre>
+<pre>
+  $file = tmpnam();
+  $fh = tmpfile();</pre>
+<pre>
+  ($fh, $file) = tmpnam();</pre>
+<p>Compatibility functions:</p>
+<pre>
+  $unopened_file = File::Temp::tempnam( $dir, $pfx );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>File::Temp</code> can be used to create and open temporary files in a safe
+way.  There is both a function interface and an object-oriented
+interface.  The File::Temp constructor or the <a href="#item_tempfile"><code>tempfile()</code></a> function can
+be used to return the name and the open filehandle of a temporary
+file.  The <a href="#item_tempdir"><code>tempdir()</code></a> function can be used to create a temporary
+directory.</p>
+<p>The security aspect of temporary file creation is emphasized such that
+a filehandle and filename are returned together.  This helps guarantee
+that a race condition can not occur where the temporary file is
+created by another process between checking for the existence of the
+file and its opening.  Additional security levels are provided to
+check, for example, that the sticky bit is set on world writable
+directories.  See <a href="#item_safe_level">safe_level</a> for more information.</p>
+<p>For compatibility with popular C library functions, Perl implementations of
+the <a href="#item_mkstemp"><code>mkstemp()</code></a> family of functions are provided. These are, mkstemp(),
+mkstemps(), <a href="#item_mkdtemp"><code>mkdtemp()</code></a> and mktemp().</p>
+<p>Additionally, implementations of the standard <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">POSIX</a>
+<a href="#item_tmpnam"><code>tmpnam()</code></a> and <a href="#item_tmpfile"><code>tmpfile()</code></a> functions are provided if required.</p>
+<p>Implementations of mktemp(), tmpnam(), and <a href="#item_tempnam"><code>tempnam()</code></a> are provided,
+but should be used with caution since they return only a filename
+that was valid when function was called, so cannot guarantee
+that the file will not exist by the time the caller opens the filename.</p>
+<p>
+</p>
+<hr />
+<h1><a name="objectoriented_interface">OBJECT-ORIENTED INTERFACE</a></h1>
+<p>This is the primary interface for interacting with
+<code>File::Temp</code>. Using the OO interface a temporary file can be created
+when the object is constructed and the file can be removed when the
+object is no longer required.</p>
+<p>Note that there is no method to obtain the filehandle from the
+<code>File::Temp</code> object. The object itself acts as a filehandle. Also,
+the object is configured such that it stringifies to the name of the
+temporary file.</p>
+<dl>
+<dt><strong><a name="item_new"><strong>new</strong></a></strong>
+
+<dd>
+<p>Create a temporary file object.</p>
+</dd>
+<dd>
+<pre>
+  my $tmp = new File::Temp();</pre>
+</dd>
+<dd>
+<p>by default the object is constructed as if <a href="#item_tempfile"><code>tempfile</code></a>
+was called without options, but with the additional behaviour
+that the temporary file is removed by the object destructor
+if UNLINK is set to true (the default).</p>
+</dd>
+<dd>
+<p>Supported arguments are the same as for <a href="#item_tempfile"><code>tempfile</code></a>: UNLINK
+(defaulting to true), DIR and SUFFIX. Additionally, the filename
+template is specified using the TEMPLATE option. The OPEN option
+is not supported (the file is always opened).</p>
+</dd>
+<dd>
+<pre>
+ $tmp = new File::Temp( TEMPLATE =&gt; 'tempXXXXX',
+                        DIR =&gt; 'mydir',
+                        SUFFIX =&gt; '.dat');</pre>
+</dd>
+<dd>
+<p>Arguments are case insensitive.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filename"><strong>filename</strong></a></strong>
+
+<dd>
+<p>Return the name of the temporary file associated with this object.</p>
+</dd>
+<dd>
+<pre>
+  $filename = $tmp-&gt;filename;</pre>
+</dd>
+<dd>
+<p>This method is called automatically when the object is used as
+a string.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unlink_on_destroy"><strong>unlink_on_destroy</strong></a></strong>
+
+<dd>
+<p>Control whether the file is unlinked when the object goes out of scope.
+The file is removed if this value is true and $KEEP_ALL is not.</p>
+</dd>
+<dd>
+<pre>
+ $fh-&gt;unlink_on_destroy( 1 );</pre>
+</dd>
+<dd>
+<p>Default is for the file to be removed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_destroy"><strong>DESTROY</strong></a></strong>
+
+<dd>
+<p>When the object goes out of scope, the destructor is called. This
+destructor will attempt to unlink the file (using <a href="#item_unlink1"><code>unlink1</code></a>)
+if the constructor was called with UNLINK set to 1 (the default state
+if UNLINK is not specified).</p>
+</dd>
+<dd>
+<p>No error is given if the unlink fails.</p>
+</dd>
+<dd>
+<p>If the global variable $KEEP_ALL is true, the file will not be removed.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>This section describes the recommended interface for generating
+temporary files and directories.</p>
+<dl>
+<dt><strong><a name="item_tempfile"><strong>tempfile</strong></a></strong>
+
+<dd>
+<p>This is the basic function to generate temporary files.
+The behaviour of the file can be changed using various options:</p>
+</dd>
+<dd>
+<pre>
+  $fh = tempfile();
+  ($fh, $filename) = tempfile();</pre>
+</dd>
+<dd>
+<p>Create a temporary file in  the directory specified for temporary
+files, as specified by the <code>tmpdir()</code> function in <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html">the File::Spec manpage</a>.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $filename) = tempfile($template);</pre>
+</dd>
+<dd>
+<p>Create a temporary file in the current directory using the supplied
+template.  Trailing `X' characters are replaced with random letters to
+generate the filename.  At least four `X' characters must be present
+at the end of the template.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $filename) = tempfile($template, SUFFIX =&gt; $suffix)</pre>
+</dd>
+<dd>
+<p>Same as previously, except that a suffix is added to the template
+after the `X' translation.  Useful for ensuring that a temporary
+filename has a particular extension when needed by other applications.
+But see the WARNING at the end.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $filename) = tempfile($template, DIR =&gt; $dir);</pre>
+</dd>
+<dd>
+<p>Translates the template as before except that a directory name
+is specified.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $filename) = tempfile($template, UNLINK =&gt; 1);</pre>
+</dd>
+<dd>
+<p>Return the filename and filehandle as before except that the file is
+automatically removed when the program exits (dependent on
+$KEEP_ALL). Default is for the file to be removed if a file handle is
+requested and to be kept if the filename is requested. In a scalar
+context (where no filename is returned) the file is always deleted
+either (depending on the operating system) on exit or when it is
+closed (unless $KEEP_ALL is true when the temp file is created).</p>
+</dd>
+<dd>
+<p>Use the object-oriented interface if fine-grained control of when
+a file is removed is required.</p>
+</dd>
+<dd>
+<p>If the template is not specified, a template is always
+automatically generated. This temporary file is placed in <code>tmpdir()</code>
+(<a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html">the File::Spec manpage</a>) unless a directory is specified explicitly with the
+DIR option.</p>
+</dd>
+<dd>
+<pre>
+  $fh = tempfile( $template, DIR =&gt; $dir );</pre>
+</dd>
+<dd>
+<p>If called in scalar context, only the filehandle is returned and the
+file will automatically be deleted when closed on operating systems
+that support this (see the description of <a href="#item_tmpfile"><code>tmpfile()</code></a> elsewhere in this
+document).  This is the preferred mode of operation, as if you only
+have a filehandle, you can never create a race condition by fumbling
+with the filename. On systems that can not unlink an open file or can
+not mark a file as temporary when it is opened (for example, Windows
+NT uses the <code>O_TEMPORARY</code> flag) the file is marked for deletion when
+the program ends (equivalent to setting UNLINK to 1). The <code>UNLINK</code>
+flag is ignored if present.</p>
+</dd>
+<dd>
+<pre>
+  (undef, $filename) = tempfile($template, OPEN =&gt; 0);</pre>
+</dd>
+<dd>
+<p>This will return the filename based on the template but
+will not open this file.  Cannot be used in conjunction with
+UNLINK set to true. Default is to always open the file
+to protect from possible race conditions. A warning is issued
+if warnings are turned on. Consider using the <a href="#item_tmpnam"><code>tmpnam()</code></a>
+and <a href="#item_mktemp"><code>mktemp()</code></a> functions described elsewhere in this document
+if opening the file is not required.</p>
+</dd>
+<dd>
+<p>Options can be combined as required.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tempdir"><strong>tempdir</strong></a></strong>
+
+<dd>
+<p>This is the recommended interface for creation of temporary directories.
+The behaviour of the function depends on the arguments:</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir();</pre>
+</dd>
+<dd>
+<p>Create a directory in <code>tmpdir()</code> (see <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html">File::Spec</a>).</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir( $template );</pre>
+</dd>
+<dd>
+<p>Create a directory from the supplied template. This template is
+similar to that described for tempfile(). `X' characters at the end
+of the template are replaced with random letters to construct the
+directory name. At least four `X' characters must be in the template.</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir ( DIR =&gt; $dir );</pre>
+</dd>
+<dd>
+<p>Specifies the directory to use for the temporary directory.
+The temporary directory name is derived from an internal template.</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir ( $template, DIR =&gt; $dir );</pre>
+</dd>
+<dd>
+<p>Prepend the supplied directory name to the template. The template
+should not include parent directory specifications itself. Any parent
+directory specifications are removed from the template before
+prepending the supplied directory.</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir ( $template, TMPDIR =&gt; 1 );</pre>
+</dd>
+<dd>
+<p>Using the supplied template, create the temporary directory in
+a standard location for temporary files. Equivalent to doing</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir ( $template, DIR =&gt; File::Spec-&gt;tmpdir);</pre>
+</dd>
+<dd>
+<p>but shorter. Parent directory specifications are stripped from the
+template itself. The <code>TMPDIR</code> option is ignored if <code>DIR</code> is set
+explicitly.  Additionally, <code>TMPDIR</code> is implied if neither a template
+nor a directory are supplied.</p>
+</dd>
+<dd>
+<pre>
+  $tempdir = tempdir( $template, CLEANUP =&gt; 1);</pre>
+</dd>
+<dd>
+<p>Create a temporary directory using the supplied template, but
+attempt to remove it (and all files inside it) when the program
+exits. Note that an attempt will be made to remove all files from
+the directory even if they were not created by this module (otherwise
+why ask to clean it up?). The directory removal is made with
+the <code>rmtree()</code> function from the <a href="/usr/lib/perl5/5.8/html/./lib/File/Path.html">File::Path</a> module.
+Of course, if the template is not specified, the temporary directory
+will be created in <code>tmpdir()</code> and will also be removed at program exit.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="mktemp_functions">MKTEMP FUNCTIONS</a></h1>
+<p>The following functions are Perl implementations of the
+<a href="#item_mktemp"><code>mktemp()</code></a> family of temp file generation system calls.</p>
+<dl>
+<dt><strong><a name="item_mkstemp"><strong>mkstemp</strong></a></strong>
+
+<dd>
+<p>Given a template, returns a filehandle to the temporary file and the name
+of the file.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $name) = mkstemp( $template );</pre>
+</dd>
+<dd>
+<p>In scalar context, just the filehandle is returned.</p>
+</dd>
+<dd>
+<p>The template may be any filename with some number of X's appended
+to it, for example <em>/tmp/temp.XXXX</em>. The trailing X's are replaced
+with unique alphanumeric combinations.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mkstemps"><strong>mkstemps</strong></a></strong>
+
+<dd>
+<p>Similar to mkstemp(), except that an extra argument can be supplied
+with a suffix to be appended to the template.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $name) = mkstemps( $template, $suffix );</pre>
+</dd>
+<dd>
+<p>For example a template of <code>testXXXXXX</code> and suffix of <code>.dat</code>
+would generate a file similar to <em>testhGji_w.dat</em>.</p>
+</dd>
+<dd>
+<p>Returns just the filehandle alone when called in scalar context.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mkdtemp"><strong>mkdtemp</strong></a></strong>
+
+<dd>
+<p>Create a directory from a template. The template must end in
+X's that are replaced by the routine.</p>
+</dd>
+<dd>
+<pre>
+  $tmpdir_name = mkdtemp($template);</pre>
+</dd>
+<dd>
+<p>Returns the name of the temporary directory created.
+Returns undef on failure.</p>
+</dd>
+<dd>
+<p>Directory must be removed by the caller.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mktemp"><strong>mktemp</strong></a></strong>
+
+<dd>
+<p>Returns a valid temporary filename but does not guarantee
+that the file will not be opened by someone else.</p>
+</dd>
+<dd>
+<pre>
+  $unopened_file = mktemp($template);</pre>
+</dd>
+<dd>
+<p>Template is the same as that required by mkstemp().</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="posix_functions">POSIX FUNCTIONS</a></h1>
+<p>This section describes the re-implementation of the <a href="#item_tmpnam"><code>tmpnam()</code></a>
+and <a href="#item_tmpfile"><code>tmpfile()</code></a> functions described in <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">the POSIX manpage</a>
+using the <a href="#item_mkstemp"><code>mkstemp()</code></a> from this module.</p>
+<p>Unlike the <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">POSIX</a> implementations, the directory used
+for the temporary file is not specified in a system include
+file (<code>P_tmpdir</code>) but simply depends on the choice of <code>tmpdir()</code>
+returned by <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html">File::Spec</a>. On some implementations this
+location can be set using the <code>TMPDIR</code> environment variable, which
+may not be secure.
+If this is a problem, simply use <a href="#item_mkstemp"><code>mkstemp()</code></a> and specify a template.</p>
+<dl>
+<dt><strong><a name="item_tmpnam"><strong>tmpnam</strong></a></strong>
+
+<dd>
+<p>When called in scalar context, returns the full name (including path)
+of a temporary file (uses mktemp()). The only check is that the file does
+not already exist, but there is no guarantee that that condition will
+continue to apply.</p>
+</dd>
+<dd>
+<pre>
+  $file = tmpnam();</pre>
+</dd>
+<dd>
+<p>When called in list context, a filehandle to the open file and
+a filename are returned. This is achieved by calling <a href="#item_mkstemp"><code>mkstemp()</code></a>
+after constructing a suitable template.</p>
+</dd>
+<dd>
+<pre>
+  ($fh, $file) = tmpnam();</pre>
+</dd>
+<dd>
+<p>If possible, this form should be used to prevent possible
+race conditions.</p>
+</dd>
+<dd>
+<p>See <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html#tmpdir">tmpdir in the File::Spec manpage</a> for information on the choice of temporary
+directory for a particular operating system.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmpfile"><strong>tmpfile</strong></a></strong>
+
+<dd>
+<p>Returns the filehandle of a temporary file.</p>
+</dd>
+<dd>
+<pre>
+  $fh = tmpfile();</pre>
+</dd>
+<dd>
+<p>The file is removed when the filehandle is closed or when the program
+exits. No access to the filename is provided.</p>
+</dd>
+<dd>
+<p>If the temporary file can not be created undef is returned.
+Currently this command will probably not work when the temporary
+directory is on an NFS file system.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="additional_functions">ADDITIONAL FUNCTIONS</a></h1>
+<p>These functions are provided for backwards compatibility
+with common tempfile generation C library functions.</p>
+<p>They are not exported and must be addressed using the full package
+name.</p>
+<dl>
+<dt><strong><a name="item_tempnam"><strong>tempnam</strong></a></strong>
+
+<dd>
+<p>Return the name of a temporary file in the specified directory
+using a prefix. The file is guaranteed not to exist at the time
+the function was called, but such guarantees are good for one
+clock tick only.  Always use the proper form of <code>sysopen</code>
+with <code>O_CREAT | O_EXCL</code> if you must open such a filename.</p>
+</dd>
+<dd>
+<pre>
+  $filename = File::Temp::tempnam( $dir, $prefix );</pre>
+</dd>
+<dd>
+<p>Equivalent to running <a href="#item_mktemp"><code>mktemp()</code></a> with $dir/$prefixXXXXXXXX
+(using unix file convention as an example)</p>
+</dd>
+<dd>
+<p>Because this function uses mktemp(), it can suffer from race conditions.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="utility_functions">UTILITY FUNCTIONS</a></h1>
+<p>Useful functions for dealing with the filehandle and filename.</p>
+<dl>
+<dt><strong><a name="item_unlink0"><strong>unlink0</strong></a></strong>
+
+<dd>
+<p>Given an open filehandle and the associated filename, make a safe
+unlink. This is achieved by first checking that the filename and
+filehandle initially point to the same file and that the number of
+links to the file is 1 (all fields returned by <code>stat()</code> are compared).
+Then the filename is unlinked and the filehandle checked once again to
+verify that the number of links on that file is now 0.  This is the
+closest you can come to making sure that the filename unlinked was the
+same as the file whose descriptor you hold.</p>
+</dd>
+<dd>
+<pre>
+  unlink0($fh, $path)
+     or die &quot;Error unlinking file $path safely&quot;;</pre>
+</dd>
+<dd>
+<p>Returns false on error. The filehandle is not closed since on some
+occasions this is not required.</p>
+</dd>
+<dd>
+<p>On some platforms, for example Windows NT, it is not possible to
+unlink an open file (the file must be closed first). On those
+platforms, the actual unlinking is deferred until the program ends and
+good status is returned. A check is still performed to make sure that
+the filehandle and filename are pointing to the same thing (but not at
+the time the end block is executed since the deferred removal may not
+have access to the filehandle).</p>
+</dd>
+<dd>
+<p>Additionally, on Windows NT not all the fields returned by <code>stat()</code> can
+be compared. For example, the <code>dev</code> and <code>rdev</code> fields seem to be
+different.  Also, it seems that the size of the file returned by <code>stat()</code>
+does not always agree, with <code>stat(FH)</code> being more accurate than
+<code>stat(filename)</code>, presumably because of caching issues even when
+using autoflush (this is usually overcome by waiting a while after
+writing to the tempfile before attempting to <a href="#item_unlink0"><code>unlink0</code></a> it).</p>
+</dd>
+<dd>
+<p>Finally, on NFS file systems the link count of the file handle does
+not always go to zero immediately after unlinking. Currently, this
+command is expected to fail on NFS disks.</p>
+</dd>
+<dd>
+<p>This function is disabled if the global variable $KEEP_ALL is true
+and an unlink on open file is supported. If the unlink is to be deferred
+to the END block, the file is still registered for removal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cmpstat"><strong>cmpstat</strong></a></strong>
+
+<dd>
+<p>Compare <code>stat</code> of filehandle with <code>stat</code> of provided filename.  This
+can be used to check that the filename and filehandle initially point
+to the same file and that the number of links to the file is 1 (all
+fields returned by <code>stat()</code> are compared).</p>
+</dd>
+<dd>
+<pre>
+  cmpstat($fh, $path)
+     or die &quot;Error comparing handle with file&quot;;</pre>
+</dd>
+<dd>
+<p>Returns false if the stat information differs or if the link count is
+greater than 1.</p>
+</dd>
+<dd>
+<p>On certain platofms, eg Windows, not all the fields returned by <code>stat()</code>
+can be compared. For example, the <code>dev</code> and <code>rdev</code> fields seem to be
+different in Windows.  Also, it seems that the size of the file
+returned by <code>stat()</code> does not always agree, with <code>stat(FH)</code> being more
+accurate than <code>stat(filename)</code>, presumably because of caching issues
+even when using autoflush (this is usually overcome by waiting a while
+after writing to the tempfile before attempting to <a href="#item_unlink0"><code>unlink0</code></a> it).</p>
+</dd>
+<dd>
+<p>Not exported by default.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unlink1"><strong>unlink1</strong></a></strong>
+
+<dd>
+<p>Similar to <a href="#item_unlink0"><code>unlink0</code></a> except after file comparison using cmpstat, the
+filehandle is closed prior to attempting to unlink the file. This
+allows the file to be removed without using an END block, but does
+mean that the post-unlink comparison of the filehandle state provided
+by <a href="#item_unlink0"><code>unlink0</code></a> is not available.</p>
+</dd>
+<dd>
+<pre>
+  unlink1($fh, $path)
+     or die &quot;Error closing and unlinking file&quot;;</pre>
+</dd>
+<dd>
+<p>Usually called from the object destructor when using the OO interface.</p>
+</dd>
+<dd>
+<p>Not exported by default.</p>
+</dd>
+<dd>
+<p>This function is disabled if the global variable $KEEP_ALL is true.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cleanup"><strong>cleanup</strong></a></strong>
+
+<dd>
+<p>Calling this function will cause any temp files or temp directories
+that are registered for removal to be removed. This happens automatically
+when the process exits but can be triggered manually if the caller is sure
+that none of the temp files are required. This method can be registered as
+an Apache callback.</p>
+</dd>
+<dd>
+<p>On OSes where temp files are automatically removed when the temp file
+is closed, calling this function will have no effect other than to remove
+temporary directories (which may include temporary files).</p>
+</dd>
+<dd>
+<pre>
+  File::Temp::cleanup();</pre>
+</dd>
+<dd>
+<p>Not exported by default.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="package_variables">PACKAGE VARIABLES</a></h1>
+<p>These functions control the global state of the package.</p>
+<dl>
+<dt><strong><a name="item_safe_level"><strong>safe_level</strong></a></strong>
+
+<dd>
+<p>Controls the lengths to which the module will go to check the safety of the
+temporary file or directory before proceeding.
+Options are:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_standard">STANDARD</a></strong>
+
+<dd>
+<p>Do the basic security measures to ensure the directory exists and
+is writable, that the <code>umask()</code> is fixed before opening of the file,
+that temporary files are opened only if they do not already exist, and
+that possible race conditions are avoided.  Finally the <a href="#item_unlink0">unlink0</a>
+function is used to remove files safely.</p>
+</dd>
+</li>
+<dt><strong><a name="item_medium">MEDIUM</a></strong>
+
+<dd>
+<p>In addition to the STANDARD security, the output directory is checked
+to make sure that it is owned either by root or the user running the
+program. If the directory is writable by group or by other, it is then
+checked to make sure that the sticky bit is set.</p>
+</dd>
+<dd>
+<p>Will not work on platforms that do not support the <code>-k</code> test
+for sticky bit.</p>
+</dd>
+</li>
+<dt><strong><a name="item_high">HIGH</a></strong>
+
+<dd>
+<p>In addition to the MEDIUM security checks, also check for the
+possibility of ``chown() giveaway'' using the <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">POSIX</a>
+<code>sysconf()</code> function. If this is a possibility, each directory in the
+path is checked in turn for safeness, recursively walking back to the
+root directory.</p>
+</dd>
+<dd>
+<p>For platforms that do not support the <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">POSIX</a>
+<code>_PC_CHOWN_RESTRICTED</code> symbol (for example, Windows NT) it is
+assumed that ``chown() giveaway'' is possible and the recursive test
+is performed.</p>
+</dd>
+</li>
+</dl>
+<p>The level can be changed as follows:</p>
+<pre>
+  File::Temp-&gt;safe_level( File::Temp::HIGH );</pre>
+<p>The level constants are not exported by the module.</p>
+<p>Currently, you must be running at least perl v5.6.0 in order to
+run with MEDIUM or HIGH security. This is simply because the
+safety tests use functions from <a href="/usr/lib/perl5/5.8/html/./ext/Fcntl/Fcntl.html">Fcntl</a> that are not
+available in older versions of perl. The problem is that the version
+number for Fcntl is the same in perl 5.6.0 and in 5.005_03 even though
+they are different versions.</p>
+<p>On systems that do not support the HIGH or MEDIUM safety levels
+(for example Win NT or OS/2) any attempt to change the level will
+be ignored. The decision to ignore rather than raise an exception
+allows portable programs to be written with high security in mind
+for the systems that can support this without those programs failing
+on systems where the extra tests are irrelevant.</p>
+<p>If you really need to see whether the change has been accepted
+simply examine the return value of <a href="#item_safe_level"><code>safe_level</code></a>.</p>
+<pre>
+  $newlevel = File::Temp-&gt;safe_level( File::Temp::HIGH );
+  die &quot;Could not change to high security&quot;
+      if $newlevel != File::Temp::HIGH;</pre>
+<dt><strong><a name="item_topsystemuid">TopSystemUID</a></strong>
+
+<dd>
+<p>This is the highest UID on the current system that refers to a root
+UID. This is used to make sure that the temporary directory is
+owned by a system UID (<code>root</code>, <code>bin</code>, <code>sys</code> etc) rather than
+simply by root.</p>
+</dd>
+<dd>
+<p>This is required since on many unix systems <code>/tmp</code> is not owned
+by root.</p>
+</dd>
+<dd>
+<p>Default is to assume that any UID less than or equal to 10 is a root
+UID.</p>
+</dd>
+<dd>
+<pre>
+  File::Temp-&gt;top_system_uid(10);
+  my $topid = File::Temp-&gt;top_system_uid;</pre>
+</dd>
+<dd>
+<p>This value can be adjusted to reduce security checking if required.
+The value is only relevant when <a href="#item_safe_level"><code>safe_level</code></a> is set to MEDIUM or higher.</p>
+</dd>
+</li>
+<dt><strong><a name="item__keep_all"><strong>$KEEP_ALL</strong></a></strong>
+
+<dd>
+<p>Controls whether temporary files and directories should be retained
+regardless of any instructions in the program to remove them
+automatically.  This is useful for debugging but should not be used in
+production code.</p>
+</dd>
+<dd>
+<pre>
+  $File::Temp::KEEP_ALL = 1;</pre>
+</dd>
+<dd>
+<p>Default is for files to be removed as requested by the caller.</p>
+</dd>
+<dd>
+<p>In some cases, files will only be retained if this variable is true
+when the file is created. This means that you can not create a temporary
+file, set this variable and expect the temp file to still be around
+when the program exits.</p>
+</dd>
+</li>
+<dt><strong><a name="item__debug"><strong>$DEBUG</strong></a></strong>
+
+<dd>
+<p>Controls whether debugging messages should be enabled.</p>
+</dd>
+<dd>
+<pre>
+  $File::Temp::DEBUG = 1;</pre>
+</dd>
+<dd>
+<p>Default is for debugging mode to be disabled.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="warning">WARNING</a></h1>
+<p>For maximum security, endeavour always to avoid ever looking at,
+touching, or even imputing the existence of the filename.  You do not
+know that that filename is connected to the same file as the handle
+you have, and attempts to check this can only trigger more race
+conditions.  It's far more secure to use the filehandle alone and
+dispense with the filename altogether.</p>
+<p>If you need to pass the handle to something that expects a filename
+then, on a unix system, use <code>&quot;/dev/fd/&quot; . fileno($fh)</code> for arbitrary
+programs, or more generally <code>&quot;+&lt;=&amp;&quot; . fileno($fh)</code> for Perl
+programs.  You will have to clear the close-on-exec bit on that file
+descriptor before passing it to another process.</p>
+<pre>
+    use Fcntl qw/F_SETFD F_GETFD/;
+    fcntl($tmpfh, F_SETFD, 0)
+        or die &quot;Can't clear close-on-exec flag on temp fh: $!\n&quot;;</pre>
+<p>
+</p>
+<h2><a name="temporary_files_and_nfs">Temporary files and NFS</a></h2>
+<p>Some problems are associated with using temporary files that reside
+on NFS file systems and it is recommended that a local filesystem
+is used whenever possible. Some of the security tests will most probably
+fail when the temp file is not local. Additionally, be aware that
+the performance of I/O operations over NFS will not be as good as for
+a local disk.</p>
+<p>
+</p>
+<h2><a name="forking">Forking</a></h2>
+<p>In some cases files created by File::Temp are removed from within an
+END block. Since END blocks are triggered when a child process exits
+(unless <code>POSIX::_exit()</code> is used by the child) File::Temp takes care
+to only remove those temp files created by a particular process ID. This
+means that a child will not attempt to remove temp files created by the
+parent process.</p>
+<p>
+</p>
+<h2><a name="binmode">BINMODE</a></h2>
+<p>The file returned by File::Temp will have been opened in binary mode
+if such a mode is available. If that is not correct, use the <code>binmode()</code>
+function to change the mode of the filehandle.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Originally began life in May 1999 as an XS interface to the system
+<a href="#item_mkstemp"><code>mkstemp()</code></a> function. In March 2000, the OpenBSD <a href="#item_mkstemp"><code>mkstemp()</code></a> code was
+translated to Perl for total control of the code's
+security checking, to ensure the presence of the function regardless of
+operating system and to help with portability. The module was shipped
+as a standard part of perl from v5.6.1.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/POSIX/tmpnam.html">tmpnam in the POSIX manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/tmpfile.html">tmpfile in the POSIX manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec.html">the File::Spec manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Path.html">the File::Path manpage</a></p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/File.html">the IO::File manpage</a> and <a href="/usr/lib/perl5/5.8/html/File/MkTemp.html">the File::MkTemp manpage</a>, <a href="/usr/lib/perl5/5.8/html/Apachae/TempFile.html">the Apachae::TempFile manpage</a> for
+different implementations of temporary file handling.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tim Jenness &lt;<a href="mailto:tjenness@cpan.org">tjenness@cpan.org</a>&gt;</p>
+<p>Copyright (C) 1999-2005 Tim Jenness and the UK Particle Physics and
+Astronomy Research Council. All Rights Reserved.  This program is free
+software; you can redistribute it and/or modify it under the same
+terms as Perl itself.</p>
+<p>Original Perl implementation loosely based on the OpenBSD C code for
+mkstemp(). Thanks to Tom Christiansen for suggesting that this module
+should be written and providing ideas for code improvements and
+security enhancements.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Temp - return name and handle of a temporary file safely</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

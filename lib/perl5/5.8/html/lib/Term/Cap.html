@@ -1,0 +1,310 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Term::Cap - Perl termcap interface</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Term::Cap - Perl termcap interface</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#methods">METHODS</a></li>
+	</ul>
+
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Term::Cap - Perl termcap interface</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    require Term::Cap;
+    $terminal = Tgetent Term::Cap { TERM =&gt; undef, OSPEED =&gt; $ospeed };
+    $terminal-&gt;Trequire(qw/ce ku kd/);
+    $terminal-&gt;Tgoto('cm', $col, $row, $FH);
+    $terminal-&gt;Tputs('dl', $count, $FH);
+    $terminal-&gt;Tpad($string, $count, $FH);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>These are low-level functions to extract and use capabilities from
+a terminal capability (termcap) database.</p>
+<p>More information on the terminal capabilities will be found in the
+termcap manpage on most Unix-like systems.</p>
+<p>
+</p>
+<h2><a name="methods">METHODS</a></h2>
+<p>The output strings for <strong>Tputs</strong> are cached for counts of 1 for performance.
+<strong>Tgoto</strong> and <strong>Tpad</strong> do not cache.  <code>$self-&gt;{_xx}</code> is the raw termcap
+data and <code>$self-&gt;{xx}</code> is the cached version.</p>
+<pre>
+    print $terminal-&gt;Tpad($self-&gt;{_xx}, 1);</pre>
+<p><strong>Tgoto</strong>, <strong>Tputs</strong>, and <strong>Tpad</strong> return the string and will also
+output the string to $FH if specified.</p>
+<dl>
+<dt><strong><a name="item_tgetent"><strong>Tgetent</strong></a></strong>
+
+<dd>
+<p>Returns a blessed object reference which the user can
+then use to send the control strings to the terminal using <strong>Tputs</strong>
+and <strong>Tgoto</strong>.</p>
+</dd>
+<dd>
+<p>The function extracts the entry of the specified terminal
+type <em>TERM</em> (defaults to the environment variable <em>TERM</em>) from the
+database.</p>
+</dd>
+<dd>
+<p>It will look in the environment for a <em>TERMCAP</em> variable.  If
+found, and the value does not begin with a slash, and the terminal
+type name is the same as the environment string <em>TERM</em>, the
+<em>TERMCAP</em> string is used instead of reading a termcap file.  If
+it does begin with a slash, the string is used as a path name of
+the termcap file to search.  If <em>TERMCAP</em> does not begin with a
+slash and name is different from <em>TERM</em>, <strong>Tgetent</strong> searches the
+files <em>$HOME/.termcap</em>, <em>/etc/termcap</em>, and <em>/usr/share/misc/termcap</em>,
+in that order, unless the environment variable <em>TERMPATH</em> exists,
+in which case it specifies a list of file pathnames (separated by
+spaces or colons) to be searched <strong>instead</strong>.  Whenever multiple
+files are searched and a tc field occurs in the requested entry,
+the entry it names must be found in the same file or one of the
+succeeding files.  If there is a <code>:tc=...:</code> in the <em>TERMCAP</em>
+environment variable string it will continue the search in the
+files as above.</p>
+</dd>
+<dd>
+<p>The extracted termcap entry is available in the object
+as <code>$self-&gt;{TERMCAP}</code>.</p>
+</dd>
+<dd>
+<p>It takes a hash reference as an argument with two optional keys:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_ospeed">OSPEED</a></strong>
+
+<dd>
+<p>The terminal output bit rate (often mistakenly called the baud rate)
+for this terminal - if not set a warning will be generated
+and it will be defaulted to 9600.  <em>OSPEED</em> can be be specified as
+either a POSIX termios/SYSV termio speeds (where 9600 equals 9600) or
+an old DSD-style speed ( where 13 equals 9600).</p>
+</dd>
+</li>
+<dt><strong><a name="item_term">TERM</a></strong>
+
+<dd>
+<p>The terminal type whose termcap entry will be used - if not supplied it will
+default to $ENV{TERM}: if that is not set then <strong>Tgetent</strong> will croak.</p>
+</dd>
+</li>
+</dl>
+<p>It calls <code>croak</code> on failure.</p>
+<dt><strong><a name="item_tpad"><strong>Tpad</strong></a></strong>
+
+<dd>
+<p>Outputs a literal string with appropriate padding for the current terminal.</p>
+</dd>
+<dd>
+<p>It takes three arguments:</p>
+</dd>
+<dl>
+<dt><strong><a name="item__string"><strong>$string</strong></a></strong>
+
+<dd>
+<p>The literal string to be output.  If it starts with a number and an optional
+'*' then the padding will be increased by an amount relative to this number,
+if the '*' is present then this amount will me multiplied by $cnt.  This part
+of $string is removed before output/</p>
+</dd>
+</li>
+<dt><strong><a name="item__cnt"><strong>$cnt</strong></a></strong>
+
+<dd>
+<p>Will be used to modify the padding applied to string as described above.</p>
+</dd>
+</li>
+<dt><strong><a name="item__fh"><strong>$FH</strong></a></strong>
+
+<dd>
+<p>An optional filehandle (or IO::Handle ) that output will be printed to.</p>
+</dd>
+</li>
+</dl>
+<p>The padded $string is returned.</p>
+<dt><strong><a name="item_tputs"><strong>Tputs</strong></a></strong>
+
+<dd>
+<p>Output the string for the given capability padded as appropriate without
+any parameter substitution.</p>
+</dd>
+<dd>
+<p>It takes three arguments:</p>
+</dd>
+<dl>
+<dt><strong><a name="item__cap"><strong>$cap</strong></a></strong>
+
+<dd>
+<p>The capability whose string is to be output.</p>
+</dd>
+</li>
+<dt><strong><strong>$cnt</strong></strong>
+
+<dd>
+<p>A count passed to Tpad to modify the padding applied to the output string.
+If $cnt is zero or one then the resulting string will be cached.</p>
+</dd>
+</li>
+<dt><strong><strong>$FH</strong></strong>
+
+<dd>
+<p>An optional filehandle (or IO::Handle ) that output will be printed to.</p>
+</dd>
+</li>
+</dl>
+<p>The appropriate string for the capability will be returned.</p>
+<dt><strong><a name="item_tgoto"><strong>Tgoto</strong></a></strong>
+
+<dd>
+<p><strong>Tgoto</strong> decodes a cursor addressing string with the given parameters.</p>
+</dd>
+<dd>
+<p>There are four arguments:</p>
+</dd>
+<dl>
+<dt><strong><strong>$cap</strong></strong>
+
+<dd>
+<p>The name of the capability to be output.</p>
+</dd>
+</li>
+<dt><strong><a name="item__col"><strong>$col</strong></a></strong>
+
+<dd>
+<p>The first value to be substituted in the output string ( usually the column
+in a cursor addressing capability )</p>
+</dd>
+</li>
+<dt><strong><a name="item__row"><strong>$row</strong></a></strong>
+
+<dd>
+<p>The second value to be substituted in the output string (usually the row
+in cursor addressing capabilities)</p>
+</dd>
+</li>
+<dt><strong><strong>$FH</strong></strong>
+
+<dd>
+<p>An optional filehandle (or IO::Handle ) to which the output string will be
+printed.</p>
+</dd>
+</li>
+</dl>
+<p>Substitutions are made with $col and $row in the output string with the
+following <code>sprintf()</code> line formats:</p>
+<pre>
+ %%   output `%'
+ %d   output value as in printf %d
+ %2   output value as in printf %2d
+ %3   output value as in printf %3d
+ %.   output value as in printf %c
+ %+x  add x to value, then do %.</pre>
+<pre>
+ %&gt;xy if value &gt; x then add y, no output
+ %r   reverse order of two parameters, no output
+ %i   increment by one, no output
+ %B   BCD (16*(value/10)) + (value%10), no output</pre>
+<pre>
+ %n   exclusive-or all parameters with 0140 (Datamedia 2500)
+ %D   Reverse coding (value - 2*(value%16)), no output (Delta Data)</pre>
+<p>The output string will be returned.</p>
+<dt><strong><a name="item_trequire"><strong>Trequire</strong></a></strong>
+
+<dd>
+<p>Takes a list of capabilities as an argument and will croak if one is not
+found.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<pre>
+    use Term::Cap;</pre>
+<pre>
+    # Get terminal output speed
+    require POSIX;
+    my $termios = new POSIX::Termios;
+    $termios-&gt;getattr;
+    my $ospeed = $termios-&gt;getospeed;</pre>
+<pre>
+    # Old-style ioctl code to get ospeed:
+    #     require 'ioctl.pl';
+    #     ioctl(TTY,$TIOCGETP,$sgtty);
+    #     ($ispeed,$ospeed) = unpack('cc',$sgtty);</pre>
+<pre>
+    # allocate and initialize a terminal structure
+    $terminal = Tgetent Term::Cap { TERM =&gt; undef, OSPEED =&gt; $ospeed };</pre>
+<pre>
+    # require certain capabilities to be available
+    $terminal-&gt;Trequire(qw/ce ku kd/);</pre>
+<pre>
+    # Output Routines, if $FH is undefined these just return the string</pre>
+<pre>
+    # Tgoto does the % expansion stuff with the given args
+    $terminal-&gt;Tgoto('cm', $col, $row, $FH);</pre>
+<pre>
+    # Tputs doesn't do any % expansion.
+    $terminal-&gt;Tputs('dl', $count = 1, $FH);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Please see the README file in distribution.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This module is part of the core Perl distribution and is also maintained
+for CPAN by Jonathan Stowe &lt;<a href="mailto:jns@gellyfish.com">jns@gellyfish.com</a>&gt;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><code>termcap(5)</code></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Term::Cap - Perl termcap interface</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

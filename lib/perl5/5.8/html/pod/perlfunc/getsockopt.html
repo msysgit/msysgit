@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>getsockopt - get socket options on a given socket</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;getsockopt - get socket options on a given socket</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>getsockopt - get socket options on a given socket</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>getsockopt SOCKET,LEVEL,OPTNAME
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Queries the option named OPTNAME associated with SOCKET at a given LEVEL.
+Options may exist at multiple protocol levels depending on the socket
+type, but at least the uppermost socket level SOL_SOCKET (defined in the
+<code>Socket</code> module) will exist. To query options at another level the
+protocol number of the appropriate protocol controlling the option
+should be supplied. For example, to indicate that an option is to be
+interpreted by the TCP protocol, LEVEL should be set to the protocol
+number of TCP, which you can get using getprotobyname.</p>
+<p>The call returns a packed string representing the requested socket option,
+or <code>undef</code> if there is an error (the error reason will be in $!). What
+exactly is in the packed string depends in the LEVEL and OPTNAME, consult
+your system documentation for details. A very common case however is that
+the option is an integer, in which case the result will be a packed
+integer which you can decode using unpack with the <code>i</code> (or <code>I</code>) format.</p>
+<p>An example testing if Nagle's algorithm is turned on on a socket:</p>
+<pre>
+    use Socket qw(:all);</pre>
+<pre>
+    defined(my $tcp = getprotobyname(&quot;tcp&quot;))
+        or die &quot;Could not determine the protocol number for tcp&quot;;
+    # my $tcp = IPPROTO_TCP; # Alternative
+    my $packed = getsockopt($socket, $tcp, TCP_NODELAY)
+        or die &quot;Could not query TCP_NODELAY socket option: $!&quot;;
+    my $nodelay = unpack(&quot;I&quot;, $packed);
+    print &quot;Nagle's algorithm is turned &quot;, $nodelay ? &quot;off\n&quot; : &quot;on\n&quot;;</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;getsockopt - get socket options on a given socket</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

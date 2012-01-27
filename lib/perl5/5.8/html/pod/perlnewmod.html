@@ -1,0 +1,375 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlnewmod - preparing a new module for distribution</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlnewmod - preparing a new module for distribution</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#warning">Warning</a></li>
+		<li><a href="#what_should_i_make_into_a_module">What should I make into a module?</a></li>
+		<li><a href="#stepbystep__preparing_the_ground">Step-by-step: Preparing the ground</a></li>
+		<li><a href="#stepbystep__making_the_module">Step-by-step: Making the module</a></li>
+		<li><a href="#stepbystep__distributing_your_module">Step-by-step: Distributing your module</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perlnewmod - preparing a new module for distribution</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This document gives you some suggestions about how to go about writing
+Perl modules, preparing them for distribution, and making them available
+via CPAN.</p>
+<p>One of the things that makes Perl really powerful is the fact that Perl
+hackers tend to want to share the solutions to problems they've faced,
+so you and I don't have to battle with the same problem again.</p>
+<p>The main way they do this is by abstracting the solution into a Perl
+module. If you don't know what one of these is, the rest of this
+document isn't going to be much use to you. You're also missing out on
+an awful lot of useful code; consider having a look at <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlmodinstall.html">the perlmodinstall manpage</a> before coming back here.</p>
+<p>When you've found that there isn't a module available for what you're
+trying to do, and you've had to write the code yourself, consider
+packaging up the solution into a module and uploading it to CPAN so that
+others can benefit.</p>
+<p>
+</p>
+<h2><a name="warning">Warning</a></h2>
+<p>We're going to primarily concentrate on Perl-only modules here, rather
+than XS modules. XS modules serve a rather different purpose, and
+you should consider different things before distributing them - the
+popularity of the library you are gluing, the portability to other
+operating systems, and so on. However, the notes on preparing the Perl
+side of the module and packaging and distributing it will apply equally
+well to an XS module as a pure-Perl one.</p>
+<p>
+</p>
+<h2><a name="what_should_i_make_into_a_module">What should I make into a module?</a></h2>
+<p>You should make a module out of any code that you think is going to be
+useful to others. Anything that's likely to fill a hole in the communal
+library and which someone else can slot directly into their program. Any
+part of your code which you can isolate and extract and plug into
+something else is a likely candidate.</p>
+<p>Let's take an example. Suppose you're reading in data from a local
+format into a hash-of-hashes in Perl, turning that into a tree, walking
+the tree and then piping each node to an Acme Transmogrifier Server.</p>
+<p>Now, quite a few people have the Acme Transmogrifier, and you've had to
+write something to talk the protocol from scratch - you'd almost
+certainly want to make that into a module. The level at which you pitch
+it is up to you: you might want protocol-level modules analogous to
+<a href="/usr/lib/perl5/5.8/html/./lib/Net/SMTP.html">Net::SMTP</a> which then talk to higher level modules analogous
+to <a href="/usr/lib/perl5/5.8/html/Mail/Send.html">Mail::Send</a>. The choice is yours, but you do want to get
+a module out for that server protocol.</p>
+<p>Nobody else on the planet is going to talk your local data format, so we
+can ignore that. But what about the thing in the middle? Building tree
+structures from Perl variables and then traversing them is a nice,
+general problem, and if nobody's already written a module that does
+that, you might want to modularise that code too.</p>
+<p>So hopefully you've now got a few ideas about what's good to modularise.
+Let's now see how it's done.</p>
+<p>
+</p>
+<h2><a name="stepbystep__preparing_the_ground">Step-by-step: Preparing the ground</a></h2>
+<p>Before we even start scraping out the code, there are a few things we'll
+want to do in advance.</p>
+<dl>
+<dt><strong><a name="item_look_around">Look around</a></strong>
+
+<dd>
+<p>Dig into a bunch of modules to see how they're written. I'd suggest
+starting with <a href="/usr/lib/perl5/5.8/html/./lib/Text/Tabs.html">Text::Tabs</a>, since it's in the standard
+library and is nice and simple, and then looking at something a little
+more complex like <a href="/usr/lib/perl5/5.8/html/./lib/File/Copy.html">File::Copy</a>.  For object oriented
+code, <code>WWW::Mechanize</code> or the <code>Email::*</code> modules provide some good
+examples.</p>
+</dd>
+<dd>
+<p>These should give you an overall feel for how modules are laid out and
+written.</p>
+</dd>
+</li>
+<dt><strong><a name="item_check_it_27s_new">Check it's new</a></strong>
+
+<dd>
+<p>There are a lot of modules on CPAN, and it's easy to miss one that's
+similar to what you're planning on contributing. Have a good plough
+through the <a href="http://search.cpan.org">http://search.cpan.org</a> and make sure you're not the one
+reinventing the wheel!</p>
+</dd>
+</li>
+<dt><strong><a name="item_discuss_the_need">Discuss the need</a></strong>
+
+<dd>
+<p>You might love it. You might feel that everyone else needs it. But there
+might not actually be any real demand for it out there. If you're unsure
+about the demand your module will have, consider sending out feelers
+on the <code>comp.lang.perl.modules</code> newsgroup, or as a last resort, ask the
+modules list at <code>modules@perl.org</code>. Remember that this is a closed list
+with a very long turn-around time - be prepared to wait a good while for
+a response from them.</p>
+</dd>
+</li>
+<dt><strong><a name="item_choose_a_name">Choose a name</a></strong>
+
+<dd>
+<p>Perl modules included on CPAN have a naming hierarchy you should try to
+fit in with. See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> for more details on how this works, and
+browse around CPAN and the modules list to get a feel of it. At the very
+least, remember this: modules should be title capitalised, (This::Thing)
+fit in with a category, and explain their purpose succinctly.</p>
+</dd>
+</li>
+<dt><strong><a name="item_check_again">Check again</a></strong>
+
+<dd>
+<p>While you're doing that, make really sure you haven't missed a module
+similar to the one you're about to write.</p>
+</dd>
+<dd>
+<p>When you've got your name sorted out and you're sure that your module is
+wanted and not currently available, it's time to start coding.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="stepbystep__making_the_module">Step-by-step: Making the module</a></h2>
+<dl>
+<dt><strong><a name="item_start_with_module_2dstarter_or_h2xs">Start with <em>module-starter</em> or <em>h2xs</em></a></strong>
+
+<dd>
+<p>The <em>module-starter</em> utility is distributed as part of the
+<a href="/usr/lib/perl5/5.8/html/Module/Starter.html">Module::Starter</a> CPAN package.  It creates a directory
+with stubs of all the necessary files to start a new module, according
+to recent ``best practice'' for module development, and is invoked from
+the command line, thus:</p>
+</dd>
+<dd>
+<pre>
+    module-starter --module=Foo::Bar \
+       --author=&quot;Your Name&quot; --email=yourname@cpan.org</pre>
+</dd>
+<dd>
+<p>If you do not wish to install the <a href="/usr/lib/perl5/5.8/html/Module/Starter.html">Module::Starter</a>
+package from CPAN, <em>h2xs</em> is an older tool, originally intended for the
+development of XS modules, which comes packaged with the Perl
+distribution.</p>
+</dd>
+<dd>
+<p>A typical invocation of <a href="/usr/lib/perl5/5.8/html/./utils/h2xs.html">h2xs</a> for a pure Perl module is:</p>
+</dd>
+<dd>
+<pre>
+    h2xs -AX --skip-exporter --use-new-tests -n Foo::Bar</pre>
+</dd>
+<dd>
+<p>The <code>-A</code> omits the Autoloader code, <code>-X</code> omits XS elements,
+<code>--skip-exporter</code> omits the Exporter code, <code>--use-new-tests</code> sets up a
+modern testing environment, and <code>-n</code> specifies the name of the module.</p>
+</dd>
+</li>
+<dt><strong><a name="item_use_strict_7cstrict_and_warnings_7cwarnings">Use <a href="/usr/lib/perl5/5.8/html/./lib/strict.html">strict</a> and <a href="/usr/lib/perl5/5.8/html/./lib/warnings.html">warnings</a></a></strong>
+
+<dd>
+<p>A module's code has to be warning and strict-clean, since you can't
+guarantee the conditions that it'll be used under. Besides, you wouldn't
+want to distribute code that wasn't warning or strict-clean anyway,
+right?</p>
+</dd>
+</li>
+<dt><strong><a name="item_use_carp_7ccarp">Use <a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">Carp</a></a></strong>
+
+<dd>
+<p>The <a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">Carp</a> module allows you to present your error messages from
+the caller's perspective; this gives you a way to signal a problem with
+the caller and not your module. For instance, if you say this:</p>
+</dd>
+<dd>
+<pre>
+    warn &quot;No hostname given&quot;;</pre>
+</dd>
+<dd>
+<p>the user will see something like this:</p>
+</dd>
+<dd>
+<pre>
+    No hostname given at /usr/local/lib/perl5/site_perl/5.6.0/Net/Acme.pm
+    line 123.</pre>
+</dd>
+<dd>
+<p>which looks like your module is doing something wrong. Instead, you want
+to put the blame on the user, and say this:</p>
+</dd>
+<dd>
+<pre>
+    No hostname given at bad_code, line 10.</pre>
+</dd>
+<dd>
+<p>You do this by using <a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">Carp</a> and replacing your <code>warn</code>s with
+<code>carp</code>s. If you need to <code>die</code>, say <code>croak</code> instead. However, keep
+<code>warn</code> and <code>die</code> in place for your sanity checks - where it really is
+your module at fault.</p>
+</dd>
+</li>
+<dt><strong><a name="item_use_exporter_7cexporter__2d_wisely_21">Use <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">Exporter</a> - wisely!</a></strong>
+
+<dd>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">Exporter</a> gives you a standard way of exporting symbols and
+subroutines from your module into the caller's namespace. For instance,
+saying <code>use Net::Acme qw(&amp;frob)</code> would import the <code>frob</code> subroutine.</p>
+</dd>
+<dd>
+<p>The package variable <code>@EXPORT</code> will determine which symbols will get
+exported when the caller simply says <code>use Net::Acme</code> - you will hardly
+ever want to put anything in there. <code>@EXPORT_OK</code>, on the other hand,
+specifies which symbols you're willing to export. If you do want to
+export a bunch of symbols, use the <code>%EXPORT_TAGS</code> and define a standard
+export set - look at <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">the Exporter manpage</a> for more details.</p>
+</dd>
+</li>
+<dt><strong><a name="item_use_plain_old_documentation_7cperlpod">Use <a href="/usr/lib/perl5/5.8/html/./pod/perlpod.html">plain old documentation</a></a></strong>
+
+<dd>
+<p>The work isn't over until the paperwork is done, and you're going to
+need to put in some time writing some documentation for your module.
+<code>module-starter</code> or <code>h2xs</code> will provide a stub for you to fill in; if
+you're not sure about the format, look at <a href="/usr/lib/perl5/5.8/html/./pod/perlpod.html">the perlpod manpage</a> for an
+introduction. Provide a good synopsis of how your module is used in
+code, a description, and then notes on the syntax and function of the
+individual subroutines or methods. Use Perl comments for developer notes
+and POD for end-user notes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_write_tests">Write tests</a></strong>
+
+<dd>
+<p>You're encouraged to create self-tests for your module to ensure it's
+working as intended on the myriad platforms Perl supports; if you upload
+your module to CPAN, a host of testers will build your module and send
+you the results of the tests. Again, <code>module-starter</code> and <code>h2xs</code>
+provide a test framework which you can extend - you should do something
+more than just checking your module will compile.
+<a href="/usr/lib/perl5/5.8/html/./lib/Test/Simple.html">Test::Simple</a> and <a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">Test::More</a> are good
+places to start when writing a test suite.</p>
+</dd>
+</li>
+<dt><strong><a name="item_write_the_readme">Write the README</a></strong>
+
+<dd>
+<p>If you're uploading to CPAN, the automated gremlins will extract the
+README file and place that in your CPAN directory. It'll also appear in
+the main <em>by-module</em> and <em>by-category</em> directories if you make it onto
+the modules list. It's a good idea to put here what the module actually
+does in detail, and the user-visible changes since the last release.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="stepbystep__distributing_your_module">Step-by-step: Distributing your module</a></h2>
+<dl>
+<dt><strong><a name="item_get_a_cpan_user_id">Get a CPAN user ID</a></strong>
+
+<dd>
+<p>Every developer publishing modules on CPAN needs a CPAN ID.  Visit
+<code>http://pause.perl.org/</code>, select ``Request PAUSE Account'', and wait for
+your request to be approved by the PAUSE administrators.</p>
+</dd>
+</li>
+<dt><strong><a name="item_perl_makefile_2epl_3b_make_test_3b_make_dist"><code>perl Makefile.PL; make test; make dist</code></a></strong>
+
+<dd>
+<p>Once again, <code>module-starter</code> or <code>h2xs</code> has done all the work for you.
+They produce the standard <code>Makefile.PL</code> you see when you download and
+install modules, and this produces a Makefile with a <code>dist</code> target.</p>
+</dd>
+<dd>
+<p>Once you've ensured that your module passes its own tests - always a
+good thing to make sure - you can <code>make dist</code>, and the Makefile will
+hopefully produce you a nice tarball of your module, ready for upload.</p>
+</dd>
+</li>
+<dt><strong><a name="item_upload_the_tarball">Upload the tarball</a></strong>
+
+<dd>
+<p>The email you got when you received your CPAN ID will tell you how to
+log in to PAUSE, the Perl Authors Upload SErver. From the menus there,
+you can upload your module to CPAN.</p>
+</dd>
+</li>
+<dt><strong><a name="item_announce_to_the_modules_list">Announce to the modules list</a></strong>
+
+<dd>
+<p>Once uploaded, it'll sit unnoticed in your author directory. If you want
+it connected to the rest of the CPAN, you'll need to go to ``Register
+Namespace'' on PAUSE.  Once registered, your module will appear in the
+by-module and by-category listings on CPAN.</p>
+</dd>
+</li>
+<dt><strong><a name="item_announce_to_clpa">Announce to clpa</a></strong>
+
+<dd>
+<p>If you have a burning desire to tell the world about your release, post
+an announcement to the moderated <code>comp.lang.perl.announce</code> newsgroup.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fix_bugs_21">Fix bugs!</a></strong>
+
+<dd>
+<p>Once you start accumulating users, they'll send you bug reports. If
+you're lucky, they'll even send you patches. Welcome to the joys of
+maintaining a software project...</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Simon Cozens, <code>simon@cpan.org</code></p>
+<p>Updated by Kirrily ``Skud'' Robert, <code>skud@cpan.org</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlmodinstall.html">the perlmodinstall manpage</a>, <a href="/usr/lib/perl5/5.8/html/./utils/h2xs.html">the h2xs manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/strict.html">the strict manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">the Carp manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">the Exporter manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlpod.html">the perlpod manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Test/Simple.html">the Test::Simple manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a>
+<a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html">the ExtUtils::MakeMaker manpage</a>, <a href="/usr/lib/perl5/5.8/html/Module/Build.html">the Module::Build manpage</a>, <a href="/usr/lib/perl5/5.8/html/Module/Starter.html">the Module::Starter manpage</a>
+<a href="http://www.cpan.org/">http://www.cpan.org/</a> , Ken Williams' tutorial on building your own
+module at <a href="http://mathforum.org/~ken/perl_modules.html">http://mathforum.org/~ken/perl_modules.html</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlnewmod - preparing a new module for distribution</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

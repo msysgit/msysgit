@@ -1,0 +1,231 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Cwd - get pathname of current working directory</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Cwd - get pathname of current working directory</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#getcwd_and_friends">getcwd and friends</a></li>
+		<li><a href="#abs_path_and_friends">abs_path and friends</a></li>
+		<li><a href="#_env_pwd_">$ENV{PWD}</a></li>
+	</ul>
+
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Cwd - get pathname of current working directory</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Cwd;
+    my $dir = getcwd;</pre>
+<pre>
+    use Cwd 'abs_path';
+    my $abs_path = abs_path($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides functions for determining the pathname of the
+current working directory.  It is recommended that getcwd (or another
+*cwd() function) be used in <em>all</em> code to ensure portability.</p>
+<p>By default, it exports the functions cwd(), getcwd(), fastcwd(), and
+<a href="#item_fastgetcwd"><code>fastgetcwd()</code></a> (and, on Win32, <a href="#item_getdcwd"><code>getdcwd())</code></a> into the caller's namespace.</p>
+<p>
+</p>
+<h2><a name="getcwd_and_friends">getcwd and friends</a></h2>
+<p>Each of these functions are called without arguments and return the
+absolute path of the current working directory.</p>
+<dl>
+<dt><strong><a name="item_getcwd">getcwd</a></strong>
+
+<dd>
+<pre>
+    my $cwd = getcwd();</pre>
+</dd>
+<dd>
+<p>Returns the current working directory.</p>
+</dd>
+<dd>
+<p>Re-implements the <a href="#item_getcwd"><code>getcwd(3)</code></a> (or <code>getwd(3))</code> functions in Perl.</p>
+</dd>
+<dt><strong><a name="item_cwd">cwd</a></strong>
+
+<dd>
+<pre>
+    my $cwd = cwd();</pre>
+</dd>
+<dd>
+<p>The <a href="#item_cwd"><code>cwd()</code></a> is the most natural form for the current architecture. For
+most systems it is identical to `pwd` (but without the trailing line
+terminator).</p>
+</dd>
+<dt><strong><a name="item_fastcwd">fastcwd</a></strong>
+
+<dd>
+<pre>
+    my $cwd = fastcwd();</pre>
+</dd>
+<dd>
+<p>A more dangerous version of getcwd(), but potentially faster.</p>
+</dd>
+<dd>
+<p>It might conceivably <code>chdir()</code> you out of a directory that it can't
+<code>chdir()</code> you back into.  If fastcwd encounters a problem it will return
+undef but will probably leave you in a different directory.  For a
+measure of extra security, if everything appears to have worked, the
+<a href="#item_fastcwd"><code>fastcwd()</code></a> function will check that it leaves you in the same directory
+that it started in. If it has changed it will <code>die</code> with the message
+``Unstable directory path, current directory changed
+unexpectedly''. That should never happen.</p>
+</dd>
+<dt><strong><a name="item_fastgetcwd">fastgetcwd</a></strong>
+
+<dd>
+<pre>
+  my $cwd = fastgetcwd();</pre>
+</dd>
+<dd>
+<p>The <a href="#item_fastgetcwd"><code>fastgetcwd()</code></a> function is provided as a synonym for cwd().</p>
+</dd>
+<dt><strong><a name="item_getdcwd">getdcwd</a></strong>
+
+<dd>
+<pre>
+    my $cwd = getdcwd();
+    my $cwd = getdcwd('C:');</pre>
+</dd>
+<dd>
+<p>The <a href="#item_getdcwd"><code>getdcwd()</code></a> function is also provided on Win32 to get the current working
+directory on the specified drive, since Windows maintains a separate current
+working directory for each drive.  If no drive is specified then the current
+drive is assumed.</p>
+</dd>
+<dd>
+<p>This function simply calls the Microsoft C library <code>_getdcwd()</code> function.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="abs_path_and_friends">abs_path and friends</a></h2>
+<p>These functions are exported only on request.  They each take a single
+argument and return the absolute pathname for it.  If no argument is
+given they'll use the current working directory.</p>
+<dl>
+<dt><strong><a name="item_abs_path">abs_path</a></strong>
+
+<dd>
+<pre>
+  my $abs_path = abs_path($file);</pre>
+</dd>
+<dd>
+<p>Uses the same algorithm as getcwd().  Symbolic links and relative-path
+components (``.'' and ``..'') are resolved to return the canonical
+pathname, just like realpath(3).</p>
+</dd>
+<dt><strong><a name="item_realpath">realpath</a></strong>
+
+<dd>
+<pre>
+  my $abs_path = realpath($file);</pre>
+</dd>
+<dd>
+<p>A synonym for abs_path().</p>
+</dd>
+<dt><strong><a name="item_fast_abs_path">fast_abs_path</a></strong>
+
+<dd>
+<pre>
+  my $abs_path = fast_abs_path($file);</pre>
+</dd>
+<dd>
+<p>A more dangerous, but potentially faster version of abs_path.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="_env_pwd_">$ENV{PWD}</a></h2>
+<p>If you ask to override your <code>chdir()</code> built-in function,</p>
+<pre>
+  use Cwd qw(chdir);</pre>
+<p>then your PWD environment variable will be kept up to date.  Note that
+it will only be kept up to date if all packages which use chdir import
+it from Cwd.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<ul>
+<li>
+<p>Since the path seperators are different on some operating systems ('/'
+on Unix, ':' on MacPerl, etc...) we recommend you use the File::Spec
+modules wherever portability is a concern.</p>
+</li>
+<li>
+<p>Actually, on Mac OS, the <a href="#item_getcwd"><code>getcwd()</code></a>, <a href="#item_fastgetcwd"><code>fastgetcwd()</code></a> and <a href="#item_fastcwd"><code>fastcwd()</code></a>
+functions  are all aliases for the <a href="#item_cwd"><code>cwd()</code></a> function, which, on Mac OS,
+calls `pwd`. Likewise, the <a href="#item_abs_path"><code>abs_path()</code></a> function is an alias for
+<a href="#item_fast_abs_path"><code>fast_abs_path()</code></a>.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Originally by the perl5-porters.</p>
+<p>Maintained by Ken Williams &lt;<a href="mailto:KWILLIAMS@cpan.org">KWILLIAMS@cpan.org</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.</p>
+<p>This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<p>Portions of the C code in this library are copyright (c) 1994 by the
+Regents of the University of California.  All rights reserved.  The
+license on this code is compatible with the licensing of the rest of
+the distribution - please see the source code in <em>Cwd.xs</em> for the
+details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/File/chdir.html">the File::chdir manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Cwd - get pathname of current working directory</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

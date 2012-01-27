@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Symbol - manipulate Perl symbols and their names</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Symbol - manipulate Perl symbols and their names</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Symbol - manipulate Perl symbols and their names</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Symbol;</pre>
+<pre>
+    $sym = gensym;
+    open($sym, &quot;filename&quot;);
+    $_ = &lt;$sym&gt;;
+    # etc.</pre>
+<pre>
+    ungensym $sym;      # no effect</pre>
+<pre>
+    # replace *FOO{IO} handle but not $FOO, %FOO, etc.
+    *FOO = geniosym;</pre>
+<pre>
+    print qualify(&quot;x&quot;), &quot;\n&quot;;              # &quot;Test::x&quot;
+    print qualify(&quot;x&quot;, &quot;FOO&quot;), &quot;\n&quot;        # &quot;FOO::x&quot;
+    print qualify(&quot;BAR::x&quot;), &quot;\n&quot;;         # &quot;BAR::x&quot;
+    print qualify(&quot;BAR::x&quot;, &quot;FOO&quot;), &quot;\n&quot;;  # &quot;BAR::x&quot;
+    print qualify(&quot;STDOUT&quot;, &quot;FOO&quot;), &quot;\n&quot;;  # &quot;main::STDOUT&quot; (global)
+    print qualify(\*x), &quot;\n&quot;;              # returns \*x
+    print qualify(\*x, &quot;FOO&quot;), &quot;\n&quot;;       # returns \*x</pre>
+<pre>
+    use strict refs;
+    print { qualify_to_ref $fh } &quot;foo!\n&quot;;
+    $ref = qualify_to_ref $name, $pkg;</pre>
+<pre>
+    use Symbol qw(delete_package);
+    delete_package('Foo::Bar');
+    print &quot;deleted\n&quot; unless exists $Foo::{'Bar::'};</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Symbol::gensym</code> creates an anonymous glob and returns a reference
+to it.  Such a glob reference can be used as a file or directory
+handle.</p>
+<p>For backward compatibility with older implementations that didn't
+support anonymous globs, <code>Symbol::ungensym</code> is also provided.
+But it doesn't do anything.</p>
+<p><code>Symbol::geniosym</code> creates an anonymous IO handle.  This can be
+assigned into an existing glob without affecting the non-IO portions
+of the glob.</p>
+<p><code>Symbol::qualify</code> turns unqualified symbol names into qualified
+variable names (e.g. ``myvar'' -&gt; ``MyPackage::myvar'').  If it is given a
+second parameter, <code>qualify</code> uses it as the default package;
+otherwise, it uses the package of its caller.  Regardless, global
+variable names (e.g. ``STDOUT'', ``ENV'', ``SIG'') are always qualified with
+``main::''.</p>
+<p>Qualification applies only to symbol names (strings).  References are
+left unchanged under the assumption that they are glob references,
+which are qualified by their nature.</p>
+<p><code>Symbol::qualify_to_ref</code> is just like <code>Symbol::qualify</code> except that it
+returns a glob ref rather than a symbol name, so you can use the result
+even if <code>use strict 'refs'</code> is in effect.</p>
+<p><code>Symbol::delete_package</code> wipes out a whole package namespace.  Note
+this routine is not exported by default--you may want to import it
+explicitly.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p><code>Symbol::delete_package</code> is a bit too powerful. It undefines every symbol that
+lives in the specified package. Since perl, for performance reasons, does not
+perform a symbol table lookup each time a function is called or a global
+variable is accessed, some code that has already been loaded and that makes use
+of symbols in package <code>Foo</code> may stop working after you delete <code>Foo</code>, even if
+you reload the <code>Foo</code> module afterwards.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Symbol - manipulate Perl symbols and their names</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

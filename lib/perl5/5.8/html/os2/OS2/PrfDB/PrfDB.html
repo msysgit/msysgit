@@ -1,0 +1,176 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OS2::PrfDB - Perl extension for access to OS/2 setting database.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::PrfDB - Perl extension for access to OS/2 setting database.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#high_level_access">High level access</a></li>
+		<li><a href="#lowlevel_access">Low-level access</a></li>
+		<li><a href="#integer_handles">Integer handles</a></li>
+		<li><a href="#exports">Exports</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>OS2::PrfDB - Perl extension for access to OS/2 setting database.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use OS2::PrfDB;
+  tie %settings, OS2::PrfDB, 'my.ini';
+  tie %subsettings, OS2::PrfDB::Sub, 'my.ini', 'mykey';</pre>
+<pre>
+  print &quot;$settings{firstkey}{subkey}\n&quot;;
+  print &quot;$subsettings{subkey}\n&quot;;</pre>
+<pre>
+  tie %system, OS2::PrfDB, SystemIni;
+  $system{myapp}{mykey} = &quot;myvalue&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The extension provides both high-level and low-level access to .ini
+files.</p>
+<p>
+</p>
+<h2><a name="high_level_access">High level access</a></h2>
+<p>High-level access is the tie-hash access via two packages:
+<code>OS2::PrfDB</code> and <code>OS2::PrfDB::Sub</code>. First one supports one argument,
+the name of the file to open, the second one the name of the file to
+open and so called <em>Application name</em>, or the primary key of the
+database.</p>
+<pre>
+  tie %settings, OS2::PrfDB, 'my.ini';
+  tie %subsettings, OS2::PrfDB::Sub, 'my.ini', 'mykey';</pre>
+<p>One may substitute a handle for already opened ini-file instead of the
+file name (obtained via low-level access functions). In particular, 3
+functions SystemIni(), UserIni(), and <code>AnyIni()</code> provide handles to the
+``systemish'' databases. AniIni will read from both, and write into User
+database.</p>
+<p>
+</p>
+<h2><a name="lowlevel_access">Low-level access</a></h2>
+<p>Low-level access functions reside in the package <code>OS2::Prf</code>. They are</p>
+<dl>
+<dt><strong><a name="item_open"><code>Open(file)</code></a></strong>
+
+<dd>
+<p>Opens the database, returns an <em>integer handle</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_close"><code>Close(hndl)</code></a></strong>
+
+<dd>
+<p>Closes the database given an <em>integer handle</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_get"><code>Get(hndl, appname, key)</code></a></strong>
+
+<dd>
+<p>Retrieves data from the database given 2-part-key <code>appname</code> <code>key</code>.
+If <code>key</code> is <code>undef</code>, return the ``\0'' delimited list of <code>key</code>s,
+terminated by \0. If <code>appname</code> is <code>undef</code>, returns the list of
+possible <code>appname</code>s in the same form.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getlength"><code>GetLength(hndl, appname, key)</code></a></strong>
+
+<dd>
+<p>Same as above, but returns the length of the value.</p>
+</dd>
+</li>
+<dt><strong><a name="item_set"><code>Set(hndl, appname, key, value [ , length ])</code></a></strong>
+
+<dd>
+<p>Sets the value. If the <code>value</code> is not defined, removes the <code>key</code>. If
+the <code>key</code> is not defined, removes the <code>appname</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_system"><code>System(val)</code></a></strong>
+
+<dd>
+<p>Return an <em>integer handle</em> associated with the system database. If
+<code>val</code> is 1, it is <em>User</em> database, if 2, <em>System</em> database, if
+0, handle for ``both'' of them: the handle works for read from any one,
+and for write into <em>User</em> one.</p>
+</dd>
+</li>
+<dt><strong><a name="item_profiles"><code>Profiles()</code></a></strong>
+
+<dd>
+<p>returns a reference to a list of two strings, giving names of the
+<em>User</em> and <em>System</em> databases.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setuser"><code>SetUser(file)</code></a></strong>
+
+<dd>
+<p><strong>(Not tested.)</strong> Sets the profile name of the <em>User</em> database. The
+application should have a message queue to use this function!</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="integer_handles">Integer handles</a></h2>
+<p>To convert a name or an integer handle into an object acceptable as
+argument to <code>tie()</code> interface, one may use the following functions from
+the package <code>OS2::Prf::Hini</code>:</p>
+<dl>
+<dt><strong><a name="item_new"><code>new(package, file)</code></a></strong>
+
+<dt><strong><a name="item_new_from_int"><code>new_from_int(package, int_hndl [ , filename ])</code></a></strong>
+
+</dl>
+<p>
+</p>
+<h2><a name="exports">Exports</a></h2>
+<p>SystemIni(), UserIni(), and AnyIni().</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Ilya Zakharevich, <a href="mailto:ilya@math.ohio-state.edu">ilya@math.ohio-state.edu</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>perl(1).</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::PrfDB - Perl extension for access to OS/2 setting database.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

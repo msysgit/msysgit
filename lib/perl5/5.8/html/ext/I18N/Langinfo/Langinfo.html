@@ -1,0 +1,146 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>I18N::Langinfo - query locale information</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;I18N::Langinfo - query locale information</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#export">EXPORT</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>I18N::Langinfo - query locale information</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use I18N::Langinfo;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>langinfo()</code> function queries various locale information that can be
+used to localize output and user interfaces.  The <code>langinfo()</code> requires
+one numeric argument that identifies the locale constant to query:
+if no argument is supplied, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> is used.  The numeric constants
+appropriate to be used as arguments are exportable from I18N::Langinfo.</p>
+<p>The following example will import the <code>langinfo()</code> function itself and
+three constants to be used as arguments to langinfo(): a constant for
+the abbreviated first day of the week (the numbering starts from
+Sunday = 1) and two more constants for the affirmative and negative
+answers for a yes/no question in the current locale.</p>
+<pre>
+    use I18N::Langinfo qw(langinfo ABDAY_1 YESSTR NOSTR);</pre>
+<pre>
+    my ($abday_1, $yesstr, $nostr) = map { langinfo } qw(ABDAY_1 YESSTR NOSTR);</pre>
+<pre>
+    print &quot;$abday_1? [$yesstr/$nostr] &quot;;</pre>
+<p>In other words, in the ``C'' (or English) locale the above will probably
+print something like:</p>
+<pre>
+    Sun? [yes/no]</pre>
+<p>but under a French locale</p>
+<pre>
+    dim? [oui/non]</pre>
+<p>The usually available constants are</p>
+<pre>
+    ABDAY_1 ABDAY_2 ABDAY_3 ABDAY_4 ABDAY_5 ABDAY_6 ABDAY_7
+    ABMON_1 ABMON_2 ABMON_3 ABMON_4 ABMON_5 ABMON_6
+    ABMON_7 ABMON_8 ABMON_9 ABMON_10 ABMON_11 ABMON_12
+    DAY_1 DAY_2 DAY_3 DAY_4 DAY_5 DAY_6 DAY_7
+    MON_1 MON_2 MON_3 MON_4 MON_5 MON_6
+    MON_7 MON_8 MON_9 MON_10 MON_11 MON_12</pre>
+<p>for abbreviated and full length days of the week and months of the year,</p>
+<pre>
+    D_T_FMT D_FMT T_FMT</pre>
+<p>for the date-time, date, and time formats used by the <code>strftime()</code> function
+(see <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">the POSIX manpage</a>)</p>
+<pre>
+    AM_STR PM_STR T_FMT_AMPM</pre>
+<p>for the locales for which it makes sense to have ante meridiem and post
+meridiem time formats,</p>
+<pre>
+    CODESET CRNCYSTR RADIXCHAR</pre>
+<p>for the character code set being used (such as ``ISO8859-1'', ``cp850'',
+``koi8-r'', ``sjis'', ``utf8'', etc.), for the currency string, for the
+radix character used between the integer and the fractional part
+of decimal numbers (yes, this is redundant with POSIX::localeconv())</p>
+<pre>
+    YESSTR YESEXPR NOSTR NOEXPR</pre>
+<p>for the affirmative and negative responses and expressions, and</p>
+<pre>
+    ERA ERA_D_FMT ERA_D_T_FMT ERA_T_FMT</pre>
+<p>for the Japanese Emperor eras (naturally only defined under Japanese locales).</p>
+<p>See your <em>langinfo(3)</em> for more information about the available
+constants.  (Often this means having to look directly at the
+<em>langinfo.h</em> C header file.)</p>
+<p>Note that unfortunately none of the above constants are guaranteed
+to be available on a particular platform.  To be on the safe side
+you can wrap the import in an eval like this:</p>
+<pre>
+    eval {
+        require I18N::Langinfo;
+        I18N::Langinfo-&gt;import(qw(langinfo CODESET));
+        $codeset = langinfo(CODESET()); # note the ()
+    };
+    if (!$@) { ... failed ... }</pre>
+<p>
+</p>
+<h2><a name="export">EXPORT</a></h2>
+<p>Nothing is exported by default.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/localeconv.html">localeconv in the POSIX manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/setlocale.html">setlocale in the POSIX manpage</a>, <em>nl_langinfo(3)</em>.</p>
+<p>The <code>langinfo()</code> is just a wrapper for the C <code>nl_langinfo()</code> interface.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Jarkko Hietaniemi, &lt;<a href="mailto:jhi@hut.fi">jhi@hut.fi</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright 2001 by Jarkko Hietaniemi</p>
+<p>This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;I18N::Langinfo - query locale information</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

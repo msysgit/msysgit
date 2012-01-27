@@ -1,0 +1,189 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Hash::Util - A selection of general-utility hash subroutines</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Hash::Util - A selection of general-utility hash subroutines</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#restricted_hashes">Restricted hashes</a></li>
+	</ul>
+
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Hash::Util - A selection of general-utility hash subroutines</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Hash::Util qw(lock_keys   unlock_keys
+                    lock_value  unlock_value
+                    lock_hash   unlock_hash
+                    hash_seed);</pre>
+<pre>
+  %hash = (foo =&gt; 42, bar =&gt; 23);
+  lock_keys(%hash);
+  lock_keys(%hash, @keyset);
+  unlock_keys(%hash);</pre>
+<pre>
+  lock_value  (%hash, 'foo');
+  unlock_value(%hash, 'foo');</pre>
+<pre>
+  lock_hash  (%hash);
+  unlock_hash(%hash);</pre>
+<pre>
+  my $hashes_are_randomised = hash_seed() != 0;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Hash::Util</code> contains special functions for manipulating hashes that
+don't really warrant a keyword.</p>
+<p>By default <code>Hash::Util</code> does not export anything.</p>
+<p>
+</p>
+<h2><a name="restricted_hashes">Restricted hashes</a></h2>
+<p>5.8.0 introduces the ability to restrict a hash to a certain set of
+keys.  No keys outside of this set can be added.  It also introduces
+the ability to lock an individual key so it cannot be deleted and the
+value cannot be changed.</p>
+<p>This is intended to largely replace the deprecated pseudo-hashes.</p>
+<dl>
+<dt><strong><a name="item_lock_keys">lock_keys</a></strong>
+
+<dt><strong><a name="item_unlock_keys">unlock_keys</a></strong>
+
+<dd>
+<pre>
+  lock_keys(%hash);
+  lock_keys(%hash, @keys);</pre>
+</dd>
+<dd>
+<p>Restricts the given %hash's set of keys to @keys.  If @keys is not
+given it restricts it to its current keyset.  No more keys can be
+added. <code>delete()</code> and <code>exists()</code> will still work, but will not alter
+the set of allowed keys. <strong>Note</strong>: the current implementation prevents
+the hash from being bless()ed while it is in a locked state. Any attempt
+to do so will raise an exception. Of course you can still <code>bless()</code>
+the hash before you call <a href="#item_lock_keys"><code>lock_keys()</code></a> so this shouldn't be a problem.</p>
+</dd>
+<dd>
+<pre>
+  unlock_keys(%hash);</pre>
+</dd>
+<dd>
+<p>Removes the restriction on the %hash's keyset.</p>
+</dd>
+<dt><strong><a name="item_lock_value">lock_value</a></strong>
+
+<dt><strong><a name="item_unlock_value">unlock_value</a></strong>
+
+<dd>
+<pre>
+  lock_value  (%hash, $key);
+  unlock_value(%hash, $key);</pre>
+</dd>
+<dd>
+<p>Locks and unlocks an individual key of a hash.  The value of a locked
+key cannot be changed.</p>
+</dd>
+<dd>
+<p>%hash must have already been locked for this to have useful effect.</p>
+</dd>
+<dt><strong><a name="item_lock_hash"><strong>lock_hash</strong></a></strong>
+
+<dt><strong><a name="item_unlock_hash"><strong>unlock_hash</strong></a></strong>
+
+<dd>
+<pre>
+    lock_hash(%hash);</pre>
+</dd>
+<dd>
+<p><a href="#item_lock_hash"><code>lock_hash()</code></a> locks an entire hash, making all keys and values readonly.
+No value can be changed, no keys can be added or deleted.</p>
+</dd>
+<dd>
+<pre>
+    unlock_hash(%hash);</pre>
+</dd>
+<dd>
+<p><a href="#item_unlock_hash"><code>unlock_hash()</code></a> does the opposite of lock_hash().  All keys and values
+are made read/write.  All values can be changed and keys can be added
+and deleted.</p>
+</dd>
+<dt><strong><a name="item_hash_seed"><strong>hash_seed</strong></a></strong>
+
+<dd>
+<pre>
+    my $hash_seed = hash_seed();</pre>
+</dd>
+<dd>
+<p><a href="#item_hash_seed"><code>hash_seed()</code></a> returns the seed number used to randomise hash ordering.
+Zero means the ``traditional'' random hash ordering, non-zero means the
+new even more random hash ordering introduced in Perl 5.8.1.</p>
+</dd>
+<dd>
+<p><strong>Note that the hash seed is sensitive information</strong>: by knowing it one
+can craft a denial-of-service attack against Perl code, even remotely,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlsec.html#algorithmic_complexity_attacks">Algorithmic Complexity Attacks in the perlsec manpage</a> for more information.
+<strong>Do not disclose the hash seed</strong> to people who don't need to know it.
+See also <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html#perl_hash_seed_debug">PERL_HASH_SEED_DEBUG in the perlrun manpage</a>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>Note that the trapping of the restricted operations is not atomic:
+for example</p>
+<pre>
+    eval { %hash = (illegal_key =&gt; 1) }</pre>
+<p>leaves the <code>%hash</code> empty rather than with its original contents.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt; on top of code by Nick
+Ing-Simmons and Jeffrey Friedl.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/List/Util/lib/Scalar/Util.html">the Scalar::Util manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/List/Util/lib/List/Util.html">the List::Util manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Hash/Util.html">the Hash::Util manpage</a>,
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlsec.html#algorithmic_complexity_attacks">Algorithmic Complexity Attacks in the perlsec manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Hash::Util - A selection of general-utility hash subroutines</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,1351 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlsub - Perl subroutines</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlsub - Perl subroutines</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#private_variables_via_my__">Private Variables via <code>my()</code></a></li>
+		<li><a href="#persistent_private_variables">Persistent Private Variables</a></li>
+		<li><a href="#temporary_values_via_local__">Temporary Values via <code>local()</code></a></li>
+		<ul>
+
+			<li><a href="#grammatical_note_on_local__">Grammatical note on <code>local()</code></a></li>
+			<li><a href="#localization_of_special_variables">Localization of special variables</a></li>
+			<li><a href="#localization_of_globs">Localization of globs</a></li>
+			<li><a href="#localization_of_elements_of_composite_types">Localization of elements of composite types</a></li>
+		</ul>
+
+		<li><a href="#lvalue_subroutines">Lvalue subroutines</a></li>
+		<li><a href="#passing_symbol_table_entries__typeglobs_">Passing Symbol Table Entries (typeglobs)</a></li>
+		<li><a href="#when_to_still_use_local__">When to Still Use <code>local()</code></a></li>
+		<li><a href="#pass_by_reference">Pass by Reference</a></li>
+		<li><a href="#prototypes">Prototypes</a></li>
+		<li><a href="#constant_functions">Constant Functions</a></li>
+		<li><a href="#overriding_builtin_functions">Overriding Built-in Functions</a></li>
+		<li><a href="#autoloading">Autoloading</a></li>
+		<li><a href="#subroutine_attributes">Subroutine Attributes</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name_x_subroutine__x_function_">NAME
+ </a></h1>
+<p>perlsub - Perl subroutines</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>To declare subroutines:
+ </p>
+<pre>
+    sub NAME;                     # A &quot;forward&quot; declaration.
+    sub NAME(PROTO);              #  ditto, but with prototypes
+    sub NAME : ATTRS;             #  with attributes
+    sub NAME(PROTO) : ATTRS;      #  with attributes and prototypes</pre>
+<pre>
+    sub NAME BLOCK                # A declaration and a definition.
+    sub NAME(PROTO) BLOCK         #  ditto, but with prototypes
+    sub NAME : ATTRS BLOCK        #  with attributes
+    sub NAME(PROTO) : ATTRS BLOCK #  with prototypes and attributes</pre>
+<p>To define an anonymous subroutine at runtime:
+</p>
+<pre>
+    $subref = sub BLOCK;                 # no proto
+    $subref = sub (PROTO) BLOCK;         # with proto
+    $subref = sub : ATTRS BLOCK;         # with attributes
+    $subref = sub (PROTO) : ATTRS BLOCK; # with proto and attributes</pre>
+<p>To import subroutines:
+</p>
+<pre>
+    use MODULE qw(NAME1 NAME2 NAME3);</pre>
+<p>To call subroutines:
+ </p>
+<pre>
+    NAME(LIST);    # &amp; is optional with parentheses.
+    NAME LIST;     # Parentheses optional if predeclared/imported.
+    &amp;NAME(LIST);   # Circumvent prototypes.
+    &amp;NAME;         # Makes current @_ visible to called subroutine.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Like many languages, Perl provides for user-defined subroutines.
+These may be located anywhere in the main program, loaded in from
+other files via the <code>do</code>, <code>require</code>, or <code>use</code> keywords, or
+generated on the fly using <code>eval</code> or anonymous subroutines.
+You can even call a function indirectly using a variable containing
+its name or a CODE reference.</p>
+<p>The Perl model for function call and return values is simple: all
+functions are passed as parameters one single flat list of scalars, and
+all functions likewise return to their caller one single flat list of
+scalars.  Any arrays or hashes in these call and return lists will
+collapse, losing their identities--but you may always use
+pass-by-reference instead to avoid this.  Both call and return lists may
+contain as many or as few scalar elements as you'd like.  (Often a
+function without an explicit return statement is called a subroutine, but
+there's really no difference from Perl's perspective.)
+ </p>
+<p>Any arguments passed in show up in the array <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>.  Therefore, if
+you called a function with two arguments, those would be stored in
+<code>$_[0]</code> and <code>$_[1]</code>.  The array <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> is a local array, but its
+elements are aliases for the actual scalar parameters.  In particular,
+if an element <code>$_[0]</code> is updated, the corresponding argument is
+updated (or an error occurs if it is not updatable).  If an argument
+is an array or hash element which did not exist when the function
+was called, that element is created only when (and if) it is modified
+or a reference to it is taken.  (Some earlier versions of Perl
+created the element whether or not the element was assigned to.)
+Assigning to the whole array <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> removes that aliasing, and does
+not update any arguments.
+  </p>
+<p>A <code>return</code> statement may be used to exit a subroutine, optionally
+specifying the returned value, which will be evaluated in the
+appropriate context (list, scalar, or void) depending on the context of
+the subroutine call.  If you specify no return value, the subroutine
+returns an empty list in list context, the undefined value in scalar
+context, or nothing in void context.  If you return one or more
+aggregates (arrays and hashes), these will be flattened together into
+one large indistinguishable list.</p>
+<p>If no <code>return</code> is found and if the last statement is an expression, its
+value is returned. If the last statement is a loop control structure
+like a <code>foreach</code> or a <code>while</code>, the returned value is unspecified. The
+empty sub returns the empty list.
+  </p>
+<p>Perl does not have named formal parameters.  In practice all you
+do is assign to a <code>my()</code> list of these.  Variables that aren't
+declared to be private are global variables.  For gory details
+on creating private variables, see <a href="#private_variables_via_my__">Private Variables via my()</a>
+and <a href="#temporary_values_via_local__">Temporary Values via local()</a>.  To create protected
+environments for a set of functions in a separate package (and
+probably a separate file), see <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html#packages">Packages in the perlmod manpage</a>.
+ </p>
+<p>Example:</p>
+<pre>
+    sub max {
+        my $max = shift(@_);
+        foreach $foo (@_) {
+            $max = $foo if $max &lt; $foo;
+        }
+        return $max;
+    }
+    $bestday = max($mon,$tue,$wed,$thu,$fri);</pre>
+<p>Example:</p>
+<pre>
+    # get a line, combining continuation lines
+    #  that start with whitespace</pre>
+<pre>
+    sub get_line {
+        $thisline = $lookahead;  # global variables!
+        LINE: while (defined($lookahead = &lt;STDIN&gt;)) {
+            if ($lookahead =~ /^[ \t]/) {
+                $thisline .= $lookahead;
+            }
+            else {
+                last LINE;
+            }
+        }
+        return $thisline;
+    }</pre>
+<pre>
+    $lookahead = &lt;STDIN&gt;;       # get first line
+    while (defined($line = get_line())) {
+        ...
+    }</pre>
+<p>Assigning to a list of private variables to name your arguments:</p>
+<pre>
+    sub maybeset {
+        my($key, $value) = @_;
+        $Foo{$key} = $value unless $Foo{$key};
+    }</pre>
+<p>Because the assignment copies the values, this also has the effect
+of turning call-by-reference into call-by-value.  Otherwise a
+function is free to do in-place modifications of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> and change
+its caller's values.
+ </p>
+<pre>
+    upcase_in($v1, $v2);  # this changes $v1 and $v2
+    sub upcase_in {
+        for (@_) { tr/a-z/A-Z/ }
+    }</pre>
+<p>You aren't allowed to modify constants in this way, of course.  If an
+argument were actually literal and you tried to change it, you'd take a
+(presumably fatal) exception.   For example, this won't work:
+ </p>
+<pre>
+    upcase_in(&quot;frederick&quot;);</pre>
+<p>It would be much safer if the <code>upcase_in()</code> function
+were written to return a copy of its parameters instead
+of changing them in place:</p>
+<pre>
+    ($v3, $v4) = upcase($v1, $v2);  # this doesn't change $v1 and $v2
+    sub upcase {
+        return unless defined wantarray;  # void context, do nothing
+        my @parms = @_;
+        for (@parms) { tr/a-z/A-Z/ }
+        return wantarray ? @parms : $parms[0];
+    }</pre>
+<p>Notice how this (unprototyped) function doesn't care whether it was
+passed real scalars or arrays.  Perl sees all arguments as one big,
+long, flat parameter list in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>.  This is one area where
+Perl's simple argument-passing style shines.  The <code>upcase()</code>
+function would work perfectly well without changing the <code>upcase()</code>
+definition even if we fed it things like this:</p>
+<pre>
+    @newlist   = upcase(@list1, @list2);
+    @newlist   = upcase( split /:/, $var );</pre>
+<p>Do not, however, be tempted to do this:</p>
+<pre>
+    (@a, @b)   = upcase(@list1, @list2);</pre>
+<p>Like the flattened incoming parameter list, the return list is also
+flattened on return.  So all you have managed to do here is stored
+everything in <code>@a</code> and made <code>@b</code> empty.  See 
+<a href="#pass_by_reference">Pass by Reference</a> for alternatives.</p>
+<p>A subroutine may be called using an explicit <code>&amp;</code> prefix.  The
+<code>&amp;</code> is optional in modern Perl, as are parentheses if the
+subroutine has been predeclared.  The <code>&amp;</code> is <em>not</em> optional
+when just naming the subroutine, such as when it's used as
+an argument to <code>defined()</code> or undef().  Nor is it optional when you
+want to do an indirect subroutine call with a subroutine name or
+reference using the <code>&amp;$subref()</code> or <code>&amp;{$subref}()</code> constructs,
+although the <code>$subref-&gt;()</code> notation solves that problem.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a> for more about all that.
+</p>
+<p>Subroutines may be called recursively.  If a subroutine is called
+using the <code>&amp;</code> form, the argument list is optional, and if omitted,
+no <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> array is set up for the subroutine: the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> array at the
+time of the call is visible to subroutine instead.  This is an
+efficiency mechanism that new users may wish to avoid.
+</p>
+<pre>
+    &amp;foo(1,2,3);        # pass three arguments
+    foo(1,2,3);         # the same</pre>
+<pre>
+    foo();              # pass a null list
+    &amp;foo();             # the same</pre>
+<pre>
+    &amp;foo;               # foo() get current args, like foo(@_) !!
+    foo;                # like foo() IFF sub foo predeclared, else &quot;foo&quot;</pre>
+<p>Not only does the <code>&amp;</code> form make the argument list optional, it also
+disables any prototype checking on arguments you do provide.  This
+is partly for historical reasons, and partly for having a convenient way
+to cheat if you know what you're doing.  See <em>Prototypes</em> below.
+</p>
+<p>Subroutines whose names are in all upper case are reserved to the Perl
+core, as are modules whose names are in all lower case.  A subroutine in
+all capitals is a loosely-held convention meaning it will be called
+indirectly by the run-time system itself, usually due to a triggered event.
+Subroutines that do special, pre-defined things include <code>AUTOLOAD</code>, <code>CLONE</code>,
+<code>DESTROY</code> plus all functions mentioned in <a href="/usr/lib/perl5/5.8/html/./pod/perltie.html">the perltie manpage</a> and <a href="/usr/lib/perl5/5.8/html/./lib/PerlIO/via.html">the PerlIO::via manpage</a>.</p>
+<p>The <code>BEGIN</code>, <code>CHECK</code>, <code>INIT</code> and <code>END</code> subroutines are not so much
+subroutines as named special code blocks, of which you can have more
+than one in a package, and which you can <strong>not</strong> call explicitly.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html#begin__check__init_and_end">BEGIN, CHECK, INIT and END in the perlmod manpage</a></p>
+<p>
+</p>
+<h2><a name="private_variables_via_my___x_my__x_variable__lexical__x_lexical__x_lexical_variable__x_scope__lexical__x_lexical_scope__x_attributes__my_">Private Variables via <code>my()</code>
+    
+ </a></h2>
+<p>Synopsis:</p>
+<pre>
+    my $foo;            # declare $foo lexically local
+    my (@wid, %get);    # declare list of variables local
+    my $foo = &quot;flurp&quot;;  # declare $foo lexical, and init it
+    my @oof = @bar;     # declare @oof lexical, and init it
+    my $x : Foo = $y;   # similar, with an attribute applied</pre>
+<p><strong>WARNING</strong>: The use of attribute lists on <code>my</code> declarations is still
+evolving.  The current semantics and interface are subject to change.
+See <a href="/usr/lib/perl5/5.8/html/./lib/attributes.html">the attributes manpage</a> and <a href="/usr/lib/perl5/5.8/html/./lib/Attribute/Handlers.html">the Attribute::Handlers manpage</a>.</p>
+<p>The <code>my</code> operator declares the listed variables to be lexically
+confined to the enclosing block, conditional (<code>if/unless/elsif/else</code>),
+loop (<code>for/foreach/while/until/continue</code>), subroutine, <code>eval</code>,
+or <code>do/require/use</code>'d file.  If more than one value is listed, the
+list must be placed in parentheses.  All listed elements must be
+legal lvalues.  Only alphanumeric identifiers may be lexically
+scoped--magical built-ins like <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$/</code></a> must currently be <code>local</code>ized
+with <code>local</code> instead.</p>
+<p>Unlike dynamic variables created by the <code>local</code> operator, lexical
+variables declared with <code>my</code> are totally hidden from the outside
+world, including any called subroutines.  This is true if it's the
+same subroutine called from itself or elsewhere--every call gets
+its own copy.
+</p>
+<p>This doesn't mean that a <code>my</code> variable declared in a statically
+enclosing lexical scope would be invisible.  Only dynamic scopes
+are cut off.   For example, the <code>bumpx()</code> function below has access
+to the lexical $x variable because both the <code>my</code> and the <code>sub</code>
+occurred at the same scope, presumably file scope.</p>
+<pre>
+    my $x = 10;
+    sub bumpx { $x++ }</pre>
+<p>An <code>eval()</code>, however, can see lexical variables of the scope it is
+being evaluated in, so long as the names aren't hidden by declarations within
+the <code>eval()</code> itself.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a>.
+</p>
+<p>The parameter list to <code>my()</code> may be assigned to if desired, which allows you
+to initialize your variables.  (If no initializer is given for a
+particular variable, it is created with the undefined value.)  Commonly
+this is used to name input parameters to a subroutine.  Examples:</p>
+<pre>
+    $arg = &quot;fred&quot;;        # &quot;global&quot; variable
+    $n = cube_root(27);
+    print &quot;$arg thinks the root is $n\n&quot;;
+ fred thinks the root is 3</pre>
+<pre>
+    sub cube_root {
+        my $arg = shift;  # name doesn't matter
+        $arg **= 1/3;
+        return $arg;
+    }</pre>
+<p>The <code>my</code> is simply a modifier on something you might assign to.  So when
+you do assign to variables in its argument list, <code>my</code> doesn't
+change whether those variables are viewed as a scalar or an array.  So</p>
+<pre>
+    my ($foo) = &lt;STDIN&gt;;                # WRONG?
+    my @FOO = &lt;STDIN&gt;;</pre>
+<p>both supply a list context to the right-hand side, while</p>
+<pre>
+    my $foo = &lt;STDIN&gt;;</pre>
+<p>supplies a scalar context.  But the following declares only one variable:</p>
+<pre>
+    my $foo, $bar = 1;                  # WRONG</pre>
+<p>That has the same effect as</p>
+<pre>
+    my $foo;
+    $bar = 1;</pre>
+<p>The declared variable is not introduced (is not visible) until after
+the current statement.  Thus,</p>
+<pre>
+    my $x = $x;</pre>
+<p>can be used to initialize a new $x with the value of the old $x, and
+the expression</p>
+<pre>
+    my $x = 123 and $x == 123</pre>
+<p>is false unless the old $x happened to have the value <code>123</code>.</p>
+<p>Lexical scopes of control structures are not bounded precisely by the
+braces that delimit their controlled blocks; control expressions are
+part of that scope, too.  Thus in the loop</p>
+<pre>
+    while (my $line = &lt;&gt;) {
+        $line = lc $line;
+    } continue {
+        print $line;
+    }</pre>
+<p>the scope of $line extends from its declaration throughout the rest of
+the loop construct (including the <code>continue</code> clause), but not beyond
+it.  Similarly, in the conditional</p>
+<pre>
+    if ((my $answer = &lt;STDIN&gt;) =~ /^yes$/i) {
+        user_agrees();
+    } elsif ($answer =~ /^no$/i) {
+        user_disagrees();
+    } else {
+        chomp $answer;
+        die &quot;'$answer' is neither 'yes' nor 'no'&quot;;
+    }</pre>
+<p>the scope of $answer extends from its declaration through the rest
+of that conditional, including any <code>elsif</code> and <code>else</code> clauses, 
+but not beyond it.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlsyn.html#simple_statements">Simple statements in the perlsyn manpage</a> for information
+on the scope of variables in statements with modifiers.</p>
+<p>The <code>foreach</code> loop defaults to scoping its index variable dynamically
+in the manner of <code>local</code>.  However, if the index variable is
+prefixed with the keyword <code>my</code>, or if there is already a lexical
+by that name in scope, then a new lexical is created instead.  Thus
+in the loop
+ </p>
+<pre>
+    for my $i (1, 2, 3) {
+        some_function();
+    }</pre>
+<p>the scope of $i extends to the end of the loop, but not beyond it,
+rendering the value of $i inaccessible within <code>some_function()</code>.
+ </p>
+<p>Some users may wish to encourage the use of lexically scoped variables.
+As an aid to catching implicit uses to package variables,
+which are always global, if you say</p>
+<pre>
+    use strict 'vars';</pre>
+<p>then any variable mentioned from there to the end of the enclosing
+block must either refer to a lexical variable, be predeclared via
+<code>our</code> or <code>use vars</code>, or else must be fully qualified with the package name.
+A compilation error results otherwise.  An inner block may countermand
+this with <code>no strict 'vars'</code>.</p>
+<p>A <code>my</code> has both a compile-time and a run-time effect.  At compile
+time, the compiler takes notice of it.  The principal usefulness
+of this is to quiet <code>use strict 'vars'</code>, but it is also essential
+for generation of closures as detailed in <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a>.  Actual
+initialization is delayed until run time, though, so it gets executed
+at the appropriate time, such as each time through a loop, for
+example.</p>
+<p>Variables declared with <code>my</code> are not part of any package and are therefore
+never fully qualified with the package name.  In particular, you're not
+allowed to try to make a package variable (or other global) lexical:</p>
+<pre>
+    my $pack::var;      # ERROR!  Illegal syntax
+    my $_;              # also illegal (currently)</pre>
+<p>In fact, a dynamic variable (also known as package or global variables)
+are still accessible using the fully qualified <code>::</code> notation even while a
+lexical of the same name is also visible:</p>
+<pre>
+    package main;
+    local $x = 10;
+    my    $x = 20;
+    print &quot;$x and $::x\n&quot;;</pre>
+<p>That will print out <code>20</code> and <code>10</code>.</p>
+<p>You may declare <code>my</code> variables at the outermost scope of a file
+to hide any such identifiers from the world outside that file.  This
+is similar in spirit to C's static variables when they are used at
+the file level.  To do this with a subroutine requires the use of
+a closure (an anonymous function that accesses enclosing lexicals).
+If you want to create a private subroutine that cannot be called
+from outside that block, it can declare a lexical variable containing
+an anonymous sub reference:</p>
+<pre>
+    my $secret_version = '1.001-beta';
+    my $secret_sub = sub { print $secret_version };
+    &amp;$secret_sub();</pre>
+<p>As long as the reference is never returned by any function within the
+module, no outside module can see the subroutine, because its name is not in
+any package's symbol table.  Remember that it's not <em>REALLY</em> called
+<code>$some_pack::secret_version</code> or anything; it's just $secret_version,
+unqualified and unqualifiable.</p>
+<p>This does not work with object methods, however; all object methods
+have to be in the symbol table of some package to be found.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlref.html#function_templates">Function Templates in the perlref manpage</a> for something of a work-around to
+this.</p>
+<p>
+</p>
+<h2><a name="persistent_private_variables_x_static__x_variable__persistent__x_variable__static__x_closure_">Persistent Private Variables
+   </a></h2>
+<p>Just because a lexical variable is lexically (also called statically)
+scoped to its enclosing block, <code>eval</code>, or <code>do</code> FILE, this doesn't mean that
+within a function it works like a C static.  It normally works more
+like a C auto, but with implicit garbage collection.</p>
+<p>Unlike local variables in C or C++, Perl's lexical variables don't
+necessarily get recycled just because their scope has exited.
+If something more permanent is still aware of the lexical, it will
+stick around.  So long as something else references a lexical, that
+lexical won't be freed--which is as it should be.  You wouldn't want
+memory being free until you were done using it, or kept around once you
+were done.  Automatic garbage collection takes care of this for you.</p>
+<p>This means that you can pass back or save away references to lexical
+variables, whereas to return a pointer to a C auto is a grave error.
+It also gives us a way to simulate C's function statics.  Here's a
+mechanism for giving a function private variables with both lexical
+scoping and a static lifetime.  If you do want to create something like
+C's static variables, just enclose the whole function in an extra block,
+and put the static variable outside the function but in the block.</p>
+<pre>
+    {
+        my $secret_val = 0;
+        sub gimme_another {
+            return ++$secret_val;
+        }
+    }
+    # $secret_val now becomes unreachable by the outside
+    # world, but retains its value between calls to gimme_another</pre>
+<p>If this function is being sourced in from a separate file
+via <code>require</code> or <code>use</code>, then this is probably just fine.  If it's
+all in the main program, you'll need to arrange for the <code>my</code>
+to be executed early, either by putting the whole block above
+your main program, or more likely, placing merely a <code>BEGIN</code>
+code block around it to make sure it gets executed before your program
+starts to run:</p>
+<pre>
+    BEGIN {
+        my $secret_val = 0;
+        sub gimme_another {
+            return ++$secret_val;
+        }
+    }</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html#begin__check__init_and_end">BEGIN, CHECK, INIT and END in the perlmod manpage</a> about the
+special triggered code blocks, <code>BEGIN</code>, <code>CHECK</code>, <code>INIT</code> and <code>END</code>.</p>
+<p>If declared at the outermost scope (the file scope), then lexicals
+work somewhat like C's file statics.  They are available to all
+functions in that same file declared below them, but are inaccessible
+from outside that file.  This strategy is sometimes used in modules
+to create private variables that the whole module can see.</p>
+<p>
+</p>
+<h2><a name="temporary_values_via_local___x_local__x_scope__dynamic__x_dynamic_scope__x_variable__local__x_variable__temporary_">Temporary Values via <code>local()</code>
+   
+</a></h2>
+<p><strong>WARNING</strong>: In general, you should be using <code>my</code> instead of <code>local</code>, because
+it's faster and safer.  Exceptions to this include the global punctuation
+variables, global filehandles and formats, and direct manipulation of the
+Perl symbol table itself.  <code>local</code> is mostly used when the current value
+of a variable must be visible to called subroutines.</p>
+<p>Synopsis:</p>
+<pre>
+    # localization of values</pre>
+<pre>
+    local $foo;                 # make $foo dynamically local
+    local (@wid, %get);         # make list of variables local
+    local $foo = &quot;flurp&quot;;       # make $foo dynamic, and init it
+    local @oof = @bar;          # make @oof dynamic, and init it</pre>
+<pre>
+    local $hash{key} = &quot;val&quot;;   # sets a local value for this hash entry
+    local ($cond ? $v1 : $v2);  # several types of lvalues support
+                                # localization</pre>
+<pre>
+    # localization of symbols</pre>
+<pre>
+    local *FH;                  # localize $FH, @FH, %FH, &amp;FH  ...
+    local *merlyn = *randal;    # now $merlyn is really $randal, plus
+                                #     @merlyn is really @randal, etc
+    local *merlyn = 'randal';   # SAME THING: promote 'randal' to *randal
+    local *merlyn = \$randal;   # just alias $merlyn, not @merlyn etc</pre>
+<p>A <code>local</code> modifies its listed variables to be ``local'' to the
+enclosing block, <code>eval</code>, or <code>do FILE</code>--and to <em>any subroutine
+called from within that block</em>.  A <code>local</code> just gives temporary
+values to global (meaning package) variables.  It does <em>not</em> create
+a local variable.  This is known as dynamic scoping.  Lexical scoping
+is done with <code>my</code>, which works more like C's auto declarations.</p>
+<p>Some types of lvalues can be localized as well : hash and array elements
+and slices, conditionals (provided that their result is always
+localizable), and symbolic references.  As for simple variables, this
+creates new, dynamically scoped values.</p>
+<p>If more than one variable or expression is given to <code>local</code>, they must be
+placed in parentheses.  This operator works
+by saving the current values of those variables in its argument list on a
+hidden stack and restoring them upon exiting the block, subroutine, or
+eval.  This means that called subroutines can also reference the local
+variable, but not the global one.  The argument list may be assigned to if
+desired, which allows you to initialize your local variables.  (If no
+initializer is given for a particular variable, it is created with an
+undefined value.)</p>
+<p>Because <code>local</code> is a run-time operator, it gets executed each time
+through a loop.  Consequently, it's more efficient to localize your
+variables outside the loop.</p>
+<p>
+</p>
+<h3><a name="grammatical_note_on_local___x_local__context_">Grammatical note on <code>local()</code>
+</a></h3>
+<p>A <code>local</code> is simply a modifier on an lvalue expression.  When you assign to
+a <code>local</code>ized variable, the <code>local</code> doesn't change whether its list is viewed
+as a scalar or an array.  So</p>
+<pre>
+    local($foo) = &lt;STDIN&gt;;
+    local @FOO = &lt;STDIN&gt;;</pre>
+<p>both supply a list context to the right-hand side, while</p>
+<pre>
+    local $foo = &lt;STDIN&gt;;</pre>
+<p>supplies a scalar context.</p>
+<p>
+</p>
+<h3><a name="localization_of_special_variables_x_local__special_variable_">Localization of special variables
+</a></h3>
+<p>If you localize a special variable, you'll be giving a new value to it,
+but its magic won't go away.  That means that all side-effects related
+to this magic still work with the localized value.</p>
+<p>This feature allows code like this to work :</p>
+<pre>
+    # Read the whole contents of FILE in $slurp
+    { local $/ = undef; $slurp = &lt;FILE&gt;; }</pre>
+<p>Note, however, that this restricts localization of some values ; for
+example, the following statement dies, as of perl 5.9.0, with an error
+<em>Modification of a read-only value attempted</em>, because the $1 variable is
+magical and read-only :</p>
+<pre>
+    local $1 = 2;</pre>
+<p>Similarly, but in a way more difficult to spot, the following snippet will
+die in perl 5.9.0 :</p>
+<pre>
+    sub f { local $_ = &quot;foo&quot;; print }
+    for ($1) {
+        # now $_ is aliased to $1, thus is magic and readonly
+        f();
+    }</pre>
+<p>See next section for an alternative to this situation.</p>
+<p><strong>WARNING</strong>: Localization of tied arrays and hashes does not currently
+work as described.
+This will be fixed in a future release of Perl; in the meantime, avoid
+code that relies on any particular behaviour of localising tied arrays
+or hashes (localising individual elements is still okay).
+See <a href="/usr/lib/perl5/5.8/html/./pod/perl58delta.html#localising_tied_arrays_and_hashes_is_broken">Localising Tied Arrays and Hashes Is Broken in the perl58delta manpage</a> for more
+details.
+</p>
+<p>
+</p>
+<h3><a name="localization_of_globs_x_local__glob__x_glob_">Localization of globs
+ </a></h3>
+<p>The construct</p>
+<pre>
+    local *name;</pre>
+<p>creates a whole new symbol table entry for the glob <code>name</code> in the
+current package.  That means that all variables in its glob slot ($name,
+@name, %name, &amp;name, and the <code>name</code> filehandle) are dynamically reset.</p>
+<p>This implies, among other things, that any magic eventually carried by
+those variables is locally lost.  In other words, saying <code>local */</code>
+will not have any effect on the internal value of the input record
+separator.</p>
+<p>Notably, if you want to work with a brand new value of the default scalar
+$_, and avoid the potential problem listed above about $_ previously
+carrying a magic value, you should use <code>local *_</code> instead of <code>local $_</code>.</p>
+<p>
+</p>
+<h3><a name="localization_of_elements_of_composite_types_x_local__composite_type_element__x_local__array_element__x_local__hash_element_">Localization of elements of composite types
+  </a></h3>
+<p>It's also worth taking a moment to explain what happens when you
+<code>local</code>ize a member of a composite type (i.e. an array or hash element).
+In this case, the element is <code>local</code>ized <em>by name</em>. This means that
+when the scope of the <code>local()</code> ends, the saved value will be
+restored to the hash element whose key was named in the <code>local()</code>, or
+the array element whose index was named in the <code>local()</code>.  If that
+element was deleted while the <code>local()</code> was in effect (e.g. by a
+<code>delete()</code> from a hash or a <code>shift()</code> of an array), it will spring
+back into existence, possibly extending an array and filling in the
+skipped elements with <code>undef</code>.  For instance, if you say</p>
+<pre>
+    %hash = ( 'This' =&gt; 'is', 'a' =&gt; 'test' );
+    @ary  = ( 0..5 );
+    {
+         local($ary[5]) = 6;
+         local($hash{'a'}) = 'drill';
+         while (my $e = pop(@ary)) {
+             print &quot;$e . . .\n&quot;;
+             last unless $e &gt; 3;
+         }
+         if (@ary) {
+             $hash{'only a'} = 'test';
+             delete $hash{'a'};
+         }
+    }
+    print join(' ', map { &quot;$_ $hash{$_}&quot; } sort keys %hash),&quot;.\n&quot;;
+    print &quot;The array has &quot;,scalar(@ary),&quot; elements: &quot;,
+          join(', ', map { defined $_ ? $_ : 'undef' } @ary),&quot;\n&quot;;</pre>
+<p>Perl will print</p>
+<pre>
+    6 . . .
+    4 . . .
+    3 . . .
+    This is a test only a test.
+    The array has 6 elements: 0, 1, 2, undef, undef, 5</pre>
+<p>The behavior of <code>local()</code> on non-existent members of composite
+types is subject to change in future.</p>
+<p>
+</p>
+<h2><a name="lvalue_subroutines_x_lvalue__x_subroutine__lvalue_">Lvalue subroutines
+ </a></h2>
+<p><strong>WARNING</strong>: Lvalue subroutines are still experimental and the
+implementation may change in future versions of Perl.</p>
+<p>It is possible to return a modifiable value from a subroutine.
+To do this, you have to declare the subroutine to return an lvalue.</p>
+<pre>
+    my $val;
+    sub canmod : lvalue {
+        # return $val; this doesn't work, don't say &quot;return&quot;
+        $val;
+    }
+    sub nomod {
+        $val;
+    }</pre>
+<pre>
+    canmod() = 5;   # assigns to $val
+    nomod()  = 5;   # ERROR</pre>
+<p>The scalar/list context for the subroutine and for the right-hand
+side of assignment is determined as if the subroutine call is replaced
+by a scalar. For example, consider:</p>
+<pre>
+    data(2,3) = get_data(3,4);</pre>
+<p>Both subroutines here are called in a scalar context, while in:</p>
+<pre>
+    (data(2,3)) = get_data(3,4);</pre>
+<p>and in:</p>
+<pre>
+    (data(2),data(3)) = get_data(3,4);</pre>
+<p>all the subroutines are called in a list context.</p>
+<dl>
+<dt><strong><a name="item_lvalue_subroutines_are_experimental">Lvalue subroutines are EXPERIMENTAL</a></strong>
+
+<dd>
+<p>They appear to be convenient, but there are several reasons to be
+circumspect.</p>
+</dd>
+<dd>
+<p>You can't use the return keyword, you must pass out the value before
+falling out of subroutine scope. (see comment in example above).  This
+is usually not a problem, but it disallows an explicit return out of a
+deeply nested loop, which is sometimes a nice way out.</p>
+</dd>
+<dd>
+<p>They violate encapsulation.  A normal mutator can check the supplied
+argument before setting the attribute it is protecting, an lvalue
+subroutine never gets that chance.  Consider;</p>
+</dd>
+<dd>
+<pre>
+    my $some_array_ref = [];    # protected by mutators ??</pre>
+</dd>
+<dd>
+<pre>
+    sub set_arr {               # normal mutator
+        my $val = shift;
+        die(&quot;expected array, you supplied &quot;, ref $val)
+           unless ref $val eq 'ARRAY';
+        $some_array_ref = $val;
+    }
+    sub set_arr_lv : lvalue {   # lvalue mutator
+        $some_array_ref;
+    }</pre>
+</dd>
+<dd>
+<pre>
+    # set_arr_lv cannot stop this !
+    set_arr_lv() = { a =&gt; 1 };</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="passing_symbol_table_entries__typeglobs__x_typeglob__x___">Passing Symbol Table Entries (typeglobs)
+ </a></h2>
+<p><strong>WARNING</strong>: The mechanism described in this section was originally
+the only way to simulate pass-by-reference in older versions of
+Perl.  While it still works fine in modern versions, the new reference
+mechanism is generally easier to work with.  See below.</p>
+<p>Sometimes you don't want to pass the value of an array to a subroutine
+but rather the name of it, so that the subroutine can modify the global
+copy of it rather than working with a local copy.  In perl you can
+refer to all objects of a particular name by prefixing the name
+with a star: <code>*foo</code>.  This is often known as a ``typeglob'', because the
+star on the front can be thought of as a wildcard match for all the
+funny prefix characters on variables and subroutines and such.</p>
+<p>When evaluated, the typeglob produces a scalar value that represents
+all the objects of that name, including any filehandle, format, or
+subroutine.  When assigned to, it causes the name mentioned to refer to
+whatever <code>*</code> value was assigned to it.  Example:</p>
+<pre>
+    sub doubleary {
+        local(*someary) = @_;
+        foreach $elem (@someary) {
+            $elem *= 2;
+        }
+    }
+    doubleary(*foo);
+    doubleary(*bar);</pre>
+<p>Scalars are already passed by reference, so you can modify
+scalar arguments without using this mechanism by referring explicitly
+to <code>$_[0]</code> etc.  You can modify all the elements of an array by passing
+all the elements as scalars, but you have to use the <code>*</code> mechanism (or
+the equivalent reference mechanism) to <code>push</code>, <code>pop</code>, or change the size of
+an array.  It will certainly be faster to pass the typeglob (or reference).</p>
+<p>Even if you don't want to modify an array, this mechanism is useful for
+passing multiple arrays in a single LIST, because normally the LIST
+mechanism will merge all the array values so that you can't extract out
+the individual arrays.  For more on typeglobs, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perldata.html#typeglobs_and_filehandles">Typeglobs and Filehandles in the perldata manpage</a>.</p>
+<p>
+</p>
+<h2><a name="when_to_still_use_local___x_local__x_variable__local_">When to Still Use <code>local()</code>
+ </a></h2>
+<p>Despite the existence of <code>my</code>, there are still three places where the
+<code>local</code> operator still shines.  In fact, in these three places, you
+<em>must</em> use <code>local</code> instead of <code>my</code>.</p>
+<ol>
+<li>
+<p>You need to give a global variable a temporary value, especially $_.</p>
+<p>The global variables, like <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> or the punctuation variables, must be 
+<code>local</code>ized with <code>local()</code>.  This block reads in <em>/etc/motd</em>, and splits
+it up into chunks separated by lines of equal signs, which are placed
+in <code>@Fields</code>.</p>
+<pre>
+    {
+        local @ARGV = (&quot;/etc/motd&quot;);
+        local $/ = undef;
+        local $_ = &lt;&gt;;  
+        @Fields = split /^\s*=+\s*$/;
+    }</pre>
+<p>It particular, it's important to <code>local</code>ize $_ in any routine that assigns
+to it.  Look out for implicit assignments in <code>while</code> conditionals.</p>
+</li>
+<li>
+<p>You need to create a local file or directory handle or a local function.</p>
+<p>A function that needs a filehandle of its own must use
+<code>local()</code> on a complete typeglob.   This can be used to create new symbol
+table entries:</p>
+<pre>
+    sub ioqueue {
+        local  (*READER, *WRITER);    # not my!
+        pipe    (READER,  WRITER)     or die &quot;pipe: $!&quot;;
+        return (*READER, *WRITER);
+    }
+    ($head, $tail) = ioqueue();</pre>
+<p>See the Symbol module for a way to create anonymous symbol table
+entries.</p>
+<p>Because assignment of a reference to a typeglob creates an alias, this
+can be used to create what is effectively a local function, or at least,
+a local alias.</p>
+<pre>
+    {
+        local *grow = \&amp;shrink; # only until this block exists
+        grow();                 # really calls shrink()
+        move();                 # if move() grow()s, it shrink()s too
+    }
+    grow();                     # get the real grow() again</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html#function_templates">Function Templates in the perlref manpage</a> for more about manipulating
+functions by name in this way.</p>
+</li>
+<li>
+<p>You want to temporarily change just one element of an array or hash.</p>
+<p>You can <code>local</code>ize just one element of an aggregate.  Usually this
+is done on dynamics:</p>
+<pre>
+    {
+        local $SIG{INT} = 'IGNORE';
+        funct();                            # uninterruptible
+    } 
+    # interruptibility automatically restored here</pre>
+<p>But it also works on lexically declared aggregates.  Prior to 5.005,
+this operation could on occasion misbehave.</p>
+</li>
+</ol>
+<p>
+</p>
+<h2><a name="pass_by_reference_x_pass_by_reference__x_passbyreference__x_reference_">Pass by Reference
+  </a></h2>
+<p>If you want to pass more than one array or hash into a function--or
+return them from it--and have them maintain their integrity, then
+you're going to have to use an explicit pass-by-reference.  Before you
+do that, you need to understand references as detailed in <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a>.
+This section may not make much sense to you otherwise.</p>
+<p>Here are a few simple examples.  First, let's pass in several arrays
+to a function and have it <code>pop</code> all of then, returning a new list
+of all their former last elements:</p>
+<pre>
+    @tailings = popmany ( \@a, \@b, \@c, \@d );</pre>
+<pre>
+    sub popmany {
+        my $aref;
+        my @retlist = ();
+        foreach $aref ( @_ ) {
+            push @retlist, pop @$aref;
+        }
+        return @retlist;
+    }</pre>
+<p>Here's how you might write a function that returns a
+list of keys occurring in all the hashes passed to it:</p>
+<pre>
+    @common = inter( \%foo, \%bar, \%joe );
+    sub inter {
+        my ($k, $href, %seen); # locals
+        foreach $href (@_) {
+            while ( $k = each %$href ) {
+                $seen{$k}++;
+            }
+        }
+        return grep { $seen{$_} == @_ } keys %seen;
+    }</pre>
+<p>So far, we're using just the normal list return mechanism.
+What happens if you want to pass or return a hash?  Well,
+if you're using only one of them, or you don't mind them
+concatenating, then the normal calling convention is ok, although
+a little expensive.</p>
+<p>Where people get into trouble is here:</p>
+<pre>
+    (@a, @b) = func(@c, @d);
+or
+    (%a, %b) = func(%c, %d);</pre>
+<p>That syntax simply won't work.  It sets just <code>@a</code> or <code>%a</code> and
+clears the <code>@b</code> or <code>%b</code>.  Plus the function didn't get passed
+into two separate arrays or hashes: it got one long list in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>,
+as always.</p>
+<p>If you can arrange for everyone to deal with this through references, it's
+cleaner code, although not so nice to look at.  Here's a function that
+takes two array references as arguments, returning the two array elements
+in order of how many elements they have in them:</p>
+<pre>
+    ($aref, $bref) = func(\@c, \@d);
+    print &quot;@$aref has more than @$bref\n&quot;;
+    sub func {
+        my ($cref, $dref) = @_;
+        if (@$cref &gt; @$dref) {
+            return ($cref, $dref);
+        } else {
+            return ($dref, $cref);
+        }
+    }</pre>
+<p>It turns out that you can actually do this also:</p>
+<pre>
+    (*a, *b) = func(\@c, \@d);
+    print &quot;@a has more than @b\n&quot;;
+    sub func {
+        local (*c, *d) = @_;
+        if (@c &gt; @d) {
+            return (\@c, \@d);
+        } else {
+            return (\@d, \@c);
+        }
+    }</pre>
+<p>Here we're using the typeglobs to do symbol table aliasing.  It's
+a tad subtle, though, and also won't work if you're using <code>my</code>
+variables, because only globals (even in disguise as <code>local</code>s)
+are in the symbol table.</p>
+<p>If you're passing around filehandles, you could usually just use the bare
+typeglob, like <code>*STDOUT</code>, but typeglobs references work, too.
+For example:</p>
+<pre>
+    splutter(\*STDOUT);
+    sub splutter {
+        my $fh = shift;
+        print $fh &quot;her um well a hmmm\n&quot;;
+    }</pre>
+<pre>
+    $rec = get_rec(\*STDIN);
+    sub get_rec {
+        my $fh = shift;
+        return scalar &lt;$fh&gt;;
+    }</pre>
+<p>If you're planning on generating new filehandles, you could do this.
+Notice to pass back just the bare *FH, not its reference.</p>
+<pre>
+    sub openit {
+        my $path = shift;
+        local *FH;
+        return open (FH, $path) ? *FH : undef;
+    }</pre>
+<p>
+</p>
+<h2><a name="prototypes_x_prototype__x_subroutine__prototype_">Prototypes
+ </a></h2>
+<p>Perl supports a very limited kind of compile-time argument checking
+using function prototyping.  If you declare</p>
+<pre>
+    sub mypush (\@@)</pre>
+<p>then <code>mypush()</code> takes arguments exactly like <code>push()</code> does.  The
+function declaration must be visible at compile time.  The prototype
+affects only interpretation of new-style calls to the function,
+where new-style is defined as not using the <code>&amp;</code> character.  In
+other words, if you call it like a built-in function, then it behaves
+like a built-in function.  If you call it like an old-fashioned
+subroutine, then it behaves like an old-fashioned subroutine.  It
+naturally falls out from this rule that prototypes have no influence
+on subroutine references like <code>\&amp;foo</code> or on indirect subroutine
+calls like <code>&amp;{$subref}</code> or <code>$subref-&gt;()</code>.</p>
+<p>Method calls are not influenced by prototypes either, because the
+function to be called is indeterminate at compile time, since
+the exact code called depends on inheritance.</p>
+<p>Because the intent of this feature is primarily to let you define
+subroutines that work like built-in functions, here are prototypes
+for some other functions that parse almost exactly like the
+corresponding built-in.</p>
+<pre>
+    Declared as                 Called as</pre>
+<pre>
+    sub mylink ($$)          mylink $old, $new
+    sub myvec ($$$)          myvec $var, $offset, 1
+    sub myindex ($$;$)       myindex &amp;getstring, &quot;substr&quot;
+    sub mysyswrite ($$$;$)   mysyswrite $buf, 0, length($buf) - $off, $off
+    sub myreverse (@)        myreverse $a, $b, $c
+    sub myjoin ($@)          myjoin &quot;:&quot;, $a, $b, $c
+    sub mypop (\@)           mypop @array
+    sub mysplice (\@$$@)     mysplice @array, @array, 0, @pushme
+    sub mykeys (\%)          mykeys %{$hashref}
+    sub myopen (*;$)         myopen HANDLE, $name
+    sub mypipe (**)          mypipe READHANDLE, WRITEHANDLE
+    sub mygrep (&amp;@)          mygrep { /foo/ } $a, $b, $c
+    sub myrand ($)           myrand 42
+    sub mytime ()            mytime</pre>
+<p>Any backslashed prototype character represents an actual argument
+that absolutely must start with that character.  The value passed
+as part of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> will be a reference to the actual argument given
+in the subroutine call, obtained by applying <code>\</code> to that argument.</p>
+<p>You can also backslash several argument types simultaneously by using
+the <code>\[]</code> notation:</p>
+<pre>
+    sub myref (\[$@%&amp;*])</pre>
+<p>will allow calling <code>myref()</code> as</p>
+<pre>
+    myref $var
+    myref @array
+    myref %hash
+    myref &amp;sub
+    myref *glob</pre>
+<p>and the first argument of <code>myref()</code> will be a reference to
+a scalar, an array, a hash, a code, or a glob.</p>
+<p>Unbackslashed prototype characters have special meanings.  Any
+unbackslashed <code>@</code> or <code>%</code> eats all remaining arguments, and forces
+list context.  An argument represented by <code>$</code> forces scalar context.  An
+<code>&amp;</code> requires an anonymous subroutine, which, if passed as the first
+argument, does not require the <code>sub</code> keyword or a subsequent comma.</p>
+<p>A <code>*</code> allows the subroutine to accept a bareword, constant, scalar expression,
+typeglob, or a reference to a typeglob in that slot.  The value will be
+available to the subroutine either as a simple scalar, or (in the latter
+two cases) as a reference to the typeglob.  If you wish to always convert
+such arguments to a typeglob reference, use Symbol::qualify_to_ref() as
+follows:</p>
+<pre>
+    use Symbol 'qualify_to_ref';</pre>
+<pre>
+    sub foo (*) {
+        my $fh = qualify_to_ref(shift, caller);
+        ...
+    }</pre>
+<p>A semicolon separates mandatory arguments from optional arguments.
+It is redundant before <code>@</code> or <code>%</code>, which gobble up everything else.</p>
+<p>Note how the last three examples in the table above are treated
+specially by the parser.  <code>mygrep()</code> is parsed as a true list
+operator, <code>myrand()</code> is parsed as a true unary operator with unary
+precedence the same as <code>rand()</code>, and <code>mytime()</code> is truly without
+arguments, just like <code>time()</code>.  That is, if you say</p>
+<pre>
+    mytime +2;</pre>
+<p>you'll get <code>mytime() + 2</code>, not <code>mytime(2)</code>, which is how it would be parsed
+without a prototype.</p>
+<p>The interesting thing about <code>&amp;</code> is that you can generate new syntax with it,
+provided it's in the initial position:
+</p>
+<pre>
+    sub try (&amp;@) {
+        my($try,$catch) = @_;
+        eval { &amp;$try };
+        if ($@) {
+            local $_ = $@;
+            &amp;$catch;
+        }
+    }
+    sub catch (&amp;) { $_[0] }</pre>
+<pre>
+    try {
+        die &quot;phooey&quot;;
+    } catch {
+        /phooey/ and print &quot;unphooey\n&quot;;
+    };</pre>
+<p>That prints <code>&quot;unphooey&quot;</code>.  (Yes, there are still unresolved
+issues having to do with visibility of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>.  I'm ignoring that
+question for the moment.  (But note that if we make <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> lexically
+scoped, those anonymous subroutines can act like closures... (Gee,
+is this sounding a little Lispish?  (Never mind.))))</p>
+<p>And here's a reimplementation of the Perl <code>grep</code> operator:
+</p>
+<pre>
+    sub mygrep (&amp;@) {
+        my $code = shift;
+        my @result;
+        foreach $_ (@_) {
+            push(@result, $_) if &amp;$code;
+        }
+        @result;
+    }</pre>
+<p>Some folks would prefer full alphanumeric prototypes.  Alphanumerics have
+been intentionally left out of prototypes for the express purpose of
+someday in the future adding named, formal parameters.  The current
+mechanism's main goal is to let module writers provide better diagnostics
+for module users.  Larry feels the notation quite understandable to Perl
+programmers, and that it will not intrude greatly upon the meat of the
+module, nor make it harder to read.  The line noise is visually
+encapsulated into a small pill that's easy to swallow.</p>
+<p>If you try to use an alphanumeric sequence in a prototype you will
+generate an optional warning - ``Illegal character in prototype...''.
+Unfortunately earlier versions of Perl allowed the prototype to be
+used as long as its prefix was a valid prototype.  The warning may be
+upgraded to a fatal error in a future version of Perl once the
+majority of offending code is fixed.</p>
+<p>It's probably best to prototype new functions, not retrofit prototyping
+into older ones.  That's because you must be especially careful about
+silent impositions of differing list versus scalar contexts.  For example,
+if you decide that a function should take just one parameter, like this:</p>
+<pre>
+    sub func ($) {
+        my $n = shift;
+        print &quot;you gave me $n\n&quot;;
+    }</pre>
+<p>and someone has been calling it with an array or expression
+returning a list:</p>
+<pre>
+    func(@foo);
+    func( split /:/ );</pre>
+<p>Then you've just supplied an automatic <code>scalar</code> in front of their
+argument, which can be more than a bit surprising.  The old <code>@foo</code>
+which used to hold one thing doesn't get passed in.  Instead,
+<code>func()</code> now gets passed in a <code>1</code>; that is, the number of elements
+in <code>@foo</code>.  And the <code>split</code> gets called in scalar context so it
+starts scribbling on your <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> parameter list.  Ouch!</p>
+<p>This is all very powerful, of course, and should be used only in moderation
+to make the world a better place.</p>
+<p>
+</p>
+<h2><a name="constant_functions_x_constant_">Constant Functions
+</a></h2>
+<p>Functions with a prototype of <code>()</code> are potential candidates for
+inlining.  If the result after optimization and constant folding
+is either a constant or a lexically-scoped scalar which has no other
+references, then it will be used in place of function calls made
+without <code>&amp;</code>.  Calls made using <code>&amp;</code> are never inlined.  (See
+<em>constant.pm</em> for an easy way to declare most constants.)</p>
+<p>The following functions would all be inlined:</p>
+<pre>
+    sub pi ()           { 3.14159 }             # Not exact, but close.
+    sub PI ()           { 4 * atan2 1, 1 }      # As good as it gets,
+                                                # and it's inlined, too!
+    sub ST_DEV ()       { 0 }
+    sub ST_INO ()       { 1 }</pre>
+<pre>
+    sub FLAG_FOO ()     { 1 &lt;&lt; 8 }
+    sub FLAG_BAR ()     { 1 &lt;&lt; 9 }
+    sub FLAG_MASK ()    { FLAG_FOO | FLAG_BAR }</pre>
+<pre>
+    sub OPT_BAZ ()      { not (0x1B58 &amp; FLAG_MASK) }</pre>
+<pre>
+    sub N () { int(OPT_BAZ) / 3 }</pre>
+<pre>
+    sub FOO_SET () { 1 if FLAG_MASK &amp; FLAG_FOO }</pre>
+<p>Be aware that these will not be inlined; as they contain inner scopes,
+the constant folding doesn't reduce them to a single constant:</p>
+<pre>
+    sub foo_set () { if (FLAG_MASK &amp; FLAG_FOO) { 1 } }</pre>
+<pre>
+    sub baz_val () {
+        if (OPT_BAZ) {
+            return 23;
+        }
+        else {
+            return 42;
+        }
+    }</pre>
+<p>If you redefine a subroutine that was eligible for inlining, you'll get
+a mandatory warning.  (You can use this warning to tell whether or not a
+particular subroutine is considered constant.)  The warning is
+considered severe enough not to be optional because previously compiled
+invocations of the function will still be using the old value of the
+function.  If you need to be able to redefine the subroutine, you need to
+ensure that it isn't inlined, either by dropping the <code>()</code> prototype
+(which changes calling semantics, so beware) or by thwarting the
+inlining mechanism in some other way, such as</p>
+<pre>
+    sub not_inlined () {
+        23 if $];
+    }</pre>
+<p>
+</p>
+<h2><a name="overriding_builtin_functions_x_builtin__x_override__x_core__x_core__global_">Overriding Built-in Functions
+   </a></h2>
+<p>Many built-in functions may be overridden, though this should be tried
+only occasionally and for good reason.  Typically this might be
+done by a package attempting to emulate missing built-in functionality
+on a non-Unix system.</p>
+<p>Overriding may be done only by importing the name from a module at
+compile time--ordinary predeclaration isn't good enough.  However, the
+<code>use subs</code> pragma lets you, in effect, predeclare subs
+via the import syntax, and these names may then override built-in ones:</p>
+<pre>
+    use subs 'chdir', 'chroot', 'chmod', 'chown';
+    chdir $somewhere;
+    sub chdir { ... }</pre>
+<p>To unambiguously refer to the built-in form, precede the
+built-in name with the special package qualifier <code>CORE::</code>.  For example,
+saying <code>CORE::open()</code> always refers to the built-in <code>open()</code>, even
+if the current package has imported some other subroutine called
+<code>&amp;open()</code> from elsewhere.  Even though it looks like a regular
+function call, it isn't: you can't take a reference to it, such as
+the incorrect <code>\&amp;CORE::open</code> might appear to produce.</p>
+<p>Library modules should not in general export built-in names like <code>open</code>
+or <code>chdir</code> as part of their default <code>@EXPORT</code> list, because these may
+sneak into someone else's namespace and change the semantics unexpectedly.
+Instead, if the module adds that name to <code>@EXPORT_OK</code>, then it's
+possible for a user to import the name explicitly, but not implicitly.
+That is, they could say</p>
+<pre>
+    use Module 'open';</pre>
+<p>and it would import the <code>open</code> override.  But if they said</p>
+<pre>
+    use Module;</pre>
+<p>they would get the default imports without overrides.</p>
+<p>The foregoing mechanism for overriding built-in is restricted, quite
+deliberately, to the package that requests the import.  There is a second
+method that is sometimes applicable when you wish to override a built-in
+everywhere, without regard to namespace boundaries.  This is achieved by
+importing a sub into the special namespace <code>CORE::GLOBAL::</code>.  Here is an
+example that quite brazenly replaces the <code>glob</code> operator with something
+that understands regular expressions.</p>
+<pre>
+    package REGlob;
+    require Exporter;
+    @ISA = 'Exporter';
+    @EXPORT_OK = 'glob';</pre>
+<pre>
+    sub import {
+        my $pkg = shift;
+        return unless @_;
+        my $sym = shift;
+        my $where = ($sym =~ s/^GLOBAL_// ? 'CORE::GLOBAL' : caller(0));
+        $pkg-&gt;export($where, $sym, @_);
+    }</pre>
+<pre>
+    sub glob {
+        my $pat = shift;
+        my @got;
+        local *D;
+        if (opendir D, '.') { 
+            @got = grep /$pat/, readdir D; 
+            closedir D;   
+        }
+        return @got;
+    }
+    1;</pre>
+<p>And here's how it could be (ab)used:</p>
+<pre>
+    #use REGlob 'GLOBAL_glob';      # override glob() in ALL namespaces
+    package Foo;
+    use REGlob 'glob';              # override glob() in Foo:: only
+    print for &lt;^[a-z_]+\.pm\$&gt;;     # show all pragmatic modules</pre>
+<p>The initial comment shows a contrived, even dangerous example.
+By overriding <code>glob</code> globally, you would be forcing the new (and
+subversive) behavior for the <code>glob</code> operator for <em>every</em> namespace,
+without the complete cognizance or cooperation of the modules that own
+those namespaces.  Naturally, this should be done with extreme caution--if
+it must be done at all.</p>
+<p>The <code>REGlob</code> example above does not implement all the support needed to
+cleanly override perl's <code>glob</code> operator.  The built-in <code>glob</code> has
+different behaviors depending on whether it appears in a scalar or list
+context, but our <code>REGlob</code> doesn't.  Indeed, many perl built-in have such
+context sensitive behaviors, and these must be adequately supported by
+a properly written override.  For a fully functional example of overriding
+<code>glob</code>, study the implementation of <code>File::DosGlob</code> in the standard
+library.</p>
+<p>When you override a built-in, your replacement should be consistent (if
+possible) with the built-in native syntax.  You can achieve this by using
+a suitable prototype.  To get the prototype of an overridable built-in,
+use the <code>prototype</code> function with an argument of <code>&quot;CORE::builtin_name&quot;</code>
+(see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/prototype.html">prototype in the perlfunc manpage</a>).</p>
+<p>Note however that some built-ins can't have their syntax expressed by a
+prototype (such as <code>system</code> or <code>chomp</code>).  If you override them you won't
+be able to fully mimic their original syntax.</p>
+<p>The built-ins <code>do</code>, <code>require</code> and <code>glob</code> can also be overridden, but due
+to special magic, their original syntax is preserved, and you don't have
+to define a prototype for their replacements.  (You can't override the
+<code>do BLOCK</code> syntax, though).</p>
+<p><code>require</code> has special additional dark magic: if you invoke your
+<code>require</code> replacement as <code>require Foo::Bar</code>, it will actually receive
+the argument <code>&quot;Foo/Bar.pm&quot;</code> in @_.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/require.html">require in the perlfunc manpage</a>.</p>
+<p>And, as you'll have noticed from the previous example, if you override
+<code>glob</code>, the <code>&lt;*&gt;</code> glob operator is overridden as well.</p>
+<p>In a similar fashion, overriding the <code>readline</code> function also overrides
+the equivalent I/O operator <code>&lt;FILEHANDLE&gt;</code>.</p>
+<p>Finally, some built-ins (e.g. <code>exists</code> or <code>grep</code>) can't be overridden.</p>
+<p>
+</p>
+<h2><a name="autoloading_x_autoloading__x_autoload_">Autoloading
+ </a></h2>
+<p>If you call a subroutine that is undefined, you would ordinarily
+get an immediate, fatal error complaining that the subroutine doesn't
+exist.  (Likewise for subroutines being used as methods, when the
+method doesn't exist in any base class of the class's package.)
+However, if an <code>AUTOLOAD</code> subroutine is defined in the package or
+packages used to locate the original subroutine, then that
+<code>AUTOLOAD</code> subroutine is called with the arguments that would have
+been passed to the original subroutine.  The fully qualified name
+of the original subroutine magically appears in the global $AUTOLOAD
+variable of the same package as the <code>AUTOLOAD</code> routine.  The name
+is not passed as an ordinary argument because, er, well, just
+because, that's why...</p>
+<p>Many <code>AUTOLOAD</code> routines load in a definition for the requested
+subroutine using eval(), then execute that subroutine using a special
+form of <code>goto()</code> that erases the stack frame of the <code>AUTOLOAD</code> routine
+without a trace.  (See the source to the standard module documented
+in <a href="/usr/lib/perl5/5.8/html/./jpl/JPL/AutoLoader.html">the AutoLoader manpage</a>, for example.)  But an <code>AUTOLOAD</code> routine can
+also just emulate the routine and never define it.   For example,
+let's pretend that a function that wasn't defined should just invoke
+<code>system</code> with those arguments.  All you'd do is:</p>
+<pre>
+    sub AUTOLOAD {
+        my $program = $AUTOLOAD;
+        $program =~ s/.*:://;
+        system($program, @_);
+    }
+    date();
+    who('am', 'i');
+    ls('-l');</pre>
+<p>In fact, if you predeclare functions you want to call that way, you don't
+even need parentheses:</p>
+<pre>
+    use subs qw(date who ls);
+    date;
+    who &quot;am&quot;, &quot;i&quot;;
+    ls -l;</pre>
+<p>A more complete example of this is the standard Shell module, which
+can treat undefined subroutine calls as calls to external programs.</p>
+<p>Mechanisms are available to help modules writers split their modules
+into autoloadable files.  See the standard AutoLoader module
+described in <a href="/usr/lib/perl5/5.8/html/./jpl/JPL/AutoLoader.html">the AutoLoader manpage</a> and in <a href="/usr/lib/perl5/5.8/html/./lib/AutoSplit.html">the AutoSplit manpage</a>, the standard
+SelfLoader modules in <a href="/usr/lib/perl5/5.8/html/./lib/SelfLoader.html">the SelfLoader manpage</a>, and the document on adding C
+functions to Perl code in <a href="/usr/lib/perl5/5.8/html/./pod/perlxs.html">the perlxs manpage</a>.</p>
+<p>
+</p>
+<h2><a name="subroutine_attributes_x_attribute__x_subroutine__attribute__x_attrs_">Subroutine Attributes
+  </a></h2>
+<p>A subroutine declaration or definition may have a list of attributes
+associated with it.  If such an attribute list is present, it is
+broken up at space or colon boundaries and treated as though a
+<code>use attributes</code> had been seen.  See <a href="/usr/lib/perl5/5.8/html/./lib/attributes.html">the attributes manpage</a> for details
+about what attributes are currently supported.
+Unlike the limitation with the obsolescent <code>use attrs</code>, the
+<code>sub : ATTRLIST</code> syntax works to associate the attributes with
+a pre-declaration, and not just with a subroutine definition.</p>
+<p>The attributes must be valid as simple identifier names (without any
+punctuation other than the '_' character).  They may have a parameter
+list appended, which is only checked for whether its parentheses ('(',')')
+nest properly.</p>
+<p>Examples of valid syntax (even though the attributes are unknown):</p>
+<pre>
+    sub fnord (&amp;\%) : switch(10,foo(7,3))  :  expensive;
+    sub plugh () : Ugly('\(&quot;) :Bad;
+    sub xyzzy : _5x5 { ... }</pre>
+<p>Examples of invalid syntax:</p>
+<pre>
+    sub fnord : switch(10,foo(); # ()-string not balanced
+    sub snoid : Ugly('(');        # ()-string not balanced
+    sub xyzzy : 5x5;              # &quot;5x5&quot; not a valid identifier
+    sub plugh : Y2::north;        # &quot;Y2::north&quot; not a simple identifier
+    sub snurt : foo + bar;        # &quot;+&quot; not a colon or space</pre>
+<p>The attribute list is passed as a list of constant strings to the code
+which associates them with the subroutine.  In particular, the second example
+of valid syntax above currently looks like this in terms of how it's
+parsed and invoked:</p>
+<pre>
+    use attributes __PACKAGE__, \&amp;plugh, q[Ugly('\(&quot;)], 'Bad';</pre>
+<p>For further details on attribute lists and their manipulation,
+see <a href="/usr/lib/perl5/5.8/html/./lib/attributes.html">the attributes manpage</a> and <a href="/usr/lib/perl5/5.8/html/./lib/Attribute/Handlers.html">the Attribute::Handlers manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html#function_templates">Function Templates in the perlref manpage</a> for more about references and closures.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlxs.html">the perlxs manpage</a> if you'd like to learn about calling C subroutines from Perl.  
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlembed.html">the perlembed manpage</a> if you'd like to learn about calling Perl subroutines from C.  
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a> to learn about bundling up your functions in separate files.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> to learn what library modules come standard on your system.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a> to learn how to make object method calls.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlsub - Perl subroutines</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

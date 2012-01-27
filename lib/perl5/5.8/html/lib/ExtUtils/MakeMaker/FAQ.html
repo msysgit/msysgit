@@ -1,0 +1,426 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#module_installation">Module Installation</a></li>
+		<li><a href="#philosophy_and_history">Philosophy and History</a></li>
+		<li><a href="#module_writing">Module Writing</a></li>
+		<li><a href="#xs">XS</a></li>
+	</ul>
+
+	<li><a href="#patching">PATCHING</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>FAQs, tricks and tips for <code>ExtUtils::MakeMaker</code>.</p>
+<p>
+</p>
+<h2><a name="module_installation">Module Installation</a></h2>
+<dl>
+<dt><strong><a name="item_how_do_i_keep_from_installing_man_pages_3f">How do I keep from installing man pages?</a></strong>
+
+<dd>
+<p>Recent versions of MakeMaker will only install man pages on Unix like
+operating systems.</p>
+</dd>
+<dd>
+<p>For an individual module:</p>
+</dd>
+<dd>
+<pre>
+        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none</pre>
+</dd>
+<dd>
+<p>If you want to suppress man page installation for all modules you have
+to reconfigure Perl and tell it 'none' when it asks where to install
+man pages.</p>
+</dd>
+</li>
+<dt><strong><a name="item_how_do_i_use_a_module_without_installing_it_3f">How do I use a module without installing it?</a></strong>
+
+<dd>
+<p>Two ways.  One is to build the module normally...</p>
+</dd>
+<dd>
+<pre>
+        perl Makefile.PL
+        make</pre>
+</dd>
+<dd>
+<p>...and then set the PERL5LIB environment variable to point at the
+blib/lib and blib/arch directories.</p>
+</dd>
+<dd>
+<p>The other is to install the module in a temporary location.</p>
+</dd>
+<dd>
+<pre>
+        perl Makefile.PL PREFIX=~/tmp LIB=~/tmp/lib/perl</pre>
+</dd>
+<dd>
+<p>And then set PERL5LIB to <em>~/tmp/lib/perl</em>.  This works well when you have
+multiple modules to work with.  It also ensures that the module goes
+through its full installation process which may modify it.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="philosophy_and_history">Philosophy and History</a></h2>
+<dl>
+<dt><strong><a name="item_why_not_just_use__3cinsert_other_build_config_tool">Why not just use &lt;insert other build config tool here&gt;?</a></strong>
+
+<dd>
+<p>Why did MakeMaker reinvent the build configuration wheel?  Why not
+just use autoconf or automake or ppm or Ant or ...</p>
+</dd>
+<dd>
+<p>There are many reasons, but the major one is cross-platform
+compatibility.</p>
+</dd>
+<dd>
+<p>Perl is one of the most ported pieces of software ever.  It works on
+operating systems I've never even heard of (see perlport for details).
+It needs a build tool that can work on all those platforms and with
+any wacky C compilers and linkers they might have.</p>
+</dd>
+<dd>
+<p>No such build tool exists.  Even make itself has wildly different
+dialects.  So we have to build our own.</p>
+</dd>
+</li>
+<dt><strong><a name="item_what_is_module_3a_3abuild_and_how_does_it_relate_t">What is Module::Build and how does it relate to MakeMaker?</a></strong>
+
+<dd>
+<p>Module::Build is a project by Ken Williams to supplant MakeMaker.
+Its primary advantages are:</p>
+</dd>
+<ul>
+<li><strong><a name="item_pure_perl_2e_no_make_2c_no_shell_commands">pure perl.  no make, no shell commands</a></strong>
+
+<li><strong><a name="item_easier_to_customize">easier to customize</a></strong>
+
+<li><strong><a name="item_cleaner_internals">cleaner internals</a></strong>
+
+<li><strong><a name="item_less_cruft">less cruft</a></strong>
+
+</ul>
+<p>Module::Build is the official heir apparent to MakeMaker and we
+encourage people to work on M::B rather than spending time adding features
+to MakeMaker.</p>
+</dl>
+<p>
+</p>
+<h2><a name="module_writing">Module Writing</a></h2>
+<dl>
+<dt><strong><a name="item_how_do_i_keep_my__24version_up_to_date_without_res">How do I keep my $VERSION up to date without resetting it manually?</a></strong>
+
+<dd>
+<p>Often you want to manually set the $VERSION in the main module
+distribution because this is the version that everybody sees on CPAN
+and maybe you want to customize it a bit.  But for all the other
+modules in your dist, $VERSION is really just bookkeeping and all that's
+important is it goes up every time the module is changed.  Doing this
+by hand is a pain and you often forget.</p>
+</dd>
+<dd>
+<p>Simplest way to do it automatically is to use your version control
+system's revision number (you are using version control, right?).</p>
+</dd>
+<dd>
+<p>In CVS, RCS and SVN you use $Revision$ (see the documentation of your
+version control system for details) writing it like so:</p>
+</dd>
+<dd>
+<pre>
+    $VERSION = sprintf &quot;%d.%03d&quot;, q$Revision$ =~ /(\d+)/g;</pre>
+</dd>
+<dd>
+<p>Every time the file is checked in the $Revision$ will be updated,
+updating your $VERSION.</p>
+</dd>
+<dd>
+<p>In CVS version 1.9 is followed by 1.10.  Since CPAN compares version
+numbers numerically we use a <code>sprintf()</code> to convert 1.9 to 1.009 and
+1.10 to 1.010 which compare properly.</p>
+</dd>
+<dd>
+<p>If branches are involved (ie. $Revision: 1.5.3.4$) its a little more
+complicated.</p>
+</dd>
+<dd>
+<pre>
+    # must be all on one line or MakeMaker will get confused.
+    $VERSION = do { my @r = (q$Revision$ =~ /\d+/g); sprintf &quot;%d.&quot;.&quot;%03d&quot; x $#r, @r };</pre>
+</dd>
+</li>
+<dt><strong><a name="item_what_27s_this_meta_2eyml_thing_and_how_did_it_get_">What's this <em>META.yml</em> thing and how did it get in my <em>MANIFEST</em>?!</a></strong>
+
+<dd>
+<p><em>META.yml</em> is a module meta-data file pioneered by Module::Build and
+automatically generated as part of the 'distdir' target (and thus
+'dist').  See <a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html#module_metadata">Module Meta-Data in the ExtUtils::MakeMaker manpage</a>.</p>
+</dd>
+<dd>
+<p>To shut off its generation, pass the <code>NO_META</code> flag to <code>WriteMakefile()</code>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="xs">XS</a></h2>
+<dl>
+<dt><strong><a name="item_how_to_i_prevent__22object_version_x_2exx_does_not">How to I prevent ``object version X.XX does not match bootstrap parameter Y.YY'' errors?</a></strong>
+
+<dd>
+<p>XS code is very sensitive to the module version number and will
+complain if the version number in your Perl module doesn't match.  If
+you change your module's version # without reruning Makefile.PL the old
+version number will remain in the Makefile causing the XS code to be built
+with the wrong number.</p>
+</dd>
+<dd>
+<p>To avoid this, you can force the Makefile to be rebuilt whenever you
+change the module containing the version number by adding this to your
+<code>WriteMakefile()</code> arguments.</p>
+</dd>
+<dd>
+<pre>
+    depend =&gt; { '$(FIRST_MAKEFILE)' =&gt; '$(VERSION_FROM)' }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_how_do_i_make_two_or_more_xs_files_coexist_in_the_">How do I make two or more XS files coexist in the same directory?</a></strong>
+
+<dd>
+<p>Sometimes you need to have two and more XS files in the same package.
+One way to go is to put them into separate directories, but sometimes
+this is not the most suitable solution. The following technique allows
+you to put two (and more) XS files in the same directory.</p>
+</dd>
+<dd>
+<p>Let's assume that we have a package <code>Cool::Foo</code>, which includes
+<code>Cool::Foo</code> and <code>Cool::Bar</code> modules each having a separate XS
+file. First we use the following <em>Makefile.PL</em>:</p>
+</dd>
+<dd>
+<pre>
+  use ExtUtils::MakeMaker;</pre>
+</dd>
+<dd>
+<pre>
+  WriteMakefile(
+      NAME              =&gt; 'Cool::Foo',
+      VERSION_FROM      =&gt; 'Foo.pm',
+      OBJECT              =&gt; q/$(O_FILES)/,
+      # ... other attrs ...
+  );</pre>
+</dd>
+<dd>
+<p>Notice the <code>OBJECT</code> attribute. MakeMaker generates the following
+variables in <em>Makefile</em>:</p>
+</dd>
+<dd>
+<pre>
+  # Handy lists of source code files:
+  XS_FILES= Bar.xs \
+        Foo.xs
+  C_FILES = Bar.c \
+        Foo.c
+  O_FILES = Bar.o \
+        Foo.o</pre>
+</dd>
+<dd>
+<p>Therefore we can use the <code>O_FILES</code> variable to tell MakeMaker to use
+these objects into the shared library.</p>
+</dd>
+<dd>
+<p>That's pretty much it. Now write <em>Foo.pm</em> and <em>Foo.xs</em>, <em>Bar.pm</em>
+and <em>Bar.xs</em>, where <em>Foo.pm</em> bootstraps the shared library and
+<em>Bar.pm</em> simply loading <em>Foo.pm</em>.</p>
+</dd>
+<dd>
+<p>The only issue left is to how to bootstrap <em>Bar.xs</em>. This is done
+from <em>Foo.xs</em>:</p>
+</dd>
+<dd>
+<pre>
+  MODULE = Cool::Foo PACKAGE = Cool::Foo</pre>
+</dd>
+<dd>
+<pre>
+  BOOT:
+  # boot the second XS file
+  boot_Cool__Bar(aTHX_ cv);</pre>
+</dd>
+<dd>
+<p>If you have more than two files, this is the place where you should
+boot extra XS files from.</p>
+</dd>
+<dd>
+<p>The following four files sum up all the details discussed so far.</p>
+</dd>
+<dd>
+<pre>
+  Foo.pm:
+  -------
+  package Cool::Foo;</pre>
+</dd>
+<dd>
+<pre>
+  require DynaLoader;</pre>
+</dd>
+<dd>
+<pre>
+  our @ISA = qw(DynaLoader);
+  our $VERSION = '0.01';
+  bootstrap Cool::Foo $VERSION;</pre>
+</dd>
+<dd>
+<pre>
+  1;</pre>
+</dd>
+<dd>
+<pre>
+  Bar.pm:
+  -------
+  package Cool::Bar;</pre>
+</dd>
+<dd>
+<pre>
+  use Cool::Foo; # bootstraps Bar.xs</pre>
+</dd>
+<dd>
+<pre>
+  1;</pre>
+</dd>
+<dd>
+<pre>
+  Foo.xs:
+  -------
+  #include &quot;EXTERN.h&quot;
+  #include &quot;perl.h&quot;
+  #include &quot;XSUB.h&quot;</pre>
+</dd>
+<dd>
+<pre>
+  MODULE = Cool::Foo  PACKAGE = Cool::Foo</pre>
+</dd>
+<dd>
+<pre>
+  BOOT:
+  # boot the second XS file
+  boot_Cool__Bar(aTHX_ cv);</pre>
+</dd>
+<dd>
+<pre>
+  MODULE = Cool::Foo  PACKAGE = Cool::Foo  PREFIX = cool_foo_</pre>
+</dd>
+<dd>
+<pre>
+  void
+  cool_foo_perl_rules()</pre>
+</dd>
+<dd>
+<pre>
+      CODE:
+      fprintf(stderr, &quot;Cool::Foo says: Perl Rules\n&quot;);</pre>
+</dd>
+<dd>
+<pre>
+  Bar.xs:
+  -------
+  #include &quot;EXTERN.h&quot;
+  #include &quot;perl.h&quot;
+  #include &quot;XSUB.h&quot;</pre>
+</dd>
+<dd>
+<pre>
+  MODULE = Cool::Bar  PACKAGE = Cool::Bar PREFIX = cool_bar_</pre>
+</dd>
+<dd>
+<pre>
+  void
+  cool_bar_perl_rules()</pre>
+</dd>
+<dd>
+<pre>
+      CODE:
+      fprintf(stderr, &quot;Cool::Bar says: Perl Rules\n&quot;);</pre>
+</dd>
+<dd>
+<p>And of course a very basic test:</p>
+</dd>
+<dd>
+<pre>
+  test.pl:
+  --------
+  use Test;
+  BEGIN { plan tests =&gt; 1 };
+  use Cool::Foo;
+  use Cool::Bar;
+  Cool::Foo::perl_rules();
+  Cool::Bar::perl_rules();
+  ok 1;</pre>
+</dd>
+<dd>
+<p>This tip has been brought to you by Nick Ing-Simmons and Stas Bekman.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="patching">PATCHING</a></h1>
+<p>If you have a question you'd like to see added to the FAQ (whether or
+not you have the answer) please send it to <a href="mailto:makemaker@perl.org.">makemaker@perl.org.</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>The denizens of <a href="mailto:makemaker@perl.org.">makemaker@perl.org.</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html">the ExtUtils::MakeMaker manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

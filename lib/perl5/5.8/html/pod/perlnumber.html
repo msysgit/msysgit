@@ -1,0 +1,254 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlnumber - semantics of numbers and numeric operations in Perl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlnumber - semantics of numbers and numeric operations in Perl</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#storing_numbers">Storing numbers</a></li>
+	<li><a href="#numeric_operators_and_numeric_conversions">Numeric operators and numeric conversions</a></li>
+	<li><a href="#flavors_of_perl_numeric_operations">Flavors of Perl numeric operations</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perlnumber - semantics of numbers and numeric operations in Perl</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    $n = 1234;              # decimal integer
+    $n = 0b1110011;         # binary integer
+    $n = 01234;             # octal integer
+    $n = 0x1234;            # hexadecimal integer
+    $n = 12.34e-56;         # exponential notation
+    $n = &quot;-12.34e56&quot;;       # number specified as a string
+    $n = &quot;1234&quot;;            # number specified as a string</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This document describes how Perl internally handles numeric values.</p>
+<p>Perl's operator overloading facility is completely ignored here.  Operator
+overloading allows user-defined behaviors for numbers, such as operations
+over arbitrarily large integers, floating points numbers with arbitrary
+precision, operations over ``exotic'' numbers such as modular arithmetic or
+p-adic arithmetic, and so on.  See <a href="/usr/lib/perl5/5.8/html/./lib/overload.html">the overload manpage</a> for details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="storing_numbers">Storing numbers</a></h1>
+<p>Perl can internally represent numbers in 3 different ways: as native
+integers, as native floating point numbers, and as decimal strings.
+Decimal strings may have an exponential notation part, as in <code>&quot;12.34e-56&quot;</code>.
+<em>Native</em> here means ``a format supported by the C compiler which was used
+to build perl''.</p>
+<p>The term ``native'' does not mean quite as much when we talk about native
+integers, as it does when native floating point numbers are involved.
+The only implication of the term ``native'' on integers is that the limits for
+the maximal and the minimal supported true integral quantities are close to
+powers of 2.  However, ``native'' floats have a most fundamental
+restriction: they may represent only those numbers which have a relatively
+``short'' representation when converted to a binary fraction.  For example,
+0.9 cannot be represented by a native float, since the binary fraction
+for 0.9 is infinite:</p>
+<pre>
+  binary0.1110011001100...</pre>
+<p>with the sequence <code>1100</code> repeating again and again.  In addition to this
+limitation,  the exponent of the binary number is also restricted when it
+is represented as a floating point number.  On typical hardware, floating
+point values can store numbers with up to 53 binary digits, and with binary
+exponents between -1024 and 1024.  In decimal representation this is close
+to 16 decimal digits and decimal exponents in the range of -304..304.
+The upshot of all this is that Perl cannot store a number like
+12345678901234567 as a floating point number on such architectures without
+loss of information.</p>
+<p>Similarly, decimal strings can represent only those numbers which have a
+finite decimal expansion.  Being strings, and thus of arbitrary length, there
+is no practical limit for the exponent or number of decimal digits for these
+numbers.  (But realize that what we are discussing the rules for just the
+<em>storage</em> of these numbers.  The fact that you can store such ``large'' numbers
+does not mean that the <em>operations</em> over these numbers will use all
+of the significant digits.
+See <a href="#numeric_operators_and_numeric_conversions">Numeric operators and numeric conversions</a> for details.)</p>
+<p>In fact numbers stored in the native integer format may be stored either
+in the signed native form, or in the unsigned native form.  Thus the limits
+for Perl numbers stored as native integers would typically be -2**31..2**32-1,
+with appropriate modifications in the case of 64-bit integers.  Again, this
+does not mean that Perl can do operations only over integers in this range:
+it is possible to store many more integers in floating point format.</p>
+<p>Summing up, Perl numeric values can store only those numbers which have
+a finite decimal expansion or a ``short'' binary expansion.</p>
+<p>
+</p>
+<hr />
+<h1><a name="numeric_operators_and_numeric_conversions">Numeric operators and numeric conversions</a></h1>
+<p>As mentioned earlier, Perl can store a number in any one of three formats,
+but most operators typically understand only one of those formats.  When
+a numeric value is passed as an argument to such an operator, it will be
+converted to the format understood by the operator.</p>
+<p>Six such conversions are possible:</p>
+<pre>
+  native integer        --&gt; native floating point       (*)
+  native integer        --&gt; decimal string
+  native floating_point --&gt; native integer              (*)
+  native floating_point --&gt; decimal string              (*)
+  decimal string        --&gt; native integer
+  decimal string        --&gt; native floating point       (*)</pre>
+<p>These conversions are governed by the following general rules:</p>
+<ul>
+<li>
+<p>If the source number can be represented in the target form, that
+representation is used.</p>
+</li>
+<li>
+<p>If the source number is outside of the limits representable in the target form,
+a representation of the closest limit is used.  (<em>Loss of information</em>)</p>
+</li>
+<li>
+<p>If the source number is between two numbers representable in the target form,
+a representation of one of these numbers is used.  (<em>Loss of information</em>)</p>
+</li>
+<li>
+<p>In <code>native floating point --&gt; native integer</code> conversions the magnitude
+of the result is less than or equal to the magnitude of the source.
+(<em>``Rounding to zero''.</em>)</p>
+</li>
+<li>
+<p>If the <code>decimal string --&gt; native integer</code> conversion cannot be done
+without loss of information, the result is compatible with the conversion
+sequence <code>decimal_string --&gt; native_floating_point --&gt; native_integer</code>.
+In particular, rounding is strongly biased to 0, though a number like
+<code>&quot;0.99999999999999999999&quot;</code> has a chance of being rounded to 1.</p>
+</li>
+</ul>
+<p><strong>RESTRICTION</strong>: The conversions marked with <code>(*)</code> above involve steps
+performed by the C compiler.  In particular, bugs/features of the compiler
+used may lead to breakage of some of the above rules.</p>
+<p>
+</p>
+<hr />
+<h1><a name="flavors_of_perl_numeric_operations">Flavors of Perl numeric operations</a></h1>
+<p>Perl operations which take a numeric argument treat that argument in one
+of four different ways: they may force it to one of the integer/floating/
+string formats, or they may behave differently depending on the format of
+the operand.  Forcing a numeric value to a particular format does not
+change the number stored in the value.</p>
+<p>All the operators which need an argument in the integer format treat the
+argument as in modular arithmetic, e.g., <code>mod 2**32</code> on a 32-bit
+architecture.  <code>sprintf &quot;%u&quot;, -1</code> therefore provides the same result as
+<code>sprintf &quot;%u&quot;, ~0</code>.</p>
+<dl>
+<dt><strong><a name="item_arithmetic_operators">Arithmetic operators</a></strong>
+
+<dd>
+<p>The binary operators <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code> <code>==</code> <code>!=</code> <code>&gt;</code> <code>&lt;</code>
+<code>&gt;=</code> <code>&lt;=</code> and the unary operators <code>-</code> <code>abs</code> and <code>--</code> will
+attempt to convert arguments to integers.  If both conversions are possible
+without loss of precision, and the operation can be performed without
+loss of precision then the integer result is used.  Otherwise arguments are
+converted to floating point format and the floating point result is used.
+The caching of conversions (as described above) means that the integer
+conversion does not throw away fractional parts on floating point numbers.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2b_2b">++</a></strong>
+
+<dd>
+<p><a href="#item__2b_2b"><code>++</code></a> behaves as the other operators above, except that if it is a string
+matching the format <code>/^[a-zA-Z]*[0-9]*\z/</code> the string increment described
+in <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a> is used.</p>
+</dd>
+</li>
+<dt><strong><a name="item_arithmetic_operators_during_use_integer">Arithmetic operators during <code>use integer</code></a></strong>
+
+<dd>
+<p>In scopes where <code>use integer;</code> is in force, nearly all the operators listed
+above will force their <code>argument(s)</code> into integer format, and return an integer
+result.  The exceptions, <code>abs</code>, <a href="#item__2b_2b"><code>++</code></a> and <code>--</code>, do not change their
+behavior with <code>use integer;</code></p>
+</dd>
+</li>
+<dt><strong><a name="item_other_mathematical_operators">Other mathematical operators</a></strong>
+
+<dd>
+<p>Operators such as <code>**</code>, <code>sin</code> and <code>exp</code> force arguments to floating point
+format.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bitwise_operators">Bitwise operators</a></strong>
+
+<dd>
+<p>Arguments are forced into the integer format if not strings.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bitwise_operators_during_use_integer">Bitwise operators during <code>use integer</code></a></strong>
+
+<dd>
+<p>forces arguments to integer format. Also shift operations internally use
+signed integers rather than the default unsigned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_operators_which_expect_an_integer">Operators which expect an integer</a></strong>
+
+<dd>
+<p>force the argument into the integer format.  This is applicable
+to the third and fourth arguments of <code>sysread</code>, for example.</p>
+</dd>
+</li>
+<dt><strong><a name="item_operators_which_expect_a_string">Operators which expect a string</a></strong>
+
+<dd>
+<p>force the argument into the string format.  For example, this is
+applicable to <code>printf &quot;%s&quot;, $value</code>.</p>
+</dd>
+</li>
+</dl>
+<p>Though forcing an argument into a particular form does not change the
+stored number, Perl remembers the result of such conversions.  In
+particular, though the first such conversion may be time-consuming,
+repeated operations will not need to redo the conversion.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Ilya Zakharevich <code>ilya@math.ohio-state.edu</code></p>
+<p>Editorial adjustments by Gurusamy Sarathy &lt;<a href="mailto:gsar@ActiveState.com">gsar@ActiveState.com</a>&gt;</p>
+<p>Updates for 5.8.0 by Nicholas Clark &lt;<a href="mailto:nick@ccl4.org">nick@ccl4.org</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/overload.html">the overload manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlnumber - semantics of numbers and numeric operations in Perl</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

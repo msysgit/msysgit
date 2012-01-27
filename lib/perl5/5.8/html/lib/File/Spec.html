@@ -1,0 +1,420 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File::Spec - portably perform operations on file names</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Spec - portably perform operations on file names</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>File::Spec - portably perform operations on file names</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use File::Spec;</pre>
+<pre>
+        $x=File::Spec-&gt;catfile('a', 'b', 'c');</pre>
+<p>which returns 'a/b/c' under Unix. Or:</p>
+<pre>
+        use File::Spec::Functions;</pre>
+<pre>
+        $x = catfile('a', 'b', 'c');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module is designed to support operations commonly performed on file
+specifications (usually called ``file names'', but not to be confused with the
+contents of a file, or Perl's file handles), such as concatenating several
+directory and file names into a single path, or determining whether a path
+is rooted. It is based on code directly taken from MakeMaker 5.17, code
+written by Andreas K&ouml;nig, Andy Dougherty, Charles Bailey, Ilya
+Zakharevich, Paul Schinder, and others.</p>
+<p>Since these functions are different for most operating systems, each set of
+OS specific routines is available in a separate module, including:</p>
+<pre>
+        File::Spec::Unix
+        File::Spec::Mac
+        File::Spec::OS2
+        File::Spec::Win32
+        File::Spec::VMS</pre>
+<p>The module appropriate for the current OS is automatically loaded by
+File::Spec. Since some modules (like VMS) make use of facilities available
+only under that OS, it may not be possible to load all modules under all
+operating systems.</p>
+<p>Since File::Spec is object oriented, subroutines should not be called directly,
+as in:</p>
+<pre>
+        File::Spec::catfile('a','b');</pre>
+<p>but rather as class methods:</p>
+<pre>
+        File::Spec-&gt;catfile('a','b');</pre>
+<p>For simple uses, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Functions.html">the File::Spec::Functions manpage</a> provides convenient functional
+forms of these methods.</p>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<dl>
+<dt><strong><a name="item_canonpath">canonpath</a></strong>
+
+<dd>
+<p>No physical check on the filesystem, but a logical cleanup of a
+path.</p>
+</dd>
+<dd>
+<pre>
+    $cpath = File::Spec-&gt;canonpath( $path ) ;</pre>
+</dd>
+<dd>
+<p>Note that this does *not* collapse <em>x/../y</em> sections into <em>y</em>.  This
+is by design.  If <em>/foo</em> on your system is a symlink to <em>/bar/baz</em>,
+then <em>/foo/../quux</em> is actually <em>/bar/quux</em>, not <em>/quux</em> as a naive
+<em>../</em>-removal would give you.  If you want to do this kind of
+processing, you probably want <code>Cwd</code>'s <code>realpath()</code> function to
+actually traverse the filesystem cleaning up paths like this.</p>
+</dd>
+</li>
+<dt><strong><a name="item_catdir">catdir</a></strong>
+
+<dd>
+<p>Concatenate two or more directory names to form a complete path ending
+with a directory. But remove the trailing slash from the resulting
+string, because it doesn't look good, isn't necessary and confuses
+OS/2. Of course, if this is the root directory, don't cut off the
+trailing slash :-)</p>
+</dd>
+<dd>
+<pre>
+    $path = File::Spec-&gt;catdir( @directories );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_catfile">catfile</a></strong>
+
+<dd>
+<p>Concatenate one or more directory names and a filename to form a
+complete path ending with a filename</p>
+</dd>
+<dd>
+<pre>
+    $path = File::Spec-&gt;catfile( @directories, $filename );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_curdir">curdir</a></strong>
+
+<dd>
+<p>Returns a string representation of the current directory.</p>
+</dd>
+<dd>
+<pre>
+    $curdir = File::Spec-&gt;curdir();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_devnull">devnull</a></strong>
+
+<dd>
+<p>Returns a string representation of the null device.</p>
+</dd>
+<dd>
+<pre>
+    $devnull = File::Spec-&gt;devnull();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_rootdir">rootdir</a></strong>
+
+<dd>
+<p>Returns a string representation of the root directory.</p>
+</dd>
+<dd>
+<pre>
+    $rootdir = File::Spec-&gt;rootdir();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_tmpdir">tmpdir</a></strong>
+
+<dd>
+<p>Returns a string representation of the first writable directory from a
+list of possible temporary directories.  Returns the current directory
+if no writable temporary directories are found.  The list of directories
+checked depends on the platform; e.g. File::Spec::Unix checks <code>$ENV{TMPDIR}</code>
+(unless taint is on) and <em>/tmp</em>.</p>
+</dd>
+<dd>
+<pre>
+    $tmpdir = File::Spec-&gt;tmpdir();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_updir">updir</a></strong>
+
+<dd>
+<p>Returns a string representation of the parent directory.</p>
+</dd>
+<dd>
+<pre>
+    $updir = File::Spec-&gt;updir();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_no_upwards">no_upwards</a></strong>
+
+<dd>
+<p>Given a list of file names, strip out those that refer to a parent
+directory. (Does not strip symlinks, only '.', '..', and equivalents.)</p>
+</dd>
+<dd>
+<pre>
+    @paths = File::Spec-&gt;no_upwards( @paths );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_case_tolerant">case_tolerant</a></strong>
+
+<dd>
+<p>Returns a true or false value indicating, respectively, that alphabetic
+case is not or is significant when comparing file specifications.</p>
+</dd>
+<dd>
+<pre>
+    $is_case_tolerant = File::Spec-&gt;case_tolerant();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_file_name_is_absolute">file_name_is_absolute</a></strong>
+
+<dd>
+<p>Takes as its argument a path, and returns true if it is an absolute path.</p>
+</dd>
+<dd>
+<pre>
+    $is_absolute = File::Spec-&gt;file_name_is_absolute( $path );</pre>
+</dd>
+<dd>
+<p>This does not consult the local filesystem on Unix, Win32, OS/2, or
+Mac OS (Classic).  It does consult the working environment for VMS
+(see <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/VMS.html#file_name_is_absolute">file_name_is_absolute in the File::Spec::VMS manpage</a>).</p>
+</dd>
+</li>
+<dt><strong><a name="item_path">path</a></strong>
+
+<dd>
+<p>Takes no argument.  Returns the environment variable <code>PATH</code> (or the local
+platform's equivalent) as a list.</p>
+</dd>
+<dd>
+<pre>
+    @PATH = File::Spec-&gt;path();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_join">join</a></strong>
+
+<dd>
+<p>join is the same as catfile.</p>
+</dd>
+</li>
+<dt><strong><a name="item_splitpath">splitpath</a></strong>
+
+<dd>
+<p>Splits a path in to volume, directory, and filename portions. On systems
+with no concept of volume, returns '' for volume.</p>
+</dd>
+<dd>
+<pre>
+    ($volume,$directories,$file) = File::Spec-&gt;splitpath( $path );
+    ($volume,$directories,$file) = File::Spec-&gt;splitpath( $path, $no_file );</pre>
+</dd>
+<dd>
+<p>For systems with no syntax differentiating filenames from directories, 
+assumes that the last file is a path unless <code>$no_file</code> is true or a
+trailing separator or <em>/.</em> or <em>/..</em> is present. On Unix, this means that <code>$no_file</code>
+true makes this return ( '', $path, '' ).</p>
+</dd>
+<dd>
+<p>The directory portion may or may not be returned with a trailing '/'.</p>
+</dd>
+<dd>
+<p>The results can be passed to <a href="#item_catpath">catpath()</a> to get back a path equivalent to
+(usually identical to) the original path.</p>
+</dd>
+</li>
+<dt><strong><a name="item_splitdir">splitdir</a></strong>
+
+<dd>
+<p>The opposite of <a href="#item_catdir">catdir()</a>.</p>
+</dd>
+<dd>
+<pre>
+    @dirs = File::Spec-&gt;splitdir( $directories );</pre>
+</dd>
+<dd>
+<p><code>$directories</code> must be only the directory portion of the path on systems 
+that have the concept of a volume or that have path syntax that differentiates
+files from directories.</p>
+</dd>
+<dd>
+<p>Unlike just splitting the directories on the separator, empty
+directory names (<code>''</code>) can be returned, because these are significant
+on some OSes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_catpath"><code>catpath()</code></a></strong>
+
+<dd>
+<p>Takes volume, directory and file portions and returns an entire path. Under
+Unix, <code>$volume</code> is ignored, and directory and file are concatenated.  A '/' is
+inserted if need be.  On other OSes, <code>$volume</code> is significant.</p>
+</dd>
+<dd>
+<pre>
+    $full_path = File::Spec-&gt;catpath( $volume, $directory, $file );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_abs2rel">abs2rel</a></strong>
+
+<dd>
+<p>Takes a destination path and an optional base path returns a relative path
+from the base path to the destination path:</p>
+</dd>
+<dd>
+<pre>
+    $rel_path = File::Spec-&gt;abs2rel( $path ) ;
+    $rel_path = File::Spec-&gt;abs2rel( $path, $base ) ;</pre>
+</dd>
+<dd>
+<p>If <code>$base</code> is not present or '', then <a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">cwd()</a> is used. If <code>$base</code> is
+relative, then it is converted to absolute form using
+<a href="#item_rel2abs">rel2abs()</a>. This means that it is taken to be relative to
+<a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">cwd()</a>.</p>
+</dd>
+<dd>
+<p>On systems with the concept of volume, if <code>$path</code> and <code>$base</code> appear to be
+on two different volumes, we will not attempt to resolve the two
+paths, and we will instead simply return <code>$path</code>.  Note that previous
+versions of this module ignored the volume of <code>$base</code>, which resulted in
+garbage results part of the time.</p>
+</dd>
+<dd>
+<p>On systems that have a grammar that indicates filenames, this ignores the 
+<code>$base</code> filename as well. Otherwise all path components are assumed to be
+directories.</p>
+</dd>
+<dd>
+<p>If <code>$path</code> is relative, it is converted to absolute form using <a href="#item_rel2abs">rel2abs()</a>.
+This means that it is taken to be relative to <a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">cwd()</a>.</p>
+</dd>
+<dd>
+<p>No checks against the filesystem are made.  On VMS, there is
+interaction with the working environment, as logicals and
+macros are expanded.</p>
+</dd>
+<dd>
+<p>Based on code written by Shigio Yamaguchi.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rel2abs"><code>rel2abs()</code></a></strong>
+
+<dd>
+<p>Converts a relative path to an absolute path.</p>
+</dd>
+<dd>
+<pre>
+    $abs_path = File::Spec-&gt;rel2abs( $path ) ;
+    $abs_path = File::Spec-&gt;rel2abs( $path, $base ) ;</pre>
+</dd>
+<dd>
+<p>If <code>$base</code> is not present or '', then <a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">cwd()</a> is used. If <code>$base</code> is relative,
+then it is converted to absolute form using <a href="#item_rel2abs">rel2abs()</a>. This means that it
+is taken to be relative to <a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">cwd()</a>.</p>
+</dd>
+<dd>
+<p>On systems with the concept of volume, if <code>$path</code> and <code>$base</code> appear to be
+on two different volumes, we will not attempt to resolve the two
+paths, and we will instead simply return <code>$path</code>.  Note that previous
+versions of this module ignored the volume of <code>$base</code>, which resulted in
+garbage results part of the time.</p>
+</dd>
+<dd>
+<p>On systems that have a grammar that indicates filenames, this ignores the 
+<code>$base</code> filename as well. Otherwise all path components are assumed to be
+directories.</p>
+</dd>
+<dd>
+<p>If <code>$path</code> is absolute, it is cleaned up and returned using <a href="#item_canonpath">canonpath()</a>.</p>
+</dd>
+<dd>
+<p>No checks against the filesystem are made.  On VMS, there is
+interaction with the working environment, as logicals and
+macros are expanded.</p>
+</dd>
+<dd>
+<p>Based on code written by Shigio Yamaguchi.</p>
+</dd>
+</li>
+</dl>
+<p>For further information, please see <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Unix.html">the File::Spec::Unix manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Mac.html">the File::Spec::Mac manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/OS2.html">the File::Spec::OS2 manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Win32.html">the File::Spec::Win32 manpage</a>, or
+<a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/VMS.html">the File::Spec::VMS manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Unix.html">the File::Spec::Unix manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Mac.html">the File::Spec::Mac manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/OS2.html">the File::Spec::OS2 manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Win32.html">the File::Spec::Win32 manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/VMS.html">the File::Spec::VMS manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/File/Spec/Functions.html">the File::Spec::Functions manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html">the ExtUtils::MakeMaker manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Currently maintained by Ken Williams <code>&lt;KWILLIAMS@cpan.org&gt;</code>.</p>
+<p>The vast majority of the code was written by
+Kenneth Albanowski <code>&lt;kjahds@kjahds.com&gt;</code>,
+Andy Dougherty <code>&lt;doughera@lafayette.edu&gt;</code>,
+Andreas K&ouml;nig <code>&lt;A.Koenig@franz.ww.TU-Berlin.DE&gt;</code>,
+Tim Bunce <code>&lt;Tim.Bunce@ig.co.uk&gt;</code>.
+VMS support by Charles Bailey <code>&lt;bailey@newman.upenn.edu&gt;</code>.
+OS/2 support by Ilya Zakharevich <code>&lt;ilya@math.ohio-state.edu&gt;</code>.
+Mac support by Paul Schinder <code>&lt;schinder@pobox.com&gt;</code>, and
+Thomas Wegner <code>&lt;wegner_thomas@yahoo.com&gt;</code>.
+<a href="#item_abs2rel"><code>abs2rel()</code></a> and <a href="#item_rel2abs"><code>rel2abs()</code></a> written by Shigio Yamaguchi <code>&lt;shigio@tamacom.com&gt;</code>,
+modified by Barrie Slaymaker <code>&lt;barries@slaysys.com&gt;</code>.
+splitpath(), splitdir(), <a href="#item_catpath"><code>catpath()</code></a> and <a href="#item_catdir"><code>catdir()</code></a> by Barrie Slaymaker.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.</p>
+<p>This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Spec - portably perform operations on file names</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

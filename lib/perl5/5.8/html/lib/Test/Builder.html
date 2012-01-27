@@ -1,0 +1,749 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Builder - Backend for building test libraries</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder - Backend for building test libraries</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#construction">Construction</a></li>
+		<li><a href="#setting_up_tests">Setting up tests</a></li>
+		<li><a href="#running_tests">Running tests</a></li>
+		<li><a href="#test_style">Test style</a></li>
+		<li><a href="#output">Output</a></li>
+		<li><a href="#test_status_and_info">Test Status and Info</a></li>
+	</ul>
+
+	<li><a href="#exit_codes">EXIT CODES</a></li>
+	<li><a href="#threads">THREADS</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Builder - Backend for building test libraries</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  package My::Test::Module;
+  use Test::Builder;
+  require Exporter;
+  @ISA = qw(Exporter);
+  @EXPORT = qw(ok);</pre>
+<pre>
+  my $Test = Test::Builder-&gt;new;
+  $Test-&gt;output('my_logfile');</pre>
+<pre>
+  sub import {
+      my($self) = shift;
+      my $pack = caller;</pre>
+<pre>
+      $Test-&gt;exported_to($pack);
+      $Test-&gt;plan(@_);</pre>
+<pre>
+      $self-&gt;export_to_level(1, $self, 'ok');
+  }</pre>
+<pre>
+  sub ok {
+      my($test, $name) = @_;</pre>
+<pre>
+      $Test-&gt;ok($test, $name);
+  }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Test::Simple and Test::More have proven to be popular testing modules,
+but they're not always flexible enough.  Test::Builder provides the a
+building block upon which to write your own test libraries <em>which can
+work together</em>.</p>
+<p>
+</p>
+<h2><a name="construction">Construction</a></h2>
+<dl>
+<dt><strong><a name="item_new"><strong>new</strong></a></strong>
+
+<dd>
+<pre>
+  my $Test = Test::Builder-&gt;new;</pre>
+</dd>
+<dd>
+<p>Returns a Test::Builder object representing the current state of the
+test.</p>
+</dd>
+<dd>
+<p>Since you only run one test per program <a href="#item_new"><code>new</code></a> always returns the same
+Test::Builder object.  No matter how many times you call new(), you're
+getting the same object.  This is called a singleton.  This is done so that
+multiple modules share such global information as the test counter and
+where test output is going.</p>
+</dd>
+<dd>
+<p>If you want a completely new Test::Builder object different from the
+singleton, use <a href="#item_create"><code>create</code></a>.</p>
+</dd>
+<dt><strong><a name="item_create"><strong>create</strong></a></strong>
+
+<dd>
+<pre>
+  my $Test = Test::Builder-&gt;create;</pre>
+</dd>
+<dd>
+<p>Ok, so there can be more than one Test::Builder object and this is how
+you get it.  You might use this instead of <a href="#item_new"><code>new()</code></a> if you're testing
+a Test::Builder based module, but otherwise you probably want <a href="#item_new"><code>new</code></a>.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong>: the implementation is not complete.  <a href="#item_level"><code>level</code></a>, for example, is
+still shared amongst <strong>all</strong> Test::Builder objects, even ones created using
+this method.  Also, the method name may change in the future.</p>
+</dd>
+<dt><strong><a name="item_reset"><strong>reset</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;reset;</pre>
+</dd>
+<dd>
+<p>Reinitializes the Test::Builder singleton to its original state.
+Mostly useful for tests run in persistent environments where the same
+test might be run multiple times in the same process.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="setting_up_tests">Setting up tests</a></h2>
+<p>These methods are for setting up tests and declaring how many there
+are.  You usually only want to call one of these methods.</p>
+<dl>
+<dt><strong><a name="item_exported_to"><strong>exported_to</strong></a></strong>
+
+<dd>
+<pre>
+  my $pack = $Test-&gt;exported_to;
+  $Test-&gt;exported_to($pack);</pre>
+</dd>
+<dd>
+<p>Tells Test::Builder what package you exported your functions to.
+This is important for getting TODO tests right.</p>
+</dd>
+<dt><strong><a name="item_plan"><strong>plan</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;plan('no_plan');
+  $Test-&gt;plan( skip_all =&gt; $reason );
+  $Test-&gt;plan( tests =&gt; $num_tests );</pre>
+</dd>
+<dd>
+<p>A convenient way to set up your tests.  Call this and Test::Builder
+will print the appropriate headers and take the appropriate actions.</p>
+</dd>
+<dd>
+<p>If you call plan(), don't call any of the other methods below.</p>
+</dd>
+<dt><strong><a name="item_expected_tests"><strong>expected_tests</strong></a></strong>
+
+<dd>
+<pre>
+    my $max = $Test-&gt;expected_tests;
+    $Test-&gt;expected_tests($max);</pre>
+</dd>
+<dd>
+<p>Gets/sets the # of tests we expect this test to run and prints out
+the appropriate headers.</p>
+</dd>
+<dt><strong><a name="item_no_plan"><strong>no_plan</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;no_plan;</pre>
+</dd>
+<dd>
+<p>Declares that this test will run an indeterminate # of tests.</p>
+</dd>
+<dt><strong><a name="item_has_plan"><strong>has_plan</strong></a></strong>
+
+<dd>
+<pre>
+  $plan = $Test-&gt;has_plan</pre>
+</dd>
+<dd>
+<p>Find out whether a plan has been defined. $plan is either <code>undef</code> (no plan has been set), <a href="#item_no_plan"><code>no_plan</code></a> (indeterminate # of tests) or an integer (the number of expected tests).</p>
+</dd>
+<dt><strong><a name="item_skip_all"><strong>skip_all</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;skip_all;
+  $Test-&gt;skip_all($reason);</pre>
+</dd>
+<dd>
+<p>Skips all the tests, using the given $reason.  Exits immediately with 0.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="running_tests">Running tests</a></h2>
+<p>These actually run the tests, analogous to the functions in
+Test::More.</p>
+<p>$name is always optional.</p>
+<dl>
+<dt><strong><a name="item_ok"><strong>ok</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;ok($test, $name);</pre>
+</dd>
+<dd>
+<p>Your basic test.  Pass if $test is true, fail if $test is false.  Just
+like Test::Simple's ok().</p>
+</dd>
+<dt><strong><a name="item_is_eq"><strong>is_eq</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;is_eq($got, $expected, $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's is().  Checks if $got eq $expected.  This is the
+string version.</p>
+</dd>
+<dt><strong><a name="item_is_num"><strong>is_num</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;is_num($got, $expected, $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's is().  Checks if $got == $expected.  This is the
+numeric version.</p>
+</dd>
+<dt><strong><a name="item_isnt_eq"><strong>isnt_eq</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;isnt_eq($got, $dont_expect, $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's isnt().  Checks if $got ne $dont_expect.  This is
+the string version.</p>
+</dd>
+<dt><strong><a name="item_isnt_num"><strong>isnt_num</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;is_num($got, $dont_expect, $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's isnt().  Checks if $got ne $dont_expect.  This is
+the numeric version.</p>
+</dd>
+<dt><strong><a name="item_like"><strong>like</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;like($this, qr/$regex/, $name);
+  $Test-&gt;like($this, '/$regex/', $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's like().  Checks if $this matches the given $regex.</p>
+</dd>
+<dd>
+<p>You'll want to avoid qr// if you want your tests to work before 5.005.</p>
+</dd>
+<dt><strong><a name="item_unlike"><strong>unlike</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;unlike($this, qr/$regex/, $name);
+  $Test-&gt;unlike($this, '/$regex/', $name);</pre>
+</dd>
+<dd>
+<p>Like Test::More's unlike().  Checks if $this <strong>does not match</strong> the
+given $regex.</p>
+</dd>
+<dt><strong><a name="item_maybe_regex"><strong>maybe_regex</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;maybe_regex(qr/$regex/);
+  $Test-&gt;maybe_regex('/$regex/');</pre>
+</dd>
+<dd>
+<p>Convenience method for building testing functions that take regular
+expressions as arguments, but need to work before perl 5.005.</p>
+</dd>
+<dd>
+<p>Takes a quoted regular expression produced by qr//, or a string
+representing a regular expression.</p>
+</dd>
+<dd>
+<p>Returns a Perl value which may be used instead of the corresponding
+regular expression, or undef if it's argument is not recognised.</p>
+</dd>
+<dd>
+<p>For example, a version of like(), sans the useful diagnostic messages,
+could be written as:</p>
+</dd>
+<dd>
+<pre>
+  sub laconic_like {
+      my ($self, $this, $regex, $name) = @_;
+      my $usable_regex = $self-&gt;maybe_regex($regex);
+      die &quot;expecting regex, found '$regex'\n&quot;
+          unless $usable_regex;
+      $self-&gt;ok($this =~ m/$usable_regex/, $name);
+  }</pre>
+</dd>
+<dt><strong><a name="item_cmp_ok"><strong>cmp_ok</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;cmp_ok($this, $type, $that, $name);</pre>
+</dd>
+<dd>
+<p>Works just like Test::More's cmp_ok().</p>
+</dd>
+<dd>
+<pre>
+    $Test-&gt;cmp_ok($big_num, '!=', $other_big_num);</pre>
+</dd>
+<dt><strong><a name="item_bail_out"><strong>BAIL_OUT</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;BAIL_OUT($reason);</pre>
+</dd>
+<dd>
+<p>Indicates to the Test::Harness that things are going so badly all
+testing should terminate.  This includes running any additional test
+scripts.</p>
+</dd>
+<dd>
+<p>It will exit with 255.</p>
+</dd>
+<dt><strong><a name="item_skip"><strong>skip</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;skip;
+    $Test-&gt;skip($why);</pre>
+</dd>
+<dd>
+<p>Skips the current test, reporting $why.</p>
+</dd>
+<dt><strong><a name="item_todo_skip"><strong>todo_skip</strong></a></strong>
+
+<dd>
+<pre>
+  $Test-&gt;todo_skip;
+  $Test-&gt;todo_skip($why);</pre>
+</dd>
+<dd>
+<p>Like skip(), only it will declare the test as failing and TODO.  Similar
+to</p>
+</dd>
+<dd>
+<pre>
+    print &quot;not ok $tnum # TODO $why\n&quot;;</pre>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="test_style">Test style</a></h2>
+<dl>
+<dt><strong><a name="item_level"><strong>level</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;level($how_high);</pre>
+</dd>
+<dd>
+<p>How far up the call stack should $Test look when reporting where the
+test failed.</p>
+</dd>
+<dd>
+<p>Defaults to 1.</p>
+</dd>
+<dd>
+<p>Setting $Test::Builder::Level overrides.  This is typically useful
+localized:</p>
+</dd>
+<dd>
+<pre>
+    {
+        local $Test::Builder::Level = 2;
+        $Test-&gt;ok($test);
+    }</pre>
+</dd>
+<dt><strong><a name="item_use_numbers"><strong>use_numbers</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;use_numbers($on_or_off);</pre>
+</dd>
+<dd>
+<p>Whether or not the test should output numbers.  That is, this if true:</p>
+</dd>
+<dd>
+<pre>
+  ok 1
+  ok 2
+  ok 3</pre>
+</dd>
+<dd>
+<p>or this if false</p>
+</dd>
+<dd>
+<pre>
+  ok
+  ok
+  ok</pre>
+</dd>
+<dd>
+<p>Most useful when you can't depend on the test output order, such as
+when threads or forking is involved.</p>
+</dd>
+<dd>
+<p>Test::Harness will accept either, but avoid mixing the two styles.</p>
+</dd>
+<dd>
+<p>Defaults to on.</p>
+</dd>
+<dt><strong><a name="item_no_diag"><strong>no_diag</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;no_diag($no_diag);</pre>
+</dd>
+<dd>
+<p>If set true no diagnostics will be printed.  This includes calls to
+diag().</p>
+</dd>
+<dt><strong><a name="item_no_ending"><strong>no_ending</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;no_ending($no_ending);</pre>
+</dd>
+<dd>
+<p>Normally, Test::Builder does some extra diagnostics when the test
+ends.  It also changes the exit code as described below.</p>
+</dd>
+<dd>
+<p>If this is true, none of that will be done.</p>
+</dd>
+<dt><strong><a name="item_no_header"><strong>no_header</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;no_header($no_header);</pre>
+</dd>
+<dd>
+<p>If set to true, no ``1..N'' header will be printed.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="output">Output</a></h2>
+<p>Controlling where the test output goes.</p>
+<p>It's ok for your test to change where STDOUT and STDERR point to,
+Test::Builder's default output settings will not be affected.</p>
+<dl>
+<dt><strong><a name="item_diag"><strong>diag</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;diag(@msgs);</pre>
+</dd>
+<dd>
+<p>Prints out the given @msgs.  Like <code>print</code>, arguments are simply
+appended together.</p>
+</dd>
+<dd>
+<p>Normally, it uses the <a href="#item_failure_output"><code>failure_output()</code></a> handle, but if this is for a
+TODO test, the <a href="#item_todo_output"><code>todo_output()</code></a> handle is used.</p>
+</dd>
+<dd>
+<p>Output will be indented and marked with a # so as not to interfere
+with test output.  A newline will be put on the end if there isn't one
+already.</p>
+</dd>
+<dd>
+<p>We encourage using this rather than calling print directly.</p>
+</dd>
+<dd>
+<p>Returns false.  Why?  Because <a href="#item_diag"><code>diag()</code></a> is often used in conjunction with
+a failing test (<a href="#item_ok"><code>ok() || diag()</code></a>) it ``passes through'' the failure.</p>
+</dd>
+<dd>
+<pre>
+    return ok(...) || diag(...);</pre>
+</dd>
+<dt><strong><a name="item__print_diag"><strong>_print_diag</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;_print_diag(@msg);</pre>
+</dd>
+<dd>
+<p>Like _print, but prints to the current diagnostic filehandle.</p>
+</dd>
+<dt><strong><a name="item_output"><strong>output</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;output($fh);
+    $Test-&gt;output($file);</pre>
+</dd>
+<dd>
+<p>Where normal ``ok/not ok'' test output should go.</p>
+</dd>
+<dd>
+<p>Defaults to STDOUT.</p>
+</dd>
+<dt><strong><a name="item_failure_output"><strong>failure_output</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;failure_output($fh);
+    $Test-&gt;failure_output($file);</pre>
+</dd>
+<dd>
+<p>Where diagnostic output on test failures and <a href="#item_diag"><code>diag()</code></a> should go.</p>
+</dd>
+<dd>
+<p>Defaults to STDERR.</p>
+</dd>
+<dt><strong><a name="item_todo_output"><strong>todo_output</strong></a></strong>
+
+<dd>
+<pre>
+    $Test-&gt;todo_output($fh);
+    $Test-&gt;todo_output($file);</pre>
+</dd>
+<dd>
+<p>Where diagnostics about todo test failures and <a href="#item_diag"><code>diag()</code></a> should go.</p>
+</dd>
+<dd>
+<p>Defaults to STDOUT.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="test_status_and_info">Test Status and Info</a></h2>
+<dl>
+<dt><strong><a name="item_current_test"><strong>current_test</strong></a></strong>
+
+<dd>
+<pre>
+    my $curr_test = $Test-&gt;current_test;
+    $Test-&gt;current_test($num);</pre>
+</dd>
+<dd>
+<p>Gets/sets the current test number we're on.  You usually shouldn't
+have to set this.</p>
+</dd>
+<dd>
+<p>If set forward, the details of the missing tests are filled in as 'unknown'.
+if set backward, the details of the intervening tests are deleted.  You
+can erase history if you really want to.</p>
+</dd>
+<dt><strong><a name="item_summary"><strong>summary</strong></a></strong>
+
+<dd>
+<pre>
+    my @tests = $Test-&gt;summary;</pre>
+</dd>
+<dd>
+<p>A simple summary of the tests so far.  True for pass, false for fail.
+This is a logical pass/fail, so todos are passes.</p>
+</dd>
+<dd>
+<p>Of course, test #1 is $tests[0], etc...</p>
+</dd>
+<dt><strong><a name="item_details"><strong>details</strong></a></strong>
+
+<dd>
+<pre>
+    my @tests = $Test-&gt;details;</pre>
+</dd>
+<dd>
+<p>Like summary(), but with a lot more detail.</p>
+</dd>
+<dd>
+<pre>
+    $tests[$test_num - 1] = 
+            { 'ok'       =&gt; is the test considered a pass?
+              actual_ok  =&gt; did it literally say 'ok'?
+              name       =&gt; name of the test (if any)
+              type       =&gt; type of test (if any, see below).
+              reason     =&gt; reason for the above (if any)
+            };</pre>
+</dd>
+<dd>
+<p>'ok' is true if Test::Harness will consider the test to be a pass.</p>
+</dd>
+<dd>
+<p>'actual_ok' is a reflection of whether or not the test literally
+printed 'ok' or 'not ok'.  This is for examining the result of 'todo'
+tests.</p>
+</dd>
+<dd>
+<p>'name' is the name of the test.</p>
+</dd>
+<dd>
+<p>'type' indicates if it was a special test.  Normal tests have a type
+of ''.  Type can be one of the following:</p>
+</dd>
+<dd>
+<pre>
+    skip        see skip()
+    todo        see todo()
+    todo_skip   see todo_skip()
+    unknown     see below</pre>
+</dd>
+<dd>
+<p>Sometimes the Test::Builder test counter is incremented without it
+printing any test output, for example, when <a href="#item_current_test"><code>current_test()</code></a> is changed.
+In these cases, Test::Builder doesn't know the result of the test, so
+it's type is 'unkown'.  These details for these tests are filled in.
+They are considered ok, but the name and actual_ok is left undef.</p>
+</dd>
+<dd>
+<p>For example ``not ok 23 - hole count # TODO insufficient donuts'' would
+result in this structure:</p>
+</dd>
+<dd>
+<pre>
+    $tests[22] =    # 23 - 1, since arrays start from 0.
+      { ok        =&gt; 1,   # logically, the test passed since it's todo
+        actual_ok =&gt; 0,   # in absolute terms, it failed
+        name      =&gt; 'hole count',
+        type      =&gt; 'todo',
+        reason    =&gt; 'insufficient donuts'
+      };</pre>
+</dd>
+<dt><strong><a name="item_todo"><strong>todo</strong></a></strong>
+
+<dd>
+<pre>
+    my $todo_reason = $Test-&gt;todo;
+    my $todo_reason = $Test-&gt;todo($pack);</pre>
+</dd>
+<dd>
+<p><a href="#item_todo"><code>todo()</code></a> looks for a $TODO variable in your tests.  If set, all tests
+will be considered 'todo' (see Test::More and Test::Harness for
+details).  Returns the reason (ie. the value of $TODO) if running as
+todo tests, false otherwise.</p>
+</dd>
+<dd>
+<p><a href="#item_todo"><code>todo()</code></a> is about finding the right package to look for $TODO in.  It
+uses the <a href="#item_exported_to"><code>exported_to()</code></a> package to find it.  If that's not set, it's
+pretty good at guessing the right package to look at based on $Level.</p>
+</dd>
+<dd>
+<p>Sometimes there is some confusion about where <a href="#item_todo"><code>todo()</code></a> should be looking
+for the $TODO variable.  If you want to be sure, tell it explicitly
+what $pack to use.</p>
+</dd>
+<dt><strong><a name="item_caller"><strong>caller</strong></a></strong>
+
+<dd>
+<pre>
+    my $package = $Test-&gt;caller;
+    my($pack, $file, $line) = $Test-&gt;caller;
+    my($pack, $file, $line) = $Test-&gt;caller($height);</pre>
+</dd>
+<dd>
+<p>Like the normal caller(), except it reports according to your level().</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="exit_codes">EXIT CODES</a></h1>
+<p>If all your tests passed, Test::Builder will exit with zero (which is
+normal).  If anything failed it will exit with how many failed.  If
+you run less (or more) tests than you planned, the missing (or extras)
+will be considered failures.  If no tests were ever run Test::Builder
+will throw a warning and exit with 255.  If the test died, even after
+having successfully completed all its tests, it will still be
+considered a failure and will exit with 255.</p>
+<p>So the exit codes are...</p>
+<pre>
+    0                   all tests successful
+    255                 test died or all passed but wrong # of tests run
+    any other number    how many failed (including missing or extras)</pre>
+<p>If you fail more than 254 tests, it will be reported as 254.</p>
+<p>
+</p>
+<hr />
+<h1><a name="threads">THREADS</a></h1>
+<p>In perl 5.8.0 and later, Test::Builder is thread-safe.  The test
+number is shared amongst all threads.  This means if one thread sets
+the test number using <a href="#item_current_test"><code>current_test()</code></a> they will all be effected.</p>
+<p>Test::Builder is only thread-aware if threads.pm is loaded <em>before</em>
+Test::Builder.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>CPAN can provide the best examples.  Test::Simple, Test::More,
+Test::Exception and Test::Differences all use Test::Builder.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>Test::Simple, Test::More, Test::Harness</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Original code by chromatic, maintained by Michael G Schwern
+&lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2002, 2004 by chromatic &lt;<a href="mailto:chromatic@wgz.org">chromatic@wgz.org</a>&gt; and
+                        Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;.</p>
+<p>This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.</p>
+<p>See <em><a href="http://www.perl.com/perl/misc/Artistic.html">http://www.perl.com/perl/misc/Artistic.html</a></em></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder - Backend for building test libraries</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

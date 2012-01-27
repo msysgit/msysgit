@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>eval - catch exceptions or compile and run code</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;eval - catch exceptions or compile and run code</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>eval - catch exceptions or compile and run code</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>eval EXPR
+     </p>
+<p>eval BLOCK</p>
+<p>eval</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>In the first form, the return value of EXPR is parsed and executed as if it
+were a little Perl program.  The value of the expression (which is itself
+determined within scalar context) is first parsed, and if there weren't any
+errors, executed in the lexical context of the current Perl program, so
+that any variable settings or subroutine and format definitions remain
+afterwards.  Note that the value is parsed every time the <code>eval</code> executes.
+If EXPR is omitted, evaluates <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a>.  This form is typically used to
+delay parsing and subsequent execution of the text of EXPR until run time.</p>
+<p>In the second form, the code within the BLOCK is parsed only once--at the
+same time the code surrounding the <code>eval</code> itself was parsed--and executed
+within the context of the current Perl program.  This form is typically
+used to trap exceptions more efficiently than the first (see below), while
+also providing the benefit of checking the code within BLOCK at compile
+time.</p>
+<p>The final semicolon, if any, may be omitted from the value of EXPR or within
+the BLOCK.</p>
+<p>In both forms, the value returned is the value of the last expression
+evaluated inside the mini-program; a return statement may be also used, just
+as with subroutines.  The expression providing the return value is evaluated
+in void, scalar, or list context, depending on the context of the <code>eval</code> 
+itself.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/wantarray.html">wantarray in the perlfunc manpage</a> for more on how the evaluation context can be 
+determined.</p>
+<p>If there is a syntax error or runtime error, or a <code>die</code> statement is
+executed, an undefined value is returned by <code>eval</code>, and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> is set to the
+error message.  If there was no error, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> is guaranteed to be a null
+string.  Beware that using <code>eval</code> neither silences perl from printing
+warnings to STDERR, nor does it stuff the text of warning messages into <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a>.
+To do either of those, you have to use the <code>$SIG{__WARN__}</code> facility, or
+turn off warnings inside the BLOCK or EXPR using <code>no&nbsp;warnings&nbsp;'all'</code>.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/warn.html">warn in the perlfunc manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/warnings.html">the warnings manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perllexwarn.html">the perllexwarn manpage</a>.</p>
+<p>Note that, because <code>eval</code> traps otherwise-fatal errors, it is useful for
+determining whether a particular feature (such as <code>socket</code> or <code>symlink</code>)
+is implemented.  It is also Perl's exception trapping mechanism, where
+the die operator is used to raise exceptions.</p>
+<p>If the code to be executed doesn't vary, you may use the eval-BLOCK
+form to trap run-time errors without incurring the penalty of
+recompiling each time.  The error, if any, is still returned in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a>.
+Examples:</p>
+<pre>
+    # make divide-by-zero nonfatal
+    eval { $answer = $a / $b; }; warn $@ if $@;</pre>
+<pre>
+    # same thing, but less efficient
+    eval '$answer = $a / $b'; warn $@ if $@;</pre>
+<pre>
+    # a compile-time error
+    eval { $answer = };                 # WRONG</pre>
+<pre>
+    # a run-time error
+    eval '$answer =';   # sets $@</pre>
+<p>Using the <code>eval{}</code> form as an exception trap in libraries does have some
+issues.  Due to the current arguably broken state of <code>__DIE__</code> hooks, you
+may wish not to trigger any <code>__DIE__</code> hooks that user code may have installed.
+You can use the <code>local $SIG{__DIE__}</code> construct for this purpose,
+as shown in this example:</p>
+<pre>
+    # a very private exception trap for divide-by-zero
+    eval { local $SIG{'__DIE__'}; $answer = $a / $b; };
+    warn $@ if $@;</pre>
+<p>This is especially significant, given that <code>__DIE__</code> hooks can call
+<code>die</code> again, which has the effect of changing their error messages:</p>
+<pre>
+    # __DIE__ hooks may modify error messages
+    {
+       local $SIG{'__DIE__'} =
+              sub { (my $x = $_[0]) =~ s/foo/bar/g; die $x };
+       eval { die &quot;foo lives here&quot; };
+       print $@ if $@;                # prints &quot;bar lives here&quot;
+    }</pre>
+<p>Because this promotes action at a distance, this counterintuitive behavior
+may be fixed in a future release.</p>
+<p>With an <code>eval</code>, you should be especially careful to remember what's
+being looked at when:</p>
+<pre>
+    eval $x;            # CASE 1
+    eval &quot;$x&quot;;          # CASE 2</pre>
+<pre>
+    eval '$x';          # CASE 3
+    eval { $x };        # CASE 4</pre>
+<pre>
+    eval &quot;\$$x++&quot;;      # CASE 5
+    $$x++;              # CASE 6</pre>
+<p>Cases 1 and 2 above behave identically: they run the code contained in
+the variable $x.  (Although case 2 has misleading double quotes making
+the reader wonder what else might be happening (nothing is).)  Cases 3
+and 4 likewise behave in the same way: they run the code <code>'$x'</code>, which
+does nothing but return the value of $x.  (Case 4 is preferred for
+purely visual reasons, but it also has the advantage of compiling at
+compile-time instead of at run-time.)  Case 5 is a place where
+normally you <em>would</em> like to use double quotes, except that in this
+particular situation, you can just use symbolic references instead, as
+in case 6.</p>
+<p><code>eval BLOCK</code> does <em>not</em> count as a loop, so the loop control statements
+<code>next</code>, <code>last</code>, or <code>redo</code> cannot be used to leave or restart the block.</p>
+<p>Note that as a very special case, an <code>eval ''</code> executed within the <code>DB</code>
+package doesn't see the usual surrounding lexical scope, but rather the
+scope of the first non-DB piece of code that called it. You don't normally
+need to worry about this unless you are writing a Perl debugger.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;eval - catch exceptions or compile and run code</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Text::Wrap - line wrapping to form simple paragraphs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Text::Wrap - line wrapping to form simple paragraphs</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#overrides">OVERRIDES</a></li>
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#license">LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Text::Wrap - line wrapping to form simple paragraphs</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p><strong>Example 1</strong></p>
+<pre>
+        use Text::Wrap</pre>
+<pre>
+        $initial_tab = &quot;\t&quot;;    # Tab before first line
+        $subsequent_tab = &quot;&quot;;   # All other lines flush left</pre>
+<pre>
+        print wrap($initial_tab, $subsequent_tab, @text);
+        print fill($initial_tab, $subsequent_tab, @text);</pre>
+<pre>
+        $lines = wrap($initial_tab, $subsequent_tab, @text);</pre>
+<pre>
+        @paragraphs = fill($initial_tab, $subsequent_tab, @text);</pre>
+<p><strong>Example 2</strong></p>
+<pre>
+        use Text::Wrap qw(wrap $columns $huge);</pre>
+<pre>
+        $columns = 132;         # Wrap at 132 characters
+        $huge = 'die';
+        $huge = 'wrap';
+        $huge = 'overflow';</pre>
+<p><strong>Example 3</strong></p>
+<pre>
+        use Text::Wrap</pre>
+<pre>
+        $Text::Wrap::columns = 72;
+        print wrap('', '', @text);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Text::Wrap::wrap()</code> is a very simple paragraph formatter.  It formats a
+single paragraph at a time by breaking lines at word boundries.
+Indentation is controlled for the first line (<code>$initial_tab</code>) and
+all subsequent lines (<code>$subsequent_tab</code>) independently.  Please note: 
+<code>$initial_tab</code> and <code>$subsequent_tab</code> are the literal strings that will
+be used: it is unlikley you would want to pass in a number.</p>
+<p>Text::Wrap::fill() is a simple multi-paragraph formatter.  It formats
+each paragraph separately and then joins them together when it's done.  It
+will destroy any whitespace in the original text.  It breaks text into
+paragraphs by looking for whitespace after a newline.  In other respects
+it acts like wrap().</p>
+<p>
+</p>
+<hr />
+<h1><a name="overrides">OVERRIDES</a></h1>
+<p><code>Text::Wrap::wrap()</code> has a number of variables that control its behavior.
+Because other modules might be using <code>Text::Wrap::wrap()</code> it is suggested
+that you leave these variables alone!  If you can't do that, then 
+use <code>local($Text::Wrap::VARIABLE) = YOURVALUE</code> when you change the
+values so that the original value is restored.  This <code>local()</code> trick
+will not work if you import the variable into your own namespace.</p>
+<p>Lines are wrapped at <code>$Text::Wrap::columns</code> columns.  <code>$Text::Wrap::columns</code>
+should be set to the full width of your output device.  In fact,
+every resulting line will have length of no more than <code>$columns - 1</code>.</p>
+<p>It is possible to control which characters terminate words by
+modifying <code>$Text::Wrap::break</code>. Set this to a string such as
+<code>'[\s:]'</code> (to break before spaces or colons) or a pre-compiled regexp
+such as <code>qr/[\s']/</code> (to break before spaces or apostrophes). The
+default is simply <code>'\s'</code>; that is, words are terminated by spaces.
+(This means, among other things, that trailing punctuation  such as
+full stops or commas stay with the word they are ``attached'' to.)</p>
+<p>Beginner note: In example 2, above <code>$columns</code> is imported into
+the local namespace, and set locally.  In example 3,
+<code>$Text::Wrap::columns</code> is set in its own namespace without importing it.</p>
+<p><code>Text::Wrap::wrap()</code> starts its work by expanding all the tabs in its
+input into spaces.  The last thing it does it to turn spaces back
+into tabs.  If you do not want tabs in your results, set 
+<code>$Text::Wrap::unexpand</code> to a false value.  Likewise if you do not
+want to use 8-character tabstops, set <code>$Text::Wrap::tabstop</code> to
+the number of characters you do want for your tabstops.</p>
+<p>If you want to separate your lines with something other than <code>\n</code>
+then set <code>$Text::Wrap::separator</code> to your preference.  This replaces
+all newlines with <code>$Text::Wrap::separator</code>.  If you just to preserve
+existing newlines but add new breaks with something else, set 
+<code>$Text::Wrap::separator2</code> instead.</p>
+<p>When words that are longer than <code>$columns</code> are encountered, they
+are broken up.  <code>wrap()</code> adds a <code>&quot;\n&quot;</code> at column <code>$columns</code>.
+This behavior can be overridden by setting <code>$huge</code> to
+'die' or to 'overflow'.  When set to 'die', large words will cause
+<code>die()</code> to be called.  When set to 'overflow', large words will be
+left intact.</p>
+<p>Historical notes: 'die' used to be the default value of
+<code>$huge</code>.  Now, 'wrap' is the default value.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<pre>
+        print wrap(&quot;\t&quot;,&quot;&quot;,&quot;This is a bit of text that forms 
+                a normal book-style paragraph&quot;);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="license">LICENSE</a></h1>
+<p>David Muir Sharnoff &lt;<a href="mailto:muir@idiom.com">muir@idiom.com</a>&gt; with help from Tim Pierce and
+many many others.  Copyright (C) 1996-2002 David Muir Sharnoff.  
+This module may be modified, used, copied, and redistributed at
+your own risk.  Publicly redistributed modified versions must use 
+a different name.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Text::Wrap - line wrapping to form simple paragraphs</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

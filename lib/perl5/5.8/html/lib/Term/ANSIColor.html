@@ -1,0 +1,329 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Term::ANSIColor - Color screen output using ANSI escape sequences</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Term::ANSIColor - Color screen output using ANSI escape sequences</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#restrictions">RESTRICTIONS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Term::ANSIColor - Color screen output using ANSI escape sequences</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Term::ANSIColor;
+    print color 'bold blue';
+    print &quot;This text is bold blue.\n&quot;;
+    print color 'reset';
+    print &quot;This text is normal.\n&quot;;
+    print colored (&quot;Yellow on magenta.\n&quot;, 'yellow on_magenta');
+    print &quot;This text is normal.\n&quot;;
+    print colored ['yellow on_magenta'], &quot;Yellow on magenta.\n&quot;;</pre>
+<pre>
+    use Term::ANSIColor qw(uncolor);
+    print uncolor '01;31', &quot;\n&quot;;</pre>
+<pre>
+    use Term::ANSIColor qw(:constants);
+    print BOLD, BLUE, &quot;This text is in bold blue.\n&quot;, RESET;</pre>
+<pre>
+    use Term::ANSIColor qw(:constants);
+    $Term::ANSIColor::AUTORESET = 1;
+    print BOLD BLUE &quot;This text is in bold blue.\n&quot;;
+    print &quot;This text is normal.\n&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module has two interfaces, one through <code>color()</code> and <code>colored()</code> and the
+other through constants.  It also offers the utility function uncolor(),
+which has to be explicitly imported to be used (see <em>SYNOPSIS</em>).</p>
+<p><code>color()</code> takes any number of strings as arguments and considers them to be
+space-separated lists of attributes.  It then forms and returns the escape
+sequence to set those attributes.  It doesn't print it out, just returns it,
+so you'll have to print it yourself if you want to (this is so that you can
+save it as a string, pass it to something else, send it to a file handle, or
+do anything else with it that you might care to).</p>
+<p><code>uncolor()</code> performs the opposite translation, turning escape sequences
+into a list of strings.</p>
+<p>The recognized attributes (all of which should be fairly intuitive) are
+clear, reset, dark, bold, underline, underscore, blink, reverse, concealed,
+black, red, green, yellow, blue, magenta, on_black, on_red, on_green,
+on_yellow, on_blue, on_magenta, on_cyan, and on_white.  Case is not
+significant.  Underline and underscore are equivalent, as are clear and
+reset, so use whichever is the most intuitive to you.  The color alone sets
+the foreground color, and on_color sets the background color.</p>
+<p>Note that not all attributes are supported by all terminal types, and some
+terminals may not support any of these sequences.  Dark, blink, and
+concealed in particular are frequently not implemented.</p>
+<p>Attributes, once set, last until they are unset (by sending the attribute
+``reset'').  Be careful to do this, or otherwise your attribute will last
+after your script is done running, and people get very annoyed at having
+their prompt and typing changed to weird colors.</p>
+<p>As an aid to help with this, <code>colored()</code> takes a scalar as the first argument
+and any number of attribute strings as the second argument and returns the
+scalar wrapped in escape codes so that the attributes will be set as
+requested before the string and reset to normal after the string.
+Alternately, you can pass a reference to an array as the first argument, and
+then the contents of that array will be taken as attributes and color codes
+and the remainder of the arguments as text to colorize.</p>
+<p>Normally, <code>colored()</code> just puts attribute codes at the beginning and end of
+the string, but if you set $Term::ANSIColor::EACHLINE to some string, that
+string will be considered the line delimiter and the attribute will be set
+at the beginning of each line of the passed string and reset at the end of
+each line.  This is often desirable if the output is being sent to a program
+like a pager that can be confused by attributes that span lines.  Normally
+you'll want to set $Term::ANSIColor::EACHLINE to <code>&quot;\n&quot;</code> to use this
+feature.</p>
+<p>Alternately, if you import <code>:constants</code>, you can use the constants CLEAR,
+RESET, BOLD, DARK, UNDERLINE, UNDERSCORE, BLINK, REVERSE, CONCEALED, BLACK,
+RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, ON_BLACK, ON_RED, ON_GREEN,
+ON_YELLOW, ON_BLUE, ON_MAGENTA, ON_CYAN, and ON_WHITE directly.  These are
+the same as <code>color('attribute')</code> and can be used if you prefer typing:</p>
+<pre>
+    print BOLD BLUE ON_WHITE &quot;Text\n&quot;, RESET;</pre>
+<p>to</p>
+<pre>
+    print colored (&quot;Text\n&quot;, 'bold blue on_white');</pre>
+<p>When using the constants, if you don't want to have to remember to add the
+<code>, RESET</code> at the end of each print line, you can set
+$Term::ANSIColor::AUTORESET to a true value.  Then, the display mode will
+automatically be reset if there is no comma after the constant.  In other
+words, with that variable set:</p>
+<pre>
+    print BOLD BLUE &quot;Text\n&quot;;</pre>
+<p>will reset the display mode afterwards, whereas:</p>
+<pre>
+    print BOLD, BLUE, &quot;Text\n&quot;;</pre>
+<p>will not.</p>
+<p>The subroutine interface has the advantage over the constants interface in
+that only two subroutines are exported into your namespace, versus
+twenty-two in the constants interface.  On the flip side, the constants
+interface has the advantage of better compile time error checking, since
+misspelled names of colors or attributes in calls to <code>color()</code> and <code>colored()</code>
+won't be caught until runtime whereas misspelled names of constants will be
+caught at compile time.  So, polute your namespace with almost two dozen
+subroutines that you may not even use that often, or risk a silly bug by
+mistyping an attribute.  Your choice, TMTOWTDI after all.</p>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<dl>
+<dt><strong><a name="item_bad_escape_sequence__25s">Bad escape sequence %s</a></strong>
+
+<dd>
+<p>(F) You passed an invalid ANSI escape sequence to uncolor().</p>
+</dd>
+</li>
+<dt><strong><a name="item_bareword__22_25s_22_not_allowed_while__22strict_su">Bareword ``%s'' not allowed while ``strict subs'' in use</a></strong>
+
+<dd>
+<p>(F) You probably mistyped a constant color name such as:</p>
+</dd>
+<dd>
+<pre>
+    $Foobar = FOOBAR . &quot;This line should be blue\n&quot;;</pre>
+</dd>
+<dd>
+<p>or:</p>
+</dd>
+<dd>
+<pre>
+    @Foobar = FOOBAR, &quot;This line should be blue\n&quot;;</pre>
+</dd>
+<dd>
+<p>This will only show up under use strict (another good reason to run under
+use strict).</p>
+</dd>
+</li>
+<dt><strong><a name="item_invalid_attribute_name__25s">Invalid attribute name %s</a></strong>
+
+<dd>
+<p>(F) You passed an invalid attribute name to either <code>color()</code> or colored().</p>
+</dd>
+</li>
+<dt><strong><a name="item_name__22_25s_22_used_only_once_3a_possible_typo">Name ``%s'' used only once: possible typo</a></strong>
+
+<dd>
+<p>(W) You probably mistyped a constant color name such as:</p>
+</dd>
+<dd>
+<pre>
+    print FOOBAR &quot;This text is color FOOBAR\n&quot;;</pre>
+</dd>
+<dd>
+<p>It's probably better to always use commas after constant names in order to
+force the next error.</p>
+</dd>
+</li>
+<dt><strong><a name="item_no_comma_allowed_after_filehandle">No comma allowed after filehandle</a></strong>
+
+<dd>
+<p>(F) You probably mistyped a constant color name such as:</p>
+</dd>
+<dd>
+<pre>
+    print FOOBAR, &quot;This text is color FOOBAR\n&quot;;</pre>
+</dd>
+<dd>
+<p>Generating this fatal compile error is one of the main advantages of using
+the constants interface, since you'll immediately know if you mistype a
+color name.</p>
+</dd>
+</li>
+<dt><strong><a name="item_no_name_for_escape_sequence__25s">No name for escape sequence %s</a></strong>
+
+<dd>
+<p>(F) The ANSI escape sequence passed to <code>uncolor()</code> contains escapes which
+aren't recognized and can't be translated to names.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<dl>
+<dt><strong><a name="item_ansi_colors_disabled">ANSI_COLORS_DISABLED</a></strong>
+
+<dd>
+<p>If this environment variable is set, all of the functions defined by this
+module (color(), colored(), and all of the constants not previously used in
+the program) will not output any escape sequences and instead will just
+return the empty string or pass through the original text as appropriate.
+This is intended to support easy use of scripts using this module on
+platforms that don't support ANSI escape sequences.</p>
+</dd>
+<dd>
+<p>For it to have its proper effect, this environment variable must be set
+before any color constants are used in the program.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="restrictions">RESTRICTIONS</a></h1>
+<p>It would be nice if one could leave off the commas around the constants
+entirely and just say:</p>
+<pre>
+    print BOLD BLUE ON_WHITE &quot;Text\n&quot; RESET;</pre>
+<p>but the syntax of Perl doesn't allow this.  You need a comma after the
+string.  (Of course, you may consider it a bug that commas between all the
+constants aren't required, in which case you may feel free to insert commas
+unless you're using $Term::ANSIColor::AUTORESET.)</p>
+<p>For easier debuging, you may prefer to always use the commas when not
+setting $Term::ANSIColor::AUTORESET so that you'll get a fatal compile error
+rather than a warning.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>The codes generated by this module are standard terminal control codes,
+complying with ECMA-48 and ISO 6429 (generally referred to as ``ANSI color''
+for the color codes).  The non-color control codes (bold, dark, italic,
+underline, and reverse) are part of the earlier ANSI X3.64 standard for
+control sequences for video terminals and peripherals.</p>
+<p>Note that not all displays are ISO 6429-compliant, or even X3.64-compliant
+(or are even attempting to be so).  This module will not work as expected on
+displays that do not honor these escape sequences, such as cmd.exe, 4nt.exe,
+and command.com under either Windows NT or Windows 2000.  They may just be
+ignored, or they may display as an ESC character followed by some apparent
+garbage.</p>
+<p>Jean Delvare provided the following table of different common terminal
+emulators and their support for the various attributes and others have helped
+me flesh it out:</p>
+<pre>
+              clear    bold     dark    under    blink   reverse  conceal
+ ------------------------------------------------------------------------
+ xterm         yes      yes      no      yes     bold      yes      yes
+ linux         yes      yes      yes    bold      yes      yes      no
+ rxvt          yes      yes      no      yes  bold/black   yes      no
+ dtterm        yes      yes      yes     yes    reverse    yes      yes
+ teraterm      yes    reverse    no      yes    rev/red    yes      no
+ aixterm      kinda   normal     no      yes      no       yes      yes
+ PuTTY         yes     color     no      yes      no       yes      no
+ Windows       yes      no       no      no       no       yes      no
+ Cygwin SSH    yes      yes      no     color    color    color     yes
+ Mac Terminal  yes      yes      no      yes      yes      yes      yes</pre>
+<p>Windows is Windows telnet, Cygwin SSH is the OpenSSH implementation under
+Cygwin on Windows NT, and Mac Terminal is the Terminal application in Mac OS
+X.  Where the entry is other than yes or no, that emulator displays the
+given attribute as something else instead.  Note that on an aixterm, clear
+doesn't reset colors; you have to explicitly set the colors back to what you
+want.  More entries in this table are welcome.</p>
+<p>Note that codes 3 (italic), 6 (rapid blink), and 9 (strikethrough) are
+specified in ANSI X3.64 and ECMA-048 but are not commonly supported by most
+displays and emulators and therefore aren't supported by this module at the
+present time.  ECMA-048 also specifies a large number of other attributes,
+including a sequence of attributes for font changes, Fraktur characters,
+double-underlining, framing, circling, and overlining.  As none of these
+attributes are widely supported or useful, they also aren't currently
+supported by this module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>ECMA-048 is available on-line (at least at the time of this writing) at
+<a href="http://www.ecma-international.org/publications/standards/ECMA-048.HTM">http://www.ecma-international.org/publications/standards/ECMA-048.HTM</a>.</p>
+<p>ISO 6429 is available from ISO for a charge; the author of this module does
+not own a copy of it.  Since the source material for ISO 6429 was ECMA-048
+and the latter is available for free, there seems little reason to obtain
+the ISO standard.</p>
+<p>The current version of this module is always available from its web site at
+<a href="http://www.eyrie.org/~eagle/software/ansicolor/">http://www.eyrie.org/~eagle/software/ansicolor/</a>.  It is also part of the
+Perl core distribution as of 5.6.0.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Original idea (using constants) by Zenin, reimplemented using subs by Russ
+Allbery &lt;<a href="mailto:rra@stanford.edu">rra@stanford.edu</a>&gt;, and then combined with the original idea by Russ
+with input from Zenin.  Russ Allbery now maintains this module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright 1996, 1997, 1998, 2000, 2001, 2002 Russ Allbery &lt;<a href="mailto:rra@stanford.edu">rra@stanford.edu</a>&gt;
+and Zenin.  This program is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Term::ANSIColor - Color screen output using ANSI escape sequences</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SysV IPC</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;SysV IPC</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#sysv_ipc">SysV IPC</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="sysv_ipc">SysV IPC</a></h1>
+<p>While System V IPC isn't so widely used as sockets, it still has some
+interesting uses.  You can't, however, effectively use SysV IPC or
+Berkeley <code>mmap()</code> to have shared memory so as to share a variable amongst
+several processes.  That's because Perl would reallocate your string when
+you weren't wanting it to.</p>
+<p>Here's a small example showing shared memory usage.</p>
+<pre>
+    use IPC::SysV qw(IPC_PRIVATE IPC_RMID S_IRWXU);</pre>
+<pre>
+    $size = 2000;
+    $id = shmget(IPC_PRIVATE, $size, S_IRWXU) || die &quot;$!&quot;;
+    print &quot;shm key $id\n&quot;;</pre>
+<pre>
+    $message = &quot;Message #1&quot;;
+    shmwrite($id, $message, 0, 60) || die &quot;$!&quot;;
+    print &quot;wrote: '$message'\n&quot;;
+    shmread($id, $buff, 0, 60) || die &quot;$!&quot;;
+    print &quot;read : '$buff'\n&quot;;</pre>
+<pre>
+    # the buffer of shmread is zero-character end-padded.
+    substr($buff, index($buff, &quot;\0&quot;)) = '';
+    print &quot;un&quot; unless $buff eq $message;
+    print &quot;swell\n&quot;;</pre>
+<pre>
+    print &quot;deleting shm $id\n&quot;;
+    shmctl($id, IPC_RMID, 0) || die &quot;$!&quot;;</pre>
+<p>Here's an example of a semaphore:</p>
+<pre>
+    use IPC::SysV qw(IPC_CREAT);</pre>
+<pre>
+    $IPC_KEY = 1234;
+    $id = semget($IPC_KEY, 10, 0666 | IPC_CREAT ) || die &quot;$!&quot;;
+    print &quot;shm key $id\n&quot;;</pre>
+<p>Put this code in a separate file to be run in more than one process.
+Call the file <em>take</em>:</p>
+<pre>
+    # create a semaphore</pre>
+<pre>
+    $IPC_KEY = 1234;
+    $id = semget($IPC_KEY,  0 , 0 );
+    die if !defined($id);</pre>
+<pre>
+    $semnum = 0;
+    $semflag = 0;</pre>
+<pre>
+    # 'take' semaphore
+    # wait for semaphore to be zero
+    $semop = 0;
+    $opstring1 = pack(&quot;s!s!s!&quot;, $semnum, $semop, $semflag);</pre>
+<pre>
+    # Increment the semaphore count
+    $semop = 1;
+    $opstring2 = pack(&quot;s!s!s!&quot;, $semnum, $semop,  $semflag);
+    $opstring = $opstring1 . $opstring2;</pre>
+<pre>
+    semop($id,$opstring) || die &quot;$!&quot;;</pre>
+<p>Put this code in a separate file to be run in more than one process.
+Call this file <em>give</em>:</p>
+<pre>
+    # 'give' the semaphore
+    # run this in the original process and you will see
+    # that the second process continues</pre>
+<pre>
+    $IPC_KEY = 1234;
+    $id = semget($IPC_KEY, 0, 0);
+    die if !defined($id);</pre>
+<pre>
+    $semnum = 0;
+    $semflag = 0;</pre>
+<pre>
+    # Decrement the semaphore count
+    $semop = -1;
+    $opstring = pack(&quot;s!s!s!&quot;, $semnum, $semop, $semflag);</pre>
+<pre>
+    semop($id,$opstring) || die &quot;$!&quot;;</pre>
+<p>The SysV IPC code above was written long ago, and it's definitely
+clunky looking.  For a more modern look, see the IPC::SysV module
+which is included with Perl starting from Perl 5.005.</p>
+<p>A small example demonstrating SysV message queues:</p>
+<pre>
+    use IPC::SysV qw(IPC_PRIVATE IPC_RMID IPC_CREAT S_IRWXU);</pre>
+<pre>
+    my $id = msgget(IPC_PRIVATE, IPC_CREAT | S_IRWXU);</pre>
+<pre>
+    my $sent = &quot;message&quot;;
+    my $type_sent = 1234;
+    my $rcvd;
+    my $type_rcvd;</pre>
+<pre>
+    if (defined $id) {
+        if (msgsnd($id, pack(&quot;l! a*&quot;, $type_sent, $sent), 0)) {
+            if (msgrcv($id, $rcvd, 60, 0, 0)) {
+                ($type_rcvd, $rcvd) = unpack(&quot;l! a*&quot;, $rcvd);
+                if ($rcvd eq $sent) {
+                    print &quot;okay\n&quot;;
+                } else {
+                    print &quot;not okay\n&quot;;
+                }
+            } else {
+                die &quot;# msgrcv failed\n&quot;;
+            }
+        } else {
+            die &quot;# msgsnd failed\n&quot;;
+        }
+        msgctl($id, IPC_RMID, 0) || die &quot;# msgctl failed: $!\n&quot;;
+    } else {
+        die &quot;# msgget failed\n&quot;;
+    }</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/udp__message_passing.html">UDP: Message Passing in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/notes.html">NOTES in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;SysV IPC</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

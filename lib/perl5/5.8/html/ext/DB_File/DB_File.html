@@ -1,0 +1,1751 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DB_File - Perl5 access to Berkeley DB version 1.x</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DB_File - Perl5 access to Berkeley DB version 1.x</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#using_db_file_with_berkeley_db_version_2_or_greater">Using DB_File with Berkeley DB version 2 or greater</a></li>
+		<li><a href="#interface_to_berkeley_db">Interface to Berkeley DB</a></li>
+		<li><a href="#opening_a_berkeley_db_database_file">Opening a Berkeley DB Database File</a></li>
+		<li><a href="#default_parameters">Default Parameters</a></li>
+		<li><a href="#in_memory_databases">In Memory Databases</a></li>
+	</ul>
+
+	<li><a href="#db_hash">DB_HASH</a></li>
+	<ul>
+
+		<li><a href="#a_simple_example">A Simple Example</a></li>
+	</ul>
+
+	<li><a href="#db_btree">DB_BTREE</a></li>
+	<ul>
+
+		<li><a href="#changing_the_btree_sort_order">Changing the BTREE sort order</a></li>
+		<li><a href="#handling_duplicate_keys">Handling Duplicate Keys</a></li>
+		<li><a href="#the_get_dup___method">The <code>get_dup()</code> Method</a></li>
+		<li><a href="#the_find_dup___method">The <code>find_dup()</code> Method</a></li>
+		<li><a href="#the_del_dup___method">The <code>del_dup()</code> Method</a></li>
+		<li><a href="#matching_partial_keys">Matching Partial Keys</a></li>
+	</ul>
+
+	<li><a href="#db_recno">DB_RECNO</a></li>
+	<ul>
+
+		<li><a href="#the__bval__option">The 'bval' Option</a></li>
+		<li><a href="#a_simple_example">A Simple Example</a></li>
+		<li><a href="#extra_recno_methods">Extra RECNO Methods</a></li>
+		<li><a href="#another_example">Another Example</a></li>
+	</ul>
+
+	<li><a href="#the_api_interface">THE API INTERFACE</a></li>
+	<li><a href="#dbm_filters">DBM FILTERS</a></li>
+	<ul>
+
+		<li><a href="#the_filter">The Filter</a></li>
+		<li><a href="#an_example__the_null_termination_problem_">An Example - the NULL termination problem.</a></li>
+		<li><a href="#another_example__key_is_a_c_int_">Another Example - Key is a C int.</a></li>
+	</ul>
+
+	<li><a href="#hints_and_tips">HINTS AND TIPS</a></li>
+	<ul>
+
+		<li><a href="#locking__the_trouble_with_fd">Locking: The Trouble with fd</a></li>
+		<li><a href="#safe_ways_to_lock_a_database">Safe ways to lock a database</a></li>
+		<li><a href="#sharing_databases_with_c_applications">Sharing Databases With C Applications</a></li>
+		<li><a href="#the_untie___gotcha">The <code>untie()</code> Gotcha</a></li>
+	</ul>
+
+	<li><a href="#common_questions">COMMON QUESTIONS</a></li>
+	<ul>
+
+		<li><a href="#why_is_there_perl_source_in_my_database">Why is there Perl source in my database?</a></li>
+		<li><a href="#how_do_i_store_complex_data_structures_with_db_file">How do I store complex data structures with DB_File?</a></li>
+		<li><a href="#what_does_invalid_argument_mean">What does ``Invalid Argument'' mean?</a></li>
+		<li><a href="#what_does_bareword__db_file__not_allowed_mean">What does ``Bareword 'DB_File' not allowed'' mean?</a></li>
+	</ul>
+
+	<li><a href="#references">REFERENCES</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#availability">AVAILABILITY</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DB_File - Perl5 access to Berkeley DB version 1.x</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DB_File;</pre>
+<pre>
+ [$X =] tie %hash,  'DB_File', [$filename, $flags, $mode, $DB_HASH] ;
+ [$X =] tie %hash,  'DB_File', $filename, $flags, $mode, $DB_BTREE ;
+ [$X =] tie @array, 'DB_File', $filename, $flags, $mode, $DB_RECNO ;</pre>
+<pre>
+ $status = $X-&gt;del($key [, $flags]) ;
+ $status = $X-&gt;put($key, $value [, $flags]) ;
+ $status = $X-&gt;get($key, $value [, $flags]) ;
+ $status = $X-&gt;seq($key, $value, $flags) ;
+ $status = $X-&gt;sync([$flags]) ;
+ $status = $X-&gt;fd ;</pre>
+<pre>
+ # BTREE only
+ $count = $X-&gt;get_dup($key) ;
+ @list  = $X-&gt;get_dup($key) ;
+ %list  = $X-&gt;get_dup($key, 1) ;
+ $status = $X-&gt;find_dup($key, $value) ;
+ $status = $X-&gt;del_dup($key, $value) ;</pre>
+<pre>
+ # RECNO only
+ $a = $X-&gt;length;
+ $a = $X-&gt;pop ;
+ $X-&gt;push(list);
+ $a = $X-&gt;shift;
+ $X-&gt;unshift(list);
+ @r = $X-&gt;splice(offset, length, elements);</pre>
+<pre>
+ # DBM Filters
+ $old_filter = $db-&gt;filter_store_key  ( sub { ... } ) ;
+ $old_filter = $db-&gt;filter_store_value( sub { ... } ) ;
+ $old_filter = $db-&gt;filter_fetch_key  ( sub { ... } ) ;
+ $old_filter = $db-&gt;filter_fetch_value( sub { ... } ) ;</pre>
+<pre>
+ untie %hash ;
+ untie @array ;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>DB_File</strong> is a module which allows Perl programs to make use of the
+facilities provided by Berkeley DB version 1.x (if you have a newer
+version of DB, see <a href="#using_db_file_with_berkeley_db_version_2_or_greater">Using DB_File with Berkeley DB version 2 or greater</a>).
+It is assumed that you have a copy of the Berkeley DB manual pages at
+hand when reading this documentation. The interface defined here
+mirrors the Berkeley DB interface closely.</p>
+<p>Berkeley DB is a C library which provides a consistent interface to a
+number of database formats.  <strong>DB_File</strong> provides an interface to all
+three of the database types currently supported by Berkeley DB.</p>
+<p>The file types are:</p>
+<dl>
+<dt><strong><a name="item_db_hash"><strong>DB_HASH</strong></a></strong>
+
+<dd>
+<p>This database type allows arbitrary key/value pairs to be stored in data
+files. This is equivalent to the functionality provided by other
+hashing packages like DBM, NDBM, ODBM, GDBM, and SDBM. Remember though,
+the files created using DB_HASH are not compatible with any of the
+other packages mentioned.</p>
+</dd>
+<dd>
+<p>A default hashing algorithm, which will be adequate for most
+applications, is built into Berkeley DB. If you do need to use your own
+hashing algorithm it is possible to write your own in Perl and have
+<strong>DB_File</strong> use it instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_db_btree"><strong>DB_BTREE</strong></a></strong>
+
+<dd>
+<p>The btree format allows arbitrary key/value pairs to be stored in a
+sorted, balanced binary tree.</p>
+</dd>
+<dd>
+<p>As with the DB_HASH format, it is possible to provide a user defined
+Perl routine to perform the comparison of keys. By default, though, the
+keys are stored in lexical order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_db_recno"><strong>DB_RECNO</strong></a></strong>
+
+<dd>
+<p>DB_RECNO allows both fixed-length and variable-length flat text files
+to be manipulated using the same key/value pair interface as in DB_HASH
+and DB_BTREE.  In this case the key will consist of a record (line)
+number.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="using_db_file_with_berkeley_db_version_2_or_greater">Using DB_File with Berkeley DB version 2 or greater</a></h2>
+<p>Although <strong>DB_File</strong> is intended to be used with Berkeley DB version 1,
+it can also be used with version 2, 3 or 4. In this case the interface is
+limited to the functionality provided by Berkeley DB 1.x. Anywhere the
+version 2 or greater interface differs, <strong>DB_File</strong> arranges for it to work
+like version 1. This feature allows <strong>DB_File</strong> scripts that were built
+with version 1 to be migrated to version 2 or greater without any changes.</p>
+<p>If you want to make use of the new features available in Berkeley DB
+2.x or greater, use the Perl module <strong>BerkeleyDB</strong> instead.</p>
+<p><strong>Note:</strong> The database file format has changed multiple times in Berkeley
+DB version 2, 3 and 4. If you cannot recreate your databases, you
+must dump any existing databases with either the <code>db_dump</code> or the
+<code>db_dump185</code> utility that comes with Berkeley DB.
+Once you have rebuilt DB_File to use Berkeley DB version 2 or greater,
+your databases can be recreated using <code>db_load</code>. Refer to the Berkeley DB
+documentation for further details.</p>
+<p>Please read <a href="#copyright">COPYRIGHT</a> before using version 2.x or greater of Berkeley
+DB with DB_File.</p>
+<p>
+</p>
+<h2><a name="interface_to_berkeley_db">Interface to Berkeley DB</a></h2>
+<p><strong>DB_File</strong> allows access to Berkeley DB files using the <code>tie()</code> mechanism
+in Perl 5 (for full details, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/tie__.html">tie() in the perlfunc manpage</a>). This facility
+allows <strong>DB_File</strong> to access Berkeley DB files using either an
+associative array (for DB_HASH &amp; DB_BTREE file types) or an ordinary
+array (for the DB_RECNO file type).</p>
+<p>In addition to the <code>tie()</code> interface, it is also possible to access most
+of the functions provided in the Berkeley DB API directly.
+See <a href="#the_api_interface">THE API INTERFACE</a>.</p>
+<p>
+</p>
+<h2><a name="opening_a_berkeley_db_database_file">Opening a Berkeley DB Database File</a></h2>
+<p>Berkeley DB uses the function <code>dbopen()</code> to open or create a database.
+Here is the C prototype for dbopen():</p>
+<pre>
+      DB*
+      dbopen (const char * file, int flags, int mode, 
+              DBTYPE type, const void * openinfo)</pre>
+<p>The parameter <code>type</code> is an enumeration which specifies which of the 3
+interface methods (DB_HASH, DB_BTREE or DB_RECNO) is to be used.
+Depending on which of these is actually chosen, the final parameter,
+<em>openinfo</em> points to a data structure which allows tailoring of the
+specific interface method.</p>
+<p>This interface is handled slightly differently in <strong>DB_File</strong>. Here is
+an equivalent call using <strong>DB_File</strong>:</p>
+<pre>
+        tie %array, 'DB_File', $filename, $flags, $mode, $DB_HASH ;</pre>
+<p>The <code>filename</code>, <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sprintf.html#item_flags"><code>flags</code></a> and <code>mode</code> parameters are the direct
+equivalent of their <code>dbopen()</code> counterparts. The final parameter $DB_HASH
+performs the function of both the <code>type</code> and <code>openinfo</code> parameters in
+dbopen().</p>
+<p>In the example above $DB_HASH is actually a pre-defined reference to a
+hash object. <strong>DB_File</strong> has three of these pre-defined references.
+Apart from $DB_HASH, there is also $DB_BTREE and $DB_RECNO.</p>
+<p>The keys allowed in each of these pre-defined references is limited to
+the names used in the equivalent C structure. So, for example, the
+$DB_HASH reference will only allow keys called <code>bsize</code>, <code>cachesize</code>,
+<code>ffactor</code>, <code>hash</code>, <code>lorder</code> and <code>nelem</code>.</p>
+<p>To change one of these elements, just assign to it like this:</p>
+<pre>
+        $DB_HASH-&gt;{'cachesize'} = 10000 ;</pre>
+<p>The three predefined variables $DB_HASH, $DB_BTREE and $DB_RECNO are
+usually adequate for most applications.  If you do need to create extra
+instances of these objects, constructors are available for each file
+type.</p>
+<p>Here are examples of the constructors and the valid options available
+for DB_HASH, DB_BTREE and DB_RECNO respectively.</p>
+<pre>
+     $a = new DB_File::HASHINFO ;
+     $a-&gt;{'bsize'} ;
+     $a-&gt;{'cachesize'} ;
+     $a-&gt;{'ffactor'};
+     $a-&gt;{'hash'} ;
+     $a-&gt;{'lorder'} ;
+     $a-&gt;{'nelem'} ;</pre>
+<pre>
+     $b = new DB_File::BTREEINFO ;
+     $b-&gt;{'flags'} ;
+     $b-&gt;{'cachesize'} ;
+     $b-&gt;{'maxkeypage'} ;
+     $b-&gt;{'minkeypage'} ;
+     $b-&gt;{'psize'} ;
+     $b-&gt;{'compare'} ;
+     $b-&gt;{'prefix'} ;
+     $b-&gt;{'lorder'} ;</pre>
+<pre>
+     $c = new DB_File::RECNOINFO ;
+     $c-&gt;{'bval'} ;
+     $c-&gt;{'cachesize'} ;
+     $c-&gt;{'psize'} ;
+     $c-&gt;{'flags'} ;
+     $c-&gt;{'lorder'} ;
+     $c-&gt;{'reclen'} ;
+     $c-&gt;{'bfname'} ;</pre>
+<p>The values stored in the hashes above are mostly the direct equivalent
+of their C counterpart. Like their C counterparts, all are set to a
+default values - that means you don't have to set <em>all</em> of the
+values when you only want to change one. Here is an example:</p>
+<pre>
+     $a = new DB_File::HASHINFO ;
+     $a-&gt;{'cachesize'} =  12345 ;
+     tie %y, 'DB_File', &quot;filename&quot;, $flags, 0777, $a ;</pre>
+<p>A few of the options need extra discussion here. When used, the C
+equivalent of the keys <code>hash</code>, <code>compare</code> and <code>prefix</code> store pointers
+to C functions. In <strong>DB_File</strong> these keys are used to store references
+to Perl subs. Below are templates for each of the subs:</p>
+<pre>
+    sub hash
+    {
+        my ($data) = @_ ;
+        ...
+        # return the hash value for $data
+        return $hash ;
+    }</pre>
+<pre>
+    sub compare
+    {
+        my ($key, $key2) = @_ ;
+        ...
+        # return  0 if $key1 eq $key2
+        #        -1 if $key1 lt $key2
+        #         1 if $key1 gt $key2
+        return (-1 , 0 or 1) ;
+    }</pre>
+<pre>
+    sub prefix
+    {
+        my ($key, $key2) = @_ ;
+        ...
+        # return number of bytes of $key2 which are 
+        # necessary to determine that it is greater than $key1
+        return $bytes ;
+    }</pre>
+<p>See <a href="#changing_the_btree_sort_order">Changing the BTREE sort order</a> for an example of using the
+<code>compare</code> template.</p>
+<p>If you are using the DB_RECNO interface and you intend making use of
+<code>bval</code>, you should check out <a href="#the__bval__option">The 'bval' Option</a>.</p>
+<p>
+</p>
+<h2><a name="default_parameters">Default Parameters</a></h2>
+<p>It is possible to omit some or all of the final 4 parameters in the
+call to <code>tie</code> and let them take default values. As DB_HASH is the most
+common file format used, the call:</p>
+<pre>
+    tie %A, &quot;DB_File&quot;, &quot;filename&quot; ;</pre>
+<p>is equivalent to:</p>
+<pre>
+    tie %A, &quot;DB_File&quot;, &quot;filename&quot;, O_CREAT|O_RDWR, 0666, $DB_HASH ;</pre>
+<p>It is also possible to omit the filename parameter as well, so the
+call:</p>
+<pre>
+    tie %A, &quot;DB_File&quot; ;</pre>
+<p>is equivalent to:</p>
+<pre>
+    tie %A, &quot;DB_File&quot;, undef, O_CREAT|O_RDWR, 0666, $DB_HASH ;</pre>
+<p>See <a href="#in_memory_databases">In Memory Databases</a> for a discussion on the use of <code>undef</code>
+in place of a filename.</p>
+<p>
+</p>
+<h2><a name="in_memory_databases">In Memory Databases</a></h2>
+<p>Berkeley DB allows the creation of in-memory databases by using NULL
+(that is, a <code>(char *)0</code> in C) in place of the filename.  <strong>DB_File</strong>
+uses <code>undef</code> instead of NULL to provide this functionality.</p>
+<p>
+</p>
+<hr />
+<h1><a name="db_hash">DB_HASH</a></h1>
+<p>The DB_HASH file format is probably the most commonly used of the three
+file formats that <strong>DB_File</strong> supports. It is also very straightforward
+to use.</p>
+<p>
+</p>
+<h2><a name="a_simple_example">A Simple Example</a></h2>
+<p>This example shows how to create a database, add key/value pairs to the
+database, delete keys/value pairs and finally how to enumerate the
+contents of the database.</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;
+    our (%h, $k, $v) ;</pre>
+<pre>
+    unlink &quot;fruit&quot; ;
+    tie %h, &quot;DB_File&quot;, &quot;fruit&quot;, O_RDWR|O_CREAT, 0666, $DB_HASH 
+        or die &quot;Cannot open file 'fruit': $!\n&quot;;</pre>
+<pre>
+    # Add a few key/value pairs to the file
+    $h{&quot;apple&quot;} = &quot;red&quot; ;
+    $h{&quot;orange&quot;} = &quot;orange&quot; ;
+    $h{&quot;banana&quot;} = &quot;yellow&quot; ;
+    $h{&quot;tomato&quot;} = &quot;red&quot; ;</pre>
+<pre>
+    # Check for existence of a key
+    print &quot;Banana Exists\n\n&quot; if $h{&quot;banana&quot;} ;</pre>
+<pre>
+    # Delete a key/value pair.
+    delete $h{&quot;apple&quot;} ;</pre>
+<pre>
+    # print the contents of the file
+    while (($k, $v) = each %h)
+      { print &quot;$k -&gt; $v\n&quot; }</pre>
+<pre>
+    untie %h ;</pre>
+<p>here is the output:</p>
+<pre>
+    Banana Exists</pre>
+<pre>
+    orange -&gt; orange
+    tomato -&gt; red
+    banana -&gt; yellow</pre>
+<p>Note that the like ordinary associative arrays, the order of the keys
+retrieved is in an apparently random order.</p>
+<p>
+</p>
+<hr />
+<h1><a name="db_btree">DB_BTREE</a></h1>
+<p>The DB_BTREE format is useful when you want to store data in a given
+order. By default the keys will be stored in lexical order, but as you
+will see from the example shown in the next section, it is very easy to
+define your own sorting function.</p>
+<p>
+</p>
+<h2><a name="changing_the_btree_sort_order">Changing the BTREE sort order</a></h2>
+<p>This script shows how to override the default sorting algorithm that
+BTREE uses. Instead of using the normal lexical ordering, a case
+insensitive compare function will be used.</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my %h ;</pre>
+<pre>
+    sub Compare
+    {
+        my ($key1, $key2) = @_ ;
+        &quot;\L$key1&quot; cmp &quot;\L$key2&quot; ;
+    }</pre>
+<pre>
+    # specify the Perl sub that will do the comparison
+    $DB_BTREE-&gt;{'compare'} = \&amp;Compare ;</pre>
+<pre>
+    unlink &quot;tree&quot; ;
+    tie %h, &quot;DB_File&quot;, &quot;tree&quot;, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open file 'tree': $!\n&quot; ;</pre>
+<pre>
+    # Add a key/value pair to the file
+    $h{'Wall'} = 'Larry' ;
+    $h{'Smith'} = 'John' ;
+    $h{'mouse'} = 'mickey' ;
+    $h{'duck'}  = 'donald' ;</pre>
+<pre>
+    # Delete
+    delete $h{&quot;duck&quot;} ;</pre>
+<pre>
+    # Cycle through the keys printing them in order.
+    # Note it is not necessary to sort the keys as
+    # the btree will have kept them in order automatically.
+    foreach (keys %h)
+      { print &quot;$_\n&quot; }</pre>
+<pre>
+    untie %h ;</pre>
+<p>Here is the output from the code above.</p>
+<pre>
+    mouse
+    Smith
+    Wall</pre>
+<p>There are a few point to bear in mind if you want to change the
+ordering in a BTREE database:</p>
+<ol>
+<li>
+<p>The new compare function must be specified when you create the database.</p>
+</li>
+<li>
+<p>You cannot change the ordering once the database has been created. Thus
+you must use the same compare function every time you access the
+database.</p>
+</li>
+<li>
+<p>Duplicate keys are entirely defined by the comparison function.
+In the case-insensitive example above, the keys: 'KEY' and 'key'
+would be considered duplicates, and assigning to the second one
+would overwrite the first. If duplicates are allowed for (with the
+R_DUP flag discussed below), only a single copy of duplicate keys
+is stored in the database --- so (again with example above) assigning
+three values to the keys: 'KEY', 'Key', and 'key' would leave just
+the first key: 'KEY' in the database with three values. For some
+situations this results in information loss, so care should be taken
+to provide fully qualified comparison functions when necessary.
+For example, the above comparison routine could be modified to
+additionally compare case-sensitively if two keys are equal in the
+case insensitive comparison:</p>
+<pre>
+    sub compare {
+        my($key1, $key2) = @_;
+        lc $key1 cmp lc $key2 ||
+        $key1 cmp $key2;
+    }</pre>
+<p>And now you will only have duplicates when the keys themselves
+are truly the same. (note: in versions of the db library prior to
+about November 1996, such duplicate keys were retained so it was
+possible to recover the original keys in sets of keys that
+compared as equal).</p>
+</li>
+</ol>
+<p>
+</p>
+<h2><a name="handling_duplicate_keys">Handling Duplicate Keys</a></h2>
+<p>The BTREE file type optionally allows a single key to be associated
+with an arbitrary number of values. This option is enabled by setting
+the flags element of <code>$DB_BTREE</code> to R_DUP when creating the database.</p>
+<p>There are some difficulties in using the tied hash interface if you
+want to manipulate a BTREE database with duplicate keys. Consider this
+code:</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my ($filename, %h) ;</pre>
+<pre>
+    $filename = &quot;tree&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    # Enable duplicate records
+    $DB_BTREE-&gt;{'flags'} = R_DUP ;</pre>
+<pre>
+    tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    # Add some key/value pairs to the file
+    $h{'Wall'} = 'Larry' ;
+    $h{'Wall'} = 'Brick' ; # Note the duplicate key
+    $h{'Wall'} = 'Brick' ; # Note the duplicate key and value
+    $h{'Smith'} = 'John' ;
+    $h{'mouse'} = 'mickey' ;</pre>
+<pre>
+    # iterate through the associative array
+    # and print each key/value pair.
+    foreach (sort keys %h)
+      { print &quot;$_  -&gt; $h{$_}\n&quot; }</pre>
+<pre>
+    untie %h ;</pre>
+<p>Here is the output:</p>
+<pre>
+    Smith   -&gt; John
+    Wall    -&gt; Larry
+    Wall    -&gt; Larry
+    Wall    -&gt; Larry
+    mouse   -&gt; mickey</pre>
+<p>As you can see 3 records have been successfully created with key <code>Wall</code>
+- the only thing is, when they are retrieved from the database they
+<em>seem</em> to have the same value, namely <code>Larry</code>. The problem is caused
+by the way that the associative array interface works. Basically, when
+the associative array interface is used to fetch the value associated
+with a given key, it will only ever retrieve the first value.</p>
+<p>Although it may not be immediately obvious from the code above, the
+associative array interface can be used to write values with duplicate
+keys, but it cannot be used to read them back from the database.</p>
+<p>The way to get around this problem is to use the Berkeley DB API method
+called <a href="#item_seq"><code>seq</code></a>.  This method allows sequential access to key/value
+pairs. See <a href="#the_api_interface">THE API INTERFACE</a> for details of both the <a href="#item_seq"><code>seq</code></a> method
+and the API in general.</p>
+<p>Here is the script above rewritten using the <a href="#item_seq"><code>seq</code></a> API method.</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my ($filename, $x, %h, $status, $key, $value) ;</pre>
+<pre>
+    $filename = &quot;tree&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    # Enable duplicate records
+    $DB_BTREE-&gt;{'flags'} = R_DUP ;</pre>
+<pre>
+    $x = tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    # Add some key/value pairs to the file
+    $h{'Wall'} = 'Larry' ;
+    $h{'Wall'} = 'Brick' ; # Note the duplicate key
+    $h{'Wall'} = 'Brick' ; # Note the duplicate key and value
+    $h{'Smith'} = 'John' ;
+    $h{'mouse'} = 'mickey' ;</pre>
+<pre>
+    # iterate through the btree using seq
+    # and print each key/value pair.
+    $key = $value = 0 ;
+    for ($status = $x-&gt;seq($key, $value, R_FIRST) ;
+         $status == 0 ;
+         $status = $x-&gt;seq($key, $value, R_NEXT) )
+      {  print &quot;$key -&gt; $value\n&quot; }</pre>
+<pre>
+    undef $x ;
+    untie %h ;</pre>
+<p>that prints:</p>
+<pre>
+    Smith   -&gt; John
+    Wall    -&gt; Brick
+    Wall    -&gt; Brick
+    Wall    -&gt; Larry
+    mouse   -&gt; mickey</pre>
+<p>This time we have got all the key/value pairs, including the multiple
+values associated with the key <code>Wall</code>.</p>
+<p>To make life easier when dealing with duplicate keys, <strong>DB_File</strong> comes with 
+a few utility methods.</p>
+<p>
+</p>
+<h2><a name="the_get_dup___method">The <code>get_dup()</code> Method</a></h2>
+<p>The <code>get_dup</code> method assists in
+reading duplicate values from BTREE databases. The method can take the
+following forms:</p>
+<pre>
+    $count = $x-&gt;get_dup($key) ;
+    @list  = $x-&gt;get_dup($key) ;
+    %list  = $x-&gt;get_dup($key, 1) ;</pre>
+<p>In a scalar context the method returns the number of values associated
+with the key, <code>$key</code>.</p>
+<p>In list context, it returns all the values which match <code>$key</code>. Note
+that the values will be returned in an apparently random order.</p>
+<p>In list context, if the second parameter is present and evaluates
+TRUE, the method returns an associative array. The keys of the
+associative array correspond to the values that matched in the BTREE
+and the values of the array are a count of the number of times that
+particular value occurred in the BTREE.</p>
+<p>So assuming the database created above, we can use <code>get_dup</code> like
+this:</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my ($filename, $x, %h) ;</pre>
+<pre>
+    $filename = &quot;tree&quot; ;</pre>
+<pre>
+    # Enable duplicate records
+    $DB_BTREE-&gt;{'flags'} = R_DUP ;</pre>
+<pre>
+    $x = tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    my $cnt  = $x-&gt;get_dup(&quot;Wall&quot;) ;
+    print &quot;Wall occurred $cnt times\n&quot; ;</pre>
+<pre>
+    my %hash = $x-&gt;get_dup(&quot;Wall&quot;, 1) ;
+    print &quot;Larry is there\n&quot; if $hash{'Larry'} ;
+    print &quot;There are $hash{'Brick'} Brick Walls\n&quot; ;</pre>
+<pre>
+    my @list = sort $x-&gt;get_dup(&quot;Wall&quot;) ;
+    print &quot;Wall =&gt;      [@list]\n&quot; ;</pre>
+<pre>
+    @list = $x-&gt;get_dup(&quot;Smith&quot;) ;
+    print &quot;Smith =&gt;     [@list]\n&quot; ;</pre>
+<pre>
+    @list = $x-&gt;get_dup(&quot;Dog&quot;) ;
+    print &quot;Dog =&gt;       [@list]\n&quot; ;</pre>
+<p>and it will print:</p>
+<pre>
+    Wall occurred 3 times
+    Larry is there
+    There are 2 Brick Walls
+    Wall =&gt;     [Brick Brick Larry]
+    Smith =&gt;    [John]
+    Dog =&gt;      []</pre>
+<p>
+</p>
+<h2><a name="the_find_dup___method">The <code>find_dup()</code> Method</a></h2>
+<pre>
+    $status = $X-&gt;find_dup($key, $value) ;</pre>
+<p>This method checks for the existence of a specific key/value pair. If the
+pair exists, the cursor is left pointing to the pair and the method 
+returns 0. Otherwise the method returns a non-zero value.</p>
+<p>Assuming the database from the previous example:</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my ($filename, $x, %h, $found) ;</pre>
+<pre>
+    $filename = &quot;tree&quot; ;</pre>
+<pre>
+    # Enable duplicate records
+    $DB_BTREE-&gt;{'flags'} = R_DUP ;</pre>
+<pre>
+    $x = tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    $found = ( $x-&gt;find_dup(&quot;Wall&quot;, &quot;Larry&quot;) == 0 ? &quot;&quot; : &quot;not&quot;) ; 
+    print &quot;Larry Wall is $found there\n&quot; ;</pre>
+<pre>
+    $found = ( $x-&gt;find_dup(&quot;Wall&quot;, &quot;Harry&quot;) == 0 ? &quot;&quot; : &quot;not&quot;) ; 
+    print &quot;Harry Wall is $found there\n&quot; ;</pre>
+<pre>
+    undef $x ;
+    untie %h ;</pre>
+<p>prints this</p>
+<pre>
+    Larry Wall is  there
+    Harry Wall is not there</pre>
+<p>
+</p>
+<h2><a name="the_del_dup___method">The <code>del_dup()</code> Method</a></h2>
+<pre>
+    $status = $X-&gt;del_dup($key, $value) ;</pre>
+<p>This method deletes a specific key/value pair. It returns
+0 if they exist and have been deleted successfully.
+Otherwise the method returns a non-zero value.</p>
+<p>Again assuming the existence of the <code>tree</code> database</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my ($filename, $x, %h, $found) ;</pre>
+<pre>
+    $filename = &quot;tree&quot; ;</pre>
+<pre>
+    # Enable duplicate records
+    $DB_BTREE-&gt;{'flags'} = R_DUP ;</pre>
+<pre>
+    $x = tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE 
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    $x-&gt;del_dup(&quot;Wall&quot;, &quot;Larry&quot;) ;</pre>
+<pre>
+    $found = ( $x-&gt;find_dup(&quot;Wall&quot;, &quot;Larry&quot;) == 0 ? &quot;&quot; : &quot;not&quot;) ; 
+    print &quot;Larry Wall is $found there\n&quot; ;</pre>
+<pre>
+    undef $x ;
+    untie %h ;</pre>
+<p>prints this</p>
+<pre>
+    Larry Wall is not there</pre>
+<p>
+</p>
+<h2><a name="matching_partial_keys">Matching Partial Keys</a></h2>
+<p>The BTREE interface has a feature which allows partial keys to be
+matched. This functionality is <em>only</em> available when the <a href="#item_seq"><code>seq</code></a> method
+is used along with the R_CURSOR flag.</p>
+<pre>
+    $x-&gt;seq($key, $value, R_CURSOR) ;</pre>
+<p>Here is the relevant quote from the dbopen man page where it defines
+the use of the R_CURSOR flag with seq:</p>
+<pre>
+    Note, for the DB_BTREE access method, the returned key is not
+    necessarily an exact match for the specified key. The returned key
+    is the smallest key greater than or equal to the specified key,
+    permitting partial key matches and range searches.</pre>
+<p>In the example script below, the <code>match</code> sub uses this feature to find
+and print the first matching key/value pair given a partial key.</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;
+    use Fcntl ;</pre>
+<pre>
+    my ($filename, $x, %h, $st, $key, $value) ;</pre>
+<pre>
+    sub match
+    {
+        my $key = shift ;
+        my $value = 0;
+        my $orig_key = $key ;
+        $x-&gt;seq($key, $value, R_CURSOR) ;
+        print &quot;$orig_key\t-&gt; $key\t-&gt; $value\n&quot; ;
+    }</pre>
+<pre>
+    $filename = &quot;tree&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    $x = tie %h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_BTREE
+        or die &quot;Cannot open $filename: $!\n&quot;;</pre>
+<pre>
+    # Add some key/value pairs to the file
+    $h{'mouse'} = 'mickey' ;
+    $h{'Wall'} = 'Larry' ;
+    $h{'Walls'} = 'Brick' ; 
+    $h{'Smith'} = 'John' ;</pre>
+<pre>
+    $key = $value = 0 ;
+    print &quot;IN ORDER\n&quot; ;
+    for ($st = $x-&gt;seq($key, $value, R_FIRST) ;
+         $st == 0 ;
+         $st = $x-&gt;seq($key, $value, R_NEXT) )</pre>
+<pre>
+      {  print &quot;$key    -&gt; $value\n&quot; }</pre>
+<pre>
+    print &quot;\nPARTIAL MATCH\n&quot; ;</pre>
+<pre>
+    match &quot;Wa&quot; ;
+    match &quot;A&quot; ;
+    match &quot;a&quot; ;</pre>
+<pre>
+    undef $x ;
+    untie %h ;</pre>
+<p>Here is the output:</p>
+<pre>
+    IN ORDER
+    Smith -&gt; John
+    Wall  -&gt; Larry
+    Walls -&gt; Brick
+    mouse -&gt; mickey</pre>
+<pre>
+    PARTIAL MATCH
+    Wa -&gt; Wall  -&gt; Larry
+    A  -&gt; Smith -&gt; John
+    a  -&gt; mouse -&gt; mickey</pre>
+<p>
+</p>
+<hr />
+<h1><a name="db_recno">DB_RECNO</a></h1>
+<p>DB_RECNO provides an interface to flat text files. Both variable and
+fixed length records are supported.</p>
+<p>In order to make RECNO more compatible with Perl, the array offset for
+all RECNO arrays begins at 0 rather than 1 as in Berkeley DB.</p>
+<p>As with normal Perl arrays, a RECNO array can be accessed using
+negative indexes. The index -1 refers to the last element of the array,
+-2 the second last, and so on. Attempting to access an element before
+the start of the array will raise a fatal run-time error.</p>
+<p>
+</p>
+<h2><a name="the__bval__option">The 'bval' Option</a></h2>
+<p>The operation of the bval option warrants some discussion. Here is the
+definition of bval from the Berkeley DB 1.85 recno manual page:</p>
+<pre>
+    The delimiting byte to be used to mark  the  end  of  a
+    record for variable-length records, and the pad charac-
+    ter for fixed-length records.  If no  value  is  speci-
+    fied,  newlines  (``\n'')  are  used to mark the end of
+    variable-length records and  fixed-length  records  are
+    padded with spaces.</pre>
+<p>The second sentence is wrong. In actual fact bval will only default to
+<code>&quot;\n&quot;</code> when the openinfo parameter in dbopen is NULL. If a non-NULL
+openinfo parameter is used at all, the value that happens to be in bval
+will be used. That means you always have to specify bval when making
+use of any of the options in the openinfo parameter. This documentation
+error will be fixed in the next release of Berkeley DB.</p>
+<p>That clarifies the situation with regards Berkeley DB itself. What
+about <strong>DB_File</strong>? Well, the behavior defined in the quote above is
+quite useful, so <strong>DB_File</strong> conforms to it.</p>
+<p>That means that you can specify other options (e.g. cachesize) and
+still have bval default to <code>&quot;\n&quot;</code> for variable length records, and
+space for fixed length records.</p>
+<p>Also note that the bval option only allows you to specify a single byte
+as a delimiter.</p>
+<p>
+</p>
+<h2><a name="a_simple_example">A Simple Example</a></h2>
+<p>Here is a simple example that uses RECNO (if you are using a version 
+of Perl earlier than 5.004_57 this example won't work -- see 
+<a href="#extra_recno_methods">Extra RECNO Methods</a> for a workaround).</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my $filename = &quot;text&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    my @h ;
+    tie @h, &quot;DB_File&quot;, $filename, O_RDWR|O_CREAT, 0666, $DB_RECNO 
+        or die &quot;Cannot open file 'text': $!\n&quot; ;</pre>
+<pre>
+    # Add a few key/value pairs to the file
+    $h[0] = &quot;orange&quot; ;
+    $h[1] = &quot;blue&quot; ;
+    $h[2] = &quot;yellow&quot; ;</pre>
+<pre>
+    push @h, &quot;green&quot;, &quot;black&quot; ;</pre>
+<pre>
+    my $elements = scalar @h ;
+    print &quot;The array contains $elements entries\n&quot; ;</pre>
+<pre>
+    my $last = pop @h ;
+    print &quot;popped $last\n&quot; ;</pre>
+<pre>
+    unshift @h, &quot;white&quot; ;
+    my $first = shift @h ;
+    print &quot;shifted $first\n&quot; ;</pre>
+<pre>
+    # Check for existence of a key
+    print &quot;Element 1 Exists with value $h[1]\n&quot; if $h[1] ;</pre>
+<pre>
+    # use a negative index
+    print &quot;The last element is $h[-1]\n&quot; ;
+    print &quot;The 2nd last element is $h[-2]\n&quot; ;</pre>
+<pre>
+    untie @h ;</pre>
+<p>Here is the output from the script:</p>
+<pre>
+    The array contains 5 entries
+    popped black
+    shifted white
+    Element 1 Exists with value blue
+    The last element is green
+    The 2nd last element is yellow</pre>
+<p>
+</p>
+<h2><a name="extra_recno_methods">Extra RECNO Methods</a></h2>
+<p>If you are using a version of Perl earlier than 5.004_57, the tied
+array interface is quite limited. In the example script above
+<a href="#item_push"><code>push</code></a>, <a href="#item_pop"><code>pop</code></a>, <a href="#item_shift"><code>shift</code></a>, <a href="#item_unshift"><code>unshift</code></a>
+or determining the array length will not work with a tied array.</p>
+<p>To make the interface more useful for older versions of Perl, a number
+of methods are supplied with <strong>DB_File</strong> to simulate the missing array
+operations. All these methods are accessed via the object returned from
+the tie call.</p>
+<p>Here are the methods:</p>
+<dl>
+<dt><strong><a name="item_push"><strong>$X-&gt;push(list) ;</strong></a></strong>
+
+<dd>
+<p>Pushes the elements of <code>list</code> to the end of the array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pop"><strong>$value = $X-&gt;pop ;</strong></a></strong>
+
+<dd>
+<p>Removes and returns the last element of the array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_shift"><strong>$X-&gt;shift</strong></a></strong>
+
+<dd>
+<p>Removes and returns the first element of the array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unshift"><strong>$X-&gt;unshift(list) ;</strong></a></strong>
+
+<dd>
+<p>Pushes the elements of <code>list</code> to the start of the array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_length"><strong>$X-&gt;length</strong></a></strong>
+
+<dd>
+<p>Returns the number of elements in the array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_splice"><strong>$X-&gt;splice(offset, length, elements);</strong></a></strong>
+
+<dd>
+<p>Returns a splice of the array.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="another_example">Another Example</a></h2>
+<p>Here is a more complete example that makes use of some of the methods
+described above. It also makes use of the API interface directly (see 
+<a href="#the_api_interface">THE API INTERFACE</a>).</p>
+<pre>
+    use warnings ;
+    use strict ;
+    my (@h, $H, $file, $i) ;
+    use DB_File ;
+    use Fcntl ;</pre>
+<pre>
+    $file = &quot;text&quot; ;</pre>
+<pre>
+    unlink $file ;</pre>
+<pre>
+    $H = tie @h, &quot;DB_File&quot;, $file, O_RDWR|O_CREAT, 0666, $DB_RECNO 
+        or die &quot;Cannot open file $file: $!\n&quot; ;</pre>
+<pre>
+    # first create a text file to play with
+    $h[0] = &quot;zero&quot; ;
+    $h[1] = &quot;one&quot; ;
+    $h[2] = &quot;two&quot; ;
+    $h[3] = &quot;three&quot; ;
+    $h[4] = &quot;four&quot; ;</pre>
+<pre>
+    # Print the records in order.
+    #
+    # The length method is needed here because evaluating a tied
+    # array in a scalar context does not return the number of
+    # elements in the array.</pre>
+<pre>
+    print &quot;\nORIGINAL\n&quot; ;
+    foreach $i (0 .. $H-&gt;length - 1) {
+        print &quot;$i: $h[$i]\n&quot; ;
+    }</pre>
+<pre>
+    # use the push &amp; pop methods
+    $a = $H-&gt;pop ;
+    $H-&gt;push(&quot;last&quot;) ;
+    print &quot;\nThe last record was [$a]\n&quot; ;</pre>
+<pre>
+    # and the shift &amp; unshift methods
+    $a = $H-&gt;shift ;
+    $H-&gt;unshift(&quot;first&quot;) ;
+    print &quot;The first record was [$a]\n&quot; ;</pre>
+<pre>
+    # Use the API to add a new record after record 2.
+    $i = 2 ;
+    $H-&gt;put($i, &quot;Newbie&quot;, R_IAFTER) ;</pre>
+<pre>
+    # and a new record before record 1.
+    $i = 1 ;
+    $H-&gt;put($i, &quot;New One&quot;, R_IBEFORE) ;</pre>
+<pre>
+    # delete record 3
+    $H-&gt;del(3) ;</pre>
+<pre>
+    # now print the records in reverse order
+    print &quot;\nREVERSE\n&quot; ;
+    for ($i = $H-&gt;length - 1 ; $i &gt;= 0 ; -- $i)
+      { print &quot;$i: $h[$i]\n&quot; }</pre>
+<pre>
+    # same again, but use the API functions instead
+    print &quot;\nREVERSE again\n&quot; ;
+    my ($s, $k, $v)  = (0, 0, 0) ;
+    for ($s = $H-&gt;seq($k, $v, R_LAST) ; 
+             $s == 0 ; 
+             $s = $H-&gt;seq($k, $v, R_PREV))
+      { print &quot;$k: $v\n&quot; }</pre>
+<pre>
+    undef $H ;
+    untie @h ;</pre>
+<p>and this is what it outputs:</p>
+<pre>
+    ORIGINAL
+    0: zero
+    1: one
+    2: two
+    3: three
+    4: four</pre>
+<pre>
+    The last record was [four]
+    The first record was [zero]</pre>
+<pre>
+    REVERSE
+    5: last
+    4: three
+    3: Newbie
+    2: one
+    1: New One
+    0: first</pre>
+<pre>
+    REVERSE again
+    5: last
+    4: three
+    3: Newbie
+    2: one
+    1: New One
+    0: first</pre>
+<p>Notes:</p>
+<ol>
+<li>
+<p>Rather than iterating through the array, <code>@h</code> like this:</p>
+<pre>
+    foreach $i (@h)</pre>
+<p>it is necessary to use either this:</p>
+<pre>
+    foreach $i (0 .. $H-&gt;length - 1)</pre>
+<p>or this:</p>
+<pre>
+    for ($a = $H-&gt;get($k, $v, R_FIRST) ;
+         $a == 0 ;
+         $a = $H-&gt;get($k, $v, R_NEXT) )</pre>
+</li>
+<li>
+<p>Notice that both times the <a href="#item_put"><code>put</code></a> method was used the record index was
+specified using a variable, <code>$i</code>, rather than the literal value
+itself. This is because <a href="#item_put"><code>put</code></a> will return the record number of the
+inserted line via that parameter.</p>
+</li>
+</ol>
+<p>
+</p>
+<hr />
+<h1><a name="the_api_interface">THE API INTERFACE</a></h1>
+<p>As well as accessing Berkeley DB using a tied hash or array, it is also
+possible to make direct use of most of the API functions defined in the
+Berkeley DB documentation.</p>
+<p>To do this you need to store a copy of the object returned from the tie.</p>
+<pre>
+        $db = tie %hash, &quot;DB_File&quot;, &quot;filename&quot; ;</pre>
+<p>Once you have done that, you can access the Berkeley DB API functions
+as <strong>DB_File</strong> methods directly like this:</p>
+<pre>
+        $db-&gt;put($key, $value, R_NOOVERWRITE) ;</pre>
+<p><strong>Important:</strong> If you have saved a copy of the object returned from
+<code>tie</code>, the underlying database file will <em>not</em> be closed until both
+the tied variable is untied and all copies of the saved object are
+destroyed.</p>
+<pre>
+    use DB_File ;
+    $db = tie %hash, &quot;DB_File&quot;, &quot;filename&quot; 
+        or die &quot;Cannot tie filename: $!&quot; ;
+    ...
+    undef $db ;
+    untie %hash ;</pre>
+<p>See <a href="#the_untie___gotcha">The untie() Gotcha</a> for more details.</p>
+<p>All the functions defined in <em>dbopen</em> are available except for
+<code>close()</code> and <code>dbopen()</code> itself. The <strong>DB_File</strong> method interface to the
+supported functions have been implemented to mirror the way Berkeley DB
+works whenever possible. In particular note that:</p>
+<ul>
+<li>
+<p>The methods return a status value. All return 0 on success.
+All return -1 to signify an error and set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> to the exact
+error code. The return code 1 generally (but not always) means that the
+key specified did not exist in the database.</p>
+<p>Other return codes are defined. See below and in the Berkeley DB
+documentation for details. The Berkeley DB documentation should be used
+as the definitive source.</p>
+</li>
+<li>
+<p>Whenever a Berkeley DB function returns data via one of its parameters,
+the equivalent <strong>DB_File</strong> method does exactly the same.</p>
+</li>
+<li>
+<p>If you are careful, it is possible to mix API calls with the tied
+hash/array interface in the same piece of code. Although only a few of
+the methods used to implement the tied interface currently make use of
+the cursor, you should always assume that the cursor has been changed
+any time the tied hash/array interface is used. As an example, this
+code will probably not do what you expect:</p>
+<pre>
+    $X = tie %x, 'DB_File', $filename, O_RDWR|O_CREAT, 0777, $DB_BTREE
+        or die &quot;Cannot tie $filename: $!&quot; ;</pre>
+<pre>
+    # Get the first key/value pair and set  the cursor
+    $X-&gt;seq($key, $value, R_FIRST) ;</pre>
+<pre>
+    # this line will modify the cursor
+    $count = scalar keys %x ;</pre>
+<pre>
+    # Get the second key/value pair.
+    # oops, it didn't, it got the last key/value pair!
+    $X-&gt;seq($key, $value, R_NEXT) ;</pre>
+<p>The code above can be rearranged to get around the problem, like this:</p>
+<pre>
+    $X = tie %x, 'DB_File', $filename, O_RDWR|O_CREAT, 0777, $DB_BTREE
+        or die &quot;Cannot tie $filename: $!&quot; ;</pre>
+<pre>
+    # this line will modify the cursor
+    $count = scalar keys %x ;</pre>
+<pre>
+    # Get the first key/value pair and set  the cursor
+    $X-&gt;seq($key, $value, R_FIRST) ;</pre>
+<pre>
+    # Get the second key/value pair.
+    # worked this time.
+    $X-&gt;seq($key, $value, R_NEXT) ;</pre>
+</li>
+</ul>
+<p>All the constants defined in <em>dbopen</em> for use in the flags parameters
+in the methods defined below are also available. Refer to the Berkeley
+DB documentation for the precise meaning of the flags values.</p>
+<p>Below is a list of the methods available.</p>
+<dl>
+<dt><strong><a name="item_get"><strong>$status = $X-&gt;get($key, $value [, $flags]) ;</strong></a></strong>
+
+<dd>
+<p>Given a key (<code>$key</code>) this method reads the value associated with it
+from the database. The value read from the database is returned in the
+<code>$value</code> parameter.</p>
+</dd>
+<dd>
+<p>If the key does not exist the method returns 1.</p>
+</dd>
+<dd>
+<p>No flags are currently defined for this method.</p>
+</dd>
+</li>
+<dt><strong><a name="item_put"><strong>$status = $X-&gt;put($key, $value [, $flags]) ;</strong></a></strong>
+
+<dd>
+<p>Stores the key/value pair in the database.</p>
+</dd>
+<dd>
+<p>If you use either the R_IAFTER or R_IBEFORE flags, the <code>$key</code> parameter
+will have the record number of the inserted key/value pair set.</p>
+</dd>
+<dd>
+<p>Valid flags are R_CURSOR, R_IAFTER, R_IBEFORE, R_NOOVERWRITE and
+R_SETCURSOR.</p>
+</dd>
+</li>
+<dt><strong><a name="item_del"><strong>$status = $X-&gt;del($key [, $flags]) ;</strong></a></strong>
+
+<dd>
+<p>Removes all key/value pairs with key <code>$key</code> from the database.</p>
+</dd>
+<dd>
+<p>A return code of 1 means that the requested key was not in the
+database.</p>
+</dd>
+<dd>
+<p>R_CURSOR is the only valid flag at present.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fd"><strong>$status = $X-&gt;fd ;</strong></a></strong>
+
+<dd>
+<p>Returns the file descriptor for the underlying database.</p>
+</dd>
+<dd>
+<p>See <a href="#locking__the_trouble_with_fd">Locking: The Trouble with fd</a> for an explanation for why you should
+not use <a href="#item_fd"><code>fd</code></a> to lock your database.</p>
+</dd>
+</li>
+<dt><strong><a name="item_seq"><strong>$status = $X-&gt;seq($key, $value, $flags) ;</strong></a></strong>
+
+<dd>
+<p>This interface allows sequential retrieval from the database. See
+<em>dbopen</em> for full details.</p>
+</dd>
+<dd>
+<p>Both the <code>$key</code> and <code>$value</code> parameters will be set to the key/value
+pair read from the database.</p>
+</dd>
+<dd>
+<p>The flags parameter is mandatory. The valid flag values are R_CURSOR,
+R_FIRST, R_LAST, R_NEXT and R_PREV.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sync"><strong>$status = $X-&gt;sync([$flags]) ;</strong></a></strong>
+
+<dd>
+<p>Flushes any cached buffers to disk.</p>
+</dd>
+<dd>
+<p>R_RECNOSYNC is the only valid flag at present.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="dbm_filters">DBM FILTERS</a></h1>
+<p>A DBM Filter is a piece of code that is be used when you <em>always</em>
+want to make the same transformation to all keys and/or values in a
+DBM database.</p>
+<p>There are four methods associated with DBM Filters. All work identically,
+and each is used to install (or uninstall) a single DBM Filter. Each
+expects a single parameter, namely a reference to a sub. The only
+difference between them is the place that the filter is installed.</p>
+<p>To summarise:</p>
+<dl>
+<dt><strong><a name="item_filter_store_key"><strong>filter_store_key</strong></a></strong>
+
+<dd>
+<p>If a filter has been installed with this method, it will be invoked
+every time you write a key to a DBM database.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filter_store_value"><strong>filter_store_value</strong></a></strong>
+
+<dd>
+<p>If a filter has been installed with this method, it will be invoked
+every time you write a value to a DBM database.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filter_fetch_key"><strong>filter_fetch_key</strong></a></strong>
+
+<dd>
+<p>If a filter has been installed with this method, it will be invoked
+every time you read a key from a DBM database.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filter_fetch_value"><strong>filter_fetch_value</strong></a></strong>
+
+<dd>
+<p>If a filter has been installed with this method, it will be invoked
+every time you read a value from a DBM database.</p>
+</dd>
+</li>
+</dl>
+<p>You can use any combination of the methods, from none, to all four.</p>
+<p>All filter methods return the existing filter, if present, or <code>undef</code>
+in not.</p>
+<p>To delete a filter pass <code>undef</code> to it.</p>
+<p>
+</p>
+<h2><a name="the_filter">The Filter</a></h2>
+<p>When each filter is called by Perl, a local copy of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> will contain
+the key or value to be filtered. Filtering is achieved by modifying
+the contents of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a>. The return code from the filter is ignored.</p>
+<p>
+</p>
+<h2><a name="an_example__the_null_termination_problem_">An Example -- the NULL termination problem.</a></h2>
+<p>Consider the following scenario. You have a DBM database
+that you need to share with a third-party C application. The C application
+assumes that <em>all</em> keys and values are NULL terminated. Unfortunately
+when Perl writes to DBM databases it doesn't use NULL termination, so
+your Perl application will have to manage NULL termination itself. When
+you write to the database you will have to use something like this:</p>
+<pre>
+    $hash{&quot;$key\0&quot;} = &quot;$value\0&quot; ;</pre>
+<p>Similarly the NULL needs to be taken into account when you are considering
+the length of existing keys/values.</p>
+<p>It would be much better if you could ignore the NULL terminations issue
+in the main application code and have a mechanism that automatically
+added the terminating NULL to all keys and values whenever you write to
+the database and have them removed when you read from the database. As I'm
+sure you have already guessed, this is a problem that DBM Filters can
+fix very easily.</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;</pre>
+<pre>
+    my %hash ;
+    my $filename = &quot;filt&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666, $DB_HASH 
+      or die &quot;Cannot open $filename: $!\n&quot; ;</pre>
+<pre>
+    # Install DBM Filters
+    $db-&gt;filter_fetch_key  ( sub { s/\0$//    } ) ;
+    $db-&gt;filter_store_key  ( sub { $_ .= &quot;\0&quot; } ) ;
+    $db-&gt;filter_fetch_value( sub { s/\0$//    } ) ;
+    $db-&gt;filter_store_value( sub { $_ .= &quot;\0&quot; } ) ;</pre>
+<pre>
+    $hash{&quot;abc&quot;} = &quot;def&quot; ;
+    my $a = $hash{&quot;ABC&quot;} ;
+    # ...
+    undef $db ;
+    untie %hash ;</pre>
+<p>Hopefully the contents of each of the filters should be
+self-explanatory. Both ``fetch'' filters remove the terminating NULL,
+and both ``store'' filters add a terminating NULL.</p>
+<p>
+</p>
+<h2><a name="another_example__key_is_a_c_int_">Another Example -- Key is a C int.</a></h2>
+<p>Here is another real-life example. By default, whenever Perl writes to
+a DBM database it always writes the key and value as strings. So when
+you use this:</p>
+<pre>
+    $hash{12345} = &quot;something&quot; ;</pre>
+<p>the key 12345 will get stored in the DBM database as the 5 byte string
+``12345''. If you actually want the key to be stored in the DBM database
+as a C int, you will have to use <code>pack</code> when writing, and <code>unpack</code>
+when reading.</p>
+<p>Here is a DBM Filter that does it:</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;
+    my %hash ;
+    my $filename = &quot;filt&quot; ;
+    unlink $filename ;</pre>
+<pre>
+    my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666, $DB_HASH 
+      or die &quot;Cannot open $filename: $!\n&quot; ;</pre>
+<pre>
+    $db-&gt;filter_fetch_key  ( sub { $_ = unpack(&quot;i&quot;, $_) } ) ;
+    $db-&gt;filter_store_key  ( sub { $_ = pack (&quot;i&quot;, $_) } ) ;
+    $hash{123} = &quot;def&quot; ;
+    # ...
+    undef $db ;
+    untie %hash ;</pre>
+<p>This time only two filters have been used -- we only need to manipulate
+the contents of the key, so it wasn't necessary to install any value
+filters.</p>
+<p>
+</p>
+<hr />
+<h1><a name="hints_and_tips">HINTS AND TIPS</a></h1>
+<p>
+</p>
+<h2><a name="locking__the_trouble_with_fd">Locking: The Trouble with fd</a></h2>
+<p>Until version 1.72 of this module, the recommended technique for locking
+<strong>DB_File</strong> databases was to flock the filehandle returned from the ``fd''
+function. Unfortunately this technique has been shown to be fundamentally
+flawed (Kudos to David Harris for tracking this down). Use it at your own
+peril!</p>
+<p>The locking technique went like this.</p>
+<pre>
+    $db = tie(%db, 'DB_File', 'foo.db', O_CREAT|O_RDWR, 0644)
+        || die &quot;dbcreat foo.db $!&quot;;
+    $fd = $db-&gt;fd;
+    open(DB_FH, &quot;+&lt;&amp;=$fd&quot;) || die &quot;dup $!&quot;;
+    flock (DB_FH, LOCK_EX) || die &quot;flock: $!&quot;;
+    ...
+    $db{&quot;Tom&quot;} = &quot;Jerry&quot; ;
+    ...
+    flock(DB_FH, LOCK_UN);
+    undef $db;
+    untie %db;
+    close(DB_FH);</pre>
+<p>In simple terms, this is what happens:</p>
+<ol>
+<li>
+<p>Use ``tie'' to open the database.</p>
+</li>
+<li>
+<p>Lock the database with fd &amp; flock.</p>
+</li>
+<li>
+<p>Read &amp; Write to the database.</p>
+</li>
+<li>
+<p>Unlock and close the database.</p>
+</li>
+</ol>
+<p>Here is the crux of the problem. A side-effect of opening the <strong>DB_File</strong>
+database in step 2 is that an initial block from the database will get
+read from disk and cached in memory.</p>
+<p>To see why this is a problem, consider what can happen when two processes,
+say ``A'' and ``B'', both want to update the same <strong>DB_File</strong> database
+using the locking steps outlined above. Assume process ``A'' has already
+opened the database and has a write lock, but it hasn't actually updated
+the database yet (it has finished step 2, but not started step 3 yet). Now
+process ``B'' tries to open the same database - step 1 will succeed,
+but it will block on step 2 until process ``A'' releases the lock. The
+important thing to notice here is that at this point in time both
+processes will have cached identical initial blocks from the database.</p>
+<p>Now process ``A'' updates the database and happens to change some of the
+data held in the initial buffer. Process ``A'' terminates, flushing
+all cached data to disk and releasing the database lock. At this point
+the database on disk will correctly reflect the changes made by process
+``A''.</p>
+<p>With the lock released, process ``B'' can now continue. It also updates the
+database and unfortunately it too modifies the data that was in its
+initial buffer. Once that data gets flushed to disk it will overwrite
+some/all of the changes process ``A'' made to the database.</p>
+<p>The result of this scenario is at best a database that doesn't contain
+what you expect. At worst the database will corrupt.</p>
+<p>The above won't happen every time competing process update the same
+<strong>DB_File</strong> database, but it does illustrate why the technique should
+not be used.</p>
+<p>
+</p>
+<h2><a name="safe_ways_to_lock_a_database">Safe ways to lock a database</a></h2>
+<p>Starting with version 2.x, Berkeley DB  has internal support for locking.
+The companion module to this one, <strong>BerkeleyDB</strong>, provides an interface
+to this locking functionality. If you are serious about locking
+Berkeley DB databases, I strongly recommend using <strong>BerkeleyDB</strong>.</p>
+<p>If using <strong>BerkeleyDB</strong> isn't an option, there are a number of modules
+available on CPAN that can be used to implement locking. Each one
+implements locking differently and has different goals in mind. It is
+therefore worth knowing the difference, so that you can pick the right
+one for your application. Here are the three locking wrappers:</p>
+<dl>
+<dt><strong><a name="item_tie_3a_3adb_lock"><strong>Tie::DB_Lock</strong></a></strong>
+
+<dd>
+<p>A <strong>DB_File</strong> wrapper which creates copies of the database file for
+read access, so that you have a kind of a multiversioning concurrent read
+system. However, updates are still serial. Use for databases where reads
+may be lengthy and consistency problems may occur.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tie_3a_3adb_lockfile"><strong>Tie::DB_LockFile</strong></a></strong>
+
+<dd>
+<p>A <strong>DB_File</strong> wrapper that has the ability to lock and unlock the database
+while it is being used. Avoids the tie-before-flock problem by simply
+re-tie-ing the database when you get or drop a lock.  Because of the
+flexibility in dropping and re-acquiring the lock in the middle of a
+session, this can be massaged into a system that will work with long
+updates and/or reads if the application follows the hints in the POD
+documentation.</p>
+</dd>
+</li>
+<dt><strong><a name="item_db_file_3a_3alock"><strong>DB_File::Lock</strong></a></strong>
+
+<dd>
+<p>An extremely lightweight <strong>DB_File</strong> wrapper that simply flocks a lockfile
+before tie-ing the database and drops the lock after the untie. Allows
+one to use the same lockfile for multiple databases to avoid deadlock
+problems, if desired. Use for databases where updates are reads are
+quick and simple flock locking semantics are enough.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="sharing_databases_with_c_applications">Sharing Databases With C Applications</a></h2>
+<p>There is no technical reason why a Berkeley DB database cannot be
+shared by both a Perl and a C application.</p>
+<p>The vast majority of problems that are reported in this area boil down
+to the fact that C strings are NULL terminated, whilst Perl strings are
+not. See <a href="#dbm_filters">DBM FILTERS</a> for a generic way to work around this problem.</p>
+<p>Here is a real example. Netscape 2.0 keeps a record of the locations you
+visit along with the time you last visited them in a DB_HASH database.
+This is usually stored in the file <em>~/.netscape/history.db</em>. The key
+field in the database is the location string and the value field is the
+time the location was last visited stored as a 4 byte binary value.</p>
+<p>If you haven't already guessed, the location string is stored with a
+terminating NULL. This means you need to be careful when accessing the
+database.</p>
+<p>Here is a snippet of code that is loosely based on Tom Christiansen's
+<em>ggh</em> script (available from your nearest CPAN archive in
+<em>authors/id/TOMC/scripts/nshist.gz</em>).</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;
+    use Fcntl ;</pre>
+<pre>
+    my ($dotdir, $HISTORY, %hist_db, $href, $binary_time, $date) ;
+    $dotdir = $ENV{HOME} || $ENV{LOGNAME};</pre>
+<pre>
+    $HISTORY = &quot;$dotdir/.netscape/history.db&quot;;</pre>
+<pre>
+    tie %hist_db, 'DB_File', $HISTORY
+        or die &quot;Cannot open $HISTORY: $!\n&quot; ;;</pre>
+<pre>
+    # Dump the complete database
+    while ( ($href, $binary_time) = each %hist_db ) {</pre>
+<pre>
+        # remove the terminating NULL
+        $href =~ s/\x00$// ;</pre>
+<pre>
+        # convert the binary time into a user friendly string
+        $date = localtime unpack(&quot;V&quot;, $binary_time);
+        print &quot;$date $href\n&quot; ;
+    }</pre>
+<pre>
+    # check for the existence of a specific key
+    # remember to add the NULL
+    if ( $binary_time = $hist_db{&quot;<a href="http://mox.perl.com/">http://mox.perl.com/</a>\x00&quot;} ) {
+        $date = localtime unpack(&quot;V&quot;, $binary_time) ;
+        print &quot;Last visited mox.perl.com on $date\n&quot; ;
+    }
+    else {
+        print &quot;Never visited mox.perl.com\n&quot;
+    }</pre>
+<pre>
+    untie %hist_db ;</pre>
+<p>
+</p>
+<h2><a name="the_untie___gotcha">The <code>untie()</code> Gotcha</a></h2>
+<p>If you make use of the Berkeley DB API, it is <em>very</em> strongly
+recommended that you read <a href="/usr/lib/perl5/5.8/html/./pod/perltie.html#the_untie_gotcha">The untie Gotcha in the perltie manpage</a>.</p>
+<p>Even if you don't currently make use of the API interface, it is still
+worth reading it.</p>
+<p>Here is an example which illustrates the problem from a <strong>DB_File</strong>
+perspective:</p>
+<pre>
+    use DB_File ;
+    use Fcntl ;</pre>
+<pre>
+    my %x ;
+    my $X ;</pre>
+<pre>
+    $X = tie %x, 'DB_File', 'tst.fil' , O_RDWR|O_TRUNC
+        or die &quot;Cannot tie first time: $!&quot; ;</pre>
+<pre>
+    $x{123} = 456 ;</pre>
+<pre>
+    untie %x ;</pre>
+<pre>
+    tie %x, 'DB_File', 'tst.fil' , O_RDWR|O_CREAT
+        or die &quot;Cannot tie second time: $!&quot; ;</pre>
+<pre>
+    untie %x ;</pre>
+<p>When run, the script will produce this error message:</p>
+<pre>
+    Cannot tie second time: Invalid argument at bad.file line 14.</pre>
+<p>Although the error message above refers to the second <code>tie()</code> statement
+in the script, the source of the problem is really with the <code>untie()</code>
+statement that precedes it.</p>
+<p>Having read <a href="/usr/lib/perl5/5.8/html/./pod/perltie.html">the perltie manpage</a> you will probably have already guessed that the
+error is caused by the extra copy of the tied object stored in <code>$X</code>.
+If you haven't, then the problem boils down to the fact that the
+<strong>DB_File</strong> destructor, DESTROY, will not be called until <em>all</em>
+references to the tied object are destroyed. Both the tied variable,
+<code>%x</code>, and <code>$X</code> above hold a reference to the object. The call to
+<code>untie()</code> will destroy the first, but <code>$X</code> still holds a valid
+reference, so the destructor will not get called and the database file
+<em>tst.fil</em> will remain open. The fact that Berkeley DB then reports the
+attempt to open a database that is already open via the catch-all
+``Invalid argument'' doesn't help.</p>
+<p>If you run the script with the <code>-w</code> flag the error message becomes:</p>
+<pre>
+    untie attempted while 1 inner references still exist at bad.file line 12.
+    Cannot tie second time: Invalid argument at bad.file line 14.</pre>
+<p>which pinpoints the real problem. Finally the script can now be
+modified to fix the original problem by destroying the API object
+before the untie:</p>
+<pre>
+    ...
+    $x{123} = 456 ;</pre>
+<pre>
+    undef $X ;
+    untie %x ;</pre>
+<pre>
+    $X = tie %x, 'DB_File', 'tst.fil' , O_RDWR|O_CREAT
+    ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="common_questions">COMMON QUESTIONS</a></h1>
+<p>
+</p>
+<h2><a name="why_is_there_perl_source_in_my_database">Why is there Perl source in my database?</a></h2>
+<p>If you look at the contents of a database file created by DB_File,
+there can sometimes be part of a Perl script included in it.</p>
+<p>This happens because Berkeley DB uses dynamic memory to allocate
+buffers which will subsequently be written to the database file. Being
+dynamic, the memory could have been used for anything before DB
+malloced it. As Berkeley DB doesn't clear the memory once it has been
+allocated, the unused portions will contain random junk. In the case
+where a Perl script gets written to the database, the random junk will
+correspond to an area of dynamic memory that happened to be used during
+the compilation of the script.</p>
+<p>Unless you don't like the possibility of there being part of your Perl
+scripts embedded in a database file, this is nothing to worry about.</p>
+<p>
+</p>
+<h2><a name="how_do_i_store_complex_data_structures_with_db_file">How do I store complex data structures with DB_File?</a></h2>
+<p>Although <strong>DB_File</strong> cannot do this directly, there is a module which
+can layer transparently over <strong>DB_File</strong> to accomplish this feat.</p>
+<p>Check out the MLDBM module, available on CPAN in the directory
+<em>modules/by-module/MLDBM</em>.</p>
+<p>
+</p>
+<h2><a name="what_does_invalid_argument_mean">What does ``Invalid Argument'' mean?</a></h2>
+<p>You will get this error message when one of the parameters in the
+<code>tie</code> call is wrong. Unfortunately there are quite a few parameters to
+get wrong, so it can be difficult to figure out which one it is.</p>
+<p>Here are a couple of possibilities:</p>
+<ol>
+<li>
+<p>Attempting to reopen a database without closing it.</p>
+</li>
+<li>
+<p>Using the O_WRONLY flag.</p>
+</li>
+</ol>
+<p>
+</p>
+<h2><a name="what_does_bareword__db_file__not_allowed_mean">What does ``Bareword 'DB_File' not allowed'' mean?</a></h2>
+<p>You will encounter this particular error message when you have the
+<code>strict 'subs'</code> pragma (or the full strict pragma) in your script.
+Consider this script:</p>
+<pre>
+    use warnings ;
+    use strict ;
+    use DB_File ;
+    my %x ;
+    tie %x, DB_File, &quot;filename&quot; ;</pre>
+<p>Running it produces the error in question:</p>
+<pre>
+    Bareword &quot;DB_File&quot; not allowed while &quot;strict subs&quot; in use</pre>
+<p>To get around the error, place the word <code>DB_File</code> in either single or
+double quotes, like this:</p>
+<pre>
+    tie %x, &quot;DB_File&quot;, &quot;filename&quot; ;</pre>
+<p>Although it might seem like a real pain, it is really worth the effort
+of having a <code>use strict</code> in all your scripts.</p>
+<p>
+</p>
+<hr />
+<h1><a name="references">REFERENCES</a></h1>
+<p>Articles that are either about <strong>DB_File</strong> or make use of it.</p>
+<ol>
+<li>
+<p><em>Full-Text Searching in Perl</em>, Tim Kientzle (<a href="mailto:tkientzle@ddj.com">tkientzle@ddj.com</a>),
+Dr. Dobb's Journal, Issue 295, January 1999, pp 34-41</p>
+</li>
+</ol>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Moved to the Changes file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Some older versions of Berkeley DB had problems with fixed length
+records using the RECNO file format. This problem has been fixed since
+version 1.85 of Berkeley DB.</p>
+<p>I am sure there are bugs in the code. If you do find any, or can
+suggest any enhancements, I would welcome your comments.</p>
+<p>
+</p>
+<hr />
+<h1><a name="availability">AVAILABILITY</a></h1>
+<p><strong>DB_File</strong> comes with the standard Perl source distribution. Look in
+the directory <em>ext/DB_File</em>. Given the amount of time between releases
+of Perl the version that ships with Perl is quite likely to be out of
+date, so the most recent version can always be found on CPAN (see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html#cpan">CPAN in the perlmodlib manpage</a> for details), in the directory
+<em>modules/by-module/DB_File</em>.</p>
+<p>This version of <strong>DB_File</strong> will work with either version 1.x, 2.x or
+3.x of Berkeley DB, but is limited to the functionality provided by
+version 1.</p>
+<p>The official web site for Berkeley DB is <em><a href="http://www.sleepycat.com">http://www.sleepycat.com</a></em>.
+All versions of Berkeley DB are available there.</p>
+<p>Alternatively, Berkeley DB version 1 is available at your nearest CPAN
+archive in <em>src/misc/db.1.85.tar.gz</em>.</p>
+<p>If you are running IRIX, then get Berkeley DB version 1 from
+<em><a href="http://reality.sgi.com/ariel">http://reality.sgi.com/ariel</a></em>. It has the patches necessary to
+compile properly on IRIX 5.3.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1995-2005 Paul Marquess. All rights reserved. This program
+is free software; you can redistribute it and/or modify it under the
+same terms as Perl itself.</p>
+<p>Although <strong>DB_File</strong> is covered by the Perl license, the library it
+makes use of, namely Berkeley DB, is not. Berkeley DB has its own
+copyright and its own license. Please take the time to read it.</p>
+<p>Here are are few words taken from the Berkeley DB FAQ (at
+<em><a href="http://www.sleepycat.com">http://www.sleepycat.com</a></em>) regarding the license:</p>
+<pre>
+    Do I have to license DB to use it in Perl scripts? 
+
+</pre>
+<pre>
+    No. The Berkeley DB license requires that software that uses
+    Berkeley DB be freely redistributable. In the case of Perl, that
+    software is Perl, and not your scripts. Any Perl scripts that you
+    write are your property, including scripts that make use of
+    Berkeley DB. Neither the Perl license nor the Berkeley DB license
+    place any restriction on what you may do with them.
+
+</pre>
+<p>If you are in any doubt about the license situation, contact either the
+Berkeley DB authors or the author of DB_File. See <a href="#author">AUTHOR</a> for details.
+
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perl.html">the perl manpage</a>, <em>dbopen(3)</em>, <em>hash(3)</em>, <em>recno(3)</em>, <em>btree(3)</em>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perldbmfilter.html">the perldbmfilter manpage</a>
+
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>The DB_File interface was written by Paul Marquess
+&lt;<a href="mailto:pmqs@cpan.org">pmqs@cpan.org</a>&gt;.
+Questions about the DB system itself may be addressed to
+&lt;<a href="mailto:db@sleepycat.com">db@sleepycat.com</a>&gt;.
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DB_File - Perl5 access to Berkeley DB version 1.x</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

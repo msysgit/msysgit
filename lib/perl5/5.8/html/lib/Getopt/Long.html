@@ -1,0 +1,1193 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Getopt::Long - Extended processing of command line options</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Getopt::Long - Extended processing of command line options</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#command_line_options__an_introduction">Command Line Options, an Introduction</a></li>
+	<li><a href="#getting_started_with_getopt__long">Getting Started with Getopt::Long</a></li>
+	<ul>
+
+		<li><a href="#simple_options">Simple options</a></li>
+		<li><a href="#a_little_bit_less_simple_options">A little bit less simple options</a></li>
+		<li><a href="#mixing_command_line_option_with_other_arguments">Mixing command line option with other arguments</a></li>
+		<li><a href="#options_with_values">Options with values</a></li>
+		<li><a href="#options_with_multiple_values">Options with multiple values</a></li>
+		<li><a href="#options_with_hash_values">Options with hash values</a></li>
+		<li><a href="#userdefined_subroutines_to_handle_options">User-defined subroutines to handle options</a></li>
+		<li><a href="#options_with_multiple_names">Options with multiple names</a></li>
+		<li><a href="#case_and_abbreviations">Case and abbreviations</a></li>
+		<li><a href="#summary_of_option_specifications">Summary of Option Specifications</a></li>
+	</ul>
+
+	<li><a href="#advanced_possibilities">Advanced Possibilities</a></li>
+	<ul>
+
+		<li><a href="#object_oriented_interface">Object oriented interface</a></li>
+		<li><a href="#thread_safety">Thread Safety</a></li>
+		<li><a href="#documentation_and_help_texts">Documentation and help texts</a></li>
+		<li><a href="#storing_option_values_in_a_hash">Storing option values in a hash</a></li>
+		<li><a href="#bundling">Bundling</a></li>
+		<li><a href="#the_lonesome_dash">The lonesome dash</a></li>
+		<li><a href="#argument_callback">Argument callback</a></li>
+	</ul>
+
+	<li><a href="#configuring_getopt__long">Configuring Getopt::Long</a></li>
+	<li><a href="#exportable_methods">Exportable Methods</a></li>
+	<li><a href="#return_values_and_errors">Return values and Errors</a></li>
+	<li><a href="#legacy">Legacy</a></li>
+	<ul>
+
+		<li><a href="#default_destinations">Default destinations</a></li>
+		<li><a href="#alternative_option_starters">Alternative option starters</a></li>
+		<li><a href="#configuration_variables">Configuration variables</a></li>
+	</ul>
+
+	<li><a href="#trouble_shooting">Trouble Shooting</a></li>
+	<ul>
+
+		<li><a href="#getoptions_does_not_return_a_false_result_when_an_option_is_not_supplied">GetOptions does not return a false result when an option is not supplied</a></li>
+		<li><a href="#getoptions_does_not_split_the_command_line_correctly">GetOptions does not split the command line correctly</a></li>
+		<li><a href="#undefined_subroutine__main__getoptions_called">Undefined subroutine &amp;main::GetOptions called</a></li>
+		<li><a href="#how_do_i_put_a__option_into_a_getopt__long">How do I put a ``-?'' option into a Getopt::Long?</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_disclaimer">COPYRIGHT AND DISCLAIMER</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Getopt::Long - Extended processing of command line options</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Getopt::Long;
+  my $data   = &quot;file.dat&quot;;
+  my $length = 24;
+  my $verbose;
+  $result = GetOptions (&quot;length=i&quot; =&gt; \$length,    # numeric
+                        &quot;file=s&quot;   =&gt; \$data,      # string
+                        &quot;verbose&quot;  =&gt; \$verbose);  # flag</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Getopt::Long module implements an extended getopt function called
+GetOptions(). This function adheres to the POSIX syntax for command
+line options, with GNU extensions. In general, this means that options
+have long names instead of single letters, and are introduced with a
+double dash ``--''. Support for bundling of command line options, as was
+the case with the more traditional single-letter approach, is provided
+but not enabled by default.</p>
+<p>
+</p>
+<hr />
+<h1><a name="command_line_options__an_introduction">Command Line Options, an Introduction</a></h1>
+<p>Command line operated programs traditionally take their arguments from
+the command line, for example filenames or other information that the
+program needs to know. Besides arguments, these programs often take
+command line <em>options</em> as well. Options are not necessary for the
+program to work, hence the name 'option', but are used to modify its
+default behaviour. For example, a program could do its job quietly,
+but with a suitable option it could provide verbose information about
+what it did.</p>
+<p>Command line options come in several flavours. Historically, they are
+preceded by a single dash <code>-</code>, and consist of a single letter.</p>
+<pre>
+    -l -a -c</pre>
+<p>Usually, these single-character options can be bundled:</p>
+<pre>
+    -lac</pre>
+<p>Options can have values, the value is placed after the option
+character. Sometimes with whitespace in between, sometimes not:</p>
+<pre>
+    -s 24 -s24</pre>
+<p>Due to the very cryptic nature of these options, another style was
+developed that used long names. So instead of a cryptic <code>-l</code> one
+could use the more descriptive <code>--long</code>. To distinguish between a
+bundle of single-character options and a long one, two dashes are used
+to precede the option name. Early implementations of long options used
+a plus <a href="#item__2b"><code>+</code></a> instead. Also, option values could be specified either
+like</p>
+<pre>
+    --size=24</pre>
+<p>or</p>
+<pre>
+    --size 24</pre>
+<p>The <a href="#item__2b"><code>+</code></a> form is now obsolete and strongly deprecated.</p>
+<p>
+</p>
+<hr />
+<h1><a name="getting_started_with_getopt__long">Getting Started with Getopt::Long</a></h1>
+<p>Getopt::Long is the Perl5 successor of <code>newgetopt.pl</code>. This was the
+first Perl module that provided support for handling the new style of
+command line options, hence the name Getopt::Long. This module also
+supports single-character options and bundling. Single character
+options may be any alphabetic character, a question mark, and a dash.
+Long options may consist of a series of letters, digits, and dashes.
+Although this is currently not enforced by Getopt::Long, multiple
+consecutive dashes are not allowed, and the option name must not end
+with a dash.</p>
+<p>To use Getopt::Long from a Perl program, you must include the
+following line in your Perl program:</p>
+<pre>
+    use Getopt::Long;</pre>
+<p>This will load the core of the Getopt::Long module and prepare your
+program for using it. Most of the actual Getopt::Long code is not
+loaded until you really call one of its functions.</p>
+<p>In the default configuration, options names may be abbreviated to
+uniqueness, case does not matter, and a single dash is sufficient,
+even for long option names. Also, options may be placed between
+non-option arguments. See <a href="#configuring_getopt__long">Configuring Getopt::Long</a> for more
+details on how to configure Getopt::Long.</p>
+<p>
+</p>
+<h2><a name="simple_options">Simple options</a></h2>
+<p>The most simple options are the ones that take no values. Their mere
+presence on the command line enables the option. Popular examples are:</p>
+<pre>
+    --all --verbose --quiet --debug</pre>
+<p>Handling simple options is straightforward:</p>
+<pre>
+    my $verbose = '';   # option variable with default value (false)
+    my $all = '';       # option variable with default value (false)
+    GetOptions ('verbose' =&gt; \$verbose, 'all' =&gt; \$all);</pre>
+<p>The call to <code>GetOptions()</code> parses the command line arguments that are
+present in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> and sets the option variable to the value <code>1</code> if
+the option did occur on the command line. Otherwise, the option
+variable is not touched. Setting the option value to true is often
+called <em>enabling</em> the option.</p>
+<p>The option name as specified to the <code>GetOptions()</code> function is called
+the option <em>specification</em>. Later we'll see that this specification
+can contain more than just the option name. The reference to the
+variable is called the option <em>destination</em>.</p>
+<p><code>GetOptions()</code> will return a true value if the command line could be
+processed successfully. Otherwise, it will write error messages to
+STDERR, and return a false result.</p>
+<p>
+</p>
+<h2><a name="a_little_bit_less_simple_options">A little bit less simple options</a></h2>
+<p>Getopt::Long supports two useful variants of simple options:
+<em>negatable</em> options and <em>incremental</em> options.</p>
+<p>A negatable option is specified with an exclamation mark <a href="#item__21"><code>!</code></a> after the
+option name:</p>
+<pre>
+    my $verbose = '';   # option variable with default value (false)
+    GetOptions ('verbose!' =&gt; \$verbose);</pre>
+<p>Now, using <code>--verbose</code> on the command line will enable <code>$verbose</code>,
+as expected. But it is also allowed to use <code>--noverbose</code>, which will
+disable <code>$verbose</code> by setting its value to <code>0</code>. Using a suitable
+default value, the program can find out whether <code>$verbose</code> is false
+by default, or disabled by using <code>--noverbose</code>.</p>
+<p>An incremental option is specified with a plus <a href="#item__2b"><code>+</code></a> after the
+option name:</p>
+<pre>
+    my $verbose = '';   # option variable with default value (false)
+    GetOptions ('verbose+' =&gt; \$verbose);</pre>
+<p>Using <code>--verbose</code> on the command line will increment the value of
+<code>$verbose</code>. This way the program can keep track of how many times the
+option occurred on the command line. For example, each occurrence of
+<code>--verbose</code> could increase the verbosity level of the program.</p>
+<p>
+</p>
+<h2><a name="mixing_command_line_option_with_other_arguments">Mixing command line option with other arguments</a></h2>
+<p>Usually programs take command line options as well as other arguments,
+for example, file names. It is good practice to always specify the
+options first, and the other arguments last. Getopt::Long will,
+however, allow the options and arguments to be mixed and 'filter out'
+all the options before passing the rest of the arguments to the
+program. To stop Getopt::Long from processing further arguments,
+insert a double dash <code>--</code> on the command line:</p>
+<pre>
+    --size 24 -- --all</pre>
+<p>In this example, <code>--all</code> will <em>not</em> be treated as an option, but
+passed to the program unharmed, in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a>.</p>
+<p>
+</p>
+<h2><a name="options_with_values">Options with values</a></h2>
+<p>For options that take values it must be specified whether the option
+value is required or not, and what kind of value the option expects.</p>
+<p>Three kinds of values are supported: integer numbers, floating point
+numbers, and strings.</p>
+<p>If the option value is required, Getopt::Long will take the
+command line argument that follows the option and assign this to the
+option variable. If, however, the option value is specified as
+optional, this will only be done if that value does not look like a
+valid command line option itself.</p>
+<pre>
+    my $tag = '';       # option variable with default value
+    GetOptions ('tag=s' =&gt; \$tag);</pre>
+<p>In the option specification, the option name is followed by an equals
+sign <code>=</code> and the letter <a href="#item_s"><code>s</code></a>. The equals sign indicates that this
+option requires a value. The letter <a href="#item_s"><code>s</code></a> indicates that this value is
+an arbitrary string. Other possible value types are <a href="#item_i"><code>i</code></a> for integer
+values, and <a href="#item_f"><code>f</code></a> for floating point values. Using a colon <code>:</code> instead
+of the equals sign indicates that the option value is optional. In
+this case, if no suitable value is supplied, string valued options get
+an empty string <code>''</code> assigned, while numeric options are set to <code>0</code>.</p>
+<p>
+</p>
+<h2><a name="options_with_multiple_values">Options with multiple values</a></h2>
+<p>Options sometimes take several values. For example, a program could
+use multiple directories to search for library files:</p>
+<pre>
+    --library lib/stdlib --library lib/extlib</pre>
+<p>To accomplish this behaviour, simply specify an array reference as the
+destination for the option:</p>
+<pre>
+    GetOptions (&quot;library=s&quot; =&gt; \@libfiles);</pre>
+<p>Alternatively, you can specify that the option can have multiple
+values by adding a ``@'', and pass a scalar reference as the
+destination:</p>
+<pre>
+    GetOptions (&quot;library=s@&quot; =&gt; \$libfiles);</pre>
+<p>Used with the example above, <code>@libfiles</code> (or <code>@$libfiles</code>) would
+contain two strings upon completion: <code>&quot;lib/srdlib&quot;</code> and
+<code>&quot;lib/extlib&quot;</code>, in that order. It is also possible to specify that
+only integer or floating point numbers are acceptable values.</p>
+<p>Often it is useful to allow comma-separated lists of values as well as
+multiple occurrences of the options. This is easy using Perl's <code>split()</code>
+and <code>join()</code> operators:</p>
+<pre>
+    GetOptions (&quot;library=s&quot; =&gt; \@libfiles);
+    @libfiles = split(/,/,join(',',@libfiles));</pre>
+<p>Of course, it is important to choose the right separator string for
+each purpose.</p>
+<p>Warning: What follows is an experimental feature.</p>
+<p>Options can take multiple values at once, for example</p>
+<pre>
+    --coordinates 52.2 16.4 --rgbcolor 255 255 149</pre>
+<p>This can be accomplished by adding a repeat specifier to the option
+specification. Repeat specifiers are very similar to the <code>{...}</code>
+repeat specifiers that can be used with regular expression patterns.
+For example, the above command line would be handled as follows:</p>
+<pre>
+    GetOptions('coordinates=f{2}' =&gt; \@coor, 'rgbcolor=i{3}' =&gt; \@color);</pre>
+<p>The destination for the option must be an array or array reference.</p>
+<p>It is also possible to specify the minimal and maximal number of
+arguments an option takes. <code>foo=s{2,4}</code> indicates an option that
+takes at least two and at most 4 arguments. <code>foo=s{,}</code> indicates one
+or more values; <code>foo:s{,}</code> indicates zero or more option values.</p>
+<p>
+</p>
+<h2><a name="options_with_hash_values">Options with hash values</a></h2>
+<p>If the option destination is a reference to a hash, the option will
+take, as value, strings of the form <em>key</em><code>=</code><em>value</em>. The value will
+be stored with the specified key in the hash.</p>
+<pre>
+    GetOptions (&quot;define=s&quot; =&gt; \%defines);</pre>
+<p>Alternatively you can use:</p>
+<pre>
+    GetOptions (&quot;define=s%&quot; =&gt; \$defines);</pre>
+<p>When used with command line options:</p>
+<pre>
+    --define os=linux --define vendor=redhat</pre>
+<p>the hash <code>%defines</code> (or <code>%$defines</code>) will contain two keys, <code>&quot;os&quot;</code>
+with value <code>&quot;linux</code> and <code>&quot;vendor&quot;</code> with value <code>&quot;redhat&quot;</code>. It is
+also possible to specify that only integer or floating point numbers
+are acceptable values. The keys are always taken to be strings.</p>
+<p>
+</p>
+<h2><a name="userdefined_subroutines_to_handle_options">User-defined subroutines to handle options</a></h2>
+<p>Ultimate control over what should be done when (actually: each time)
+an option is encountered on the command line can be achieved by
+designating a reference to a subroutine (or an anonymous subroutine)
+as the option destination. When <code>GetOptions()</code> encounters the option, it
+will call the subroutine with two or three arguments. The first
+argument is the name of the option. For a scalar or array destination,
+the second argument is the value to be stored. For a hash destination,
+the second arguments is the key to the hash, and the third argument
+the value to be stored. It is up to the subroutine to store the value,
+or do whatever it thinks is appropriate.</p>
+<p>A trivial application of this mechanism is to implement options that
+are related to each other. For example:</p>
+<pre>
+    my $verbose = '';   # option variable with default value (false)
+    GetOptions ('verbose' =&gt; \$verbose,
+                'quiet'   =&gt; sub { $verbose = 0 });</pre>
+<p>Here <code>--verbose</code> and <code>--quiet</code> control the same variable
+<code>$verbose</code>, but with opposite values.</p>
+<p>If the subroutine needs to signal an error, it should call <code>die()</code> with
+the desired error message as its argument. <code>GetOptions()</code> will catch the
+die(), issue the error message, and record that an error result must
+be returned upon completion.</p>
+<p>If the text of the error message starts with an exclamation mark <a href="#item__21"><code>!</code></a>
+it is interpreted specially by GetOptions(). There is currently one
+special command implemented: <code>die(&quot;!FINISH&quot;)</code> will cause <code>GetOptions()</code>
+to stop processing options, as if it encountered a double dash <code>--</code>.</p>
+<p>
+</p>
+<h2><a name="options_with_multiple_names">Options with multiple names</a></h2>
+<p>Often it is user friendly to supply alternate mnemonic names for
+options. For example <code>--height</code> could be an alternate name for
+<code>--length</code>. Alternate names can be included in the option
+specification, separated by vertical bar <code>|</code> characters. To implement
+the above example:</p>
+<pre>
+    GetOptions ('length|height=f' =&gt; \$length);</pre>
+<p>The first name is called the <em>primary</em> name, the other names are
+called <em>aliases</em>. When using a hash to store options, the key will
+always be the primary name.</p>
+<p>Multiple alternate names are possible.</p>
+<p>
+</p>
+<h2><a name="case_and_abbreviations">Case and abbreviations</a></h2>
+<p>Without additional configuration, <code>GetOptions()</code> will ignore the case of
+option names, and allow the options to be abbreviated to uniqueness.</p>
+<pre>
+    GetOptions ('length|height=f' =&gt; \$length, &quot;head&quot; =&gt; \$head);</pre>
+<p>This call will allow <code>--l</code> and <code>--L</code> for the length option, but
+requires a least <code>--hea</code> and <code>--hei</code> for the head and height options.</p>
+<p>
+</p>
+<h2><a name="summary_of_option_specifications">Summary of Option Specifications</a></h2>
+<p>Each option specifier consists of two parts: the name specification
+and the argument specification.</p>
+<p>The name specification contains the name of the option, optionally
+followed by a list of alternative names separated by vertical bar
+characters.</p>
+<pre>
+    length            option name is &quot;length&quot;
+    length|size|l     name is &quot;length&quot;, aliases are &quot;size&quot; and &quot;l&quot;</pre>
+<p>The argument specification is optional. If omitted, the option is
+considered boolean, a value of 1 will be assigned when the option is
+used on the command line.</p>
+<p>The argument specification can be</p>
+<dl>
+<dt><strong><a name="item__21">!</a></strong>
+
+<dd>
+<p>The option does not take an argument and may be negated by prefixing
+it with ``no'' or ``no-''. E.g. <code>&quot;foo!&quot;</code> will allow <code>--foo</code> (a value of
+1 will be assigned) as well as <code>--nofoo</code> and <code>--no-foo</code> (a value of
+0 will be assigned). If the option has aliases, this applies to the
+aliases as well.</p>
+</dd>
+<dd>
+<p>Using negation on a single letter option when bundling is in effect is
+pointless and will result in a warning.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2b">+</a></strong>
+
+<dd>
+<p>The option does not take an argument and will be incremented by 1
+every time it appears on the command line. E.g. <code>&quot;more+&quot;</code>, when used
+with <code>--more --more --more</code>, will increment the value three times,
+resulting in a value of 3 (provided it was 0 or undefined at first).</p>
+</dd>
+<dd>
+<p>The <a href="#item__2b"><code>+</code></a> specifier is ignored if the option destination is not a scalar.</p>
+</dd>
+</li>
+<dt><strong><a name="item__3d_type__5b_desttype__5d__5b_repeat__5d">= <em>type</em> [ <em>desttype</em> ] [ <em>repeat</em> ]</a></strong>
+
+<dd>
+<p>The option requires an argument of the given type. Supported types
+are:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_s">s</a></strong>
+
+<dd>
+<p>String. An arbitrary sequence of characters. It is valid for the
+argument to start with <code>-</code> or <code>--</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_i">i</a></strong>
+
+<dd>
+<p>Integer. An optional leading plus or minus sign, followed by a
+sequence of digits.</p>
+</dd>
+</li>
+<dt><strong><a name="item_o">o</a></strong>
+
+<dd>
+<p>Extended integer, Perl style. This can be either an optional leading
+plus or minus sign, followed by a sequence of digits, or an octal
+string (a zero, optionally followed by '0', '1', .. '7'), or a
+hexadecimal string (<code>0x</code> followed by '0' .. '9', 'a' .. 'f', case
+insensitive), or a binary string (<code>0b</code> followed by a series of '0'
+and '1').</p>
+</dd>
+</li>
+<dt><strong><a name="item_f">f</a></strong>
+
+<dd>
+<p>Real number. For example <code>3.14</code>, <code>-6.23E24</code> and so on.</p>
+</dd>
+</li>
+</dl>
+<p>The <em>desttype</em> can be <code>@</code> or <code>%</code> to specify that the option is
+list or a hash valued. This is only needed when the destination for
+the option value is not otherwise specified. It should be omitted when
+not needed.</p>
+<p>The <em>repeat</em> specifies the number of values this option takes per
+occurrence on the command line. It has the format <code>{</code> [ <em>min</em> ] [ <code>,</code> [ <em>max</em> ] ] <code>}</code>.</p>
+<p><em>min</em> denotes the minimal number of arguments. It defaults to 1 for
+options with <code>=</code> and to 0 for options with <code>:</code>, see below. Note that
+<em>min</em> overrules the <code>=</code> / <code>:</code> semantics.</p>
+<p><em>max</em> denotes the maximum number of arguments. It must be at least
+<em>min</em>. If <em>max</em> is omitted, <em>but the comma is not</em>, there is no
+upper bound to the number of argument values taken.</p>
+<dt><strong><a name="item__3a_type__5b_desttype__5d">: <em>type</em> [ <em>desttype</em> ]</a></strong>
+
+<dd>
+<p>Like <code>=</code>, but designates the argument as optional.
+If omitted, an empty string will be assigned to string values options,
+and the value zero to numeric options.</p>
+</dd>
+<dd>
+<p>Note that if a string argument starts with <code>-</code> or <code>--</code>, it will be
+considered an option on itself.</p>
+</dd>
+</li>
+<dt><strong><a name="item__3a_number__5b_desttype__5d">: <em>number</em> [ <em>desttype</em> ]</a></strong>
+
+<dd>
+<p>Like <code>:i</code>, but if the value is omitted, the <em>number</em> will be assigned.</p>
+</dd>
+</li>
+<dt><strong><a name="item__3a__2b__5b_desttype__5d">: + [ <em>desttype</em> ]</a></strong>
+
+<dd>
+<p>Like <code>:i</code>, but if the value is omitted, the current value for the
+option will be incremented.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="advanced_possibilities">Advanced Possibilities</a></h1>
+<p>
+</p>
+<h2><a name="object_oriented_interface">Object oriented interface</a></h2>
+<p>Getopt::Long can be used in an object oriented way as well:</p>
+<pre>
+    use Getopt::Long;
+    $p = new Getopt::Long::Parser;
+    $p-&gt;configure(...configuration options...);
+    if ($p-&gt;getoptions(...options descriptions...)) ...</pre>
+<p>Configuration options can be passed to the constructor:</p>
+<pre>
+    $p = new Getopt::Long::Parser
+             config =&gt; [...configuration options...];</pre>
+<p>
+</p>
+<h2><a name="thread_safety">Thread Safety</a></h2>
+<p>Getopt::Long is thread safe when using ithreads as of Perl 5.8.  It is
+<em>not</em> thread safe when using the older (experimental and now
+obsolete) threads implementation that was added to Perl 5.005.</p>
+<p>
+</p>
+<h2><a name="documentation_and_help_texts">Documentation and help texts</a></h2>
+<p>Getopt::Long encourages the use of Pod::Usage to produce help
+messages. For example:</p>
+<pre>
+    use Getopt::Long;
+    use Pod::Usage;</pre>
+<pre>
+    my $man = 0;
+    my $help = 0;</pre>
+<pre>
+    GetOptions('help|?' =&gt; \$help, man =&gt; \$man) or pod2usage(2);
+    pod2usage(1) if $help;
+    pod2usage(-exitstatus =&gt; 0, -verbose =&gt; 2) if $man;</pre>
+<pre>
+    __END__</pre>
+<pre>
+    =head1 NAME</pre>
+<pre>
+    sample - Using Getopt::Long and Pod::Usage</pre>
+<pre>
+    =head1 SYNOPSIS</pre>
+<pre>
+    sample [options] [file ...]</pre>
+<pre>
+     Options:
+       -help            brief help message
+       -man             full documentation</pre>
+<pre>
+    =head1 OPTIONS</pre>
+<pre>
+    =over 8</pre>
+<pre>
+    =item B&lt;-help&gt;</pre>
+<pre>
+    Print a brief help message and exits.</pre>
+<pre>
+    =item B&lt;-man&gt;</pre>
+<pre>
+    Prints the manual page and exits.</pre>
+<pre>
+    =back</pre>
+<pre>
+    =head1 DESCRIPTION</pre>
+<pre>
+    B&lt;This program&gt; will read the given input file(s) and do something
+    useful with the contents thereof.</pre>
+<pre>
+    =cut</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Usage.html">the Pod::Usage manpage</a> for details.</p>
+<p>
+</p>
+<h2><a name="storing_option_values_in_a_hash">Storing option values in a hash</a></h2>
+<p>Sometimes, for example when there are a lot of options, having a
+separate variable for each of them can be cumbersome. <code>GetOptions()</code>
+supports, as an alternative mechanism, storing options in a hash.</p>
+<p>To obtain this, a reference to a hash must be passed <em>as the first
+argument</em> to GetOptions(). For each option that is specified on the
+command line, the option value will be stored in the hash with the
+option name as key. Options that are not actually used on the command
+line will not be put in the hash, on other words,
+<code>exists($h{option})</code> (or <code>defined())</code> can be used to test if an option
+was used. The drawback is that warnings will be issued if the program
+runs under <code>use strict</code> and uses <code>$h{option}</code> without testing with
+<code>exists()</code> or <code>defined()</code> first.</p>
+<pre>
+    my %h = ();
+    GetOptions (\%h, 'length=i');       # will store in $h{length}</pre>
+<p>For options that take list or hash values, it is necessary to indicate
+this by appending an <code>@</code> or <code>%</code> sign after the type:</p>
+<pre>
+    GetOptions (\%h, 'colours=s@');     # will push to @{$h{colours}}</pre>
+<p>To make things more complicated, the hash may contain references to
+the actual destinations, for example:</p>
+<pre>
+    my $len = 0;
+    my %h = ('length' =&gt; \$len);
+    GetOptions (\%h, 'length=i');       # will store in $len</pre>
+<p>This example is fully equivalent with:</p>
+<pre>
+    my $len = 0;
+    GetOptions ('length=i' =&gt; \$len);   # will store in $len</pre>
+<p>Any mixture is possible. For example, the most frequently used options
+could be stored in variables while all other options get stored in the
+hash:</p>
+<pre>
+    my $verbose = 0;                    # frequently referred
+    my $debug = 0;                      # frequently referred
+    my %h = ('verbose' =&gt; \$verbose, 'debug' =&gt; \$debug);
+    GetOptions (\%h, 'verbose', 'debug', 'filter', 'size=i');
+    if ( $verbose ) { ... }
+    if ( exists $h{filter} ) { ... option 'filter' was specified ... }</pre>
+<p>
+</p>
+<h2><a name="bundling">Bundling</a></h2>
+<p>With bundling it is possible to set several single-character options
+at once. For example if <code>a</code>, <code>v</code> and <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>x</code></a> are all valid options,</p>
+<pre>
+    -vax</pre>
+<p>would set all three.</p>
+<p>Getopt::Long supports two levels of bundling. To enable bundling, a
+call to Getopt::Long::Configure is required.</p>
+<p>The first level of bundling can be enabled with:</p>
+<pre>
+    Getopt::Long::Configure (&quot;bundling&quot;);</pre>
+<p>Configured this way, single-character options can be bundled but long
+options <strong>must</strong> always start with a double dash <code>--</code> to avoid
+ambiguity. For example, when <code>vax</code>, <code>a</code>, <code>v</code> and <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>x</code></a> are all valid
+options,</p>
+<pre>
+    -vax</pre>
+<p>would set <code>a</code>, <code>v</code> and <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>x</code></a>, but</p>
+<pre>
+    --vax</pre>
+<p>would set <code>vax</code>.</p>
+<p>The second level of bundling lifts this restriction. It can be enabled
+with:</p>
+<pre>
+    Getopt::Long::Configure (&quot;bundling_override&quot;);</pre>
+<p>Now, <code>-vax</code> would set the option <code>vax</code>.</p>
+<p>When any level of bundling is enabled, option values may be inserted
+in the bundle. For example:</p>
+<pre>
+    -h24w80</pre>
+<p>is equivalent to</p>
+<pre>
+    -h 24 -w 80</pre>
+<p>When configured for bundling, single-character options are matched
+case sensitive while long options are matched case insensitive. To
+have the single-character options matched case insensitive as well,
+use:</p>
+<pre>
+    Getopt::Long::Configure (&quot;bundling&quot;, &quot;ignorecase_always&quot;);</pre>
+<p>It goes without saying that bundling can be quite confusing.</p>
+<p>
+</p>
+<h2><a name="the_lonesome_dash">The lonesome dash</a></h2>
+<p>Normally, a lone dash <code>-</code> on the command line will not be considered
+an option. Option processing will terminate (unless ``permute'' is
+configured) and the dash will be left in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a>.</p>
+<p>It is possible to get special treatment for a lone dash. This can be
+achieved by adding an option specification with an empty name, for
+example:</p>
+<pre>
+    GetOptions ('' =&gt; \$stdio);</pre>
+<p>A lone dash on the command line will now be a legal option, and using
+it will set variable <code>$stdio</code>.</p>
+<p>
+</p>
+<h2><a name="argument_callback">Argument callback</a></h2>
+<p>A special option 'name' <code>&lt;&gt;</code> can be used to designate a subroutine
+to handle non-option arguments. When <code>GetOptions()</code> encounters an
+argument that does not look like an option, it will immediately call this
+subroutine and passes it one parameter: the argument name.</p>
+<p>For example:</p>
+<pre>
+    my $width = 80;
+    sub process { ... }
+    GetOptions ('width=i' =&gt; \$width, '&lt;&gt;' =&gt; \&amp;process);</pre>
+<p>When applied to the following command line:</p>
+<pre>
+    arg1 --width=72 arg2 --width=60 arg3</pre>
+<p>This will call
+<code>process(&quot;arg1&quot;)</code> while <code>$width</code> is <code>80</code>,
+<code>process(&quot;arg2&quot;)</code> while <code>$width</code> is <code>72</code>, and
+<code>process(&quot;arg3&quot;)</code> while <code>$width</code> is <code>60</code>.</p>
+<p>This feature requires configuration option <strong>permute</strong>, see section
+<a href="#configuring_getopt__long">Configuring Getopt::Long</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="configuring_getopt__long">Configuring Getopt::Long</a></h1>
+<p>Getopt::Long can be configured by calling subroutine
+Getopt::Long::Configure(). This subroutine takes a list of quoted
+strings, each specifying a configuration option to be enabled, e.g.
+<a href="#item_ignore_case"><code>ignore_case</code></a>, or disabled, e.g. <code>no_ignore_case</code>. Case does not
+matter. Multiple calls to <code>Configure()</code> are possible.</p>
+<p>Alternatively, as of version 2.24, the configuration options may be
+passed together with the <code>use</code> statement:</p>
+<pre>
+    use Getopt::Long qw(:config no_ignore_case bundling);</pre>
+<p>The following options are available:</p>
+<dl>
+<dt><strong><a name="item_default">default</a></strong>
+
+<dd>
+<p>This option causes all configuration options to be reset to their
+default values.</p>
+</dd>
+</li>
+<dt><strong><a name="item_posix_default">posix_default</a></strong>
+
+<dd>
+<p>This option causes all configuration options to be reset to their
+default values as if the environment variable POSIXLY_CORRECT had
+been set.</p>
+</dd>
+</li>
+<dt><strong><a name="item_auto_abbrev">auto_abbrev</a></strong>
+
+<dd>
+<p>Allow option names to be abbreviated to uniqueness.
+Default is enabled unless environment variable
+POSIXLY_CORRECT has been set, in which case <a href="#item_auto_abbrev"><code>auto_abbrev</code></a> is disabled.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getopt_compat">getopt_compat</a></strong>
+
+<dd>
+<p>Allow <a href="#item__2b"><code>+</code></a> to start options.
+Default is enabled unless environment variable
+POSIXLY_CORRECT has been set, in which case <a href="#item_getopt_compat"><code>getopt_compat</code></a> is disabled.</p>
+</dd>
+</li>
+<dt><strong><a name="item_gnu_compat">gnu_compat</a></strong>
+
+<dd>
+<p><a href="#item_gnu_compat"><code>gnu_compat</code></a> controls whether <code>--opt=</code> is allowed, and what it should
+do. Without <a href="#item_gnu_compat"><code>gnu_compat</code></a>, <code>--opt=</code> gives an error. With <a href="#item_gnu_compat"><code>gnu_compat</code></a>,
+<code>--opt=</code> will give option <code>opt</code> and empty value.
+This is the way GNU <code>getopt_long()</code> does it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_gnu_getopt">gnu_getopt</a></strong>
+
+<dd>
+<p>This is a short way of setting <a href="#item_gnu_compat"><code>gnu_compat</code></a> <a href="#item_bundling"><code>bundling</code></a> <a href="#item_permute"><code>permute</code></a>
+<code>no_getopt_compat</code>. With <a href="#item_gnu_getopt"><code>gnu_getopt</code></a>, command line handling should be
+fully compatible with GNU getopt_long().</p>
+</dd>
+</li>
+<dt><strong><a name="item_require_order">require_order</a></strong>
+
+<dd>
+<p>Whether command line arguments are allowed to be mixed with options.
+Default is disabled unless environment variable
+POSIXLY_CORRECT has been set, in which case <a href="#item_require_order"><code>require_order</code></a> is enabled.</p>
+</dd>
+<dd>
+<p>See also <a href="#item_permute"><code>permute</code></a>, which is the opposite of <a href="#item_require_order"><code>require_order</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_permute">permute</a></strong>
+
+<dd>
+<p>Whether command line arguments are allowed to be mixed with options.
+Default is enabled unless environment variable
+POSIXLY_CORRECT has been set, in which case <a href="#item_permute"><code>permute</code></a> is disabled.
+Note that <a href="#item_permute"><code>permute</code></a> is the opposite of <a href="#item_require_order"><code>require_order</code></a>.</p>
+</dd>
+<dd>
+<p>If <a href="#item_permute"><code>permute</code></a> is enabled, this means that</p>
+</dd>
+<dd>
+<pre>
+    --foo arg1 --bar arg2 arg3</pre>
+</dd>
+<dd>
+<p>is equivalent to</p>
+</dd>
+<dd>
+<pre>
+    --foo --bar arg1 arg2 arg3</pre>
+</dd>
+<dd>
+<p>If an argument callback routine is specified, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> will always be
+empty upon successful return of <code>GetOptions()</code> since all options have been
+processed. The only exception is when <code>--</code> is used:</p>
+</dd>
+<dd>
+<pre>
+    --foo arg1 --bar arg2 -- arg3</pre>
+</dd>
+<dd>
+<p>This will call the callback routine for arg1 and arg2, and then
+terminate <code>GetOptions()</code> leaving <code>&quot;arg2&quot;</code> in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a>.</p>
+</dd>
+<dd>
+<p>If <a href="#item_require_order"><code>require_order</code></a> is enabled, options processing
+terminates when the first non-option is encountered.</p>
+</dd>
+<dd>
+<pre>
+    --foo arg1 --bar arg2 arg3</pre>
+</dd>
+<dd>
+<p>is equivalent to</p>
+</dd>
+<dd>
+<pre>
+    --foo -- arg1 --bar arg2 arg3</pre>
+</dd>
+<dd>
+<p>If <a href="#item_pass_through"><code>pass_through</code></a> is also enabled, options processing will terminate
+at the first unrecognized option, or non-option, whichever comes
+first.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bundling">bundling (default: disabled)</a></strong>
+
+<dd>
+<p>Enabling this option will allow single-character options to be
+bundled. To distinguish bundles from long option names, long options
+<em>must</em> be introduced with <code>--</code> and bundles with <code>-</code>.</p>
+</dd>
+<dd>
+<p>Note that, if you have options <code>a</code>, <code>l</code> and <code>all</code>, and
+auto_abbrev enabled, possible arguments and option settings are:</p>
+</dd>
+<dd>
+<pre>
+    using argument               sets option(s)
+    ------------------------------------------
+    -a, --a                      a
+    -l, --l                      l
+    -al, -la, -ala, -all,...     a, l
+    --al, --all                  all</pre>
+</dd>
+<dd>
+<p>The surprising part is that <code>--a</code> sets option <code>a</code> (due to auto
+completion), not <code>all</code>.</p>
+</dd>
+<dd>
+<p>Note: disabling <a href="#item_bundling"><code>bundling</code></a> also disables <a href="#item_bundling_override"><code>bundling_override</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bundling_override">bundling_override (default: disabled)</a></strong>
+
+<dd>
+<p>If <a href="#item_bundling_override"><code>bundling_override</code></a> is enabled, bundling is enabled as with
+<a href="#item_bundling"><code>bundling</code></a> but now long option names override option bundles.</p>
+</dd>
+<dd>
+<p>Note: disabling <a href="#item_bundling_override"><code>bundling_override</code></a> also disables <a href="#item_bundling"><code>bundling</code></a>.</p>
+</dd>
+<dd>
+<p><strong>Note:</strong> Using option bundling can easily lead to unexpected results,
+especially when mixing long options and bundles. Caveat emptor.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ignore_case">ignore_case  (default: enabled)</a></strong>
+
+<dd>
+<p>If enabled, case is ignored when matching long option names. If,
+however, bundling is enabled as well, single character options will be
+treated case-sensitive.</p>
+</dd>
+<dd>
+<p>With <a href="#item_ignore_case"><code>ignore_case</code></a>, option specifications for options that only
+differ in case, e.g., <code>&quot;foo&quot;</code> and <code>&quot;Foo&quot;</code>, will be flagged as
+duplicates.</p>
+</dd>
+<dd>
+<p>Note: disabling <a href="#item_ignore_case"><code>ignore_case</code></a> also disables <a href="#item_ignore_case_always"><code>ignore_case_always</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ignore_case_always">ignore_case_always (default: disabled)</a></strong>
+
+<dd>
+<p>When bundling is in effect, case is ignored on single-character
+options also.</p>
+</dd>
+<dd>
+<p>Note: disabling <a href="#item_ignore_case_always"><code>ignore_case_always</code></a> also disables <a href="#item_ignore_case"><code>ignore_case</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_auto_version">auto_version (default:disabled)</a></strong>
+
+<dd>
+<p>Automatically provide support for the <strong>--version</strong> option if
+the application did not specify a handler for this option itself.</p>
+</dd>
+<dd>
+<p>Getopt::Long will provide a standard version message that includes the
+program name, its version (if $main::VERSION is defined), and the
+versions of Getopt::Long and Perl. The message will be written to
+standard output and processing will terminate.</p>
+</dd>
+<dd>
+<p><a href="#item_auto_version"><code>auto_version</code></a> will be enabled if the calling program explicitly
+specified a version number higher than 2.32 in the <code>use</code> or
+<code>require</code> statement.</p>
+</dd>
+</li>
+<dt><strong><a name="item_auto_help">auto_help (default:disabled)</a></strong>
+
+<dd>
+<p>Automatically provide support for the <strong>--help</strong> and <strong>-?</strong> options if
+the application did not specify a handler for this option itself.</p>
+</dd>
+<dd>
+<p>Getopt::Long will provide a help message using module <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Usage.html">the Pod::Usage manpage</a>. The
+message, derived from the SYNOPSIS POD section, will be written to
+standard output and processing will terminate.</p>
+</dd>
+<dd>
+<p><a href="#item_auto_help"><code>auto_help</code></a> will be enabled if the calling program explicitly
+specified a version number higher than 2.32 in the <code>use</code> or
+<code>require</code> statement.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pass_through">pass_through (default: disabled)</a></strong>
+
+<dd>
+<p>Options that are unknown, ambiguous or supplied with an invalid option
+value are passed through in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> instead of being flagged as
+errors. This makes it possible to write wrapper scripts that process
+only part of the user supplied command line arguments, and pass the
+remaining options to some other program.</p>
+</dd>
+<dd>
+<p>If <a href="#item_require_order"><code>require_order</code></a> is enabled, options processing will terminate at
+the first unrecognized option, or non-option, whichever comes first.
+However, if <a href="#item_permute"><code>permute</code></a> is enabled instead, results can become confusing.</p>
+</dd>
+<dd>
+<p>Note that the options terminator (default <code>--</code>), if present, will
+also be passed through in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_prefix">prefix</a></strong>
+
+<dd>
+<p>The string that starts options. If a constant string is not
+sufficient, see <a href="#item_prefix_pattern"><code>prefix_pattern</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_prefix_pattern">prefix_pattern</a></strong>
+
+<dd>
+<p>A Perl pattern that identifies the strings that introduce options.
+Default is <code>--|-|\+</code> unless environment variable
+POSIXLY_CORRECT has been set, in which case it is <code>--|-</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_long_prefix_pattern">long_prefix_pattern</a></strong>
+
+<dd>
+<p>A Perl pattern that allows the disambiguation of long and short
+prefixes. Default is <code>--</code>.</p>
+</dd>
+<dd>
+<p>Typically you only need to set this if you are using nonstandard
+prefixes and want some or all of them to have the same semantics as
+'--' does under normal circumstances.</p>
+</dd>
+<dd>
+<p>For example, setting prefix_pattern to <code>--|-|\+|\/</code> and
+long_prefix_pattern to <code>--|\/</code> would add Win32 style argument
+handling.</p>
+</dd>
+</li>
+<dt><strong><a name="item_debug">debug (default: disabled)</a></strong>
+
+<dd>
+<p>Enable debugging output.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="exportable_methods">Exportable Methods</a></h1>
+<dl>
+<dt><strong><a name="item_versionmessage">VersionMessage</a></strong>
+
+<dd>
+<p>This subroutine provides a standard version message. Its argument can be:</p>
+</dd>
+<ul>
+<li>
+<p>A string containing the text of a message to print <em>before</em> printing
+the standard message.</p>
+</li>
+<li>
+<p>A numeric value corresponding to the desired exit status.</p>
+</li>
+<li>
+<p>A reference to a hash.</p>
+</li>
+</ul>
+<p>If more than one argument is given then the entire argument list is
+assumed to be a hash.  If a hash is supplied (either as a reference or
+as a list) it should contain one or more elements with the following
+keys:</p>
+<dl>
+<dt><strong><a name="item__2dmessage"><code>-message</code></a></strong>
+
+<dt><strong><a name="item__2dmsg"><code>-msg</code></a></strong>
+
+<dd>
+<p>The text of a message to print immediately prior to printing the
+program's usage message.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dexitval"><code>-exitval</code></a></strong>
+
+<dd>
+<p>The desired exit status to pass to the <strong>exit()</strong> function.
+This should be an integer, or else the string ``NOEXIT'' to
+indicate that control should simply be returned without
+terminating the invoking process.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2doutput"><code>-output</code></a></strong>
+
+<dd>
+<p>A reference to a filehandle, or the pathname of a file to which the
+usage message should be written. The default is <code>\*STDERR</code> unless the
+exit value is less than 2 (in which case the default is <code>\*STDOUT</code>).</p>
+</dd>
+</li>
+</dl>
+<p>You cannot tie this routine directly to an option, e.g.:</p>
+<pre>
+    GetOptions(&quot;version&quot; =&gt; \&amp;VersionMessage);</pre>
+<p>Use this instead:</p>
+<pre>
+    GetOptions(&quot;version&quot; =&gt; sub { VersionMessage() });</pre>
+<dt><strong><a name="item_helpmessage">HelpMessage</a></strong>
+
+<dd>
+<p>This subroutine produces a standard help message, derived from the
+program's POD section SYNOPSIS using <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Usage.html">the Pod::Usage manpage</a>. It takes the same
+arguments as VersionMessage(). In particular, you cannot tie it
+directly to an option, e.g.:</p>
+</dd>
+<dd>
+<pre>
+    GetOptions(&quot;help&quot; =&gt; \&amp;HelpMessage);</pre>
+</dd>
+<dd>
+<p>Use this instead:</p>
+</dd>
+<dd>
+<pre>
+    GetOptions(&quot;help&quot; =&gt; sub { HelpMessage() });</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="return_values_and_errors">Return values and Errors</a></h1>
+<p>Configuration errors and errors in the option definitions are
+signalled using <code>die()</code> and will terminate the calling program unless
+the call to Getopt::Long::GetOptions() was embedded in <code>eval { ...
+}</code>, or <code>die()</code> was trapped using <code>$SIG{__DIE__}</code>.</p>
+<p>GetOptions returns true to indicate success.
+It returns false when the function detected one or more errors during
+option parsing. These errors are signalled using <code>warn()</code> and can be
+trapped with <code>$SIG{__WARN__}</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="legacy">Legacy</a></h1>
+<p>The earliest development of <code>newgetopt.pl</code> started in 1990, with Perl
+version 4. As a result, its development, and the development of
+Getopt::Long, has gone through several stages. Since backward
+compatibility has always been extremely important, the current version
+of Getopt::Long still supports a lot of constructs that nowadays are
+no longer necessary or otherwise unwanted. This section describes
+briefly some of these 'features'.</p>
+<p>
+</p>
+<h2><a name="default_destinations">Default destinations</a></h2>
+<p>When no destination is specified for an option, GetOptions will store
+the resultant value in a global variable named <code>opt_</code><em>XXX</em>, where
+<em>XXX</em> is the primary name of this option. When a progam executes
+under <code>use strict</code> (recommended), these variables must be
+pre-declared with <code>our()</code> or <code>use vars</code>.</p>
+<pre>
+    our $opt_length = 0;
+    GetOptions ('length=i');    # will store in $opt_length</pre>
+<p>To yield a usable Perl variable, characters that are not part of the
+syntax for variables are translated to underscores. For example,
+<code>--fpp-struct-return</code> will set the variable
+<code>$opt_fpp_struct_return</code>. Note that this variable resides in the
+namespace of the calling program, not necessarily <code>main</code>. For
+example:</p>
+<pre>
+    GetOptions (&quot;size=i&quot;, &quot;sizes=i@&quot;);</pre>
+<p>with command line ``-size 10 -sizes 24 -sizes 48'' will perform the
+equivalent of the assignments</p>
+<pre>
+    $opt_size = 10;
+    @opt_sizes = (24, 48);</pre>
+<p>
+</p>
+<h2><a name="alternative_option_starters">Alternative option starters</a></h2>
+<p>A string of alternative option starter characters may be passed as the
+first argument (or the first argument after a leading hash reference
+argument).</p>
+<pre>
+    my $len = 0;
+    GetOptions ('/', 'length=i' =&gt; $len);</pre>
+<p>Now the command line may look like:</p>
+<pre>
+    /length 24 -- arg</pre>
+<p>Note that to terminate options processing still requires a double dash
+<code>--</code>.</p>
+<p><code>GetOptions()</code> will not interpret a leading <code>&quot;&lt;&gt;&quot;</code> as option starters
+if the next argument is a reference. To force <code>&quot;&lt;&quot;</code> and <code>&quot;&gt;&quot;</code> as
+option starters, use <code>&quot;&gt;&lt;&quot;</code>. Confusing? Well, <strong>using a starter
+argument is strongly deprecated</strong> anyway.</p>
+<p>
+</p>
+<h2><a name="configuration_variables">Configuration variables</a></h2>
+<p>Previous versions of Getopt::Long used variables for the purpose of
+configuring. Although manipulating these variables still work, it is
+strongly encouraged to use the <code>Configure</code> routine that was introduced
+in version 2.17. Besides, it is much easier.</p>
+<p>
+</p>
+<hr />
+<h1><a name="trouble_shooting">Trouble Shooting</a></h1>
+<p>
+</p>
+<h2><a name="getoptions_does_not_return_a_false_result_when_an_option_is_not_supplied">GetOptions does not return a false result when an option is not supplied</a></h2>
+<p>That's why they're called 'options'.</p>
+<p>
+</p>
+<h2><a name="getoptions_does_not_split_the_command_line_correctly">GetOptions does not split the command line correctly</a></h2>
+<p>The command line is not split by GetOptions, but by the command line
+interpreter (CLI). On Unix, this is the shell. On Windows, it is
+COMMAND.COM or CMD.EXE. Other operating systems have other CLIs.</p>
+<p>It is important to know that these CLIs may behave different when the
+command line contains special characters, in particular quotes or
+backslashes. For example, with Unix shells you can use single quotes
+(<code>'</code>) and double quotes (<code>&quot;</code>) to group words together. The following
+alternatives are equivalent on Unix:</p>
+<pre>
+    &quot;two words&quot;
+    'two words'
+    two\ words</pre>
+<p>In case of doubt, insert the following statement in front of your Perl
+program:</p>
+<pre>
+    print STDERR (join(&quot;|&quot;,@ARGV),&quot;\n&quot;);</pre>
+<p>to verify how your CLI passes the arguments to the program.</p>
+<p>
+</p>
+<h2><a name="undefined_subroutine__main__getoptions_called">Undefined subroutine &amp;main::GetOptions called</a></h2>
+<p>Are you running Windows, and did you write</p>
+<pre>
+    use GetOpt::Long;</pre>
+<p>(note the capital 'O')?</p>
+<p>
+</p>
+<h2><a name="how_do_i_put_a__option_into_a_getopt__long">How do I put a ``-?'' option into a Getopt::Long?</a></h2>
+<p>You can only obtain this using an alias, and Getopt::Long of at least
+version 2.13.</p>
+<pre>
+    use Getopt::Long;
+    GetOptions (&quot;help|?&quot;);    # -help and -? will both set $opt_help</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Johan Vromans &lt;<a href="mailto:jvromans@squirrel.nl">jvromans@squirrel.nl</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_disclaimer">COPYRIGHT AND DISCLAIMER</a></h1>
+<p>This program is Copyright 1990,2005 by Johan Vromans.
+This program is free software; you can redistribute it and/or
+modify it under the terms of the Perl Artistic License or the
+GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any
+later version.</p>
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+<p>If you do not have a copy of the GNU General Public License write to
+the Free Software Foundation, Inc., 675 Mass Ave, Cambridge,
+MA 02139, USA.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Getopt::Long - Extended processing of command line options</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

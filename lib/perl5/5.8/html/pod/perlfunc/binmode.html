@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>binmode - prepare binary files for I/O</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;binmode - prepare binary files for I/O</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>binmode - prepare binary files for I/O</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>binmode FILEHANDLE, LAYER
+    </p>
+<p>binmode FILEHANDLE</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Arranges for FILEHANDLE to be read or written in ``binary'' or ``text''
+mode on systems where the run-time libraries distinguish between
+binary and text files.  If FILEHANDLE is an expression, the value is
+taken as the name of the filehandle.  Returns true on success,
+otherwise it returns <code>undef</code> and sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> (errno).</p>
+<p>On some systems (in general, DOS and Windows-based systems) <code>binmode()</code>
+is necessary when you're not working with a text file.  For the sake
+of portability it is a good idea to always use it when appropriate,
+and to never use it when it isn't appropriate.  Also, people can
+set their I/O to be by default UTF-8 encoded Unicode, not bytes.</p>
+<p>In other words: regardless of platform, use <code>binmode()</code> on binary data,
+like for example images.</p>
+<p>If LAYER is present it is a single string, but may contain multiple
+directives. The directives alter the behaviour of the file handle.
+When LAYER is present using binmode on text file makes sense.</p>
+<p>If LAYER is omitted or specified as <code>:raw</code> the filehandle is made
+suitable for passing binary data. This includes turning off possible CRLF
+translation and marking it as bytes (as opposed to Unicode characters).
+Note that, despite what may be implied in <em>``Programming Perl''</em> (the
+Camel) or elsewhere, <code>:raw</code> is <em>not</em> the simply inverse of <code>:crlf</code>
+-- other layers which would affect binary nature of the stream are
+<em>also</em> disabled. See <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the PerlIO manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html">the perlrun manpage</a> and the discussion about the
+PERLIO environment variable.</p>
+<p>The <code>:bytes</code>, <code>:crlf</code>, and <code>:utf8</code>, and any other directives of the
+form <code>:...</code>, are called I/O <em>layers</em>.  The <code>open</code> pragma can be used to
+establish default I/O layers.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">the open manpage</a>.</p>
+<p><em>The LAYER parameter of the binmode() function is described as ``DISCIPLINE''
+in ``Programming Perl, 3rd Edition''.  However, since the publishing of this
+book, by many known as ``Camel III'', the consensus of the naming of this
+functionality has moved from ``discipline'' to ``layer''.  All documentation
+of this version of Perl therefore refers to ``layers'' rather than to
+``disciplines''.  Now back to the regularly scheduled documentation...</em></p>
+<p>To mark FILEHANDLE as UTF-8, use <code>:utf8</code>.</p>
+<p>In general, <code>binmode()</code> should be called after <code>open()</code> but before any I/O
+is done on the filehandle.  Calling <code>binmode()</code> will normally flush any
+pending buffered output data (and perhaps pending input data) on the
+handle.  An exception to this is the <code>:encoding</code> layer that
+changes the default character encoding of the handle, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">the open manpage</a>.
+The <code>:encoding</code> layer sometimes needs to be called in
+mid-stream, and it doesn't flush the stream.  The <code>:encoding</code>
+also implicitly pushes on top of itself the <code>:utf8</code> layer because
+internally Perl will operate on UTF-8 encoded Unicode characters.</p>
+<p>The operating system, device drivers, C libraries, and Perl run-time
+system all work together to let the programmer treat a single
+character (<code>\n</code>) as the line terminator, irrespective of the external
+representation.  On many operating systems, the native text file
+representation matches the internal representation, but on some
+platforms the external representation of <code>\n</code> is made up of more than
+one character.</p>
+<p>Mac OS, all variants of Unix, and Stream_LF files on VMS use a single
+character to end each line in the external representation of text (even
+though that single character is CARRIAGE RETURN on Mac OS and LINE FEED
+on Unix and most VMS files). In other systems like OS/2, DOS and the
+various flavors of MS-Windows your program sees a <code>\n</code> as a simple <code>\cJ</code>,
+but what's stored in text files are the two characters <code>\cM\cJ</code>.  That
+means that, if you don't use <code>binmode()</code> on these systems, <code>\cM\cJ</code>
+sequences on disk will be converted to <code>\n</code> on input, and any <code>\n</code> in
+your program will be converted back to <code>\cM\cJ</code> on output.  This is what
+you want for text files, but it can be disastrous for binary files.</p>
+<p>Another consequence of using <code>binmode()</code> (on some systems) is that
+special end-of-file markers will be seen as part of the data stream.
+For systems from the Microsoft family this means that if your binary
+data contains <code>\cZ</code>, the I/O subsystem will regard it as the end of
+the file, unless you use binmode().</p>
+<p><code>binmode()</code> is not only important for <code>readline()</code> and <code>print()</code> operations,
+but also when using read(), seek(), sysread(), <code>syswrite()</code> and <code>tell()</code>
+(see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a> for more details).  See the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$/</code></a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$\</code></a> variables
+in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a> for how to manually set your input and output
+line-termination sequences.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;binmode - prepare binary files for I/O</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

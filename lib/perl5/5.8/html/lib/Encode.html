@@ -1,0 +1,647 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode - character encodings</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode - character encodings</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<ul>
+
+		<li><a href="#table_of_contents">Table of Contents</a></li>
+	</ul>
+
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#terminology">TERMINOLOGY</a></li>
+	</ul>
+
+	<li><a href="#perl_encoding_api">PERL ENCODING API</a></li>
+	<ul>
+
+		<li><a href="#listing_available_encodings">Listing available encodings</a></li>
+		<li><a href="#defining_aliases">Defining Aliases</a></li>
+	</ul>
+
+	<li><a href="#encoding_via_perlio">Encoding via PerlIO</a></li>
+	<li><a href="#handling_malformed_data">Handling Malformed Data</a></li>
+	<ul>
+
+		<li><a href="#coderef_for_check">coderef for CHECK</a></li>
+	</ul>
+
+	<li><a href="#defining_encodings">Defining Encodings</a></li>
+	<li><a href="#the_utf8_flag">The UTF-8 flag</a></li>
+	<ul>
+
+		<li><a href="#messing_with_perl_s_internals">Messing with Perl's Internals</a></li>
+	</ul>
+
+	<li><a href="#utf8_vs__utf8">UTF-8 vs. utf8</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#maintainer">MAINTAINER</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode - character encodings</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Encode;</pre>
+<p>
+</p>
+<h2><a name="table_of_contents">Table of Contents</a></h2>
+<p>Encode consists of a collection of modules whose details are too big
+to fit in one document.  This POD itself explains the top-level APIs
+and general topics at a glance.  For other topics and more details,
+see the PODs below:</p>
+<pre>
+  Name                          Description
+  --------------------------------------------------------
+  Encode::Alias         Alias definitions to encodings
+  Encode::Encoding      Encode Implementation Base Class
+  Encode::Supported     List of Supported Encodings
+  Encode::CN            Simplified Chinese Encodings
+  Encode::JP            Japanese Encodings
+  Encode::KR            Korean Encodings
+  Encode::TW            Traditional Chinese Encodings
+  --------------------------------------------------------</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Encode</code> module provides the interfaces between Perl's strings
+and the rest of the system.  Perl strings are sequences of
+<strong>characters</strong>.</p>
+<p>The repertoire of characters that Perl can represent is at least that
+defined by the Unicode Consortium. On most platforms the ordinal
+values of the characters (as returned by <code>ord(ch)</code>) is the ``Unicode
+codepoint'' for the character (the exceptions are those platforms where
+the legacy encoding is some variant of EBCDIC rather than a super-set
+of ASCII - see <a href="/usr/lib/perl5/5.8/html/./pod/perlebcdic.html">the perlebcdic manpage</a>).</p>
+<p>Traditionally, computer data has been moved around in 8-bit chunks
+often called ``bytes''. These chunks are also known as ``octets'' in
+networking standards. Perl is widely used to manipulate data of many
+types - not only strings of characters representing human or computer
+languages but also ``binary'' data being the machine's representation of
+numbers, pixels in an image - or just about anything.</p>
+<p>When Perl is processing ``binary data'', the programmer wants Perl to
+process ``sequences of bytes''. This is not a problem for Perl - as a
+byte has 256 possible values, it easily fits in Perl's much larger
+``logical character''.</p>
+<p>
+</p>
+<h2><a name="terminology">TERMINOLOGY</a></h2>
+<ul>
+<li>
+<p><em>character</em>: a character in the range 0..(2**32-1) (or more).
+(What Perl's strings are made of.)</p>
+</li>
+<li>
+<p><em>byte</em>: a character in the range 0..255
+(A special case of a Perl character.)</p>
+</li>
+<li>
+<p><em>octet</em>: 8 bits of data, with ordinal values 0..255
+(Term for bytes passed to or from a non-Perl context, e.g. a disk file.)</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="perl_encoding_api">PERL ENCODING API</a></h1>
+<dl>
+<dt><strong><a name="item_encode">$octets  = encode(ENCODING, $string [, CHECK])</a></strong>
+
+<dd>
+<p>Encodes a string from Perl's internal form into <em>ENCODING</em> and returns
+a sequence of octets.  ENCODING can be either a canonical name or
+an alias.  For encoding names and aliases, see <a href="#defining_aliases">Defining Aliases</a>.
+For CHECK, see <a href="#handling_malformed_data">Handling Malformed Data</a>.</p>
+</dd>
+<dd>
+<p>For example, to convert a string from Perl's internal format to
+iso-8859-1 (also known as Latin1),</p>
+</dd>
+<dd>
+<pre>
+  $octets = encode(&quot;iso-8859-1&quot;, $string);</pre>
+</dd>
+<dd>
+<p><strong>CAVEAT</strong>: When you run <a href="#item_encode"><code>$octets = encode(&quot;utf8&quot;, $string)</code></a>, then $octets
+<strong>may not be equal to</strong> $string.  Though they both contain the same data, the utf8 flag
+for $octets is <strong>always</strong> off.  When you encode anything, utf8 flag of
+the result is always off, even when it contains completely valid utf8
+string. See <a href="#the_utf8_flag">The UTF-8 flag</a> below.</p>
+</dd>
+<dd>
+<p>If the $string is <code>undef</code> then <code>undef</code> is returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_decode">$string = decode(ENCODING, $octets [, CHECK])</a></strong>
+
+<dd>
+<p>Decodes a sequence of octets assumed to be in <em>ENCODING</em> into Perl's
+internal form and returns the resulting string.  As in encode(),
+ENCODING can be either a canonical name or an alias. For encoding names
+and aliases, see <a href="#defining_aliases">Defining Aliases</a>.  For CHECK, see
+<a href="#handling_malformed_data">Handling Malformed Data</a>.</p>
+</dd>
+<dd>
+<p>For example, to convert ISO-8859-1 data to a string in Perl's internal format:</p>
+</dd>
+<dd>
+<pre>
+  $string = decode(&quot;iso-8859-1&quot;, $octets);</pre>
+</dd>
+<dd>
+<p><strong>CAVEAT</strong>: When you run <a href="#item_decode"><code>$string = decode(&quot;utf8&quot;, $octets)</code></a>, then $string
+<strong>may not be equal to</strong> $octets.  Though they both contain the same data,
+the utf8 flag for $string is on unless $octets entirely consists of
+ASCII data (or EBCDIC on EBCDIC machines).  See <a href="#the_utf8_flag">The UTF-8 flag</a>
+below.</p>
+</dd>
+<dd>
+<p>If the $string is <code>undef</code> then <code>undef</code> is returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_from_to">[$length =] from_to($octets, FROM_ENC, TO_ENC [, CHECK])</a></strong>
+
+<dd>
+<p>Converts <strong>in-place</strong> data between two encodings. The data in $octets
+must be encoded as octets and not as characters in Perl's internal
+format. For example, to convert ISO-8859-1 data to Microsoft's CP1250
+encoding:</p>
+</dd>
+<dd>
+<pre>
+  from_to($octets, &quot;iso-8859-1&quot;, &quot;cp1250&quot;);</pre>
+</dd>
+<dd>
+<p>and to convert it back:</p>
+</dd>
+<dd>
+<pre>
+  from_to($octets, &quot;cp1250&quot;, &quot;iso-8859-1&quot;);</pre>
+</dd>
+<dd>
+<p>Note that because the conversion happens in place, the data to be
+converted cannot be a string constant; it must be a scalar variable.</p>
+</dd>
+<dd>
+<p><a href="#item_from_to"><code>from_to()</code></a> returns the length of the converted string in octets on
+success, <em>undef</em> on error.</p>
+</dd>
+<dd>
+<p><strong>CAVEAT</strong>: The following operations look the same but are not quite so;</p>
+</dd>
+<dd>
+<pre>
+  from_to($data, &quot;iso-8859-1&quot;, &quot;utf8&quot;); #1
+  $data = decode(&quot;iso-8859-1&quot;, $data);  #2</pre>
+</dd>
+<dd>
+<p>Both #1 and #2 make $data consist of a completely valid UTF-8 string
+but only #2 turns utf8 flag on.  #1 is equivalent to</p>
+</dd>
+<dd>
+<pre>
+  $data = encode(&quot;utf8&quot;, decode(&quot;iso-8859-1&quot;, $data));</pre>
+</dd>
+<dd>
+<p>See <a href="#the_utf8_flag">The UTF-8 flag</a> below.</p>
+</dd>
+</li>
+<dt><strong><a name="item_encode_utf8">$octets = encode_utf8($string);</a></strong>
+
+<dd>
+<p>Equivalent to <a href="#item_encode"><code>$octets = encode(&quot;utf8&quot;, $string);</code></a> The characters
+that comprise $string are encoded in Perl's internal format and the
+result is returned as a sequence of octets. All possible
+characters have a UTF-8 representation so this function cannot fail.</p>
+</dd>
+</li>
+<dt><strong><a name="item_decode_utf8">$string = decode_utf8($octets [, CHECK]);</a></strong>
+
+<dd>
+<p>equivalent to <a href="#item_decode"><code>$string = decode(&quot;utf8&quot;, $octets [, CHECK])</code></a>.
+The sequence of octets represented by
+$octets is decoded from UTF-8 into a sequence of logical
+characters. Not all sequences of octets form valid UTF-8 encodings, so
+it is possible for this call to fail.  For CHECK, see
+<a href="#handling_malformed_data">Handling Malformed Data</a>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="listing_available_encodings">Listing available encodings</a></h2>
+<pre>
+  use Encode;
+  @list = Encode-&gt;encodings();</pre>
+<p>Returns a list of the canonical names of the available encodings that
+are loaded.  To get a list of all available encodings including the
+ones that are not loaded yet, say</p>
+<pre>
+  @all_encodings = Encode-&gt;encodings(&quot;:all&quot;);</pre>
+<p>Or you can give the name of a specific module.</p>
+<pre>
+  @with_jp = Encode-&gt;encodings(&quot;Encode::JP&quot;);</pre>
+<p>When ``::'' is not in the name, ``Encode::'' is assumed.</p>
+<pre>
+  @ebcdic = Encode-&gt;encodings(&quot;EBCDIC&quot;);</pre>
+<p>To find out in detail which encodings are supported by this package,
+see <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Supported.html">the Encode::Supported manpage</a>.</p>
+<p>
+</p>
+<h2><a name="defining_aliases">Defining Aliases</a></h2>
+<p>To add a new alias to a given encoding, use:</p>
+<pre>
+  use Encode;
+  use Encode::Alias;
+  define_alias(newName =&gt; ENCODING);</pre>
+<p>After that, newName can be used as an alias for ENCODING.
+ENCODING may be either the name of an encoding or an
+<em>encoding object</em></p>
+<p>But before you do so, make sure the alias is nonexistent with
+<code>resolve_alias()</code>, which returns the canonical name thereof.
+i.e.</p>
+<pre>
+  Encode::resolve_alias(&quot;latin1&quot;) eq &quot;iso-8859-1&quot; # true
+  Encode::resolve_alias(&quot;iso-8859-12&quot;)   # false; nonexistent
+  Encode::resolve_alias($name) eq $name  # true if $name is canonical</pre>
+<p><code>resolve_alias()</code> does not need <code>use Encode::Alias</code>; it can be
+exported via <code>use Encode qw(resolve_alias)</code>.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Alias.html">the Encode::Alias manpage</a> for details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="encoding_via_perlio">Encoding via PerlIO</a></h1>
+<p>If your perl supports <em>PerlIO</em> (which is the default), you can use a PerlIO layer to decode
+and encode directly via a filehandle.  The following two examples
+are totally identical in their functionality.</p>
+<pre>
+  # via PerlIO
+  open my $in,  &quot;&lt;:encoding(shiftjis)&quot;, $infile  or die;
+  open my $out, &quot;&gt;:encoding(euc-jp)&quot;,   $outfile or die;
+  while(&lt;$in&gt;){ print $out $_; }</pre>
+<pre>
+  # via from_to
+  open my $in,  &quot;&lt;&quot;, $infile  or die;
+  open my $out, &quot;&gt;&quot;, $outfile or die;
+  while(&lt;$in&gt;){
+    from_to($_, &quot;shiftjis&quot;, &quot;euc-jp&quot;, 1);
+    print $out $_;
+  }</pre>
+<p>Unfortunately, it may be that encodings are PerlIO-savvy.  You can check
+if your encoding is supported by PerlIO by calling the <code>perlio_ok</code>
+method.</p>
+<pre>
+  Encode::perlio_ok(&quot;hz&quot;);             # False
+  find_encoding(&quot;euc-cn&quot;)-&gt;perlio_ok;  # True where PerlIO is available</pre>
+<pre>
+  use Encode qw(perlio_ok);            # exported upon request
+  perlio_ok(&quot;euc-jp&quot;)</pre>
+<p>Fortunately, all encodings that come with Encode core are PerlIO-savvy
+except for hz and ISO-2022-kr.  For gory details, see
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a> and <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the Encode::PerlIO manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="handling_malformed_data">Handling Malformed Data</a></h1>
+<p>The optional <em>CHECK</em> argument tells Encode what to do when it
+encounters malformed data.  Without CHECK, Encode::FB_DEFAULT ( == 0 )
+is assumed.</p>
+<p>As of version 2.12 Encode supports coderef values for CHECK.  See below.</p>
+<dl>
+<dt><strong><a name="item_note_3a_not_all_encoding_support_this_feature"><strong>NOTE:</strong> Not all encoding support this feature</a></strong>
+
+<dd>
+<p>Some encodings ignore <em>CHECK</em> argument.  For example,
+<a href="/usr/lib/perl5/5.8/html/./lib/Encode/Unicode.html">the Encode::Unicode manpage</a> ignores <em>CHECK</em> and it always croaks on error.</p>
+</dd>
+</li>
+</dl>
+<p>Now here is the list of <em>CHECK</em> values available</p>
+<dl>
+<dt><strong><a name="item_fb_default"><em>CHECK</em> = Encode::FB_DEFAULT ( == 0)</a></strong>
+
+<dd>
+<p>If <em>CHECK</em> is 0, (en|de)code will put a <em>substitution character</em> in
+place of a malformed character.  When you encode, &lt;subchar&gt;
+will be used.  When you decode the code point <code>0xFFFD</code> is used.  If
+the data is supposed to be UTF-8, an optional lexical warning
+(category utf8) is given.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fb_croak"><em>CHECK</em> = Encode::FB_CROAK ( == 1)</a></strong>
+
+<dd>
+<p>If <em>CHECK</em> is 1, methods will die on error immediately with an error
+message.  Therefore, when <em>CHECK</em> is set to 1,  you should trap the
+error with eval{} unless you really want to let it die.</p>
+</dd>
+</li>
+<dt><strong><a name="item_check__3d_encode_3a_3afb_quiet"><em>CHECK</em> = Encode::FB_QUIET</a></strong>
+
+<dd>
+<p>If <em>CHECK</em> is set to Encode::FB_QUIET, (en|de)code will immediately
+return the portion of the data that has been processed so far when an
+error occurs. The data argument will be overwritten with everything
+after that point (that is, the unprocessed part of data).  This is
+handy when you have to call decode repeatedly in the case where your
+source data may contain partial multi-byte character sequences,
+(i.e. you are reading with a fixed-width buffer). Here is a sample
+code that does exactly this:</p>
+</dd>
+<dd>
+<pre>
+  my $buffer = ''; my $string = '';
+  while(read $fh, $buffer, 256, length($buffer)){
+    $string .= decode($encoding, $buffer, Encode::FB_QUIET);
+    # $buffer now contains the unprocessed partial character
+  }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_check__3d_encode_3a_3afb_warn"><em>CHECK</em> = Encode::FB_WARN</a></strong>
+
+<dd>
+<p>This is the same as above, except that it warns on error.  Handy when
+you are debugging the mode above.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mode">perlqq mode (<em>CHECK</em> = Encode::FB_PERLQQ)</a></strong>
+
+<dt><strong>HTML charref mode (<em>CHECK</em> = Encode::FB_HTMLCREF)</strong>
+
+<dt><strong>XML charref mode (<em>CHECK</em> = Encode::FB_XMLCREF)</strong>
+
+<dd>
+<p>For encodings that are implemented by Encode::XS, CHECK ==
+Encode::FB_PERLQQ turns (en|de)code into <code>perlqq</code> fallback mode.</p>
+</dd>
+<dd>
+<p>When you decode, <code>\xHH</code> will be inserted for a malformed character,
+where <em>HH</em> is the hex representation of the octet  that could not be
+decoded to utf8.  And when you encode, <code>\x{HHHH}</code> will be inserted,
+where <em>HHHH</em> is the Unicode ID of the character that cannot be found
+in the character repertoire of the encoding.</p>
+</dd>
+<dd>
+<p>HTML/XML character reference modes are about the same, in place of
+<code>\x{HHHH}</code>, HTML uses <code>&amp;#NNN;</code> where <em>NNN</em> is a decimal number and
+XML uses <code>&amp;#xHHHH;</code> where <em>HHHH</em> is the hexadecimal number.</p>
+</dd>
+<dd>
+<p>In Encode 2.10 or later, <code>LEAVE_SRC</code> is also implied.</p>
+</dd>
+</li>
+<dt><strong><a name="item_the_bitmask">The bitmask</a></strong>
+
+<dd>
+<p>These modes are actually set via a bitmask.  Here is how the FB_XX
+constants are laid out.  You can import the FB_XX constants via
+<code>use Encode qw(:fallbacks)</code>; you can import the generic bitmask
+constants via <code>use Encode qw(:fallback_all)</code>.</p>
+</dd>
+<dd>
+<pre>
+                     FB_DEFAULT FB_CROAK FB_QUIET FB_WARN  FB_PERLQQ
+ DIE_ON_ERR    0x0001             X
+ WARN_ON_ERR   0x0002                               X
+ RETURN_ON_ERR 0x0004                      X        X
+ LEAVE_SRC     0x0008                                        X
+ PERLQQ        0x0100                                        X
+ HTMLCREF      0x0200
+ XMLCREF       0x0400</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="coderef_for_check">coderef for CHECK</a></h2>
+<p>As of Encode 2.12 CHECK can also be a code reference which takes the
+ord value of unmapped caharacter as an argument and returns a string
+that represents the fallback character.  For instance,</p>
+<pre>
+  $ascii = encode(&quot;ascii&quot;, $utf8, sub{ sprintf &quot;&lt;U+%04X&gt;&quot;, shift });</pre>
+<p>Acts like FB_PERLQQ but &lt;U+<em>XXXX</em>&gt; is used instead of
+\x{<em>XXXX</em>}.</p>
+<p>
+</p>
+<hr />
+<h1><a name="defining_encodings">Defining Encodings</a></h1>
+<p>To define a new encoding, use:</p>
+<pre>
+    use Encode qw(define_encoding);
+    define_encoding($object, 'canonicalName' [, alias...]);</pre>
+<p><em>canonicalName</em> will be associated with <em>$object</em>.  The object
+should provide the interface described in <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a>.
+If more than two arguments are provided then additional
+arguments are taken as aliases for <em>$object</em>.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a> for more details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="the_utf8_flag">The UTF-8 flag</a></h1>
+<p>Before the introduction of utf8 support in perl, The <code>eq</code> operator
+just compared the strings represented by two scalars. Beginning with
+perl 5.8, <code>eq</code> compares two strings with simultaneous consideration
+of <em>the utf8 flag</em>. To explain why we made it so, I will quote page
+402 of <code>Programming Perl, 3rd ed.</code></p>
+<dl>
+<dt><strong><a name="item_goal__231_3a">Goal #1:</a></strong>
+
+<dd>
+<p>Old byte-oriented programs should not spontaneously break on the old
+byte-oriented data they used to work on.</p>
+</dd>
+</li>
+<dt><strong><a name="item_goal__232_3a">Goal #2:</a></strong>
+
+<dd>
+<p>Old byte-oriented programs should magically start working on the new
+character-oriented data when appropriate.</p>
+</dd>
+</li>
+<dt><strong><a name="item_goal__233_3a">Goal #3:</a></strong>
+
+<dd>
+<p>Programs should run just as fast in the new character-oriented mode
+as in the old byte-oriented mode.</p>
+</dd>
+</li>
+<dt><strong><a name="item_goal__234_3a">Goal #4:</a></strong>
+
+<dd>
+<p>Perl should remain one language, rather than forking into a
+byte-oriented Perl and a character-oriented Perl.</p>
+</dd>
+</li>
+</dl>
+<p>Back when <code>Programming Perl, 3rd ed.</code> was written, not even Perl 5.6.0
+was born and many features documented in the book remained
+unimplemented for a long time.  Perl 5.8 corrected this and the introduction
+of the UTF-8 flag is one of them.  You can think of this perl notion as of a
+byte-oriented mode (utf8 flag off) and a character-oriented mode (utf8
+flag on).</p>
+<p>Here is how Encode takes care of the utf8 flag.</p>
+<ul>
+<li>
+<p>When you encode, the resulting utf8 flag is always off.</p>
+</li>
+<li>
+<p>When you decode, the resulting utf8 flag is on unless you can
+unambiguously represent data.  Here is the definition of
+dis-ambiguity.</p>
+<p>After <a href="#item_decode"><code>$utf8 = decode('foo', $octet);</code></a>,</p>
+<pre>
+  When $octet is...   The utf8 flag in $utf8 is
+  ---------------------------------------------
+  In ASCII only (or EBCDIC only)            OFF
+  In ISO-8859-1                              ON
+  In any other Encoding                      ON
+  ---------------------------------------------</pre>
+<p>As you see, there is one exception, In ASCII.  That way you can assume
+Goal #1.  And with Encode Goal #2 is assumed but you still have to be
+careful in such cases mentioned in <strong>CAVEAT</strong> paragraphs.</p>
+<p>This utf8 flag is not visible in perl scripts, exactly for the same
+reason you cannot (or you <em>don't have to</em>) see if a scalar contains a
+string, integer, or floating point number.   But you can still peek
+and poke these if you will.  See the section below.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="messing_with_perl_s_internals">Messing with Perl's Internals</a></h2>
+<p>The following API uses parts of Perl's internals in the current
+implementation.  As such, they are efficient but may change.</p>
+<dl>
+<dt><strong><a name="item_is_utf8">is_utf8(STRING [, CHECK])</a></strong>
+
+<dd>
+<p>[INTERNAL] Tests whether the UTF-8 flag is turned on in the STRING.
+If CHECK is true, also checks the data in STRING for being well-formed
+UTF-8.  Returns true if successful, false otherwise.</p>
+</dd>
+<dd>
+<p>As of perl 5.8.1, <a href="/usr/lib/perl5/5.8/html/./lib/utf8.html">the utf8 manpage</a> also has utf8::is_utf8().</p>
+</dd>
+</li>
+<dt><strong><a name="item__utf8_on"><code>_utf8_on(STRING)</code></a></strong>
+
+<dd>
+<p>[INTERNAL] Turns on the UTF-8 flag in STRING.  The data in STRING is
+<strong>not</strong> checked for being well-formed UTF-8.  Do not use unless you
+<strong>know</strong> that the STRING is well-formed UTF-8.  Returns the previous
+state of the UTF-8 flag (so please don't treat the return value as
+indicating success or failure), or <code>undef</code> if STRING is not a string.</p>
+</dd>
+</li>
+<dt><strong><a name="item__utf8_off"><code>_utf8_off(STRING)</code></a></strong>
+
+<dd>
+<p>[INTERNAL] Turns off the UTF-8 flag in STRING.  Do not use frivolously.
+Returns the previous state of the UTF-8 flag (so please don't treat the
+return value as indicating success or failure), or <code>undef</code> if STRING is
+not a string.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="utf8_vs__utf8">UTF-8 vs. utf8</a></h1>
+<pre>
+  ....We now view strings not as sequences of bytes, but as sequences
+  of numbers in the range 0 .. 2**32-1 (or in the case of 64-bit
+  computers, 0 .. 2**64-1) -- Programming Perl, 3rd ed.</pre>
+<p>That has been the perl's notion of UTF-8 but official UTF-8 is more
+strict; Its ranges is much narrower (0 .. 10FFFF), some sequences are
+not allowed (i.e. Those used in the surrogate pair, 0xFFFE, et al).</p>
+<p>Now that is overruled by Larry Wall himself.</p>
+<pre>
+  From: Larry Wall &lt;larry@wall.org&gt;
+  Date: December 04, 2004 11:51:58 JST
+  To: perl-unicode@perl.org
+  Subject: Re: Make Encode.pm support the real UTF-8
+  Message-Id: &lt;20041204025158.GA28754@wall.org&gt;
+  
+  On Fri, Dec 03, 2004 at 10:12:12PM +0000, Tim Bunce wrote:
+  : I've no problem with 'utf8' being perl's unrestricted uft8 encoding,
+  : but &quot;UTF-8&quot; is the name of the standard and should give the
+  : corresponding behaviour.
+  
+  For what it's worth, that's how I've always kept them straight in my
+  head.
+  
+  Also for what it's worth, Perl 6 will mostly default to strict but
+  make it easy to switch back to lax.
+  
+  Larry</pre>
+<p>Do you copy?  As of Perl 5.8.7, <strong>UTF-8</strong> means strict, official UTF-8
+while <strong>utf8</strong> means liberal, lax, version thereof.  And Encode version
+2.10 or later thus groks the difference between <code>UTF-8</code> and C``utf8''.</p>
+<pre>
+  encode(&quot;utf8&quot;,  &quot;\x{FFFF_FFFF}&quot;, 1); # okay
+  encode(&quot;UTF-8&quot;, &quot;\x{FFFF_FFFF}&quot;, 1); # croaks</pre>
+<p><code>UTF-8</code> in Encode is actually a canonical name for <code>utf-8-strict</code>.
+Yes, the hyphen between ``UTF'' and ``8'' is important.  Without it Encode
+goes ``liberal''</p>
+<pre>
+  find_encoding(&quot;UTF-8&quot;)-&gt;name # is 'utf-8-strict'
+  find_encoding(&quot;utf-8&quot;)-&gt;name # ditto. names are case insensitive
+  find_encoding(&quot;utf8&quot;)-&gt;name  # ditto. &quot;_&quot; are treated as &quot;-&quot;
+  find_encoding(&quot;UTF8&quot;)-&gt;name  # is 'utf8'.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Supported.html">the Encode::Supported manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the Encode::PerlIO manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/encoding.html">the encoding manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlebcdic.html">the perlebcdic manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">open in the perlfunc manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/utf8.html">the utf8 manpage</a>,
+the Perl Unicode Mailing List &lt;<a href="mailto:perl-unicode@perl.org">perl-unicode@perl.org</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="maintainer">MAINTAINER</a></h1>
+<p>This project was originated by Nick Ing-Simmons and later maintained
+by Dan Kogai &lt;<a href="mailto:dankogai@dan.co.jp">dankogai@dan.co.jp</a>&gt;.  See AUTHORS for a full
+list of people involved.  For any questions, use
+&lt;<a href="mailto:perl-unicode@perl.org">perl-unicode@perl.org</a>&gt; so we can all share.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode - character encodings</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

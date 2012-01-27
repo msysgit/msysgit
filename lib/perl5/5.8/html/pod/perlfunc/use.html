@@ -1,0 +1,126 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>use - load in a module at compile time</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;use - load in a module at compile time</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>use - load in a module at compile time</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>use Module VERSION LIST
+  </p>
+<p>use Module VERSION</p>
+<p>use Module LIST</p>
+<p>use Module</p>
+<p>use VERSION</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Imports some semantics into the current package from the named module,
+generally by aliasing certain subroutine or variable names into your
+package.  It is exactly equivalent to</p>
+<pre>
+    BEGIN { require Module; import Module LIST; }</pre>
+<p>except that Module <em>must</em> be a bareword.</p>
+<p>VERSION may be either a numeric argument such as 5.006, which will be
+compared to <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$]</code></a>, or a literal of the form v5.6.1, which will be compared
+to <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___v"><code>$^V</code></a> (aka $PERL_VERSION.  A fatal error is produced if VERSION is
+greater than the version of the current Perl interpreter; Perl will not
+attempt to parse the rest of the file.  Compare with <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/require.html">require in the perlfunc manpage</a>, which can
+do a similar check at run time.</p>
+<p>Specifying VERSION as a literal of the form v5.6.1 should generally be
+avoided, because it leads to misleading error messages under earlier
+versions of Perl that do not support this syntax.  The equivalent numeric
+version should be used instead.</p>
+<pre>
+    use v5.6.1;         # compile time version check
+    use 5.6.1;          # ditto
+    use 5.006_001;      # ditto; preferred for backwards compatibility</pre>
+<p>This is often useful if you need to check the current Perl version before
+<code>use</code>ing library modules that have changed in incompatible ways from
+older versions of Perl.  (We try not to do this more than we have to.)</p>
+<p>The <code>BEGIN</code> forces the <code>require</code> and <code>import</code> to happen at compile time.  The
+<code>require</code> makes sure the module is loaded into memory if it hasn't been
+yet.  The <code>import</code> is not a builtin--it's just an ordinary static method
+call into the <code>Module</code> package to tell the module to import the list of
+features back into the current package.  The module can implement its
+<code>import</code> method any way it likes, though most modules just choose to
+derive their <code>import</code> method via inheritance from the <code>Exporter</code> class that
+is defined in the <code>Exporter</code> module.  See <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">the Exporter manpage</a>.  If no <code>import</code>
+method can be found then the call is skipped.</p>
+<p>If you do not want to call the package's <code>import</code> method (for instance,
+to stop your namespace from being altered), explicitly supply the empty list:</p>
+<pre>
+    use Module ();</pre>
+<p>That is exactly equivalent to</p>
+<pre>
+    BEGIN { require Module }</pre>
+<p>If the VERSION argument is present between Module and LIST, then the
+<code>use</code> will call the VERSION method in class Module with the given
+version as an argument.  The default VERSION method, inherited from
+the UNIVERSAL class, croaks if the given version is larger than the
+value of the variable <code>$Module::VERSION</code>.</p>
+<p>Again, there is a distinction between omitting LIST (<code>import</code> called
+with no arguments) and an explicit empty LIST <code>()</code> (<code>import</code> not
+called).  Note that there is no comma after VERSION!</p>
+<p>Because this is a wide-open interface, pragmas (compiler directives)
+are also implemented this way.  Currently implemented pragmas are:</p>
+<pre>
+    use constant;
+    use diagnostics;
+    use integer;
+    use sigtrap  qw(SEGV BUS);
+    use strict   qw(subs vars refs);
+    use subs     qw(afunc blurfl);
+    use warnings qw(all);
+    use sort     qw(stable _quicksort _mergesort);</pre>
+<p>Some of these pseudo-modules import semantics into the current
+block scope (like <code>strict</code> or <code>integer</code>, unlike ordinary modules,
+which import symbols into the current package (which are effective
+through the end of the file).</p>
+<p>There's a corresponding <code>no</code> command that unimports meanings imported
+by <code>use</code>, i.e., it calls <code>unimport Module LIST</code> instead of <code>import</code>.</p>
+<pre>
+    no integer;
+    no strict 'refs';
+    no warnings;</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> for a list of standard modules and pragmas.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html">the perlrun manpage</a>
+for the <code>-M</code> and <code>-m</code> command-line options to perl that give <code>use</code>
+functionality from the command-line.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;use - load in a module at compile time</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

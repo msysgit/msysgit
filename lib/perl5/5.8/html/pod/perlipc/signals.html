@@ -1,0 +1,198 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Signals</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Signals</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#signals">Signals</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="signals">Signals</a></h1>
+<p>Perl uses a simple signal handling model: the %SIG hash contains names
+or references of user-installed signal handlers.  These handlers will
+be called with an argument which is the name of the signal that
+triggered it.  A signal may be generated intentionally from a
+particular keyboard sequence like control-C or control-Z, sent to you
+from another process, or triggered automatically by the kernel when
+special events transpire, like a child process exiting, your process
+running out of stack space, or hitting file size limit.</p>
+<p>For example, to trap an interrupt signal, set up a handler like this:</p>
+<pre>
+    sub catch_zap {
+        my $signame = shift;
+        $shucks++;
+        die &quot;Somebody sent me a SIG$signame&quot;;
+    }
+    $SIG{INT} = 'catch_zap';  # could fail in modules
+    $SIG{INT} = \&amp;catch_zap;  # best strategy</pre>
+<p>Prior to Perl 5.7.3 it was necessary to do as little as you possibly
+could in your handler; notice how all we do is set a global variable
+and then raise an exception.  That's because on most systems,
+libraries are not re-entrant; particularly, memory allocation and I/O
+routines are not.  That meant that doing nearly <em>anything</em> in your
+handler could in theory trigger a memory fault and subsequent core
+dump - see <a href="#deferred_signals__safe_signals_">Deferred Signals (Safe Signals)</a> below.</p>
+<p>The names of the signals are the ones listed out by <code>kill -l</code> on your
+system, or you can retrieve them from the Config module.  Set up an
+@signame list indexed by number to get the name and a %signo table
+indexed by name to get the number:</p>
+<pre>
+    use Config;
+    defined $Config{sig_name} || die &quot;No sigs?&quot;;
+    foreach $name (split(' ', $Config{sig_name})) {
+        $signo{$name} = $i;
+        $signame[$i] = $name;
+        $i++;
+    }</pre>
+<p>So to check whether signal 17 and SIGALRM were the same, do just this:</p>
+<pre>
+    print &quot;signal #17 = $signame[17]\n&quot;;
+    if ($signo{ALRM}) {
+        print &quot;SIGALRM is $signo{ALRM}\n&quot;;
+    }</pre>
+<p>You may also choose to assign the strings <code>'IGNORE'</code> or <code>'DEFAULT'</code> as
+the handler, in which case Perl will try to discard the signal or do the
+default thing.</p>
+<p>On most Unix platforms, the <code>CHLD</code> (sometimes also known as <code>CLD</code>) signal
+has special behavior with respect to a value of <code>'IGNORE'</code>.
+Setting <code>$SIG{CHLD}</code> to <code>'IGNORE'</code> on such a platform has the effect of
+not creating zombie processes when the parent process fails to <code>wait()</code>
+on its child processes (i.e. child processes are automatically reaped).
+Calling <code>wait()</code> with <code>$SIG{CHLD}</code> set to <code>'IGNORE'</code> usually returns
+<code>-1</code> on such platforms.</p>
+<p>Some signals can be neither trapped nor ignored, such as
+the KILL and STOP (but not the TSTP) signals.  One strategy for
+temporarily ignoring signals is to use a <code>local()</code> statement, which will be
+automatically restored once your block is exited.  (Remember that <code>local()</code>
+values are ``inherited'' by functions called from within that block.)</p>
+<pre>
+    sub precious {
+        local $SIG{INT} = 'IGNORE';
+        &amp;more_functions;
+    }
+    sub more_functions {
+        # interrupts still ignored, for now...
+    }</pre>
+<p>Sending a signal to a negative process ID means that you send the signal
+to the entire Unix process-group.  This code sends a hang-up signal to all
+processes in the current process group (and sets $SIG{HUP} to IGNORE so
+it doesn't kill itself):</p>
+<pre>
+    {
+        local $SIG{HUP} = 'IGNORE';
+        kill HUP =&gt; -$$;
+        # snazzy writing of: kill('HUP', -$$)
+    }</pre>
+<p>Another interesting signal to send is signal number zero.  This doesn't
+actually affect a child process, but instead checks whether it's alive
+or has changed its UID.</p>
+<pre>
+    unless (kill 0 =&gt; $kid_pid) {
+        warn &quot;something wicked happened to $kid_pid&quot;;
+    }</pre>
+<p>When directed at a process whose UID is not identical to that
+of the sending process, signal number zero may fail because
+you lack permission to send the signal, even though the process is alive.
+You may be able to determine the cause of failure using <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>%!</code></a>.</p>
+<pre>
+    unless (kill 0 =&gt; $pid or $!{EPERM}) {
+        warn &quot;$pid looks dead&quot;;
+    }</pre>
+<p>You might also want to employ anonymous functions for simple signal
+handlers:</p>
+<pre>
+    $SIG{INT} = sub { die &quot;\nOutta here!\n&quot; };</pre>
+<p>But that will be problematic for the more complicated handlers that need
+to reinstall themselves.  Because Perl's signal mechanism is currently
+based on the <code>signal(3)</code> function from the C library, you may sometimes be so
+misfortunate as to run on systems where that function is ``broken'', that
+is, it behaves in the old unreliable SysV way rather than the newer, more
+reasonable BSD and POSIX fashion.  So you'll see defensive people writing
+signal handlers like this:</p>
+<pre>
+    sub REAPER {
+        $waitedpid = wait;
+        # loathe sysV: it makes us not only reinstate
+        # the handler, but place it after the wait
+        $SIG{CHLD} = \&amp;REAPER;
+    }
+    $SIG{CHLD} = \&amp;REAPER;
+    # now do something that forks...</pre>
+<p>or better still:</p>
+<pre>
+    use POSIX &quot;:sys_wait_h&quot;;
+    sub REAPER {
+        my $child;
+        # If a second child dies while in the signal handler caused by the
+        # first death, we won't get another signal. So must loop here else
+        # we will leave the unreaped child as a zombie. And the next time
+        # two children die we get another zombie. And so on.
+        while (($child = waitpid(-1,WNOHANG)) &gt; 0) {
+            $Kid_Status{$child} = $?;
+        }
+        $SIG{CHLD} = \&amp;REAPER;  # still loathe sysV
+    }
+    $SIG{CHLD} = \&amp;REAPER;
+    # do something that forks...</pre>
+<p>Signal handling is also used for timeouts in Unix,   While safely
+protected within an <code>eval{}</code> block, you set a signal handler to trap
+alarm signals and then schedule to have one delivered to you in some
+number of seconds.  Then try your blocking operation, clearing the alarm
+when it's done but not before you've exited your <code>eval{}</code> block.  If it
+goes off, you'll use <code>die()</code> to jump out of the block, much as you might
+using <code>longjmp()</code> or <code>throw()</code> in other languages.</p>
+<p>Here's an example:</p>
+<pre>
+    eval {
+        local $SIG{ALRM} = sub { die &quot;alarm clock restart&quot; };
+        alarm 10;
+        flock(FH, 2);   # blocking write lock
+        alarm 0;
+    };
+    if ($@ and $@ !~ /alarm clock restart/) { die }</pre>
+<p>If the operation being timed out is <code>system()</code> or qx(), this technique
+is liable to generate zombies.    If this matters to you, you'll
+need to do your own <code>fork()</code> and exec(), and kill the errant child process.</p>
+<p>For more complex signal handling, you might see the standard POSIX
+module.  Lamentably, this is almost entirely undocumented, but
+the <em>t/lib/posix.t</em> file from the Perl source distribution has some
+examples in it.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/description.html">DESCRIPTION in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/handling_the_sighup_signal_in_daemons.html">Handling the SIGHUP Signal in Daemons in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Signals</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

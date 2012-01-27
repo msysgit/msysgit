@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode::JP - Japanese Encodings</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::JP - Japanese Encodings</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#abstract">ABSTRACT</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#note_on_iso2022jp_1_">Note on ISO-2022-JP(-1)?</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode::JP - Japanese Encodings</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Encode qw/encode decode/; 
+    $euc_jp = encode(&quot;euc-jp&quot;, $utf8);   # loads Encode::JP implicitly
+    $utf8   = decode(&quot;euc-jp&quot;, $euc_jp); # ditto</pre>
+<p>
+</p>
+<hr />
+<h1><a name="abstract">ABSTRACT</a></h1>
+<p>This module implements Japanese charset encodings.  Encodings
+supported are as follows.</p>
+<pre>
+  Canonical   Alias             Description
+  --------------------------------------------------------------------
+  euc-jp      /\beuc.*jp$/i     EUC (Extended Unix Character)
+              /\bjp.*euc/i   
+              /\bujis$/i
+  shiftjis    /\bshift.*jis$/i  Shift JIS (aka MS Kanji)
+              /\bsjis$/i
+  7bit-jis    /\bjis$/i         7bit JIS
+  iso-2022-jp                   ISO-2022-JP                  [RFC1468]
+                                = 7bit JIS with all Halfwidth Kana 
+                                  converted to Fullwidth
+  iso-2022-jp-1                 ISO-2022-JP-1                [RFC2237]
+                                = ISO-2022-JP with JIS X 0212-1990
+                                  support.  See below
+  MacJapanese                   Shift JIS + Apple vendor mappings
+  cp932       /\bwindows-31j$/i Code Page 932
+                                = Shift JIS + MS/IBM vendor mappings
+  jis0201-raw                   JIS0201, raw format
+  jis0208-raw                   JIS0201, raw format
+  jis0212-raw                   JIS0201, raw format
+  --------------------------------------------------------------------</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>To find out how to use this module in detail, see <a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="note_on_iso2022jp_1_">Note on ISO-2022-JP(-1)?</a></h1>
+<p>ISO-2022-JP-1 (RFC2237) is a superset of ISO-2022-JP (RFC1468) which
+adds support for JIS X 0212-1990.  That means you can use the same
+code to decode to utf8 but not vice versa.</p>
+<pre>
+  $utf8 = decode('iso-2022-jp-1', $stream);</pre>
+<p>and</p>
+<pre>
+  $utf8 = decode('iso-2022-jp',   $stream);</pre>
+<p>yield the same result but</p>
+<pre>
+  $with_0212 = encode('iso-2022-jp-1', $utf8);</pre>
+<p>is now different from</p>
+<pre>
+  $without_0212 = encode('iso-2022-jp', $utf8 );</pre>
+<p>In the latter case, characters that map to 0212 are first converted
+to U+3013 (0xA2AE in EUC-JP; a white square also known as 'Tofu' or
+'geta mark') then fed to the decoding engine.  U+FFFD is not used,
+in order to preserve text layout as much as possible.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>The ASCII region (0x00-0x7f) is preserved for all encodings, even
+though this conflicts with mappings by the Unicode Consortium.  See</p>
+<p><a href="http://www.debian.or.jp/~kubota/unicode-symbols.html.en">http://www.debian.or.jp/~kubota/unicode-symbols.html.en</a></p>
+<p>to find out why it is implemented that way.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::JP - Japanese Encodings</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

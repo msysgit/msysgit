@@ -1,0 +1,766 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>VMS::Stdio - standard I/O functions via VMS extensions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;VMS::Stdio - standard I/O functions via VMS extensions</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#revision">REVISION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>VMS::Stdio - standard I/O functions via VMS extensions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use VMS::Stdio qw( &amp;flush &amp;getname &amp;remove &amp;rewind &amp;setdef &amp;sync &amp;tmpnam
+                     &amp;vmsopen &amp;vmssysopen &amp;waitfh &amp;writeof );
+  setdef(&quot;new:[default.dir]&quot;);
+  $uniquename = tmpnam;
+  $fh = vmsopen(&quot;my.file&quot;,&quot;rfm=var&quot;,&quot;alq=100&quot;,...) or die $!;
+  $name = getname($fh);
+  print $fh &quot;Hello, world!\n&quot;;
+  flush($fh);
+  sync($fh);
+  rewind($fh);
+  $line = &lt;$fh&gt;;
+  undef $fh;  # closes file
+  $fh = vmssysopen(&quot;another.file&quot;, O_RDONLY | O_NDELAY, 0, &quot;ctx=bin&quot;);
+  sysread($fh,$data,128);
+  waitfh($fh);
+  close($fh);
+  remove(&quot;another.file&quot;);
+  writeof($pipefh);
+  binmode($fh);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package gives Perl scripts access via VMS extensions to several
+C stdio operations not available through Perl's CORE I/O functions.
+The specific routines are described below.  These functions are
+prototyped as unary operators, with the exception of <a href="#item_vmsopen"><code>vmsopen</code></a>
+and <a href="#item_vmssysopen"><code>vmssysopen</code></a>, which can take any number of arguments, and
+<a href="#item_tmpnam"><code>tmpnam</code></a>, which takes none.</p>
+<p>All of the routines are available for export, though none are
+exported by default.  All of the constants used by <a href="#item_vmssysopen"><code>vmssysopen</code></a>
+to specify access modes are exported by default.  The routines
+are associated with the Exporter tag FUNCTIONS, and the constants
+are associated with the Exporter tag CONSTANTS, so you can more
+easily choose what you'd like to import:</p>
+<pre>
+    # import constants, but not functions
+    use VMS::Stdio;  # same as use VMS::Stdio qw( :DEFAULT );
+    # import functions, but not constants
+    use VMS::Stdio qw( !:CONSTANTS :FUNCTIONS ); 
+    # import both
+    use VMS::Stdio qw( :CONSTANTS :FUNCTIONS ); 
+    # import neither
+    use VMS::Stdio ();</pre>
+<p>Of course, you can also choose to import specific functions by
+name, as usual.</p>
+<p>This package <code>ISA</code> IO::File, so that you can call IO::File
+methods on the handles returned by <a href="#item_vmsopen"><code>vmsopen</code></a> and <a href="#item_vmssysopen"><code>vmssysopen</code></a>.
+The IO::File package is not initialized, however, until you
+actually call a method that VMS::Stdio doesn't provide.  This
+is done to save startup time for users who don't wish to use
+the IO::File methods.</p>
+<p><strong>Note:</strong>  In order to conform to naming conventions for Perl
+extensions and functions, the name of this package has been
+changed to VMS::Stdio as of Perl 5.002, and the names of some
+routines have been changed.  Calls to the old VMS::stdio routines
+will generate a warning, and will be routed to the equivalent
+VMS::Stdio function.  This compatibility interface will be
+removed in a future release of this extension, so please
+update your code to use the new routines.</p>
+<dl>
+<dt><strong><a name="item_binmode">binmode</a></strong>
+
+<dd>
+<p>This function causes the file handle to be reopened with the CRTL's
+carriage control processing disabled; its effect is the same as that
+of the <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_b"><code>b</code></a> access mode in <a href="#item_vmsopen"><code>vmsopen</code></a>.  After the file is reopened,
+the file pointer is positioned as close to its position before the
+call as possible (<em>i.e.</em> as close as <code>fsetpos()</code> can get it -- for
+some record-structured files, it's not possible to return to the
+exact byte offset in the file).  Because the file must be reopened,
+this function cannot be used on temporary-delete files. <a href="#item_binmode"><code>binmode</code></a>
+returns true if successful, and <code>undef</code> if not.</p>
+</dd>
+<dd>
+<p>Note that the effect of <a href="#item_binmode"><code>binmode</code></a> differs from that of the <a href="#item_binmode"><code>binmode()</code></a>
+function on operating systems such as Windows and MSDOS, and is not
+needed to process most types of file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_flush">flush</a></strong>
+
+<dd>
+<p>This function causes the contents of stdio buffers for the specified
+file handle to be flushed.  If <code>undef</code> is used as the argument to
+<a href="#item_flush"><code>flush</code></a>, all currently open file handles are flushed.  Like the CRTL
+<code>fflush()</code> routine, it does not flush any underlying RMS buffers for the
+file, so the data may not be flushed all the way to the disk.  <a href="#item_flush"><code>flush</code></a>
+returns a true value if successful, and <code>undef</code> if not.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getname">getname</a></strong>
+
+<dd>
+<p>The <a href="#item_getname"><code>getname</code></a> function returns the file specification associated
+with a Perl I/O handle.  If an error occurs, it returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_remove">remove</a></strong>
+
+<dd>
+<p>This function deletes the file named in its argument, returning
+a true value if successful and <code>undef</code> if not.  It differs from
+the CORE Perl function <code>unlink</code> in that it does not try to
+reset file protection if the original protection does not give
+you delete access to the file (cf. <a href="/usr/lib/perl5/5.8/html/./pod/perlvms.html">the perlvms manpage</a>).  In other words,
+<a href="#item_remove"><code>remove</code></a> is equivalent to</p>
+</dd>
+<dd>
+<pre>
+  unlink($file) if VMS::Filespec::candelete($file);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_rewind">rewind</a></strong>
+
+<dd>
+<p><a href="#item_rewind"><code>rewind</code></a> resets the current position of the specified file handle
+to the beginning of the file.  It's really just a convenience
+method equivalent in effect to <code>seek($fh,0,0)</code>.  It returns a
+true value if successful, and <code>undef</code> if it fails.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setdef">setdef</a></strong>
+
+<dd>
+<p>This function sets the default device and directory for the process.
+It is identical to the built-in <code>chdir()</code> operator, except that the change
+persists after Perl exits.  It returns a true value on success, and
+<code>undef</code> if it encounters an error.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sync">sync</a></strong>
+
+<dd>
+<p>This function flushes buffered data for the specified file handle
+from stdio and RMS buffers all the way to disk.  If successful, it
+returns a true value; otherwise, it returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmpnam">tmpnam</a></strong>
+
+<dd>
+<p>The <a href="#item_tmpnam"><code>tmpnam</code></a> function returns a unique string which can be used
+as a filename when creating temporary files.  If, for some
+reason, it is unable to generate a name, it returns <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_vmsopen">vmsopen</a></strong>
+
+<dd>
+<p>The <a href="#item_vmsopen"><code>vmsopen</code></a> function enables you to specify optional RMS arguments
+to the VMS CRTL when opening a file.  Its operation is similar to the built-in
+Perl <code>open</code> function (see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for a complete description),
+but it will only open normal files; it cannot open pipes or duplicate
+existing I/O handles.  Up to 8 optional arguments may follow the
+file name.  These arguments should be strings which specify
+optional file characteristics as allowed by the CRTL. (See the
+CRTL reference manual description of <code>creat()</code> and <code>fopen()</code> for details.)
+If successful, <a href="#item_vmsopen"><code>vmsopen</code></a> returns a VMS::Stdio file handle; if an
+error occurs, it returns <code>undef</code>.</p>
+</dd>
+<dd>
+<p>You can use the file handle returned by <a href="#item_vmsopen"><code>vmsopen</code></a> just as you
+would any other Perl file handle.  The class VMS::Stdio ISA
+IO::File, so you can call IO::File methods using the handle
+returned by <a href="#item_vmsopen"><code>vmsopen</code></a>.  However, <code>use</code>ing VMS::Stdio does not
+automatically <code>use</code> IO::File; you must do so explicitly in
+your program if you want to call IO::File methods.  This is
+done to avoid the overhead of initializing the IO::File package
+in programs which intend to use the handle returned by <a href="#item_vmsopen"><code>vmsopen</code></a>
+as a normal Perl file handle only.  When the scalar containing
+a VMS::Stdio file handle is overwritten, <code>undef</code>d, or goes
+out of scope, the associated file is closed automatically.</p>
+</dd>
+<dd>
+<p>File characteristic options:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_alq_3dinteger">alq=INTEGER</a></strong>
+
+<dd>
+<p>Sets the allocation quantity for this file</p>
+</dd>
+</li>
+<dt><strong><a name="item_bls_3dinteger">bls=INTEGER</a></strong>
+
+<dd>
+<p>File blocksize</p>
+</dd>
+</li>
+<dt><strong><a name="item_ctx_3dstring">ctx=STRING</a></strong>
+
+<dd>
+<p>Sets the context for the file. Takes one of these arguments:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_bin">bin</a></strong>
+
+<dd>
+<p>Disables LF to CRLF translation</p>
+</dd>
+</li>
+<dt><strong><a name="item_cvt">cvt</a></strong>
+
+<dd>
+<p>Negates previous setting of <code>ctx=noctx</code></p>
+</dd>
+</li>
+<dt><strong><a name="item_nocvt">nocvt</a></strong>
+
+<dd>
+<p>Disables conversion of FORTRAN carriage control</p>
+</dd>
+</li>
+<dt><strong><a name="item_rec">rec</a></strong>
+
+<dd>
+<p>Force record-mode access</p>
+</dd>
+</li>
+<dt><strong><a name="item_stm">stm</a></strong>
+
+<dd>
+<p>Force stream mode</p>
+</dd>
+</li>
+<dt><strong><a name="item_xplct">xplct</a></strong>
+
+<dd>
+<p>Causes records to be flushed <em>only</em> when the file is closed, or when an
+explicit flush is done</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_deq_3dinteger">deq=INTEGER</a></strong>
+
+<dd>
+<p>Sets the default extension quantity</p>
+</dd>
+</li>
+<dt><strong><a name="item_dna_3dfilespec">dna=FILESPEC</a></strong>
+
+<dd>
+<p>Sets the default filename string. Used to fill in any missing pieces of the
+filename passed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fop_3dstring">fop=STRING</a></strong>
+
+<dd>
+<p>File processing option. Takes one or more of the following (in a
+comma-separated list if there's more than one)</p>
+</dd>
+<dl>
+<dt><strong><a name="item_ctg">ctg</a></strong>
+
+<dd>
+<p>Contiguous.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cbt">cbt</a></strong>
+
+<dd>
+<p>Contiguous-best-try.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dfw">dfw</a></strong>
+
+<dd>
+<p>Deferred write; only applicable to files opened for shared access.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dlt">dlt</a></strong>
+
+<dd>
+<p>Delete file on close.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tef">tef</a></strong>
+
+<dd>
+<p>Truncate at end-of-file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cif">cif</a></strong>
+
+<dd>
+<p>Create if nonexistent.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sup">sup</a></strong>
+
+<dd>
+<p>Supersede.</p>
+</dd>
+</li>
+<dt><strong><a name="item_scf">scf</a></strong>
+
+<dd>
+<p>Submit as command file on close.</p>
+</dd>
+</li>
+<dt><strong><a name="item_spl">spl</a></strong>
+
+<dd>
+<p>Spool to system printer on close.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmd">tmd</a></strong>
+
+<dd>
+<p>Temporary delete.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmp">tmp</a></strong>
+
+<dd>
+<p>Temporary (no file directory).</p>
+</dd>
+</li>
+<dt><strong><a name="item_nef">nef</a></strong>
+
+<dd>
+<p>Not end-of-file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rck">rck</a></strong>
+
+<dd>
+<p>Read check compare operation.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wck">wck</a></strong>
+
+<dd>
+<p>Write check compare operation.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mxv">mxv</a></strong>
+
+<dd>
+<p>Maximize version number.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rwo">rwo</a></strong>
+
+<dd>
+<p>Rewind file on open.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pos">pos</a></strong>
+
+<dd>
+<p>Current position.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rwc">rwc</a></strong>
+
+<dd>
+<p>Rewind file on close.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sqo">sqo</a></strong>
+
+<dd>
+<p>File can only be processed in a sequential manner.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_fsz_3dinteger">fsz=INTEGER</a></strong>
+
+<dd>
+<p>Fixed header size</p>
+</dd>
+</li>
+<dt><strong><a name="item_gbc_3dinteger">gbc=INTEGER</a></strong>
+
+<dd>
+<p>Global buffers requested for the file</p>
+</dd>
+</li>
+<dt><strong><a name="item_mbc_3dinteger">mbc=INTEGER</a></strong>
+
+<dd>
+<p>Multiblock count</p>
+</dd>
+</li>
+<dt><strong><a name="item_mbf_3dinteger">mbf=INTEGER</a></strong>
+
+<dd>
+<p>Bultibuffer count</p>
+</dd>
+</li>
+<dt><strong><a name="item_mrs_3dinteger">mrs=INTEGER</a></strong>
+
+<dd>
+<p>Maximum record size</p>
+</dd>
+</li>
+<dt><strong><a name="item_rat_3dstring">rat=STRING</a></strong>
+
+<dd>
+<p>File record attributes. Takes one of the following:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_cr">cr</a></strong>
+
+<dd>
+<p>Carriage-return control.</p>
+</dd>
+</li>
+<dt><strong><a name="item_blk">blk</a></strong>
+
+<dd>
+<p>Disallow records to span block boundaries.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ftn">ftn</a></strong>
+
+<dd>
+<p>FORTRAN print control.</p>
+</dd>
+</li>
+<dt><strong><a name="item_none">none</a></strong>
+
+<dd>
+<p>Explicitly forces no carriage control.</p>
+</dd>
+</li>
+<dt><strong><a name="item_prn">prn</a></strong>
+
+<dd>
+<p>Print file format.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_rfm_3dstring">rfm=STRING</a></strong>
+
+<dd>
+<p>File record format. Takes one of the following:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_fix">fix</a></strong>
+
+<dd>
+<p>Fixed-length record format.</p>
+</dd>
+</li>
+<dt><strong>stm</strong>
+
+<dd>
+<p>RMS stream record format.</p>
+</dd>
+</li>
+<dt><strong><a name="item_stmlf">stmlf</a></strong>
+
+<dd>
+<p>Stream format with line-feed terminator.</p>
+</dd>
+</li>
+<dt><strong><a name="item_stmcr">stmcr</a></strong>
+
+<dd>
+<p>Stream format with carriage-return terminator.</p>
+</dd>
+</li>
+<dt><strong><a name="item_var">var</a></strong>
+
+<dd>
+<p>Variable-length record format.</p>
+</dd>
+</li>
+<dt><strong><a name="item_vfc">vfc</a></strong>
+
+<dd>
+<p>Variable-length record with fixed control.</p>
+</dd>
+</li>
+<dt><strong><a name="item_udf">udf</a></strong>
+
+<dd>
+<p>Undefined format</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_rop_3dstring">rop=STRING</a></strong>
+
+<dd>
+<p>Record processing operations. Takes one or more of the following in a
+comma-separated list:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_asy">asy</a></strong>
+
+<dd>
+<p>Asynchronous I/O.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cco">cco</a></strong>
+
+<dd>
+<p>Cancel Ctrl/O (used with Terminal I/O).</p>
+</dd>
+</li>
+<dt><strong>cvt</strong>
+
+<dd>
+<p>Capitalizes characters on a read from the terminal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_eof">eof</a></strong>
+
+<dd>
+<p>Positions the record stream to the end-of-file for the connect operation
+only.</p>
+</dd>
+</li>
+<dt><strong><a name="item_nlk">nlk</a></strong>
+
+<dd>
+<p>Do not lock record.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pmt">pmt</a></strong>
+
+<dd>
+<p>Enables use of the prompt specified by pmt=usr-prmpt on input from the
+terminal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pta">pta</a></strong>
+
+<dd>
+<p>Eliminates any information in the type-ahead buffer on a read from the
+terminal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rea">rea</a></strong>
+
+<dd>
+<p>Locks record for a read operation for this process, while allowing other
+accessors to read the record.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rlk">rlk</a></strong>
+
+<dd>
+<p>Locks record for write.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rne">rne</a></strong>
+
+<dd>
+<p>Suppresses echoing of input data on the screen as it is entered on the
+keyboard.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rnf">rnf</a></strong>
+
+<dd>
+<p>Indicates that Ctrl/U, Ctrl/R, and DELETE are not to be considered control
+commands on terminal input, but are to be passed to the application
+program.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rrl">rrl</a></strong>
+
+<dd>
+<p>Reads regardless of lock.</p>
+</dd>
+</li>
+<dt><strong><a name="item_syncsts">syncsts</a></strong>
+
+<dd>
+<p>Returns success status of RMS$_SYNCH if the requested service completes its
+task immediately.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmo">tmo</a></strong>
+
+<dd>
+<p>Timeout I/O.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tpt">tpt</a></strong>
+
+<dd>
+<p>Allows put/write services using sequential record access mode to occur at
+any point in the file, truncating the file at that point.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ulk">ulk</a></strong>
+
+<dd>
+<p>Prohibits RMS from automatically unlocking records.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wat">wat</a></strong>
+
+<dd>
+<p>Wait until record is available, if currently locked by another stream.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rah">rah</a></strong>
+
+<dd>
+<p>Read ahead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wbh">wbh</a></strong>
+
+<dd>
+<p>Write behind.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_rtv_3dinteger">rtv=INTEGER</a></strong>
+
+<dd>
+<p>The number of retrieval pointers that RMS has to maintain (0 to 127255)</p>
+</dd>
+</li>
+<dt><strong><a name="item_shr_3dstring">shr=STRING</a></strong>
+
+<dd>
+<p>File sharing options. Choose one of the following:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_del">del</a></strong>
+
+<dd>
+<p>Allows users to delete.</p>
+</dd>
+</li>
+<dt><strong><a name="item_get">get</a></strong>
+
+<dd>
+<p>Allows users to read.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mse">mse</a></strong>
+
+<dd>
+<p>Allows mainstream access.</p>
+</dd>
+</li>
+<dt><strong><a name="item_nil">nil</a></strong>
+
+<dd>
+<p>Prohibits file sharing.</p>
+</dd>
+</li>
+<dt><strong><a name="item_put">put</a></strong>
+
+<dd>
+<p>Allows users to write.</p>
+</dd>
+</li>
+<dt><strong><a name="item_upd">upd</a></strong>
+
+<dd>
+<p>Allows users to update.</p>
+</dd>
+</li>
+<dt><strong><a name="item_upi">upi</a></strong>
+
+<dd>
+<p>Allows one or more writers.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_tmo_3dinteger">tmo=INTEGER</a></strong>
+
+<dd>
+<p>I/O timeout value</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_vmssysopen">vmssysopen</a></strong>
+
+<dd>
+<p>This function bears the same relationship to the CORE function
+<code>sysopen</code> as <a href="#item_vmsopen"><code>vmsopen</code></a> does to <code>open</code>.  Its first three arguments
+are the name, access flags, and permissions for the file.  Like
+<a href="#item_vmsopen"><code>vmsopen</code></a>, it takes up to 8 additional string arguments which
+specify file characteristics.  Its return value is identical to
+that of <a href="#item_vmsopen"><code>vmsopen</code></a>.</p>
+</dd>
+<dd>
+<p>The symbolic constants for the mode argument are exported by
+VMS::Stdio by default, and are also exported by the Fcntl package.</p>
+</dd>
+</li>
+<dt><strong><a name="item_waitfh">waitfh</a></strong>
+
+<dd>
+<p>This function causes Perl to wait for the completion of an I/O
+operation on the file handle specified as its argument.  It is
+used with handles opened for asynchronous I/O, and performs its
+task by calling the CRTL routine fwait().</p>
+</dd>
+</li>
+<dt><strong><a name="item_writeof">writeof</a></strong>
+
+<dd>
+<p>This function writes an EOF to a file handle, if the device driver
+supports this operation.  Its primary use is to send an EOF to a
+subprocess through a pipe opened for writing without closing the
+pipe.  It returns a true value if successful, and <code>undef</code> if
+it encounters an error.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="revision">REVISION</a></h1>
+<p>This document was last revised on 13-Oct-1998, for Perl 5.004, 5.005, and
+5.6.0.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;VMS::Stdio - standard I/O functions via VMS extensions</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

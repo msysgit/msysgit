@@ -1,0 +1,340 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Builder::Tester - test testsuites that have been built with
+Test::Builder</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder::Tester - test testsuites that have been built with
+Test::Builder</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#methods">Methods</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Builder::Tester - test testsuites that have been built with
+Test::Builder</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Test::Builder::Tester tests =&gt; 1;
+    use Test::More;</pre>
+<pre>
+    test_out(&quot;not ok 1 - foo&quot;);
+    test_fail(+1);
+    fail(&quot;foo&quot;);
+    test_test(&quot;fail works&quot;);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>A module that helps you test testing modules that are built with
+<strong>Test::Builder</strong>.</p>
+<p>The testing system is designed to be used by performing a three step
+process for each test you wish to test.  This process starts with using
+<a href="#item_test_out"><code>test_out</code></a> and <a href="#item_test_err"><code>test_err</code></a> in advance to declare what the testsuite you
+are testing will output with <strong>Test::Builder</strong> to stdout and stderr.</p>
+<p>You then can run the <code>test(s)</code> from your test suite that call
+<strong>Test::Builder</strong>.  At this point the output of <strong>Test::Builder</strong> is
+safely captured by <strong>Test::Builder::Tester</strong> rather than being
+interpreted as real test output.</p>
+<p>The final stage is to call <a href="#item_test_test"><code>test_test</code></a> that will simply compare what you
+predeclared to what <strong>Test::Builder</strong> actually outputted, and report the
+results back with a ``ok'' or ``not ok'' (with debugging) to the normal
+output.</p>
+<p>
+</p>
+<h2><a name="methods">Methods</a></h2>
+<p>These are the six methods that are exported as default.</p>
+<dl>
+<dt><strong><a name="item_test_out">test_out</a></strong>
+
+<dt><strong><a name="item_test_err">test_err</a></strong>
+
+<dd>
+<p>Procedures for predeclaring the output that your test suite is
+expected to produce until <a href="#item_test_test"><code>test_test</code></a> is called.  These procedures
+automatically assume that each line terminates with ``\n''.  So</p>
+</dd>
+<dd>
+<pre>
+   test_out(&quot;ok 1&quot;,&quot;ok 2&quot;);</pre>
+</dd>
+<dd>
+<p>is the same as</p>
+</dd>
+<dd>
+<pre>
+   test_out(&quot;ok 1\nok 2&quot;);</pre>
+</dd>
+<dd>
+<p>which is even the same as</p>
+</dd>
+<dd>
+<pre>
+   test_out(&quot;ok 1&quot;);
+   test_out(&quot;ok 2&quot;);</pre>
+</dd>
+<dd>
+<p>Once <a href="#item_test_out"><code>test_out</code></a> or <a href="#item_test_err"><code>test_err</code></a> (or <a href="#item_test_fail"><code>test_fail</code></a> or <a href="#item_test_diag"><code>test_diag</code></a>) have
+been called once all further output from <strong>Test::Builder</strong> will be
+captured by <strong>Test::Builder::Tester</strong>.  This means that your will not
+be able perform further tests to the normal output in the normal way
+until you call <a href="#item_test_test"><code>test_test</code></a> (well, unless you manually meddle with the
+output filehandles)</p>
+</dd>
+</li>
+<dt><strong><a name="item_test_fail">test_fail</a></strong>
+
+<dd>
+<p>Because the standard failure message that <strong>Test::Builder</strong> produces
+whenever a test fails will be a common occurrence in your test error
+output, and because has changed between Test::Builder versions, rather
+than forcing you to call <a href="#item_test_err"><code>test_err</code></a> with the string all the time like
+so</p>
+</dd>
+<dd>
+<pre>
+    test_err(&quot;# Failed test ($0 at line &quot;.line_num(+1).&quot;)&quot;);</pre>
+</dd>
+<dd>
+<p><a href="#item_test_fail"><code>test_fail</code></a> exists as a convenience method that can be called
+instead.  It takes one argument, the offset from the current line that
+the line that causes the fail is on.</p>
+</dd>
+<dd>
+<pre>
+    test_fail(+1);</pre>
+</dd>
+<dd>
+<p>This means that the example in the synopsis could be rewritten
+more simply as:</p>
+</dd>
+<dd>
+<pre>
+   test_out(&quot;not ok 1 - foo&quot;);
+   test_fail(+1);
+   fail(&quot;foo&quot;);
+   test_test(&quot;fail works&quot;);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_test_diag">test_diag</a></strong>
+
+<dd>
+<p>As most of the remaining expected output to the error stream will be
+created by Test::Builder's <code>diag</code> function, <strong>Test::Builder::Tester</strong>
+provides a convience function <a href="#item_test_diag"><code>test_diag</code></a> that you can use instead of
+<a href="#item_test_err"><code>test_err</code></a>.</p>
+</dd>
+<dd>
+<p>The <a href="#item_test_diag"><code>test_diag</code></a> function prepends comment hashes and spacing to the
+start and newlines to the end of the expected output passed to it and
+adds it to the list of expected error output.  So, instead of writing</p>
+</dd>
+<dd>
+<pre>
+   test_err(&quot;# Couldn't open file&quot;);</pre>
+</dd>
+<dd>
+<p>you can write</p>
+</dd>
+<dd>
+<pre>
+   test_diag(&quot;Couldn't open file&quot;);</pre>
+</dd>
+<dd>
+<p>Remember that <strong>Test::Builder</strong>'s diag function will not add newlines to
+the end of output and test_diag will. So to check</p>
+</dd>
+<dd>
+<pre>
+   Test::Builder-&gt;new-&gt;diag(&quot;foo\n&quot;,&quot;bar\n&quot;);</pre>
+</dd>
+<dd>
+<p>You would do</p>
+</dd>
+<dd>
+<pre>
+  test_diag(&quot;foo&quot;,&quot;bar&quot;)</pre>
+</dd>
+<dd>
+<p>without the newlines.</p>
+</dd>
+</li>
+<dt><strong><a name="item_test_test">test_test</a></strong>
+
+<dd>
+<p>Actually performs the output check testing the tests, comparing the
+data (with <code>eq</code>) that we have captured from <strong>Test::Builder</strong> against
+that that was declared with <a href="#item_test_out"><code>test_out</code></a> and <a href="#item_test_err"><code>test_err</code></a>.</p>
+</dd>
+<dd>
+<p>This takes name/value pairs that effect how the test is run.</p>
+</dd>
+<dl>
+<dt><strong><a name="item_title">title (synonym 'name', 'label')</a></strong>
+
+<dd>
+<p>The name of the test that will be displayed after the <code>ok</code> or <code>not
+ok</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_skip_out">skip_out</a></strong>
+
+<dd>
+<p>Setting this to a true value will cause the test to ignore if the
+output sent by the test to the output stream does not match that
+declared with <a href="#item_test_out"><code>test_out</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_skip_err">skip_err</a></strong>
+
+<dd>
+<p>Setting this to a true value will cause the test to ignore if the
+output sent by the test to the error stream does not match that
+declared with <a href="#item_test_err"><code>test_err</code></a>.</p>
+</dd>
+</li>
+</dl>
+<p>As a convience, if only one argument is passed then this argument
+is assumed to be the name of the test (as in the above examples.)</p>
+<p>Once <a href="#item_test_test"><code>test_test</code></a> has been run test output will be redirected back to
+the original filehandles that <strong>Test::Builder</strong> was connected to
+(probably STDOUT and STDERR,) meaning any further tests you run
+will function normally and cause success/errors for <strong>Test::Harness</strong>.</p>
+<dt><strong><a name="item_line_num">line_num</a></strong>
+
+<dd>
+<p>A utility function that returns the line number that the function was
+called on.  You can pass it an offset which will be added to the
+result.  This is very useful for working out the correct text of
+diagnostic methods that contain line numbers.</p>
+</dd>
+<dd>
+<p>Essentially this is the same as the <code>__LINE__</code> macro, but the
+<a href="#item_line_num"><code>line_num(+3)</code></a> idiom is arguably nicer.</p>
+</dd>
+</li>
+</dl>
+<p>In addition to the six exported functions there there exists one
+function that can only be accessed with a fully qualified function
+call.</p>
+<dl>
+<dt><strong><a name="item_color">color</a></strong>
+
+<dd>
+<p>When <a href="#item_test_test"><code>test_test</code></a> is called and the output that your tests generate
+does not match that which you declared, <a href="#item_test_test"><code>test_test</code></a> will print out
+debug information showing the two conflicting versions.  As this
+output itself is debug information it can be confusing which part of
+the output is from <a href="#item_test_test"><code>test_test</code></a> and which was the original output from
+your original tests.  Also, it may be hard to spot things like
+extraneous whitespace at the end of lines that may cause your test to
+fail even though the output looks similar.</p>
+</dd>
+<dd>
+<p>To assist you, if you have the <strong>Term::ANSIColor</strong> module installed
+(which you should do by default from perl 5.005 onwards), <a href="#item_test_test"><code>test_test</code></a>
+can colour the background of the debug information to disambiguate the
+different types of output. The debug output will have it's background
+coloured green and red.  The green part represents the text which is
+the same between the executed and actual output, the red shows which
+part differs.</p>
+</dd>
+<dd>
+<p>The <a href="#item_color"><code>color</code></a> function determines if colouring should occur or not.
+Passing it a true or false value will enable or disable colouring
+respectively, and the function called with no argument will return the
+current setting.</p>
+</dd>
+<dd>
+<p>To enable colouring from the command line, you can use the
+<strong>Text::Builder::Tester::Color</strong> module like so:</p>
+</dd>
+<dd>
+<pre>
+   perl -Mlib=Text::Builder::Tester::Color test.t</pre>
+</dd>
+<dd>
+<p>Or by including the <strong>Test::Builder::Tester::Color</strong> module directly in
+the PERL5LIB.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Calls <strong>Test::Builder</strong>'s <code>no_ending</code> method turning off the ending
+tests.  This is needed as otherwise it will trip out because we've run
+more tests than we strictly should have and it'll register any
+failures we had that we were testing for as real failures.</p>
+<p>The color function doesn't work unless <strong>Term::ANSIColor</strong> is installed
+and is compatible with your terminal.</p>
+<p>Bugs (and requests for new features) can be reported to the author
+though the CPAN RT system:
+<a href="http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-Builder-Tester">http://rt.cpan.org/NoAuth/ReportBug.html</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright Mark Fowler &lt;<a href="mailto:mark@twoshortplanks.com">mark@twoshortplanks.com</a>&gt; 2002, 2004.</p>
+<p>Some code taken from <strong>Test::More</strong> and <strong>Test::Catch</strong>, written by by
+Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;.  Hence, those parts
+Copyright Micheal G Schwern 2001.  Used and distributed with
+permission.</p>
+<p>This program is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>This code has been tested explicitly on the following versions
+of perl: 5.7.3, 5.6.1, 5.6.0, 5.005_03, 5.004_05 and 5.004.</p>
+<p>Thanks to Richard Clamp &lt;<a href="mailto:richardc@unixbeard.net">richardc@unixbeard.net</a>&gt; for letting
+me use his testing system to try this module out on.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Builder.html">the Test::Builder manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Test/Builder/Tester/Color.html">the Test::Builder::Tester::Color manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder::Tester - test testsuites that have been built with
+Test::Builder</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

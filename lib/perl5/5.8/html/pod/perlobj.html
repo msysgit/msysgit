@@ -1,0 +1,598 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlobj - Perl objects</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlobj - Perl objects</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#an_object_is_simply_a_reference">An Object is Simply a Reference</a></li>
+		<li><a href="#a_class_is_simply_a_package">A Class is Simply a Package</a></li>
+		<li><a href="#a_method_is_simply_a_subroutine">A Method is Simply a Subroutine</a></li>
+		<li><a href="#method_invocation">Method Invocation</a></li>
+		<li><a href="#indirect_object_syntax">Indirect Object Syntax</a></li>
+		<li><a href="#default_universal_methods">Default UNIVERSAL methods</a></li>
+		<li><a href="#destructors">Destructors</a></li>
+		<li><a href="#summary">Summary</a></li>
+		<li><a href="#twophased_garbage_collection">Two-Phased Garbage Collection</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name_x_object__x_oop_">NAME
+ </a></h1>
+<p>perlobj - Perl objects</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>First you need to understand what references are in Perl.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a> for that.  Second, if you still find the following
+reference work too complicated, a tutorial on object-oriented programming
+in Perl can be found in <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perltooc.html">the perltooc manpage</a>.</p>
+<p>If you're still with us, then
+here are three very simple definitions that you should find reassuring.</p>
+<ol>
+<li>
+<p>An object is simply a reference that happens to know which class it
+belongs to.</p>
+</li>
+<li>
+<p>A class is simply a package that happens to provide methods to deal
+with object references.</p>
+</li>
+<li>
+<p>A method is simply a subroutine that expects an object reference (or
+a package name, for class methods) as the first argument.</p>
+</li>
+</ol>
+<p>We'll cover these points now in more depth.</p>
+<p>
+</p>
+<h2><a name="an_object_is_simply_a_reference_x_object__x_bless__x_constructor__x_new_">An Object is Simply a Reference
+   </a></h2>
+<p>Unlike say C++, Perl doesn't provide any special syntax for
+constructors.  A constructor is merely a subroutine that returns a
+reference to something ``blessed'' into a class, generally the
+class that the subroutine is defined in.  Here is a typical
+constructor:</p>
+<pre>
+    package Critter;
+    sub new { bless {} }</pre>
+<p>That word <code>new</code> isn't special.  You could have written
+a construct this way, too:</p>
+<pre>
+    package Critter;
+    sub spawn { bless {} }</pre>
+<p>This might even be preferable, because the C++ programmers won't
+be tricked into thinking that <code>new</code> works in Perl as it does in C++.
+It doesn't.  We recommend that you name your constructors whatever
+makes sense in the context of the problem you're solving.  For example,
+constructors in the Tk extension to Perl are named after the widgets
+they create.</p>
+<p>One thing that's different about Perl constructors compared with those in
+C++ is that in Perl, they have to allocate their own memory.  (The other
+things is that they don't automatically call overridden base-class
+constructors.)  The <code>{}</code> allocates an anonymous hash containing no
+key/value pairs, and returns it  The <code>bless()</code> takes that reference and
+tells the object it references that it's now a Critter, and returns
+the reference.  This is for convenience, because the referenced object
+itself knows that it has been blessed, and the reference to it could
+have been returned directly, like this:</p>
+<pre>
+    sub new {
+        my $self = {};
+        bless $self;
+        return $self;
+    }</pre>
+<p>You often see such a thing in more complicated constructors
+that wish to call methods in the class as part of the construction:</p>
+<pre>
+    sub new {
+        my $self = {};
+        bless $self;
+        $self-&gt;initialize();
+        return $self;
+    }</pre>
+<p>If you care about inheritance (and you should; see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html#modules__creation__use__and_abuse">Modules: Creation, Use, and Abuse in the perlmodlib manpage</a>),
+then you want to use the two-arg form of bless
+so that your constructors may be inherited:</p>
+<pre>
+    sub new {
+        my $class = shift;
+        my $self = {};
+        bless $self, $class;
+        $self-&gt;initialize();
+        return $self;
+    }</pre>
+<p>Or if you expect people to call not just <code>CLASS-&gt;new()</code> but also
+<code>$obj-&gt;new()</code>, then use something like the following.  (Note that using
+this to call <code>new()</code> on an instance does not automatically perform any
+copying.  If you want a shallow or deep copy of an object, you'll have to
+specifically allow for that.)  The <code>initialize()</code> method used will be of
+whatever $class we blessed the object into:</p>
+<pre>
+    sub new {
+        my $this = shift;
+        my $class = ref($this) || $this;
+        my $self = {};
+        bless $self, $class;
+        $self-&gt;initialize();
+        return $self;
+    }</pre>
+<p>Within the class package, the methods will typically deal with the
+reference as an ordinary reference.  Outside the class package,
+the reference is generally treated as an opaque value that may
+be accessed only through the class's methods.</p>
+<p>Although a constructor can in theory re-bless a referenced object
+currently belonging to another class, this is almost certainly going
+to get you into trouble.  The new class is responsible for all
+cleanup later.  The previous blessing is forgotten, as an object
+may belong to only one class at a time.  (Although of course it's
+free to inherit methods from many classes.)  If you find yourself
+having to do this, the parent class is probably misbehaving, though.</p>
+<p>A clarification:  Perl objects are blessed.  References are not.  Objects
+know which package they belong to.  References do not.  The <code>bless()</code>
+function uses the reference to find the object.  Consider
+the following example:</p>
+<pre>
+    $a = {};
+    $b = $a;
+    bless $a, BLAH;
+    print &quot;\$b is a &quot;, ref($b), &quot;\n&quot;;</pre>
+<p>This reports $b as being a BLAH, so obviously <code>bless()</code>
+operated on the object and not on the reference.</p>
+<p>
+</p>
+<h2><a name="a_class_is_simply_a_package_x_class__x_package__x__isa__x_inheritance_">A Class is Simply a Package
+   </a></h2>
+<p>Unlike say C++, Perl doesn't provide any special syntax for class
+definitions.  You use a package as a class by putting method
+definitions into the class.</p>
+<p>There is a special array within each package called @ISA, which says
+where else to look for a method if you can't find it in the current
+package.  This is how Perl implements inheritance.  Each element of the
+@ISA array is just the name of another package that happens to be a
+class package.  The classes are searched (depth first) for missing
+methods in the order that they occur in @ISA.  The classes accessible
+through @ISA are known as base classes of the current class.</p>
+<p>All classes implicitly inherit from class <code>UNIVERSAL</code> as their
+last base class.  Several commonly used methods are automatically
+supplied in the UNIVERSAL class; see <a href="#default_universal_methods">Default UNIVERSAL methods</a> for
+more details.
+  </p>
+<p>If a missing method is found in a base class, it is cached
+in the current class for efficiency.  Changing @ISA or defining new
+subroutines invalidates the cache and causes Perl to do the lookup again.</p>
+<p>If neither the current class, its named base classes, nor the UNIVERSAL
+class contains the requested method, these three places are searched
+all over again, this time looking for a method named AUTOLOAD().  If an
+AUTOLOAD is found, this method is called on behalf of the missing method,
+setting the package global $AUTOLOAD to be the fully qualified name of
+the method that was intended to be called.
+</p>
+<p>If none of that works, Perl finally gives up and complains.</p>
+<p>If you want to stop the AUTOLOAD inheritance say simply
+</p>
+<pre>
+        sub AUTOLOAD;</pre>
+<p>and the call will die using the name of the sub being called.</p>
+<p>Perl classes do method inheritance only.  Data inheritance is left up
+to the class itself.  By and large, this is not a problem in Perl,
+because most classes model the attributes of their object using an
+anonymous hash, which serves as its own little namespace to be carved up
+by the various classes that might want to do something with the object.
+The only problem with this is that you can't sure that you aren't using
+a piece of the hash that isn't already used.  A reasonable workaround
+is to prepend your fieldname in the hash with the package name.
+ </p>
+<pre>
+    sub bump {
+        my $self = shift;
+        $self-&gt;{ __PACKAGE__ . &quot;.count&quot;}++;
+    }</pre>
+<p>
+</p>
+<h2><a name="a_method_is_simply_a_subroutine_x_method_">A Method is Simply a Subroutine
+</a></h2>
+<p>Unlike say C++, Perl doesn't provide any special syntax for method
+definition.  (It does provide a little syntax for method invocation
+though.  More on that later.)  A method expects its first argument
+to be the object (reference) or package (string) it is being invoked
+on.  There are two ways of calling methods, which we'll call class
+methods and instance methods.</p>
+<p>A class method expects a class name as the first argument.  It
+provides functionality for the class as a whole, not for any
+individual object belonging to the class.  Constructors are often
+class methods, but see <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perltooc.html">the perltooc manpage</a> for alternatives.
+Many class methods simply ignore their first argument, because they
+already know what package they're in and don't care what package
+they were invoked via.  (These aren't necessarily the same, because
+class methods follow the inheritance tree just like ordinary instance
+methods.)  Another typical use for class methods is to look up an
+object by name:</p>
+<pre>
+    sub find {
+        my ($class, $name) = @_;
+        $objtable{$name};
+    }</pre>
+<p>An instance method expects an object reference as its first argument.
+Typically it shifts the first argument into a ``self'' or ``this'' variable,
+and then uses that as an ordinary reference.</p>
+<pre>
+    sub display {
+        my $self = shift;
+        my @keys = @_ ? @_ : sort keys %$self;
+        foreach $key (@keys) {
+            print &quot;\t$key =&gt; $self-&gt;{$key}\n&quot;;
+        }
+    }</pre>
+<p>
+</p>
+<h2><a name="method_invocation_x_invocation__x_method__x_arrow__x_______">Method Invocation
+    &gt;&gt;</a></h2>
+<p>For various historical and other reasons, Perl offers two equivalent
+ways to write a method call.  The simpler and more common way is to use
+the arrow notation:</p>
+<pre>
+    my $fred = Critter-&gt;find(&quot;Fred&quot;);
+    $fred-&gt;display(&quot;Height&quot;, &quot;Weight&quot;);</pre>
+<p>You should already be familiar with the use of the <code>-&gt;</code> operator with
+references.  In fact, since <code>$fred</code> above is a reference to an object,
+you could think of the method call as just another form of
+dereferencing.</p>
+<p>Whatever is on the left side of the arrow, whether a reference or a
+class name, is passed to the method subroutine as its first argument.
+So the above code is mostly equivalent to:</p>
+<pre>
+    my $fred = Critter::find(&quot;Critter&quot;, &quot;Fred&quot;);
+    Critter::display($fred, &quot;Height&quot;, &quot;Weight&quot;);</pre>
+<p>How does Perl know which package the subroutine is in?  By looking at
+the left side of the arrow, which must be either a package name or a
+reference to an object, i.e. something that has been blessed to a
+package.  Either way, that's the package where Perl starts looking.  If
+that package has no subroutine with that name, Perl starts looking for
+it in any base classes of that package, and so on.</p>
+<p>If you need to, you <em>can</em> force Perl to start looking in some other package:</p>
+<pre>
+    my $barney = MyCritter-&gt;Critter::find(&quot;Barney&quot;);
+    $barney-&gt;Critter::display(&quot;Height&quot;, &quot;Weight&quot;);</pre>
+<p>Here <code>MyCritter</code> is presumably a subclass of <code>Critter</code> that defines
+its own versions of <code>find()</code> and display().  We haven't specified what
+those methods do, but that doesn't matter above since we've forced Perl
+to start looking for the subroutines in <code>Critter</code>.</p>
+<p>As a special case of the above, you may use the <code>SUPER</code> pseudo-class to
+tell Perl to start looking for the method in the packages named in the
+current class's <code>@ISA</code> list.  
+</p>
+<pre>
+    package MyCritter;
+    use base 'Critter';    # sets @MyCritter::ISA = ('Critter');</pre>
+<pre>
+    sub display { 
+        my ($self, @args) = @_;
+        $self-&gt;SUPER::display(&quot;Name&quot;, @args);
+    }</pre>
+<p>It is important to note that <code>SUPER</code> refers to the <code>superclass(es)</code> of the
+<em>current package</em> and not to the <code>superclass(es)</code> of the object. Also, the
+<code>SUPER</code> pseudo-class can only currently be used as a modifier to a method
+name, but not in any of the other ways that class names are normally used,
+eg:
+</p>
+<pre>
+    something-&gt;SUPER::method(...);      # OK
+    SUPER::method(...);                 # WRONG
+    SUPER-&gt;method(...);                 # WRONG</pre>
+<p>Instead of a class name or an object reference, you can also use any
+expression that returns either of those on the left side of the arrow.
+So the following statement is valid:</p>
+<pre>
+    Critter-&gt;find(&quot;Fred&quot;)-&gt;display(&quot;Height&quot;, &quot;Weight&quot;);</pre>
+<p>and so is the following:</p>
+<pre>
+    my $fred = (reverse &quot;rettirC&quot;)-&gt;find(reverse &quot;derF&quot;);</pre>
+<p>The right side of the arrow typically is the method name, but a simple 
+scalar variable containing either the method name or a subroutine 
+reference can also be used.</p>
+<p>
+</p>
+<h2><a name="indirect_object_syntax_x_indirect_object_syntax__x_invocation__indirect__x_indirect_">Indirect Object Syntax
+  </a></h2>
+<p>The other way to invoke a method is by using the so-called ``indirect
+object'' notation.  This syntax was available in Perl 4 long before
+objects were introduced, and is still used with filehandles like this:</p>
+<pre>
+   print STDERR &quot;help!!!\n&quot;;</pre>
+<p>The same syntax can be used to call either object or class methods.</p>
+<pre>
+   my $fred = find Critter &quot;Fred&quot;;
+   display $fred &quot;Height&quot;, &quot;Weight&quot;;</pre>
+<p>Notice that there is no comma between the object or class name and the
+parameters.  This is how Perl can tell you want an indirect method call
+instead of an ordinary subroutine call.</p>
+<p>But what if there are no arguments?  In that case, Perl must guess what
+you want.  Even worse, it must make that guess <em>at compile time</em>.
+Usually Perl gets it right, but when it doesn't you get a function
+call compiled as a method, or vice versa.  This can introduce subtle bugs
+that are hard to detect.</p>
+<p>For example, a call to a method <code>new</code> in indirect notation -- as C++
+programmers are wont to make -- can be miscompiled into a subroutine
+call if there's already a <code>new</code> function in scope.  You'd end up
+calling the current package's <code>new</code> as a subroutine, rather than the
+desired class's method.  The compiler tries to cheat by remembering
+bareword <code>require</code>s, but the grief when it messes up just isn't worth the
+years of debugging it will take you to track down such subtle bugs.</p>
+<p>There is another problem with this syntax: the indirect object is
+limited to a name, a scalar variable, or a block, because it would have
+to do too much lookahead otherwise, just like any other postfix
+dereference in the language.  (These are the same quirky rules as are
+used for the filehandle slot in functions like <code>print</code> and <code>printf</code>.)
+This can lead to horribly confusing precedence problems, as in these
+next two lines:</p>
+<pre>
+    move $obj-&gt;{FIELD};                 # probably wrong!
+    move $ary[$i];                      # probably wrong!</pre>
+<p>Those actually parse as the very surprising:</p>
+<pre>
+    $obj-&gt;move-&gt;{FIELD};                # Well, lookee here
+    $ary-&gt;move([$i]);                   # Didn't expect this one, eh?</pre>
+<p>Rather than what you might have expected:</p>
+<pre>
+    $obj-&gt;{FIELD}-&gt;move();              # You should be so lucky.
+    $ary[$i]-&gt;move;                     # Yeah, sure.</pre>
+<p>To get the correct behavior with indirect object syntax, you would have
+to use a block around the indirect object:</p>
+<pre>
+    move {$obj-&gt;{FIELD}};
+    move {$ary[$i]};</pre>
+<p>Even then, you still have the same potential problem if there happens to
+be a function named <code>move</code> in the current package.  <strong>The <code>-&gt;</code>
+notation suffers from neither of these disturbing ambiguities, so we
+recommend you use it exclusively.</strong>  However, you may still end up having
+to read code using the indirect object notation, so it's important to be
+familiar with it.</p>
+<p>
+</p>
+<h2><a name="default_universal_methods_x_universal_">Default UNIVERSAL methods
+</a></h2>
+<p>The <code>UNIVERSAL</code> package automatically contains the following methods that
+are inherited by all other classes:</p>
+<dl>
+<dt><strong><a name="item_isa"><code>isa(CLASS)</code>
+</a></strong>
+
+<dd>
+<p><a href="#item_isa"><code>isa</code></a> returns <em>true</em> if its object is blessed into a subclass of <code>CLASS</code></p>
+</dd>
+<dd>
+<p>You can also call <code>UNIVERSAL::isa</code> as a subroutine with two arguments.  Of
+course, this will do the wrong thing if someone has overridden <a href="#item_isa"><code>isa</code></a> in a
+class, so don't do it.</p>
+</dd>
+<dd>
+<p>If you need to determine whether you've received a valid invocant, use the
+<code>blessed</code> function from <a href="/usr/lib/perl5/5.8/html/./ext/List/Util/lib/Scalar/Util.html">the Scalar::Util manpage</a>:
+ </p>
+</dd>
+<dd>
+<pre>
+    if (blessed($ref) &amp;&amp; $ref-&gt;isa( 'Some::Class')) {
+        # ...
+    }</pre>
+</dd>
+<dd>
+<p><code>blessed</code> returns the name of the package the argument has been
+blessed into, or <code>undef</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_can"><code>can(METHOD)</code>
+</a></strong>
+
+<dd>
+<p><a href="#item_can"><code>can</code></a> checks to see if its object has a method called <code>METHOD</code>,
+if it does then a reference to the sub is returned, if it does not then
+<em>undef</em> is returned.</p>
+</dd>
+<dd>
+<p><code>UNIVERSAL::can</code> can also be called as a subroutine with two arguments.  It'll
+always return <em>undef</em> if its first argument isn't an object or a class name.
+The same caveats for calling <code>UNIVERSAL::isa</code> directly apply here, too.</p>
+</dd>
+</li>
+<dt><strong><a name="item_version">VERSION( [NEED] )
+</a></strong>
+
+<dd>
+<p><a href="#item_version"><code>VERSION</code></a> returns the version number of the class (package).  If the
+NEED argument is given then it will check that the current version (as
+defined by the $VERSION variable in the given package) not less than
+NEED; it will die if this is not the case.  This method is normally
+called as a class method.  This method is called automatically by the
+<a href="#item_version"><code>VERSION</code></a> form of <code>use</code>.</p>
+</dd>
+<dd>
+<pre>
+    use A 1.2 qw(some imported subs);
+    # implies:
+    A-&gt;VERSION(1.2);</pre>
+</dd>
+</li>
+</dl>
+<p><strong>NOTE:</strong> <a href="#item_can"><code>can</code></a> directly uses Perl's internal code for method lookup, and
+<a href="#item_isa"><code>isa</code></a> uses a very similar method and cache-ing strategy. This may cause
+strange effects if the Perl code dynamically changes @ISA in any package.</p>
+<p>You may add other methods to the UNIVERSAL class via Perl or XS code.
+You do not need to <code>use UNIVERSAL</code> to make these methods
+available to your program (and you should not do so).</p>
+<p>
+</p>
+<h2><a name="destructors_x_destructor__x_destroy_">Destructors
+ </a></h2>
+<p>When the last reference to an object goes away, the object is
+automatically destroyed.  (This may even be after you exit, if you've
+stored references in global variables.)  If you want to capture control
+just before the object is freed, you may define a DESTROY method in
+your class.  It will automatically be called at the appropriate moment,
+and you can do any extra cleanup you need to do.  Perl passes a reference
+to the object under destruction as the first (and only) argument.  Beware
+that the reference is a read-only value, and cannot be modified by
+manipulating <code>$_[0]</code> within the destructor.  The object itself (i.e.
+the thingy the reference points to, namely <code>${$_[0]}</code>, <code>@{$_[0]}</code>, 
+<code>%{$_[0]}</code> etc.) is not similarly constrained.</p>
+<p>Since DESTROY methods can be called at unpredictable times, it is
+important that you localise any global variables that the method may
+update.  In particular, localise <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> if you use <code>eval {}</code> and
+localise <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> if you use <code>system</code> or backticks.</p>
+<p>If you arrange to re-bless the reference before the destructor returns,
+perl will again call the DESTROY method for the re-blessed object after
+the current one returns.  This can be used for clean delegation of
+object destruction, or for ensuring that destructors in the base classes
+of your choosing get called.  Explicitly calling DESTROY is also possible,
+but is usually never needed.</p>
+<p>Do not confuse the previous discussion with how objects <em>CONTAINED</em> in the current
+one are destroyed.  Such objects will be freed and destroyed automatically
+when the current object is freed, provided no other references to them exist
+elsewhere.</p>
+<p>
+</p>
+<h2><a name="summary">Summary</a></h2>
+<p>That's about all there is to it.  Now you need just to go off and buy a
+book about object-oriented design methodology, and bang your forehead
+with it for the next six months or so.</p>
+<p>
+</p>
+<h2><a name="twophased_garbage_collection_x_garbage_collection__x_gc__x_circular_reference__x_reference__circular__x_destroy__x_destructor_">Two-Phased Garbage Collection
+  
+  </a></h2>
+<p>For most purposes, Perl uses a fast and simple, reference-based
+garbage collection system.  That means there's an extra
+dereference going on at some level, so if you haven't built
+your Perl executable using your C compiler's <code>-O</code> flag, performance
+will suffer.  If you <em>have</em> built Perl with <code>cc -O</code>, then this
+probably won't matter.</p>
+<p>A more serious concern is that unreachable memory with a non-zero
+reference count will not normally get freed.  Therefore, this is a bad
+idea:</p>
+<pre>
+    {
+        my $a;
+        $a = \$a;
+    }</pre>
+<p>Even thought $a <em>should</em> go away, it can't.  When building recursive data
+structures, you'll have to break the self-reference yourself explicitly
+if you don't care to leak.  For example, here's a self-referential
+node such as one might use in a sophisticated tree structure:</p>
+<pre>
+    sub new_node {
+        my $class = shift;
+        my $node  = {};
+        $node-&gt;{LEFT} = $node-&gt;{RIGHT} = $node;
+        $node-&gt;{DATA} = [ @_ ];
+        return bless $node =&gt; $class;
+    }</pre>
+<p>If you create nodes like that, they (currently) won't go away unless you
+break their self reference yourself.  (In other words, this is not to be
+construed as a feature, and you shouldn't depend on it.)</p>
+<p>Almost.</p>
+<p>When an interpreter thread finally shuts down (usually when your program
+exits), then a rather costly but complete mark-and-sweep style of garbage
+collection is performed, and everything allocated by that thread gets
+destroyed.  This is essential to support Perl as an embedded or a
+multithreadable language.  For example, this program demonstrates Perl's
+two-phased garbage collection:</p>
+<pre>
+    #!/usr/bin/perl
+    package Subtle;</pre>
+<pre>
+    sub new {
+        my $test;
+        $test = \$test;
+        warn &quot;CREATING &quot; . \$test;
+        return bless \$test;
+    }</pre>
+<pre>
+    sub DESTROY {
+        my $self = shift;
+        warn &quot;DESTROYING $self&quot;;
+    }</pre>
+<pre>
+    package main;</pre>
+<pre>
+    warn &quot;starting program&quot;;
+    {
+        my $a = Subtle-&gt;new;
+        my $b = Subtle-&gt;new;
+        $$a = 0;  # break selfref
+        warn &quot;leaving block&quot;;
+    }</pre>
+<pre>
+    warn &quot;just exited block&quot;;
+    warn &quot;time to die...&quot;;
+    exit;</pre>
+<p>When run as <em>/foo/test</em>, the following output is produced:</p>
+<pre>
+    starting program at /foo/test line 18.
+    CREATING SCALAR(0x8e5b8) at /foo/test line 7.
+    CREATING SCALAR(0x8e57c) at /foo/test line 7.
+    leaving block at /foo/test line 23.
+    DESTROYING Subtle=SCALAR(0x8e5b8) at /foo/test line 13.
+    just exited block at /foo/test line 26.
+    time to die... at /foo/test line 27.
+    DESTROYING Subtle=SCALAR(0x8e57c) during global destruction.</pre>
+<p>Notice that ``global destruction'' bit there?  That's the thread
+garbage collector reaching the unreachable.</p>
+<p>Objects are always destructed, even when regular refs aren't.  Objects
+are destructed in a separate pass before ordinary refs just to 
+prevent object destructors from using refs that have been themselves
+destructed.  Plain refs are only garbage-collected if the destruct level
+is greater than 0.  You can test the higher levels of global destruction
+by setting the PERL_DESTRUCT_LEVEL environment variable, presuming
+<code>-DDEBUGGING</code> was enabled during perl build time.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlhack.html#perl_destruct_level">PERL_DESTRUCT_LEVEL in the perlhack manpage</a> for more information.</p>
+<p>A more complete garbage collection strategy will be implemented
+at a future date.</p>
+<p>In the meantime, the best solution is to create a non-recursive container
+class that holds a pointer to the self-referential data structure.
+Define a DESTROY method for the containing object's class that manually
+breaks the circularities in the self-referential structure.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>A kinder, gentler tutorial on object-oriented programming in Perl can
+be found in <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlboot.html">the perlboot manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perltooc.html">the perltooc manpage</a>.  You should
+also check out <a href="/usr/lib/perl5/5.8/html/./pod/perlbot.html">the perlbot manpage</a> for other object tricks, traps, and tips, as
+well as <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> for some style guides on constructing both
+modules and classes.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlobj - Perl objects</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

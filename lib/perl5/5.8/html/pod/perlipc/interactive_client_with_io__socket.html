@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Interactive Client with IO::Socket</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Interactive Client with IO::Socket</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#interactive_client_with_io__socket">Interactive Client with IO::Socket</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="interactive_client_with_io__socket">Interactive Client with IO::Socket</a></h2>
+<p>Well, that's all fine if you want to send one command and get one answer,
+but what about setting up something fully interactive, somewhat like
+the way <em>telnet</em> works?  That way you can type a line, get the answer,
+type a line, get the answer, etc.</p>
+<p>This client is more complicated than the two we've done so far, but if
+you're on a system that supports the powerful <code>fork</code> call, the solution
+isn't that rough.  Once you've made the connection to whatever service
+you'd like to chat with, call <code>fork</code> to clone your process.  Each of
+these two identical process has a very simple job to do: the parent
+copies everything from the socket to standard output, while the child
+simultaneously copies everything from standard input to the socket.
+To accomplish the same thing using just one process would be <em>much</em>
+harder, because it's easier to code two processes to do one thing than it
+is to code one process to do two things.  (This keep-it-simple principle
+a cornerstones of the Unix philosophy, and good software engineering as
+well, which is probably why it's spread to other systems.)</p>
+<p>Here's the code:</p>
+<pre>
+    #!/usr/bin/perl -w
+    use strict;
+    use IO::Socket;
+    my ($host, $port, $kidpid, $handle, $line);</pre>
+<pre>
+    unless (@ARGV == 2) { die &quot;usage: $0 host port&quot; }
+    ($host, $port) = @ARGV;</pre>
+<pre>
+    # create a tcp connection to the specified host and port
+    $handle = IO::Socket::INET-&gt;new(Proto     =&gt; &quot;tcp&quot;,
+                                    PeerAddr  =&gt; $host,
+                                    PeerPort  =&gt; $port)
+           or die &quot;can't connect to port $port on $host: $!&quot;;</pre>
+<pre>
+    $handle-&gt;autoflush(1);              # so output gets there right away
+    print STDERR &quot;[Connected to $host:$port]\n&quot;;</pre>
+<pre>
+    # split the program into two processes, identical twins
+    die &quot;can't fork: $!&quot; unless defined($kidpid = fork());</pre>
+<pre>
+    # the if{} block runs only in the parent process
+    if ($kidpid) {
+        # copy the socket to standard output
+        while (defined ($line = &lt;$handle&gt;)) {
+            print STDOUT $line;
+        }
+        kill(&quot;TERM&quot;, $kidpid);                  # send SIGTERM to child
+    }
+    # the else{} block runs only in the child process
+    else {
+        # copy standard input to the socket
+        while (defined ($line = &lt;STDIN&gt;)) {
+            print $handle $line;
+        }
+    }</pre>
+<p>The <code>kill</code> function in the parent's <code>if</code> block is there to send a
+signal to our child process (current running in the <code>else</code> block)
+as soon as the remote server has closed its end of the connection.</p>
+<p>If the remote server sends data a byte at time, and you need that
+data immediately without waiting for a newline (which might not happen),
+you may wish to replace the <code>while</code> loop in the parent with the
+following:</p>
+<pre>
+    my $byte;
+    while (sysread($handle, $byte, 1) == 1) {
+        print STDOUT $byte;
+    }</pre>
+<p>Making a system call for each byte you want to read is not very efficient
+(to put it mildly) but is the simplest to explain and works reasonably
+well.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/a_webget_client.html">A Webget Client in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/tcp_servers_with_io__socket.html">TCP Servers with IO::Socket in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Interactive Client with IO::Socket</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

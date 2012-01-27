@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Net::hostent - by-name interface to Perl's built-in gethost* functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::hostent - by-name interface to Perl's built-in gethost* functions</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Net::hostent - by-name interface to Perl's built-in gethost*() functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use Net::hostent;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module's default exports override the core <code>gethostbyname()</code> and
+<code>gethostbyaddr()</code> functions, replacing them with versions that return
+``Net::hostent'' objects.  This object has methods that return the similarly
+named structure field name from the C's hostent structure from <em>netdb.h</em>;
+namely name, aliases, addrtype, length, and addr_list.  The aliases and
+addr_list methods return array reference, the rest scalars.  The addr
+method is equivalent to the zeroth element in the addr_list array
+reference.</p>
+<p>You may also import all the structure fields directly into your namespace
+as regular variables using the :FIELDS import tag.  (Note that this still
+overrides your core functions.)  Access these fields as variables named
+with a preceding <code>h_</code>.  Thus, <code>$host_obj-&gt;name()</code> corresponds to
+$h_name if you import the fields.  Array references are available as
+regular array variables, so for example <code>@{ $host_obj-&gt;aliases()
+}</code> would be simply @h_aliases.</p>
+<p>The <code>gethost()</code> function is a simple front-end that forwards a numeric
+argument to <code>gethostbyaddr()</code> by way of Socket::inet_aton, and the rest
+to gethostbyname().</p>
+<p>To access this functionality without the core overrides,
+pass the <code>use</code> an empty import list, and then access
+function functions with their full qualified names.
+On the other hand, the built-ins are still available
+via the <code>CORE::</code> pseudo-package.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<pre>
+ use Net::hostent;
+ use Socket;</pre>
+<pre>
+ @ARGV = ('netscape.com') unless @ARGV;</pre>
+<pre>
+ for $host ( @ARGV ) {</pre>
+<pre>
+    unless ($h = gethost($host)) {
+        warn &quot;$0: no such host: $host\n&quot;;
+        next;
+    }</pre>
+<pre>
+    printf &quot;\n%s is %s%s\n&quot;, 
+            $host, 
+            lc($h-&gt;name) eq lc($host) ? &quot;&quot; : &quot;*really* &quot;,
+            $h-&gt;name;</pre>
+<pre>
+    print &quot;\taliases are &quot;, join(&quot;, &quot;, @{$h-&gt;aliases}), &quot;\n&quot;
+                if @{$h-&gt;aliases};</pre>
+<pre>
+    if ( @{$h-&gt;addr_list} &gt; 1 ) { 
+        my $i;
+        for $addr ( @{$h-&gt;addr_list} ) {
+            printf &quot;\taddr #%d is [%s]\n&quot;, $i++, inet_ntoa($addr);
+        } 
+    } else {
+        printf &quot;\taddress is [%s]\n&quot;, inet_ntoa($h-&gt;addr);
+    }</pre>
+<pre>
+    if ($h = gethostbyaddr($h-&gt;addr)) {
+        if (lc($h-&gt;name) ne lc($host)) {
+            printf &quot;\tThat addr reverses to host %s!\n&quot;, $h-&gt;name;
+            $host = $h-&gt;name;
+            redo;
+        } 
+    }
+ }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>While this class is currently implemented using the Class::Struct
+module to build a struct-like class, you shouldn't rely upon this.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tom Christiansen</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::hostent - by-name interface to Perl's built-in gethost* functions</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,378 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Locale::Country - ISO codes for country identification</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Country - ISO codes for country identification</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#conversion_routines">CONVERSION ROUTINES</a></li>
+	<li><a href="#query_routines">QUERY ROUTINES</a></li>
+	<li><a href="#semiprivate_routines">SEMI-PRIVATE ROUTINES</a></li>
+	<ul>
+
+		<li><a href="#alias_code">alias_code</a></li>
+		<li><a href="#rename_country">rename_country</a></li>
+	</ul>
+
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#domain_names">DOMAIN NAMES</a></li>
+	<li><a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Locale::Country - ISO codes for country identification (ISO 3166)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Locale::Country;
+    
+    $country = code2country('jp');        # $country gets 'Japan'
+    $code    = country2code('Norway');    # $code gets 'no'
+    
+    @codes   = all_country_codes();
+    @names   = all_country_names();
+    
+    # semi-private routines
+    Locale::Country::alias_code('uk' =&gt; 'gb');
+    Locale::Country::rename_country('gb' =&gt; 'Great Britain');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Locale::Country</code> module provides access to the ISO
+codes for identifying countries, as defined in ISO 3166-1.
+You can either access the codes via the <a href="#conversion_routines">conversion routines</a>
+(described below), or with the two functions which return lists
+of all country codes or all country names.</p>
+<p>There are three different code sets you can use for identifying
+countries:</p>
+<dl>
+<dt><strong><a name="item_alpha_2d2"><strong>alpha-2</strong></a></strong>
+
+<dd>
+<p>Two letter codes, such as 'tv' for Tuvalu.
+This code set is identified with the symbol <code>LOCALE_CODE_ALPHA_2</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_alpha_2d3"><strong>alpha-3</strong></a></strong>
+
+<dd>
+<p>Three letter codes, such as 'brb' for Barbados.
+This code set is identified with the symbol <code>LOCALE_CODE_ALPHA_3</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_numeric"><strong>numeric</strong></a></strong>
+
+<dd>
+<p>Numeric codes, such as 064 for Bhutan.
+This code set is identified with the symbol <code>LOCALE_CODE_NUMERIC</code>.</p>
+</dd>
+</li>
+</dl>
+<p>All of the routines take an optional additional argument
+which specifies the code set to use.
+If not specified, it defaults to the two-letter codes.
+This is partly for backwards compatibility (previous versions
+of this module only supported the alpha-2 codes), and
+partly because they are the most widely used codes.</p>
+<p>The alpha-2 and alpha-3 codes are not case-dependent,
+so you can use 'BO', 'Bo', 'bO' or 'bo' for Bolivia.
+When a code is returned by one of the functions in
+this module, it will always be lower-case.</p>
+<p>As of version 2.00, Locale::Country supports variant
+names for countries. So, for example, the country code for ``United States''
+is ``us'', so country2code('United States') returns 'us'.
+Now the following will also return 'us':</p>
+<pre>
+    country2code('United States of America') 
+    country2code('USA')</pre>
+<p>
+</p>
+<hr />
+<h1><a name="conversion_routines">CONVERSION ROUTINES</a></h1>
+<p>There are three conversion routines: <a href="#item_code2country"><code>code2country()</code></a>, <a href="#item_country2code"><code>country2code()</code></a>,
+and <a href="#item_country_code2code"><code>country_code2code()</code></a>.</p>
+<dl>
+<dt><strong><a name="item_code2country">code2country( CODE, [ CODESET ] )</a></strong>
+
+<dd>
+<p>This function takes a country code and returns a string
+which contains the name of the country identified.
+If the code is not a valid country code, as defined by ISO 3166,
+then <code>undef</code> will be returned:</p>
+</dd>
+<dd>
+<pre>
+    $country = code2country('fi');</pre>
+</dd>
+</li>
+<dt><strong><a name="item_country2code">country2code( STRING, [ CODESET ] )</a></strong>
+
+<dd>
+<p>This function takes a country name and returns the corresponding
+country code, if such exists.
+If the argument could not be identified as a country name,
+then <code>undef</code> will be returned:</p>
+</dd>
+<dd>
+<pre>
+    $code = country2code('Norway', LOCALE_CODE_ALPHA_3);
+    # $code will now be 'nor'</pre>
+</dd>
+<dd>
+<p>The case of the country name is not important.
+See the section <a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a> below.</p>
+</dd>
+</li>
+<dt><strong><a name="item_country_code2code">country_code2code( CODE, CODESET, CODESET )</a></strong>
+
+<dd>
+<p>This function takes a country code from one code set,
+and returns the corresponding code from another code set.</p>
+</dd>
+<dd>
+<pre>
+    $alpha2 = country_code2code('fin',
+                 LOCALE_CODE_ALPHA_3, LOCALE_CODE_ALPHA_2);
+    # $alpha2 will now be 'fi'</pre>
+</dd>
+<dd>
+<p>If the code passed is not a valid country code in
+the first code set, or if there isn't a code for the
+corresponding country in the second code set,
+then <code>undef</code> will be returned.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="query_routines">QUERY ROUTINES</a></h1>
+<p>There are two function which can be used to obtain a list of all codes,
+or all country names:</p>
+<dl>
+<dt><strong><a name="item_all_country_codes"><code>all_country_codes( [ CODESET ] )</code></a></strong>
+
+<dd>
+<p>Returns a list of all two-letter country codes.
+The codes are guaranteed to be all lower-case,
+and not in any particular order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_all_country_names"><code>all_country_names( [ CODESET ] )</code></a></strong>
+
+<dd>
+<p>Returns a list of all country names for which there is a corresponding
+country code in the specified code set.
+The names are capitalised, and not returned in any particular order.</p>
+</dd>
+<dd>
+<p>Not all countries have alpha-3 and numeric codes -
+some just have an alpha-2 code,
+so you'll get a different number of countries
+depending on which code set you specify.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="semiprivate_routines">SEMI-PRIVATE ROUTINES</a></h1>
+<p>Locale::Country provides two semi-private routines for modifying
+the internal data.
+Given their status, they aren't exported by default,
+and so need to be called by prefixing the function name with the
+package name.</p>
+<p>
+</p>
+<h2><a name="alias_code">alias_code</a></h2>
+<p>Define a new code as an alias for an existing code:</p>
+<pre>
+    Locale::Country::alias_code( ALIAS =&gt; CODE [, CODESET ] )</pre>
+<p>This feature was added as a mechanism for handling
+a ``uk'' code. The ISO standard says that the two-letter code for
+``United Kingdom'' is ``gb'', whereas domain names are all .uk.</p>
+<p>By default the module does not understand ``uk'', since it is implementing
+an ISO standard. If you would like 'uk' to work as the two-letter
+code for United Kingdom, use the following:</p>
+<pre>
+    Locale::Country::alias_code('uk' =&gt; 'gb');</pre>
+<p>With this code, both ``uk'' and ``gb'' are valid codes for United Kingdom,
+with the reverse lookup returning ``uk'' rather than the usual ``gb''.</p>
+<p><strong>Note:</strong> this function was previously called _alias_code,
+but the leading underscore has been dropped.
+The old name will be supported for all 2.X releases for
+backwards compatibility.</p>
+<p>
+</p>
+<h2><a name="rename_country">rename_country</a></h2>
+<p>If the official country name just isn't good enough for you,
+you can rename a country. For example, the official country
+name for code 'gb' is 'United Kingdom'.
+If you want to change that, you might call:</p>
+<pre>
+    Locale::Country::rename_country('gb' =&gt; 'Great Britain');</pre>
+<p>This means that calling <a href="#item_code2country"><code>code2country('gb')</code></a> will now return
+'Great Britain' instead of 'United Kingdom'.
+The original country name is retained as an alias,
+so for the above example, country2code('United Kingdom')
+will still return 'gb'.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>The following example illustrates use of the <a href="#item_code2country"><code>code2country()</code></a> function.
+The user is prompted for a country code, and then told the corresponding
+country name:</p>
+<pre>
+    $| = 1;   # turn off buffering
+    
+    print &quot;Enter country code: &quot;;
+    chop($code = &lt;STDIN&gt;);
+    $country = code2country($code, LOCALE_CODE_ALPHA_2);
+    if (defined $country)
+    {
+        print &quot;$code = $country\n&quot;;
+    }
+    else
+    {
+        print &quot;'$code' is not a valid country code!\n&quot;;
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="domain_names">DOMAIN NAMES</a></h1>
+<p>Most top-level domain names are based on these codes,
+but there are certain codes which aren't.
+If you are using this module to identify country from hostname,
+your best bet is to preprocess the country code.</p>
+<p>For example, <strong>edu</strong>, <strong>com</strong>, <strong>gov</strong> and friends would map to <strong>us</strong>;
+<strong>uk</strong> would map to <strong>gb</strong>. Any others?</p>
+<p>
+</p>
+<hr />
+<h1><a name="known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></h1>
+<ul>
+<li>
+<p>When using <a href="#item_country2code"><code>country2code()</code></a>, the country name must currently appear
+exactly as it does in the source of the module. The module now supports
+a small number of variants.</p>
+<p>Possible extensions to this are: an interface for getting at the
+list of variant names, and regular expression matches.</p>
+</li>
+<li>
+<p>In the current implementation, all data is read in when the
+module is loaded, and then held in memory.
+A lazy implementation would be more memory friendly.</p>
+</li>
+<li>
+<p>Support for country names in different languages.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_locale_3a_3alanguage">Locale::Language</a></strong>
+
+<dd>
+<p>ISO two letter codes for identification of language (ISO 639).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3ascript">Locale::Script</a></strong>
+
+<dd>
+<p>ISO codes for identification of scripts (ISO 15924).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3acurrency">Locale::Currency</a></strong>
+
+<dd>
+<p>ISO three letter codes for identification of currencies
+and funds (ISO 4217).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3asubcountry">Locale::SubCountry</a></strong>
+
+<dd>
+<p>ISO codes for country sub-divisions (states, counties, provinces, etc),
+as defined in ISO 3166-2.
+This module is not part of the Locale-Codes distribution,
+but is available from CPAN in CPAN/modules/by-module/Locale/</p>
+</dd>
+</li>
+<dt><strong><a name="item_iso_3166_2d1">ISO 3166-1</a></strong>
+
+<dd>
+<p>The ISO standard which defines these codes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eiso_2eorg_2fiso_2fen_2fprods_2d"><a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">http://www.iso.org/iso/en/prods-services/iso3166ma/index.html</a></a></strong>
+
+<dd>
+<p>Official home page for the ISO 3166 maintenance agency.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2eegt_2eie_2fstandards_2fiso3166_"><a href="http://www.egt.ie/standards/iso3166/iso3166-1-en.html">http://www.egt.ie/standards/iso3166/iso3166-1-en.html</a></a></strong>
+
+<dd>
+<p>Another useful, but not official, home page.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2ecia_2egov_2fcia_2fpublications_"><a href="http://www.cia.gov/cia/publications/factbook/docs/app-d-1.html">http://www.cia.gov/cia/publications/factbook/docs/app-d-1.html</a></a></strong>
+
+<dd>
+<p>An appendix in the CIA world fact book which lists country codes
+as defined by ISO 3166, FIPS 10-4, and internet domain names.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Neil Bowers &lt;<a href="mailto:neil@bowers.com">neil@bowers.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (C) 2002-2004, Neil Bowers.</p>
+<p>Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).</p>
+<p>This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Country - ISO codes for country identification</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

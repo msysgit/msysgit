@@ -1,0 +1,378 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Unicode::UCD - Unicode character database</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unicode::UCD - Unicode character database</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#charinfo">charinfo</a></li>
+		<li><a href="#charblock">charblock</a></li>
+		<li><a href="#charscript">charscript</a></li>
+		<li><a href="#charblocks">charblocks</a></li>
+		<li><a href="#charscripts">charscripts</a></li>
+		<li><a href="#blocks_versus_scripts">Blocks versus Scripts</a></li>
+		<li><a href="#matching_scripts_and_blocks">Matching Scripts and Blocks</a></li>
+		<li><a href="#code_point_arguments">Code Point Arguments</a></li>
+		<li><a href="#charinrange">charinrange</a></li>
+		<li><a href="#compexcl">compexcl</a></li>
+		<li><a href="#casefold">casefold</a></li>
+		<li><a href="#casespec">casespec</a></li>
+		<li><a href="#namedseq__"><code>namedseq()</code></a></li>
+		<li><a href="#unicode__ucd__unicodeversion">Unicode::UCD::UnicodeVersion</a></li>
+		<li><a href="#implementation_note">Implementation Note</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Unicode::UCD - Unicode character database</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Unicode::UCD 'charinfo';
+    my $charinfo   = charinfo($codepoint);</pre>
+<pre>
+    use Unicode::UCD 'charblock';
+    my $charblock  = charblock($codepoint);</pre>
+<pre>
+    use Unicode::UCD 'charscript';
+    my $charscript = charscript($codepoint);</pre>
+<pre>
+    use Unicode::UCD 'charblocks';
+    my $charblocks = charblocks();</pre>
+<pre>
+    use Unicode::UCD 'charscripts';
+    my %charscripts = charscripts();</pre>
+<pre>
+    use Unicode::UCD qw(charscript charinrange);
+    my $range = charscript($script);
+    print &quot;looks like $script\n&quot; if charinrange($range, $codepoint);</pre>
+<pre>
+    use Unicode::UCD 'compexcl';
+    my $compexcl = compexcl($codepoint);</pre>
+<pre>
+    use Unicode::UCD 'namedseq';
+    my $namedseq = namedseq($named_sequence_name);</pre>
+<pre>
+    my $unicode_version = Unicode::UCD::UnicodeVersion();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Unicode::UCD module offers a simple interface to the Unicode
+Character Database.</p>
+<p>
+</p>
+<h2><a name="charinfo">charinfo</a></h2>
+<pre>
+    use Unicode::UCD 'charinfo';</pre>
+<pre>
+    my $charinfo = charinfo(0x41);</pre>
+<p><code>charinfo()</code> returns a reference to a hash that has the following fields
+as defined by the Unicode standard:</p>
+<pre>
+    key</pre>
+<pre>
+    code             code point with at least four hexdigits
+    name             name of the character IN UPPER CASE
+    category         general category of the character
+    combining        classes used in the Canonical Ordering Algorithm
+    bidi             bidirectional category
+    decomposition    character decomposition mapping
+    decimal          if decimal digit this is the integer numeric value
+    digit            if digit this is the numeric value
+    numeric          if numeric is the integer or rational numeric value
+    mirrored         if mirrored in bidirectional text
+    unicode10        Unicode 1.0 name if existed and different
+    comment          ISO 10646 comment field
+    upper            uppercase equivalent mapping
+    lower            lowercase equivalent mapping
+    title            titlecase equivalent mapping</pre>
+<pre>
+    block            block the character belongs to (used in \p{In...})
+    script           script the character belongs to</pre>
+<p>If no match is found, a reference to an empty hash is returned.</p>
+<p>The <code>block</code> property is the same as returned by charinfo().  It is
+not defined in the Unicode Character Database proper (Chapter 4 of the
+Unicode 3.0 Standard, aka TUS3) but instead in an auxiliary database
+(Chapter 14 of TUS3).  Similarly for the <code>script</code> property.</p>
+<p>Note that you cannot do (de)composition and casing based solely on the
+above <code>decomposition</code> and <code>lower</code>, <code>upper</code>, <code>title</code>, properties,
+you will need also the compexcl(), casefold(), and <code>casespec()</code> functions.</p>
+<p>
+</p>
+<h2><a name="charblock">charblock</a></h2>
+<pre>
+    use Unicode::UCD 'charblock';</pre>
+<pre>
+    my $charblock = charblock(0x41);
+    my $charblock = charblock(1234);
+    my $charblock = charblock(&quot;0x263a&quot;);
+    my $charblock = charblock(&quot;U+263a&quot;);</pre>
+<pre>
+    my $range     = charblock('Armenian');</pre>
+<p>With a <strong>code point argument</strong> <code>charblock()</code> returns the <em>block</em> the character
+belongs to, e.g.  <code>Basic Latin</code>.  Note that not all the character
+positions within all blocks are defined.</p>
+<p>See also <a href="#blocks_versus_scripts">Blocks versus Scripts</a>.</p>
+<p>If supplied with an argument that can't be a code point, <code>charblock()</code> tries
+to do the opposite and interpret the argument as a character block. The
+return value is a <em>range</em>: an anonymous list of lists that contain
+<em>start-of-range</em>, <em>end-of-range</em> code point pairs. You can test whether
+a code point is in a range using the <a href="#charinrange">charinrange</a> function. If the
+argument is not a known character block, <code>undef</code> is returned.</p>
+<p>
+</p>
+<h2><a name="charscript">charscript</a></h2>
+<pre>
+    use Unicode::UCD 'charscript';</pre>
+<pre>
+    my $charscript = charscript(0x41);
+    my $charscript = charscript(1234);
+    my $charscript = charscript(&quot;U+263a&quot;);</pre>
+<pre>
+    my $range      = charscript('Thai');</pre>
+<p>With a <strong>code point argument</strong> <code>charscript()</code> returns the <em>script</em> the
+character belongs to, e.g.  <code>Latin</code>, <code>Greek</code>, <code>Han</code>.</p>
+<p>See also <a href="#blocks_versus_scripts">Blocks versus Scripts</a>.</p>
+<p>If supplied with an argument that can't be a code point, <code>charscript()</code> tries
+to do the opposite and interpret the argument as a character script. The
+return value is a <em>range</em>: an anonymous list of lists that contain
+<em>start-of-range</em>, <em>end-of-range</em> code point pairs. You can test whether a
+code point is in a range using the <a href="#charinrange">charinrange</a> function. If the
+argument is not a known character script, <code>undef</code> is returned.</p>
+<p>
+</p>
+<h2><a name="charblocks">charblocks</a></h2>
+<pre>
+    use Unicode::UCD 'charblocks';</pre>
+<pre>
+    my $charblocks = charblocks();</pre>
+<p><code>charblocks()</code> returns a reference to a hash with the known block names
+as the keys, and the code point ranges (see <a href="#charblock">charblock</a>) as the values.</p>
+<p>See also <a href="#blocks_versus_scripts">Blocks versus Scripts</a>.</p>
+<p>
+</p>
+<h2><a name="charscripts">charscripts</a></h2>
+<pre>
+    use Unicode::UCD 'charscripts';</pre>
+<pre>
+    my %charscripts = charscripts();</pre>
+<p><code>charscripts()</code> returns a hash with the known script names as the keys,
+and the code point ranges (see <a href="#charscript">charscript</a>) as the values.</p>
+<p>See also <a href="#blocks_versus_scripts">Blocks versus Scripts</a>.</p>
+<p>
+</p>
+<h2><a name="blocks_versus_scripts">Blocks versus Scripts</a></h2>
+<p>The difference between a block and a script is that scripts are closer
+to the linguistic notion of a set of characters required to present
+languages, while block is more of an artifact of the Unicode character
+numbering and separation into blocks of (mostly) 256 characters.</p>
+<p>For example the Latin <strong>script</strong> is spread over several <strong>blocks</strong>, such
+as <code>Basic Latin</code>, <code>Latin 1 Supplement</code>, <code>Latin Extended-A</code>, and
+<code>Latin Extended-B</code>.  On the other hand, the Latin script does not
+contain all the characters of the <code>Basic Latin</code> block (also known as
+the ASCII): it includes only the letters, and not, for example, the digits
+or the punctuation.</p>
+<p>For blocks see <a href="http://www.unicode.org/Public/UNIDATA/Blocks.txt">http://www.unicode.org/Public/UNIDATA/Blocks.txt</a></p>
+<p>For scripts see UTR #24: <a href="http://www.unicode.org/unicode/reports/tr24/">http://www.unicode.org/unicode/reports/tr24/</a></p>
+<p>
+</p>
+<h2><a name="matching_scripts_and_blocks">Matching Scripts and Blocks</a></h2>
+<p>Scripts are matched with the regular-expression construct
+<code>\p{...}</code> (e.g. <code>\p{Tibetan}</code> matches characters of the Tibetan script),
+while <code>\p{In...}</code> is used for blocks (e.g. <code>\p{InTibetan}</code> matches
+any of the 256 code points in the Tibetan block).</p>
+<p>
+</p>
+<h2><a name="code_point_arguments">Code Point Arguments</a></h2>
+<p>A <em>code point argument</em> is either a decimal or a hexadecimal scalar
+designating a Unicode character, or <code>U+</code> followed by hexadecimals
+designating a Unicode character.  In other words, if you want a code
+point to be interpreted as a hexadecimal number, you must prefix it
+with either <code>0x</code> or <code>U+</code>, because a string like e.g. <code>123</code> will
+be interpreted as a decimal code point.  Also note that Unicode is
+<strong>not</strong> limited to 16 bits (the number of Unicode characters is
+open-ended, in theory unlimited): you may have more than 4 hexdigits.</p>
+<p>
+</p>
+<h2><a name="charinrange">charinrange</a></h2>
+<p>In addition to using the <code>\p{In...}</code> and <code>\P{In...}</code> constructs, you
+can also test whether a code point is in the <em>range</em> as returned by
+<a href="#charblock">charblock</a> and <a href="#charscript">charscript</a> or as the values of the hash returned
+by <a href="#charblocks">charblocks</a> and <a href="#charscripts">charscripts</a> by using charinrange():</p>
+<pre>
+    use Unicode::UCD qw(charscript charinrange);</pre>
+<pre>
+    $range = charscript('Hiragana');
+    print &quot;looks like hiragana\n&quot; if charinrange($range, $codepoint);</pre>
+<p>
+</p>
+<h2><a name="compexcl">compexcl</a></h2>
+<pre>
+    use Unicode::UCD 'compexcl';</pre>
+<pre>
+    my $compexcl = compexcl(&quot;09dc&quot;);</pre>
+<p>The <code>compexcl()</code> returns the composition exclusion (that is, if the
+character should not be produced during a precomposition) of the 
+character specified by a <strong>code point argument</strong>.</p>
+<p>If there is a composition exclusion for the character, true is
+returned.  Otherwise, false is returned.</p>
+<p>
+</p>
+<h2><a name="casefold">casefold</a></h2>
+<pre>
+    use Unicode::UCD 'casefold';</pre>
+<pre>
+    my $casefold = casefold(&quot;00DF&quot;);</pre>
+<p>The <code>casefold()</code> returns the locale-independent case folding of the
+character specified by a <strong>code point argument</strong>.</p>
+<p>If there is a case folding for that character, a reference to a hash
+with the following fields is returned:</p>
+<pre>
+    key</pre>
+<pre>
+    code             code point with at least four hexdigits
+    status           &quot;C&quot;, &quot;F&quot;, &quot;S&quot;, or &quot;I&quot;
+    mapping          one or more codes separated by spaces</pre>
+<p>The meaning of the <em>status</em> is as follows:</p>
+<pre>
+   C                 common case folding, common mappings shared
+                     by both simple and full mappings
+   F                 full case folding, mappings that cause strings
+                     to grow in length. Multiple characters are separated
+                     by spaces
+   S                 simple case folding, mappings to single characters
+                     where different from F
+   I                 special case for dotted uppercase I and
+                     dotless lowercase i
+                     - If this mapping is included, the result is
+                       case-insensitive, but dotless and dotted I's
+                       are not distinguished
+                     - If this mapping is excluded, the result is not
+                       fully case-insensitive, but dotless and dotted
+                       I's are distinguished</pre>
+<p>If there is no case folding for that character, <code>undef</code> is returned.</p>
+<p>For more information about case mappings see
+<a href="http://www.unicode.org/unicode/reports/tr21/">http://www.unicode.org/unicode/reports/tr21/</a></p>
+<p>
+</p>
+<h2><a name="casespec">casespec</a></h2>
+<pre>
+    use Unicode::UCD 'casespec';</pre>
+<pre>
+    my $casespec = casespec(&quot;FB00&quot;);</pre>
+<p>The <code>casespec()</code> returns the potentially locale-dependent case mapping
+of the character specified by a <strong>code point argument</strong>.  The mapping
+may change the length of the string (which the basic Unicode case
+mappings as returned by <code>charinfo()</code> never do).</p>
+<p>If there is a case folding for that character, a reference to a hash
+with the following fields is returned:</p>
+<pre>
+    key</pre>
+<pre>
+    code             code point with at least four hexdigits
+    lower            lowercase
+    title            titlecase
+    upper            uppercase
+    condition        condition list (may be undef)</pre>
+<p>The <code>condition</code> is optional.  Where present, it consists of one or
+more <em>locales</em> or <em>contexts</em>, separated by spaces (other than as
+used to separate elements, spaces are to be ignored).  A condition
+list overrides the normal behavior if all of the listed conditions are
+true.  Case distinctions in the condition list are not significant.
+Conditions preceded by ``NON_'' represent the negation of the condition.</p>
+<p>Note that when there are multiple case folding definitions for a
+single code point because of different locales, the value returned by
+<code>casespec()</code> is a hash reference which has the locales as the keys and
+hash references as described above as the values.</p>
+<p>A <em>locale</em> is defined as a 2-letter ISO 3166 country code, possibly
+followed by a ``_'' and a 2-letter ISO language code (possibly followed
+by a ``_'' and a variant code).  You can find the lists of those codes,
+see <a href="/usr/lib/perl5/5.8/html/./lib/Locale/Country.html">the Locale::Country manpage</a> and <a href="/usr/lib/perl5/5.8/html/./lib/Locale/Language.html">the Locale::Language manpage</a>.</p>
+<p>A <em>context</em> is one of the following choices:</p>
+<pre>
+    FINAL            The letter is not followed by a letter of
+                     general category L (e.g. Ll, Lt, Lu, Lm, or Lo)
+    MODERN           The mapping is only used for modern text
+    AFTER_i          The last base character was &quot;i&quot; (U+0069)</pre>
+<p>For more information about case mappings see
+<a href="http://www.unicode.org/unicode/reports/tr21/">http://www.unicode.org/unicode/reports/tr21/</a></p>
+<p>
+</p>
+<h2><a name="namedseq__"><code>namedseq()</code></a></h2>
+<pre>
+    use Unicode::UCD 'namedseq';</pre>
+<pre>
+    my $namedseq = namedseq(&quot;KATAKANA LETTER AINU P&quot;);
+    my @namedseq = namedseq(&quot;KATAKANA LETTER AINU P&quot;);
+    my %namedseq = namedseq();</pre>
+<p>If used with a single argument in a scalar context, returns the string
+consisting of the code points of the named sequence, or <code>undef</code> if no
+named sequence by that name exists.  If used with a single argument in
+a list context, returns list of the code points.  If used with no
+arguments in a list context, returns a hash with the names of the
+named sequences as the keys and the named sequences as strings as
+the values.  Otherwise, returns <code>undef</code> or empty list depending
+on the context.</p>
+<p>(New from Unicode 4.1.0)</p>
+<p>
+</p>
+<h2><a name="unicode__ucd__unicodeversion">Unicode::UCD::UnicodeVersion</a></h2>
+<p>Unicode::UCD::UnicodeVersion() returns the version of the Unicode
+Character Database, in other words, the version of the Unicode
+standard the database implements.  The version is a string
+of numbers delimited by dots (<code>'.'</code>).</p>
+<p>
+</p>
+<h2><a name="implementation_note">Implementation Note</a></h2>
+<p>The first use of <code>charinfo()</code> opens a read-only filehandle to the Unicode
+Character Database (the database is included in the Perl distribution).
+The filehandle is then kept open for further queries.  In other words,
+if you are wondering where one of your filehandles went, that's where.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Does not yet support EBCDIC platforms.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Jarkko Hietaniemi</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Unicode::UCD - Unicode character database</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

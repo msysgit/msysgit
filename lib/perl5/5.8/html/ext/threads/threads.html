@@ -1,0 +1,284 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>threads - Perl extension allowing use of interpreter based threads from perl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;threads - Perl extension allowing use of interpreter based threads from perl</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#warnings">WARNINGS</a></li>
+	<li><a href="#todo">TODO</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author_and_copyright">AUTHOR and COPYRIGHT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>threads - Perl extension allowing use of interpreter based threads from perl</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use threads;</pre>
+<pre>
+    sub start_thread {
+        print &quot;Thread started\n&quot;;
+    }</pre>
+<pre>
+    my $thread  = threads-&gt;create(&quot;start_thread&quot;,&quot;argument&quot;);
+    my $thread2 = $thread-&gt;create(sub { print &quot;I am a thread&quot;},&quot;argument&quot;);
+    my $thread3 = async { foreach (@files) { ... } };</pre>
+<pre>
+    $thread-&gt;join();
+    $thread-&gt;detach();</pre>
+<pre>
+    $thread = threads-&gt;self();
+    $thread = threads-&gt;object( $tid );</pre>
+<pre>
+    $thread-&gt;tid();
+    threads-&gt;tid();
+    threads-&gt;self-&gt;tid();</pre>
+<pre>
+    threads-&gt;yield();</pre>
+<pre>
+    threads-&gt;list();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Perl 5.6 introduced something called interpreter threads.  Interpreter
+threads are different from ``5005threads'' (the thread model of Perl
+5.005) by creating a new perl interpreter per thread and not sharing
+any data or state between threads by default.</p>
+<p>Prior to perl 5.8 this has only been available to people embedding
+perl and for emulating <code>fork()</code> on windows.</p>
+<p>The threads API is loosely based on the old Thread.pm API. It is very
+important to note that variables are not shared between threads, all
+variables are per default thread local.  To use shared variables one
+must use threads::shared.</p>
+<p>It is also important to note that you must enable threads by doing
+<code>use threads</code> as early as possible in the script itself and that it
+is not possible to enable threading inside an <code>eval &quot;&quot;</code>, <code>do</code>,
+<code>require</code>, or <code>use</code>.  In particular, if you are intending to share
+variables with threads::shared, you must <code>use threads</code> before you
+<code>use threads::shared</code> and <code>threads</code> will emit a warning if you do
+it the other way around.</p>
+<dl>
+<dt><strong><a name="item_create">$thread = threads-&gt;create(function, LIST)</a></strong>
+
+<dd>
+<p>This will create a new thread with the entry point function and give
+it LIST as parameters.  It will return the corresponding threads
+object, or <code>undef</code> if thread creation failed. The <code>new()</code> method is an
+alias for create().</p>
+</dd>
+</li>
+<dt><strong><a name="item_join">$thread-&gt;join</a></strong>
+
+<dd>
+<p>This will wait for the corresponding thread to join. When the thread
+finishes, <a href="#item_join"><code>join()</code></a> will return the return values of the entry point
+function. If the thread has been detached, an error will be thrown.</p>
+</dd>
+<dd>
+<p>The context (void, scalar or list) of the thread creation is also the
+context for join().  This means that if you intend to return an array
+from a thread, you must use <code>my ($thread) = threads-</code>new(...)&gt;, and
+that if you intend to return a scalar, you must use <code>my $thread = ...</code>.</p>
+</dd>
+<dd>
+<p>If the program exits without all other threads having been either
+joined or detached, then a warning will be issued. (A program exits
+either because one of its threads explicitly calls exit(), or in the
+case of the main thread, reaches the end of the main program file.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_detach">$thread-&gt;detach</a></strong>
+
+<dd>
+<p>Will make the thread unjoinable, and cause any eventual return value
+to be discarded.</p>
+</dd>
+</li>
+<dt><strong><a name="item_self">threads-&gt;self</a></strong>
+
+<dd>
+<p>This will return the thread object for the current thread.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tid">$thread-&gt;tid</a></strong>
+
+<dd>
+<p>This will return the id of the thread.  Thread IDs are integers, with
+the main thread in a program being 0.  Currently Perl assigns a unique
+tid to every thread ever created in your program, assigning the first
+thread to be created a tid of 1, and increasing the tid by 1 for each
+new thread that's created.</p>
+</dd>
+<dd>
+<p>NB the class method <a href="#item_tid"><code>threads-&gt;tid()</code></a> is a quick way to get the
+current thread id if you don't have your thread object handy.</p>
+</dd>
+</li>
+<dt><strong><a name="item_object">threads-&gt;object( tid )</a></strong>
+
+<dd>
+<p>This will return the thread object for the thread associated with the
+specified tid.  Returns undef if there is no thread associated with the tid
+or no tid is specified or the specified tid is undef.</p>
+</dd>
+</li>
+<dt><strong><a name="item_yield">threads-&gt;yield();</a></strong>
+
+<dd>
+<p>This is a suggestion to the OS to let this thread yield CPU time to other
+threads.  What actually happens is highly dependent upon the underlying
+thread implementation.</p>
+</dd>
+<dd>
+<p>You may do <code>use threads qw(yield)</code> then use just a bare <a href="#item_yield"><code>yield</code></a> in your
+code.</p>
+</dd>
+</li>
+<dt><strong><a name="item_list">threads-&gt;list();</a></strong>
+
+<dd>
+<p>This will return a list of all non joined, non detached threads.</p>
+</dd>
+</li>
+<dt><strong><a name="item_async_block_3b">async BLOCK;</a></strong>
+
+<dd>
+<p><code>async</code> creates a thread to execute the block immediately following
+it.  This block is treated as an anonymous sub, and so must have a
+semi-colon after the closing brace. Like <code>threads-&gt;new</code>, <code>async</code>
+returns a thread object.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="warnings">WARNINGS</a></h1>
+<dl>
+<dt><strong><a name="item_a_thread_exited_while__25d_other_threads_were_stil">A thread exited while %d other threads were still running</a></strong>
+
+<dd>
+<p>A thread (not necessarily the main thread) exited while there were
+still other threads running.  Usually it's a good idea to first collect
+the return values of the created threads by joining them, and only then
+exit from the main thread.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<p>The current implementation of threads has been an attempt to get
+a correct threading system working that could be built on, 
+and optimized, in newer versions of perl.</p>
+<p>Currently the overhead of creating a thread is rather large,
+also the cost of returning values can be large. These are areas
+were there most likely will be work done to optimize what data
+that needs to be cloned.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<dl>
+<dt><strong><a name="item_parent_2dchild_threads_2e">Parent-Child threads.</a></strong>
+
+<dd>
+<p>On some platforms it might not be possible to destroy ``parent''
+threads while there are still existing child ``threads''.</p>
+</dd>
+<dd>
+<p>This will possibly be fixed in later versions of perl.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tid_is_i32">tid is I32</a></strong>
+
+<dd>
+<p>The thread id is a 32 bit integer, it can potentially overflow.
+This might be fixed in a later version of perl.</p>
+</dd>
+</li>
+<dt><strong><a name="item_returning_objects">Returning objects</a></strong>
+
+<dd>
+<p>When you return an object the entire stash that the object is blessed
+as well.  This will lead to a large memory usage.  The ideal situation
+would be to detect the original stash if it existed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_creating_threads_inside_begin_blocks">Creating threads inside BEGIN blocks</a></strong>
+
+<dd>
+<p>Creating threads inside BEGIN blocks (or during the compilation phase
+in general) does not work.  (In Windows, trying to use <code>fork()</code> inside
+BEGIN blocks is an equally losing proposition, since it has been
+implemented in very much the same way as threads.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_perl_old_signals_are_not_threadsafe_2c_will_not_be">PERL_OLD_SIGNALS are not threadsafe, will not be.</a></strong>
+
+<dd>
+<p>If your Perl has been built with PERL_OLD_SIGNALS (one has
+to explicitly add that symbol to ccflags, see <code>perl -V</code>),
+signal handling is not threadsafe.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author_and_copyright">AUTHOR and COPYRIGHT</a></h1>
+<p>Arthur Bergman &lt;sky at nanisky.com&gt;</p>
+<p>threads is released under the same license as Perl.</p>
+<p>Thanks to</p>
+<p>Richard Soderberg &lt;perl at crystalflame.net&gt;
+Helping me out tons, trying to find reasons for races and other weird bugs!</p>
+<p>Simon Cozens &lt;simon at brecon.co.uk&gt;
+Being there to answer zillions of annoying questions</p>
+<p>Rocco Caputo &lt;troc at netrus.net&gt;</p>
+<p>Vipul Ved Prakash &lt;mail at vipul.net&gt;
+Helping with debugging.</p>
+<p>please join <a href="mailto:perl-ithreads@perl.org">perl-ithreads@perl.org</a> for more information</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/threads/shared.html">the threads::shared manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlthrtut.html">the perlthrtut manpage</a>, 
+<a href="http://www.perl.com/pub/a/2002/06/11/threads.html">http://www.perl.com/pub/a/2002/06/11/threads.html</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlcall.html">the perlcall manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlembed.html">the perlembed manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html">the perlguts manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;threads - Perl extension allowing use of interpreter based threads from perl</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

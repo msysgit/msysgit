@@ -1,0 +1,356 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlreref - Perl Regular Expressions Reference</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlreref - Perl Regular Expressions Reference</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#operators">OPERATORS</a></li>
+		<li><a href="#syntax">SYNTAX</a></li>
+		<li><a href="#escape_sequences">ESCAPE SEQUENCES</a></li>
+		<li><a href="#character_classes">CHARACTER CLASSES</a></li>
+		<li><a href="#anchors">ANCHORS</a></li>
+		<li><a href="#quantifiers">QUANTIFIERS</a></li>
+		<li><a href="#extended_constructs">EXTENDED CONSTRUCTS</a></li>
+		<li><a href="#variables">VARIABLES</a></li>
+		<li><a href="#functions">FUNCTIONS</a></li>
+		<li><a href="#terminology">TERMINOLOGY</a></li>
+		<ul>
+
+			<li><a href="#titlecase">Titlecase</a></li>
+		</ul>
+
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#thanks">THANKS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perlreref - Perl Regular Expressions Reference</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a quick reference to Perl's regular expressions.
+For full information see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>, as well
+as the <a href="#see_also">SEE ALSO</a> section in this document.</p>
+<p>
+</p>
+<h2><a name="operators">OPERATORS</a></h2>
+<pre>
+  =~ determines to which variable the regex is applied.
+     In its absence, $_ is used.</pre>
+<pre>
+        $var =~ /foo/;</pre>
+<pre>
+  !~ determines to which variable the regex is applied,
+     and negates the result of the match; it returns
+     false if the match succeeds, and true if it fails.</pre>
+<pre>
+       $var !~ /foo/;</pre>
+<pre>
+  m/pattern/igmsoxc searches a string for a pattern match,
+     applying the given options.</pre>
+<pre>
+        i  case-Insensitive
+        g  Global - all occurrences
+        m  Multiline mode - ^ and $ match internal lines
+        s  match as a Single line - . matches \n
+        o  compile pattern Once
+        x  eXtended legibility - free whitespace and comments
+        c  don't reset pos on failed matches when using /g</pre>
+<pre>
+     If 'pattern' is an empty string, the last I&lt;successfully&gt; matched
+     regex is used. Delimiters other than '/' may be used for both this
+     operator and the following ones.</pre>
+<pre>
+  qr/pattern/imsox lets you store a regex in a variable,
+     or pass one around. Modifiers as for m// and are stored
+     within the regex.</pre>
+<pre>
+  s/pattern/replacement/igmsoxe substitutes matches of
+     'pattern' with 'replacement'. Modifiers as for m//
+     with one addition:</pre>
+<pre>
+        e  Evaluate replacement as an expression</pre>
+<pre>
+     'e' may be specified multiple times. 'replacement' is interpreted
+     as a double quoted string unless a single-quote (') is the delimiter.</pre>
+<pre>
+  ?pattern? is like m/pattern/ but matches only once. No alternate
+      delimiters can be used. Must be reset with L&lt;reset|<a href="./pod/perlfunc.html">perlfunc</a>/reset&gt;.</pre>
+<p>
+</p>
+<h2><a name="syntax">SYNTAX</a></h2>
+<pre>
+   \       Escapes the character immediately following it
+   .       Matches any single character except a newline (unless /s is used)
+   ^       Matches at the beginning of the string (or line, if /m is used)
+   $       Matches at the end of the string (or line, if /m is used)
+   *       Matches the preceding element 0 or more times
+   +       Matches the preceding element 1 or more times
+   ?       Matches the preceding element 0 or 1 times
+   {...}   Specifies a range of occurrences for the element preceding it
+   [...]   Matches any one of the characters contained within the brackets
+   (...)   Groups subexpressions for capturing to $1, $2...
+   (?:...) Groups subexpressions without capturing (cluster)
+   |       Matches either the subexpression preceding or following it
+   \1, \2 ...  The text from the Nth group</pre>
+<p>
+</p>
+<h2><a name="escape_sequences">ESCAPE SEQUENCES</a></h2>
+<p>These work as in normal strings.</p>
+<pre>
+   \a       Alarm (beep)
+   \e       Escape
+   \f       Formfeed
+   \n       Newline
+   \r       Carriage return
+   \t       Tab
+   \037     Any octal ASCII value
+   \x7f     Any hexadecimal ASCII value
+   \x{263a} A wide hexadecimal value
+   \cx      Control-x
+   \N{name} A named character</pre>
+<pre>
+   \l  Lowercase next character
+   \u  Titlecase next character
+   \L  Lowercase until \E
+   \U  Uppercase until \E
+   \Q  Disable pattern metacharacters until \E
+   \E  End case modification</pre>
+<p>For Titlecase, see <a href="#titlecase">Titlecase</a>.</p>
+<p>This one works differently from normal strings:</p>
+<pre>
+   \b  An assertion, not backspace, except in a character class</pre>
+<p>
+</p>
+<h2><a name="character_classes">CHARACTER CLASSES</a></h2>
+<pre>
+   [amy]    Match 'a', 'm' or 'y'
+   [f-j]    Dash specifies &quot;range&quot;
+   [f-j-]   Dash escaped or at start or end means 'dash'
+   [^f-j]   Caret indicates &quot;match any character _except_ these&quot;</pre>
+<p>The following sequences work within or without a character class.
+The first six are locale aware, all are Unicode aware.  The default
+character class equivalent are given.  See <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a> and
+<a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a> for details.</p>
+<pre>
+   \d      A digit                     [0-9]
+   \D      A nondigit                  [^0-9]
+   \w      A word character            [a-zA-Z0-9_]
+   \W      A non-word character        [^a-zA-Z0-9_]
+   \s      A whitespace character      [ \t\n\r\f]
+   \S      A non-whitespace character  [^ \t\n\r\f]</pre>
+<pre>
+   \C      Match a byte (with Unicode, '.' matches a character)
+   \pP     Match P-named (Unicode) property
+   \p{...} Match Unicode property with long name
+   \PP     Match non-P
+   \P{...} Match lack of Unicode property with long name
+   \X      Match extended unicode sequence</pre>
+<p>POSIX character classes and their Unicode and Perl equivalents:</p>
+<pre>
+   alnum   IsAlnum              Alphanumeric
+   alpha   IsAlpha              Alphabetic
+   ascii   IsASCII              Any ASCII char
+   blank   IsSpace  [ \t]       Horizontal whitespace (GNU extension)
+   cntrl   IsCntrl              Control characters
+   digit   IsDigit  \d          Digits
+   graph   IsGraph              Alphanumeric and punctuation
+   lower   IsLower              Lowercase chars (locale and Unicode aware)
+   print   IsPrint              Alphanumeric, punct, and space
+   punct   IsPunct              Punctuation
+   space   IsSpace  [\s\ck]     Whitespace
+           IsSpacePerl   \s     Perl's whitespace definition
+   upper   IsUpper              Uppercase chars (locale and Unicode aware)
+   word    IsWord   \w          Alphanumeric plus _ (Perl extension)
+   xdigit  IsXDigit [0-9A-Fa-f] Hexadecimal digit</pre>
+<p>Within a character class:</p>
+<pre>
+    POSIX       traditional   Unicode
+    [:digit:]       \d        \p{IsDigit}
+    [:^digit:]      \D        \P{IsDigit}</pre>
+<p>
+</p>
+<h2><a name="anchors">ANCHORS</a></h2>
+<p>All are zero-width assertions.</p>
+<pre>
+   ^  Match string start (or line, if /m is used)
+   $  Match string end (or line, if /m is used) or before newline
+   \b Match word boundary (between \w and \W)
+   \B Match except at word boundary (between \w and \w or \W and \W)
+   \A Match string start (regardless of /m)
+   \Z Match string end (before optional newline)
+   \z Match absolute string end
+   \G Match where previous m//g left off</pre>
+<p>
+</p>
+<h2><a name="quantifiers">QUANTIFIERS</a></h2>
+<p>Quantifiers are greedy by default -- match the <strong>longest</strong> leftmost.</p>
+<pre>
+   Maximal Minimal Allowed range
+   ------- ------- -------------
+   {n,m}   {n,m}?  Must occur at least n times but no more than m times
+   {n,}    {n,}?   Must occur at least n times
+   {n}     {n}?    Must occur exactly n times
+   *       *?      0 or more times (same as {0,})
+   +       +?      1 or more times (same as {1,})
+   ?       ??      0 or 1 time (same as {0,1})</pre>
+<p>There is no quantifier {,n} -- that gets understood as a literal string.</p>
+<p>
+</p>
+<h2><a name="extended_constructs">EXTENDED CONSTRUCTS</a></h2>
+<pre>
+   (?#text)         A comment
+   (?imxs-imsx:...) Enable/disable option (as per m// modifiers)
+   (?=...)          Zero-width positive lookahead assertion
+   (?!...)          Zero-width negative lookahead assertion
+   (?&lt;=...)         Zero-width positive lookbehind assertion
+   (?&lt;!...)         Zero-width negative lookbehind assertion
+   (?&gt;...)          Grab what we can, prohibit backtracking
+   (?{ code })      Embedded code, return value becomes $^R
+   (??{ code })     Dynamic regex, return value used as regex
+   (?(cond)yes|no)  cond being integer corresponding to capturing parens
+   (?(cond)yes)        or a lookaround/eval zero-width assertion</pre>
+<p>
+</p>
+<h2><a name="variables">VARIABLES</a></h2>
+<pre>
+   $_    Default variable for operators to use
+   $*    Enable multiline matching (deprecated; not in 5.9.0 or later)</pre>
+<pre>
+   $&amp;    Entire matched string
+   $`    Everything prior to matched string
+   $'    Everything after to matched string</pre>
+<p>The use of those last three will slow down <strong>all</strong> regex use
+within your program. Consult <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a> for <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__last_match_start"><code>@LAST_MATCH_START</code></a>
+to see equivalent expressions that won't cause slow down.
+See also <a href="/usr/lib/perl5/5.8/html/Devel/SawAmpersand.html">the Devel::SawAmpersand manpage</a>.</p>
+<pre>
+   $1, $2 ...  hold the Xth captured expr
+   $+    Last parenthesized pattern match
+   $^N   Holds the most recently closed capture
+   $^R   Holds the result of the last (?{...}) expr
+   @-    Offsets of starts of groups. $-[0] holds start of whole match
+   @+    Offsets of ends of groups. $+[0] holds end of whole match</pre>
+<p>Captured groups are numbered according to their <em>opening</em> paren.</p>
+<p>
+</p>
+<h2><a name="functions">FUNCTIONS</a></h2>
+<pre>
+   lc          Lowercase a string
+   lcfirst     Lowercase first char of a string
+   uc          Uppercase a string
+   ucfirst     Titlecase first char of a string</pre>
+<pre>
+   pos         Return or set current match position
+   quotemeta   Quote metacharacters
+   reset       Reset ?pattern? status
+   study       Analyze string for optimizing matching</pre>
+<pre>
+   split       Use regex to split a string into parts</pre>
+<p>The first four of these are like the escape sequences <code>\L</code>, <code>\l</code>,
+<code>\U</code>, and <code>\u</code>.  For Titlecase, see <a href="#titlecase">Titlecase</a>.</p>
+<p>
+</p>
+<h2><a name="terminology">TERMINOLOGY</a></h2>
+<p>
+</p>
+<h3><a name="titlecase">Titlecase</a></h3>
+<p>Unicode concept which most often is equal to uppercase, but for
+certain characters like the German ``sharp s'' there is a difference.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Iain Truskett.</p>
+<p>This document may be distributed under the same terms as Perl itself.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<ul>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlretut.html">the perlretut manpage</a> for a tutorial on regular expressions.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlrequick.html">the perlrequick manpage</a> for a rapid tutorial.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a> for more details.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a> for details on the variables.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a> for details on the operators.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for details on the functions.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlfaq6.html">the perlfaq6 manpage</a> for FAQs on regular expressions.</p>
+</li>
+<li>
+<p>The <a href="/usr/lib/perl5/5.8/html/./ext/re/re.html">the re manpage</a> module to alter behaviour and aid
+debugging.</p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perldebug.html#debugging_regular_expressions">Debugging regular expressions in the perldebug manpage</a></p>
+</li>
+<li>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perluniintro.html">the perluniintro manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/charnames.html">the charnames manpage</a> and <a href="/usr/lib/perl5/5.8/html/./lib/locale.html">the locale manpage</a>
+for details on regexes and internationalisation.</p>
+</li>
+<li>
+<p><em>Mastering Regular Expressions</em> by Jeffrey Friedl
+(<em><a href="http://regex.info/">http://regex.info/</a></em>) for a thorough grounding and
+reference on the topic.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="thanks">THANKS</a></h1>
+<p>David P.C. Wollmann,
+Richard Soderberg,
+Sean M. Burke,
+Tom Christiansen,
+Jim Cromie,
+and
+Jeffrey Goff
+for useful advice.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlreref - Perl Regular Expressions Reference</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

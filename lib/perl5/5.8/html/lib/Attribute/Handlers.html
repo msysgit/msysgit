@@ -1,0 +1,666 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Attribute::Handlers - Simpler definition of attribute handlers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Attribute::Handlers - Simpler definition of attribute handlers</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#version">VERSION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#typed_lexicals">Typed lexicals</a></li>
+		<li><a href="#typespecific_attribute_handlers">Type-specific attribute handlers</a></li>
+		<li><a href="#noninterpretive_attribute_handlers">Non-interpretive attribute handlers</a></li>
+		<li><a href="#phasespecific_attribute_handlers">Phase-specific attribute handlers</a></li>
+		<li><a href="#attributes_as_tie_interfaces">Attributes as <code>tie</code> interfaces</a></li>
+		<ul>
+
+			<li><a href="#passing_the_tied_object_to_tie">Passing the tied object to <code>tie</code></a></li>
+		</ul>
+
+	</ul>
+
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Attribute::Handlers - Simpler definition of attribute handlers</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">VERSION</a></h1>
+<p>This document describes version 0.78 of Attribute::Handlers,
+released October 5, 2002.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        package MyClass;
+        require v5.6.0;
+        use Attribute::Handlers;
+        no warnings 'redefine';</pre>
+<pre>
+        sub Good : ATTR(SCALAR) {
+                my ($package, $symbol, $referent, $attr, $data) = @_;</pre>
+<pre>
+                # Invoked for any scalar variable with a :Good attribute,
+                # provided the variable was declared in MyClass (or
+                # a derived class) or typed to MyClass.</pre>
+<pre>
+                # Do whatever to $referent here (executed in CHECK phase).
+                ...
+        }</pre>
+<pre>
+        sub Bad : ATTR(SCALAR) {
+                # Invoked for any scalar variable with a :Bad attribute,
+                # provided the variable was declared in MyClass (or
+                # a derived class) or typed to MyClass.
+                ...
+        }</pre>
+<pre>
+        sub Good : ATTR(ARRAY) {
+                # Invoked for any array variable with a :Good attribute,
+                # provided the variable was declared in MyClass (or
+                # a derived class) or typed to MyClass.
+                ...
+        }</pre>
+<pre>
+        sub Good : ATTR(HASH) {
+                # Invoked for any hash variable with a :Good attribute,
+                # provided the variable was declared in MyClass (or
+                # a derived class) or typed to MyClass.
+                ...
+        }</pre>
+<pre>
+        sub Ugly : ATTR(CODE) {
+                # Invoked for any subroutine declared in MyClass (or a 
+                # derived class) with an :Ugly attribute.
+                ...
+        }</pre>
+<pre>
+        sub Omni : ATTR {
+                # Invoked for any scalar, array, hash, or subroutine
+                # with an :Omni attribute, provided the variable or
+                # subroutine was declared in MyClass (or a derived class)
+                # or the variable was typed to MyClass.
+                # Use ref($_[2]) to determine what kind of referent it was.
+                ...
+        }</pre>
+<pre>
+        use Attribute::Handlers autotie =&gt; { Cycle =&gt; Tie::Cycle };</pre>
+<pre>
+        my $next : Cycle(['A'..'Z']);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module, when inherited by a package, allows that package's class to
+define attribute handler subroutines for specific attributes. Variables
+and subroutines subsequently defined in that package, or in packages
+derived from that package may be given attributes with the same names as
+the attribute handler subroutines, which will then be called in one of
+the compilation phases (i.e. in a <code>BEGIN</code>, <code>CHECK</code>, <code>INIT</code>, or <code>END</code>
+block).</p>
+<p>To create a handler, define it as a subroutine with the same name as
+the desired attribute, and declare the subroutine itself with the  
+attribute <code>:ATTR</code>. For example:</p>
+<pre>
+        package LoudDecl;
+        use Attribute::Handlers;</pre>
+<pre>
+        sub Loud :ATTR {
+                my ($package, $symbol, $referent, $attr, $data, $phase) = @_;
+                print STDERR
+                        ref($referent), &quot; &quot;,
+                        *{$symbol}{NAME}, &quot; &quot;,
+                        &quot;($referent) &quot;, &quot;was just declared &quot;,
+                        &quot;and ascribed the ${attr} attribute &quot;,
+                        &quot;with data ($data)\n&quot;,
+                        &quot;in phase $phase\n&quot;;
+        }</pre>
+<p>This creates a handler for the attribute <code>:Loud</code> in the class LoudDecl.
+Thereafter, any subroutine declared with a <code>:Loud</code> attribute in the class
+LoudDecl:</p>
+<pre>
+        package LoudDecl;</pre>
+<pre>
+        sub foo: Loud {...}</pre>
+<p>causes the above handler to be invoked, and passed:</p>
+<dl>
+<dt><strong><a name="item__5b0_5d">[0]</a></strong>
+
+<dd>
+<p>the name of the package into which it was declared;</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b1_5d">[1]</a></strong>
+
+<dd>
+<p>a reference to the symbol table entry (typeglob) containing the subroutine;</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b2_5d">[2]</a></strong>
+
+<dd>
+<p>a reference to the subroutine;</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b3_5d">[3]</a></strong>
+
+<dd>
+<p>the name of the attribute;</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b4_5d">[4]</a></strong>
+
+<dd>
+<p>any data associated with that attribute;</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b5_5d">[5]</a></strong>
+
+<dd>
+<p>the name of the phase in which the handler is being invoked.</p>
+</dd>
+</li>
+</dl>
+<p>Likewise, declaring any variables with the <code>:Loud</code> attribute within the
+package:</p>
+<pre>
+        package LoudDecl;</pre>
+<pre>
+        my $foo :Loud;
+        my @foo :Loud;
+        my %foo :Loud;</pre>
+<p>will cause the handler to be called with a similar argument list (except,
+of course, that <code>$_[2]</code> will be a reference to the variable).</p>
+<p>The package name argument will typically be the name of the class into
+which the subroutine was declared, but it may also be the name of a derived
+class (since handlers are inherited).</p>
+<p>If a lexical variable is given an attribute, there is no symbol table to 
+which it belongs, so the symbol table argument (<code>$_[1]</code>) is set to the
+string <code>'LEXICAL'</code> in that case. Likewise, ascribing an attribute to
+an anonymous subroutine results in a symbol table argument of <code>'ANON'</code>.</p>
+<p>The data argument passes in the value (if any) associated with the 
+attribute. For example, if <code>&amp;foo</code> had been declared:</p>
+<pre>
+        sub foo :Loud(&quot;turn it up to 11, man!&quot;) {...}</pre>
+<p>then the string <code>&quot;turn it up to 11, man!&quot;</code> would be passed as the
+last argument.</p>
+<p>Attribute::Handlers makes strenuous efforts to convert
+the data argument (<code>$_[4]</code>) to a useable form before passing it to
+the handler (but see <a href="#noninterpretive_attribute_handlers">Non-interpretive attribute handlers</a>).
+For example, all of these:</p>
+<pre>
+        sub foo :Loud(till=&gt;ears=&gt;are=&gt;bleeding) {...}
+        sub foo :Loud(['till','ears','are','bleeding']) {...}
+        sub foo :Loud(qw/till ears are bleeding/) {...}
+        sub foo :Loud(qw/my, ears, are, bleeding/) {...}
+        sub foo :Loud(till,ears,are,bleeding) {...}</pre>
+<p>causes it to pass <code>['till','ears','are','bleeding']</code> as the handler's
+data argument. However, if the data can't be parsed as valid Perl, then
+it is passed as an uninterpreted string. For example:</p>
+<pre>
+        sub foo :Loud(my,ears,are,bleeding) {...}
+        sub foo :Loud(qw/my ears are bleeding) {...}</pre>
+<p>cause the strings <code>'my,ears,are,bleeding'</code> and <code>'qw/my ears are bleeding'</code>
+respectively to be passed as the data argument.</p>
+<p>If the attribute has only a single associated scalar data value, that value is
+passed as a scalar. If multiple values are associated, they are passed as an
+array reference. If no value is associated with the attribute, <code>undef</code> is
+passed.</p>
+<p>
+</p>
+<h2><a name="typed_lexicals">Typed lexicals</a></h2>
+<p>Regardless of the package in which it is declared, if a lexical variable is
+ascribed an attribute, the handler that is invoked is the one belonging to
+the package to which it is typed. For example, the following declarations:</p>
+<pre>
+        package OtherClass;</pre>
+<pre>
+        my LoudDecl $loudobj : Loud;
+        my LoudDecl @loudobjs : Loud;
+        my LoudDecl %loudobjex : Loud;</pre>
+<p>causes the LoudDecl::Loud handler to be invoked (even if OtherClass also
+defines a handler for <code>:Loud</code> attributes).</p>
+<p>
+</p>
+<h2><a name="typespecific_attribute_handlers">Type-specific attribute handlers</a></h2>
+<p>If an attribute handler is declared and the <code>:ATTR</code> specifier is
+given the name of a built-in type (<code>SCALAR</code>, <code>ARRAY</code>, <code>HASH</code>, or <code>CODE</code>),
+the handler is only applied to declarations of that type. For example,
+the following definition:</p>
+<pre>
+        package LoudDecl;</pre>
+<pre>
+        sub RealLoud :ATTR(SCALAR) { print &quot;Yeeeeow!&quot; }</pre>
+<p>creates an attribute handler that applies only to scalars:</p>
+<pre>
+        package Painful;
+        use base LoudDecl;</pre>
+<pre>
+        my $metal : RealLoud;           # invokes &amp;LoudDecl::RealLoud
+        my @metal : RealLoud;           # error: unknown attribute
+        my %metal : RealLoud;           # error: unknown attribute
+        sub metal : RealLoud {...}      # error: unknown attribute</pre>
+<p>You can, of course, declare separate handlers for these types as well
+(but you'll need to specify <code>no warnings 'redefine'</code> to do it quietly):</p>
+<pre>
+        package LoudDecl;
+        use Attribute::Handlers;
+        no warnings 'redefine';</pre>
+<pre>
+        sub RealLoud :ATTR(SCALAR) { print &quot;Yeeeeow!&quot; }
+        sub RealLoud :ATTR(ARRAY) { print &quot;Urrrrrrrrrr!&quot; }
+        sub RealLoud :ATTR(HASH) { print &quot;Arrrrrgggghhhhhh!&quot; }
+        sub RealLoud :ATTR(CODE) { croak &quot;Real loud sub torpedoed&quot; }</pre>
+<p>You can also explicitly indicate that a single handler is meant to be
+used for all types of referents like so:</p>
+<pre>
+        package LoudDecl;
+        use Attribute::Handlers;</pre>
+<pre>
+        sub SeriousLoud :ATTR(ANY) { warn &quot;Hearing loss imminent&quot; }</pre>
+<p>(I.e. <a href="#item_attr"><code>ATTR(ANY)</code></a> is a synonym for <code>:ATTR</code>).</p>
+<p>
+</p>
+<h2><a name="noninterpretive_attribute_handlers">Non-interpretive attribute handlers</a></h2>
+<p>Occasionally the strenuous efforts Attribute::Handlers makes to convert
+the data argument (<code>$_[4]</code>) to a useable form before passing it to
+the handler get in the way.</p>
+<p>You can turn off that eagerness-to-help by declaring
+an attribute handler with the keyword <code>RAWDATA</code>. For example:</p>
+<pre>
+        sub Raw          : ATTR(RAWDATA) {...}
+        sub Nekkid       : ATTR(SCALAR,RAWDATA) {...}
+        sub Au::Naturale : ATTR(RAWDATA,ANY) {...}</pre>
+<p>Then the handler makes absolutely no attempt to interpret the data it
+receives and simply passes it as a string:</p>
+<pre>
+        my $power : Raw(1..100);        # handlers receives &quot;1..100&quot;</pre>
+<p>
+</p>
+<h2><a name="phasespecific_attribute_handlers">Phase-specific attribute handlers</a></h2>
+<p>By default, attribute handlers are called at the end of the compilation
+phase (in a <code>CHECK</code> block). This seems to be optimal in most cases because
+most things that can be defined are defined by that point but nothing has
+been executed.</p>
+<p>However, it is possible to set up attribute handlers that are called at
+other points in the program's compilation or execution, by explicitly
+stating the phase (or phases) in which you wish the attribute handler to
+be called. For example:</p>
+<pre>
+        sub Early    :ATTR(SCALAR,BEGIN) {...}
+        sub Normal   :ATTR(SCALAR,CHECK) {...}
+        sub Late     :ATTR(SCALAR,INIT) {...}
+        sub Final    :ATTR(SCALAR,END) {...}
+        sub Bookends :ATTR(SCALAR,BEGIN,END) {...}</pre>
+<p>As the last example indicates, a handler may be set up to be (re)called in
+two or more phases. The phase name is passed as the handler's final argument.</p>
+<p>Note that attribute handlers that are scheduled for the <code>BEGIN</code> phase
+are handled as soon as the attribute is detected (i.e. before any
+subsequently defined <code>BEGIN</code> blocks are executed).</p>
+<p>
+</p>
+<h2><a name="attributes_as_tie_interfaces">Attributes as <code>tie</code> interfaces</a></h2>
+<p>Attributes make an excellent and intuitive interface through which to tie
+variables. For example:</p>
+<pre>
+        use Attribute::Handlers;
+        use Tie::Cycle;</pre>
+<pre>
+        sub UNIVERSAL::Cycle : ATTR(SCALAR) {
+                my ($package, $symbol, $referent, $attr, $data, $phase) = @_;
+                $data = [ $data ] unless ref $data eq 'ARRAY';
+                tie $$referent, 'Tie::Cycle', $data;
+        }</pre>
+<pre>
+        # and thereafter...</pre>
+<pre>
+        package main;</pre>
+<pre>
+        my $next : Cycle('A'..'Z');     # $next is now a tied variable</pre>
+<pre>
+        while (&lt;&gt;) {
+                print $next;
+        }</pre>
+<p>Note that, because the <code>Cycle</code> attribute receives its arguments in the
+<code>$data</code> variable, if the attribute is given a list of arguments, <code>$data</code>
+will consist of a single array reference; otherwise, it will consist of the
+single argument directly. Since Tie::Cycle requires its cycling values to
+be passed as an array reference, this means that we need to wrap
+non-array-reference arguments in an array constructor:</p>
+<pre>
+        $data = [ $data ] unless ref $data eq 'ARRAY';</pre>
+<p>Typically, however, things are the other way around: the tieable class expects
+its arguments as a flattened list, so the attribute looks like:</p>
+<pre>
+        sub UNIVERSAL::Cycle : ATTR(SCALAR) {
+                my ($package, $symbol, $referent, $attr, $data, $phase) = @_;
+                my @data = ref $data eq 'ARRAY' ? @$data : $data;
+                tie $$referent, 'Tie::Whatever', @data;
+        }</pre>
+<p>This software pattern is so widely applicable that Attribute::Handlers
+provides a way to automate it: specifying <code>'autotie'</code> in the
+<code>use Attribute::Handlers</code> statement. So, the cycling example,
+could also be written:</p>
+<pre>
+        use Attribute::Handlers autotie =&gt; { Cycle =&gt; 'Tie::Cycle' };</pre>
+<pre>
+        # and thereafter...</pre>
+<pre>
+        package main;</pre>
+<pre>
+        my $next : Cycle(['A'..'Z']);     # $next is now a tied variable</pre>
+<pre>
+        while (&lt;&gt;) {
+                print $next;</pre>
+<p>Note that we now have to pass the cycling values as an array reference,
+since the <code>autotie</code> mechanism passes <code>tie</code> a list of arguments as a list
+(as in the Tie::Whatever example), <em>not</em> as an array reference (as in
+the original Tie::Cycle example at the start of this section).</p>
+<p>The argument after <code>'autotie'</code> is a reference to a hash in which each key is
+the name of an attribute to be created, and each value is the class to which
+variables ascribed that attribute should be tied.</p>
+<p>Note that there is no longer any need to import the Tie::Cycle module --
+Attribute::Handlers takes care of that automagically. You can even pass
+arguments to the module's <code>import</code> subroutine, by appending them to the
+class name. For example:</p>
+<pre>
+        use Attribute::Handlers
+                autotie =&gt; { Dir =&gt; 'Tie::Dir qw(DIR_UNLINK)' };</pre>
+<p>If the attribute name is unqualified, the attribute is installed in the
+current package. Otherwise it is installed in the qualifier's package:</p>
+<pre>
+        package Here;</pre>
+<pre>
+        use Attribute::Handlers autotie =&gt; {
+                Other::Good =&gt; Tie::SecureHash, # tie attr installed in Other::
+                        Bad =&gt; Tie::Taxes,      # tie attr installed in Here::
+            UNIVERSAL::Ugly =&gt; Software::Patent # tie attr installed everywhere
+        };</pre>
+<p>Autoties are most commonly used in the module to which they actually tie, 
+and need to export their attributes to any module that calls them. To
+facilitate this, Attribute::Handlers recognizes a special ``pseudo-class'' --
+<code>__CALLER__</code>, which may be specified as the qualifier of an attribute:</p>
+<pre>
+        package Tie::Me::Kangaroo:Down::Sport;</pre>
+<pre>
+        use Attribute::Handlers autotie =&gt; { '__CALLER__::Roo' =&gt; __PACKAGE__ };</pre>
+<p>This causes Attribute::Handlers to define the <code>Roo</code> attribute in the package
+that imports the Tie::Me::Kangaroo:Down::Sport module.</p>
+<p>Note that it is important to quote the __CALLER__::Roo identifier because
+a bug in perl 5.8 will refuse to parse it and cause an unknown error.</p>
+<p>
+</p>
+<h3><a name="passing_the_tied_object_to_tie">Passing the tied object to <code>tie</code></a></h3>
+<p>Occasionally it is important to pass a reference to the object being tied
+to the TIESCALAR, TIEHASH, etc. that ties it.</p>
+<p>The <code>autotie</code> mechanism supports this too. The following code:</p>
+<pre>
+        use Attribute::Handlers autotieref =&gt; { Selfish =&gt; Tie::Selfish };
+        my $var : Selfish(@args);</pre>
+<p>has the same effect as:</p>
+<pre>
+        tie my $var, 'Tie::Selfish', @args;</pre>
+<p>But when <code>&quot;autotieref&quot;</code> is used instead of <code>&quot;autotie&quot;</code>:</p>
+<pre>
+        use Attribute::Handlers autotieref =&gt; { Selfish =&gt; Tie::Selfish };
+        my $var : Selfish(@args);</pre>
+<p>the effect is to pass the <code>tie</code> call an extra reference to the variable
+being tied:</p>
+<pre>
+        tie my $var, 'Tie::Selfish', \$var, @args;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>If the class shown in <em>SYNOPSIS</em> were placed in the MyClass.pm
+module, then the following code:</p>
+<pre>
+        package main;
+        use MyClass;</pre>
+<pre>
+        my MyClass $slr :Good :Bad(1**1-1) :Omni(-vorous);</pre>
+<pre>
+        package SomeOtherClass;
+        use base MyClass;</pre>
+<pre>
+        sub tent { 'acle' }</pre>
+<pre>
+        sub fn :Ugly(sister) :Omni('po',tent()) {...}
+        my @arr :Good :Omni(s/cie/nt/);
+        my %hsh :Good(q/bye) :Omni(q/bus/);</pre>
+<p>would cause the following handlers to be invoked:</p>
+<pre>
+        # my MyClass $slr :Good :Bad(1**1-1) :Omni(-vorous);</pre>
+<pre>
+        MyClass::Good:ATTR(SCALAR)( 'MyClass',          # class
+                                    'LEXICAL',          # no typeglob
+                                    \$slr,              # referent
+                                    'Good',             # attr name
+                                    undef               # no attr data
+                                    'CHECK',            # compiler phase
+                                  );</pre>
+<pre>
+        MyClass::Bad:ATTR(SCALAR)( 'MyClass',           # class
+                                   'LEXICAL',           # no typeglob
+                                   \$slr,               # referent
+                                   'Bad',               # attr name
+                                   0                    # eval'd attr data
+                                   'CHECK',             # compiler phase
+                                 );</pre>
+<pre>
+        MyClass::Omni:ATTR(SCALAR)( 'MyClass',          # class
+                                    'LEXICAL',          # no typeglob
+                                    \$slr,              # referent
+                                    'Omni',             # attr name
+                                    '-vorous'           # eval'd attr data
+                                    'CHECK',            # compiler phase
+                                  );</pre>
+<pre>
+        # sub fn :Ugly(sister) :Omni('po',tent()) {...}</pre>
+<pre>
+        MyClass::UGLY:ATTR(CODE)( 'SomeOtherClass',     # class
+                                  \*SomeOtherClass::fn, # typeglob
+                                  \&amp;SomeOtherClass::fn, # referent
+                                  'Ugly',               # attr name
+                                  'sister'              # eval'd attr data
+                                  'CHECK',              # compiler phase
+                                );</pre>
+<pre>
+        MyClass::Omni:ATTR(CODE)( 'SomeOtherClass',     # class
+                                  \*SomeOtherClass::fn, # typeglob
+                                  \&amp;SomeOtherClass::fn, # referent
+                                  'Omni',               # attr name
+                                  ['po','acle']         # eval'd attr data
+                                  'CHECK',              # compiler phase
+                                );</pre>
+<pre>
+        # my @arr :Good :Omni(s/cie/nt/);</pre>
+<pre>
+        MyClass::Good:ATTR(ARRAY)( 'SomeOtherClass',    # class
+                                   'LEXICAL',           # no typeglob
+                                   \@arr,               # referent
+                                   'Good',              # attr name
+                                   undef                # no attr data
+                                   'CHECK',             # compiler phase
+                                 );</pre>
+<pre>
+        MyClass::Omni:ATTR(ARRAY)( 'SomeOtherClass',    # class
+                                   'LEXICAL',           # no typeglob
+                                   \@arr,               # referent
+                                   'Omni',              # attr name
+                                   &quot;&quot;                   # eval'd attr data 
+                                   'CHECK',             # compiler phase
+                                 );</pre>
+<pre>
+        # my %hsh :Good(q/bye) :Omni(q/bus/);
+                                  
+        MyClass::Good:ATTR(HASH)( 'SomeOtherClass',     # class
+                                  'LEXICAL',            # no typeglob
+                                  \%hsh,                # referent
+                                  'Good',               # attr name
+                                  'q/bye'               # raw attr data
+                                  'CHECK',              # compiler phase
+                                );
+                        
+        MyClass::Omni:ATTR(HASH)( 'SomeOtherClass',     # class
+                                  'LEXICAL',            # no typeglob
+                                  \%hsh,                # referent
+                                  'Omni',               # attr name
+                                  'bus'                 # eval'd attr data
+                                  'CHECK',              # compiler phase
+                                );</pre>
+<p>Installing handlers into UNIVERSAL, makes them...err..universal.
+For example:</p>
+<pre>
+        package Descriptions;
+        use Attribute::Handlers;</pre>
+<pre>
+        my %name;
+        sub name { return $name{$_[2]}||*{$_[1]}{NAME} }</pre>
+<pre>
+        sub UNIVERSAL::Name :ATTR {
+                $name{$_[2]} = $_[4];
+        }</pre>
+<pre>
+        sub UNIVERSAL::Purpose :ATTR {
+                print STDERR &quot;Purpose of &quot;, &amp;name, &quot; is $_[4]\n&quot;;
+        }</pre>
+<pre>
+        sub UNIVERSAL::Unit :ATTR {
+                print STDERR &amp;name, &quot; measured in $_[4]\n&quot;;
+        }</pre>
+<p>Let's you write:</p>
+<pre>
+        use Descriptions;</pre>
+<pre>
+        my $capacity : Name(capacity)
+                     : Purpose(to store max storage capacity for files)
+                     : Unit(Gb);</pre>
+<pre>
+        package Other;</pre>
+<pre>
+        sub foo : Purpose(to foo all data before barring it) { }</pre>
+<pre>
+        # etc.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<dl>
+<dt><strong><a name="item_attr"><code>Bad attribute type: ATTR(%s)</code></a></strong>
+
+<dd>
+<p>An attribute handler was specified with an <a href="#item_attr"><code>:ATTR(ref_type)</code></a>, but the
+type of referent it was defined to handle wasn't one of the five permitted:
+<code>SCALAR</code>, <code>ARRAY</code>, <code>HASH</code>, <code>CODE</code>, or <code>ANY</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_attribute_handler__25s_doesn_27t_handle__25s_attri"><code>Attribute handler %s doesn't handle %s attributes</code></a></strong>
+
+<dd>
+<p>A handler for attributes of the specified name <em>was</em> defined, but not
+for the specified type of declaration. Typically encountered whe trying
+to apply a <code>VAR</code> attribute handler to a subroutine, or a <code>SCALAR</code>
+attribute handler to some other type of variable.</p>
+</dd>
+</li>
+<dt><strong><a name="item_declaration_of__25s_attribute_in_package__25s_may_"><code>Declaration of %s attribute in package %s may clash with future reserved word</code></a></strong>
+
+<dd>
+<p>A handler for an attributes with an all-lowercase name was declared. An
+attribute with an all-lowercase name might have a meaning to Perl
+itself some day, even though most don't yet. Use a mixed-case attribute
+name, instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_can_27t_have_two_attr_specifiers_on_one_subroutine"><code>Can't have two ATTR specifiers on one subroutine</code></a></strong>
+
+<dd>
+<p>You just can't, okay?
+Instead, put all the specifications together with commas between them
+in a single <a href="#item_attr"><code>ATTR(specification)</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_can_27t_autotie_a__25s"><code>Can't autotie a %s</code></a></strong>
+
+<dd>
+<p>You can only declare autoties for types <code>&quot;SCALAR&quot;</code>, <code>&quot;ARRAY&quot;</code>, and
+<code>&quot;HASH&quot;</code>. They're the only things (apart from typeglobs -- which are
+not declarable) that Perl can tie.</p>
+</dd>
+</li>
+<dt><strong><a name="item_internal_error_3a__25s_symbol_went_missing"><code>Internal error: %s symbol went missing</code></a></strong>
+
+<dd>
+<p>Something is rotten in the state of the program. An attributed
+subroutine ceased to exist between the point it was declared and the point
+at which its attribute <code>handler(s)</code> would have been called.</p>
+</dd>
+</li>
+<dt><strong><a name="item_won_27t_be_able_to_apply_end_handler"><code>Won't be able to apply END handler</code></a></strong>
+
+<dd>
+<p>You have defined an END handler for an attribute that is being applied
+to a lexical variable.  Since the variable may not be available during END
+this won't happen.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Damian Conway (<a href="mailto:damian@conway.org">damian@conway.org</a>)</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>There are undoubtedly serious bugs lurking somewhere in code this funky :-)
+Bug reports and other feedback are most welcome.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<pre>
+         Copyright (c) 2001, Damian Conway. All Rights Reserved.
+       This module is free software. It may be used, redistributed
+           and/or modified under the same terms as Perl itself.
+</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Attribute::Handlers - Simpler definition of attribute handlers</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

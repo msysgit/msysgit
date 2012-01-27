@@ -1,0 +1,270 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>charnames - define character names for C&lt;\N{named}&gt; string literal escapes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;charnames - define character names for C&lt;\N{named}&gt; string literal escapes</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#custom_translators">CUSTOM TRANSLATORS</a></li>
+	<li><a href="#custom_aliases">CUSTOM ALIASES</a></li>
+	<ul>
+
+		<li><a href="#anonymous_hashes">Anonymous hashes</a></li>
+		<li><a href="#alias_file">Alias file</a></li>
+		<li><a href="#alias_shortcut">Alias shortcut</a></li>
+	</ul>
+
+	<li><a href="#charnames__viacode_code_">charnames::viacode(code)</a></li>
+	<li><a href="#charnames__vianame_name_">charnames::vianame(name)</a></li>
+	<li><a href="#aliases">ALIASES</a></li>
+	<li><a href="#illegal_characters">ILLEGAL CHARACTERS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>charnames - define character names for <code>\N{named}</code> string literal escapes</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use charnames ':full';
+  print &quot;\N{GREEK SMALL LETTER SIGMA} is called sigma.\n&quot;;</pre>
+<pre>
+  use charnames ':short';
+  print &quot;\N{greek:Sigma} is an upper-case sigma.\n&quot;;</pre>
+<pre>
+  use charnames qw(cyrillic greek);
+  print &quot;\N{sigma} is Greek sigma, and \N{be} is Cyrillic b.\n&quot;;</pre>
+<pre>
+  use charnames &quot;:full&quot;, &quot;:alias&quot; =&gt; {
+    e_ACUTE =&gt; &quot;LATIN SMALL LETTER E WITH ACUTE&quot;,
+  };
+  print &quot;\N{e_ACUTE} is a small letter e with an acute.\n&quot;;</pre>
+<pre>
+  use charnames ();
+  print charnames::viacode(0x1234); # prints &quot;ETHIOPIC SYLLABLE SEE&quot;
+  printf &quot;%04X&quot;, charnames::vianame(&quot;GOTHIC LETTER AHSA&quot;); # prints &quot;10330&quot;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Pragma <code>use charnames</code> supports arguments <code>:full</code>, <code>:short</code>, script
+names and customized aliases.  If <code>:full</code> is present, for expansion of
+<code>\N{CHARNAME}</code>, the string <code>CHARNAME</code> is first looked up in the list of
+standard Unicode character names.  If <code>:short</code> is present, and
+<code>CHARNAME</code> has the form <code>SCRIPT:CNAME</code>, then <code>CNAME</code> is looked up
+as a letter in script <code>SCRIPT</code>.  If pragma <code>use charnames</code> is used
+with script name arguments, then for <code>\N{CHARNAME}</code> the name
+<code>CHARNAME</code> is looked up as a letter in the given scripts (in the
+specified order). Customized aliases are explained in <a href="#custom_aliases">CUSTOM ALIASES</a>.</p>
+<p>For lookup of <code>CHARNAME</code> inside a given script <code>SCRIPTNAME</code>
+this pragma looks for the names</p>
+<pre>
+  SCRIPTNAME CAPITAL LETTER CHARNAME
+  SCRIPTNAME SMALL LETTER CHARNAME
+  SCRIPTNAME LETTER CHARNAME</pre>
+<p>in the table of standard Unicode names.  If <code>CHARNAME</code> is lowercase,
+then the <code>CAPITAL</code> variant is ignored, otherwise the <code>SMALL</code> variant
+is ignored.</p>
+<p>Note that <code>\N{...}</code> is compile-time, it's a special form of string
+constant used inside double-quoted strings: in other words, you cannot
+use variables inside the <code>\N{...}</code>.  If you want similar run-time
+functionality, use charnames::vianame().</p>
+<p>For the C0 and C1 control characters (U+0000..U+001F, U+0080..U+009F)
+as of Unicode 3.1, there are no official Unicode names but you can use
+instead the ISO 6429 names (LINE FEED, ESCAPE, and so forth).  In
+Unicode 3.2 (as of Perl 5.8) some naming changes take place ISO 6429
+has been updated, see <a href="#aliases">ALIASES</a>.  Also note that the U+UU80, U+0081,
+U+0084, and U+0099 do not have names even in ISO 6429.</p>
+<p>Since the Unicode standard uses ``U+HHHH'', so can you: ``\N{U+263a}''
+is the Unicode smiley face, or ``\N{WHITE SMILING FACE}''.</p>
+<p>
+</p>
+<hr />
+<h1><a name="custom_translators">CUSTOM TRANSLATORS</a></h1>
+<p>The mechanism of translation of <code>\N{...}</code> escapes is general and not
+hardwired into <em>charnames.pm</em>.  A module can install custom
+translations (inside the scope which <code>use</code>s the module) with the
+following magic incantation:</p>
+<pre>
+    use charnames ();           # for $charnames::hint_bits
+    sub import {
+        shift;
+        $^H |= $charnames::hint_bits;
+        $^H{charnames} = \&amp;translator;
+    }</pre>
+<p>Here <code>translator()</code> is a subroutine which takes <code>CHARNAME</code> as an
+argument, and returns text to insert into the string instead of the
+<code>\N{CHARNAME}</code> escape.  Since the text to insert should be different
+in <code>bytes</code> mode and out of it, the function should check the current
+state of <code>bytes</code>-flag as in:</p>
+<pre>
+    use bytes ();                       # for $bytes::hint_bits
+    sub translator {
+        if ($^H &amp; $bytes::hint_bits) {
+            return bytes_translator(@_);
+        }
+        else {
+            return utf8_translator(@_);
+        }
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="custom_aliases">CUSTOM ALIASES</a></h1>
+<p>This version of charnames supports three mechanisms of adding local
+or customized aliases to standard Unicode naming conventions (:full)</p>
+<p>
+</p>
+<h2><a name="anonymous_hashes">Anonymous hashes</a></h2>
+<pre>
+    use charnames &quot;:full&quot;, &quot;:alias&quot; =&gt; {
+        e_ACUTE =&gt; &quot;LATIN SMALL LETTER E WITH ACUTE&quot;,
+        };
+    my $str = &quot;\N{e_ACUTE}&quot;;</pre>
+<p>
+</p>
+<h2><a name="alias_file">Alias file</a></h2>
+<pre>
+    use charnames &quot;:full&quot;, &quot;:alias&quot; =&gt; &quot;pro&quot;;</pre>
+<pre>
+    will try to read &quot;unicore/pro_alias.pl&quot; from the @INC path. This
+    file should return a list in plain perl:</pre>
+<pre>
+    (
+    A_GRAVE         =&gt; &quot;LATIN CAPITAL LETTER A WITH GRAVE&quot;,
+    A_CIRCUM        =&gt; &quot;LATIN CAPITAL LETTER A WITH CIRCUMFLEX&quot;,
+    A_DIAERES       =&gt; &quot;LATIN CAPITAL LETTER A WITH DIAERESIS&quot;,
+    A_TILDE         =&gt; &quot;LATIN CAPITAL LETTER A WITH TILDE&quot;,
+    A_BREVE         =&gt; &quot;LATIN CAPITAL LETTER A WITH BREVE&quot;,
+    A_RING          =&gt; &quot;LATIN CAPITAL LETTER A WITH RING ABOVE&quot;,
+    A_MACRON        =&gt; &quot;LATIN CAPITAL LETTER A WITH MACRON&quot;,
+    );</pre>
+<p>
+</p>
+<h2><a name="alias_shortcut">Alias shortcut</a></h2>
+<pre>
+    use charnames &quot;:alias&quot; =&gt; &quot;:pro&quot;;</pre>
+<pre>
+    works exactly the same as the alias pairs, only this time,
+    &quot;:full&quot; is inserted automatically as first argument (if no
+    other argument is given).</pre>
+<p>
+</p>
+<hr />
+<h1><a name="charnames__viacode_code_">charnames::viacode(code)</a></h1>
+<p>Returns the full name of the character indicated by the numeric code.
+The example</p>
+<pre>
+    print charnames::viacode(0x2722);</pre>
+<p>prints ``FOUR TEARDROP-SPOKED ASTERISK''.</p>
+<p>Returns undef if no name is known for the code.</p>
+<p>This works only for the standard names, and does not yet apply
+to custom translators.</p>
+<p>Notice that the name returned for of U+FEFF is ``ZERO WIDTH NO-BREAK
+SPACE'', not ``BYTE ORDER MARK''.</p>
+<p>
+</p>
+<hr />
+<h1><a name="charnames__vianame_name_">charnames::vianame(name)</a></h1>
+<p>Returns the code point indicated by the name.
+The example</p>
+<pre>
+    printf &quot;%04X&quot;, charnames::vianame(&quot;FOUR TEARDROP-SPOKED ASTERISK&quot;);</pre>
+<p>prints ``2722''.</p>
+<p>Returns undef if the name is unknown.</p>
+<p>This works only for the standard names, and does not yet apply
+to custom translators.</p>
+<p>
+</p>
+<hr />
+<h1><a name="aliases">ALIASES</a></h1>
+<p>A few aliases have been defined for convenience: instead of having
+to use the official names</p>
+<pre>
+    LINE FEED (LF)
+    FORM FEED (FF)
+    CARRIAGE RETURN (CR)
+    NEXT LINE (NEL)</pre>
+<p>(yes, with parentheses) one can use</p>
+<pre>
+    LINE FEED
+    FORM FEED
+    CARRIAGE RETURN
+    NEXT LINE
+    LF
+    FF
+    CR
+    NEL</pre>
+<p>One can also use</p>
+<pre>
+    BYTE ORDER MARK
+    BOM</pre>
+<p>and</p>
+<pre>
+    ZWNJ
+    ZWJ</pre>
+<p>for ZERO WIDTH NON-JOINER and ZERO WIDTH JOINER.</p>
+<p>For backward compatibility one can use the old names for
+certain C0 and C1 controls</p>
+<pre>
+    old                         new</pre>
+<pre>
+    HORIZONTAL TABULATION       CHARACTER TABULATION
+    VERTICAL TABULATION         LINE TABULATION
+    FILE SEPARATOR              INFORMATION SEPARATOR FOUR
+    GROUP SEPARATOR             INFORMATION SEPARATOR THREE
+    RECORD SEPARATOR            INFORMATION SEPARATOR TWO
+    UNIT SEPARATOR              INFORMATION SEPARATOR ONE
+    PARTIAL LINE DOWN           PARTIAL LINE FORWARD
+    PARTIAL LINE UP             PARTIAL LINE BACKWARD</pre>
+<p>but the old names in addition to giving the character
+will also give a warning about being deprecated.</p>
+<p>
+</p>
+<hr />
+<h1><a name="illegal_characters">ILLEGAL CHARACTERS</a></h1>
+<p>If you ask by name for a character that does not exist, a warning is
+given and the Unicode <em>replacement character</em> ``\x{FFFD}'' is returned.</p>
+<p>If you ask by code for a character that does not exist, no warning is
+given and <code>undef</code> is returned.  (Though if you ask for a code point
+past U+10FFFF you do get a warning.)</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Since evaluation of the translation function happens in a middle of
+compilation (of a string literal), the translation function should not
+do any <code>eval</code>s or <code>require</code>s.  This restriction should be lifted in
+a future version of Perl.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;charnames - define character names for C&lt;\N{named}&gt; string literal escapes</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

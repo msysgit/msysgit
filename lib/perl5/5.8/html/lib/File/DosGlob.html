@@ -1,0 +1,187 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File::DosGlob - DOS like globbing and then some</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::DosGlob - DOS like globbing and then some</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#exports__by_request_only_">EXPORTS (by request only)</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>File::DosGlob - DOS like globbing and then some</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    require 5.004;</pre>
+<pre>
+    # override CORE::glob in current package
+    use File::DosGlob 'glob';</pre>
+<pre>
+    # override CORE::glob in ALL packages (use with extreme caution!)
+    use File::DosGlob 'GLOBAL_glob';</pre>
+<pre>
+    @perlfiles = glob  &quot;..\\pe?l/*.p?&quot;;
+    print &lt;..\\pe?l/*.p?&gt;;</pre>
+<pre>
+    # from the command line (overrides only in main::)
+    &gt; perl -MFile::DosGlob=glob -e &quot;print &lt;../pe*/*p?&gt;&quot;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>A module that implements DOS-like globbing with a few enhancements.
+It is largely compatible with perlglob.exe (the M$ setargv.obj
+version) in all but one respect--it understands wildcards in
+directory components.</p>
+<p>For example, <code>&lt;..\\l*b\\file/*glob.p?</code>&gt; will work as expected (in
+that it will find something like '..\lib\File/DosGlob.pm' alright).
+Note that all path components are case-insensitive, and that
+backslashes and forward slashes are both accepted, and preserved.
+You may have to double the backslashes if you are putting them in
+literally, due to double-quotish parsing of the pattern by perl.</p>
+<p>Spaces in the argument delimit distinct patterns, so
+<code>glob('*.exe *.dll')</code> globs all filenames that end in <code>.exe</code>
+or <code>.dll</code>.  If you want to put in literal spaces in the glob
+pattern, you can escape them with either double quotes, or backslashes.
+e.g. <code>glob('c:/&quot;Program Files&quot;/*/*.dll')</code>, or
+<code>glob('c:/Program\ Files/*/*.dll')</code>.  The argument is tokenized using
+<code>Text::ParseWords::parse_line()</code>, so see <a href="/usr/lib/perl5/5.8/html/./lib/Text/ParseWords.html">the Text::ParseWords manpage</a> for details
+of the quoting rules used.</p>
+<p>Extending it to csh patterns is left as an exercise to the reader.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<ul>
+<li>
+<p>Mac OS (Classic) users should note a few differences. The specification 
+of pathnames in glob patterns adheres to the usual Mac OS conventions: 
+The path separator is a colon ':', not a slash '/' or backslash '\'. A 
+full path always begins with a volume name. A relative pathname on Mac 
+OS must always begin with a ':', except when specifying a file or 
+directory name in the current working directory, where the leading colon 
+is optional. If specifying a volume name only, a trailing ':' is 
+required. Due to these rules, a glob like &lt;*:&gt; will find all 
+mounted volumes, while a glob like &lt;*&gt; or &lt;:*&gt; will find 
+all files and directories in the current directory.</p>
+<p>Note that updirs in the glob pattern are resolved before the matching begins,
+i.e. a pattern like ``*HD:t?p::a*'' will be matched as ``*HD:a*''. Note also,
+that a single trailing ':' in the pattern is ignored (unless it's a volume
+name pattern like ``*HD:''), i.e. a glob like &lt;:*:&gt; will find both directories 
+<em>and</em> files (and not, as one might expect, only directories).</p>
+<p>The metachars '*', '?' and the escape char '\' are valid characters in 
+volume, directory and file names on Mac OS. Hence, if you want to match
+a '*', '?' or '\' literally, you have to escape these characters. Due to 
+perl's quoting rules, things may get a bit complicated, when you want to 
+match a string like '\*' literally, or when you want to match '\' literally, 
+but treat the immediately following character '*' as metachar. So, here's a 
+rule of thumb (applies to both single- and double-quoted strings): escape 
+each '*' or '?' or '\' with a backslash, if you want to treat them literally, 
+and then double each backslash and your are done. E.g.</p>
+<p>- Match '\*' literally</p>
+<pre>
+   escape both '\' and '*'  : '\\\*'
+   double the backslashes   : '\\\\\\*'</pre>
+<p>(Internally, the glob routine sees a '\\\*', which means that both '\' and 
+'*' are escaped.)</p>
+<p>- Match '\' literally, treat '*' as metachar</p>
+<pre>
+   escape '\' but not '*'   : '\\*'
+   double the backslashes   : '\\\\*'</pre>
+<p>(Internally, the glob routine sees a '\\*', which means that '\' is escaped and 
+'*' is not.)</p>
+<p>Note that you also have to quote literal spaces in the glob pattern, as described
+above.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="exports__by_request_only_">EXPORTS (by request only)</a></h1>
+<p><code>glob()</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Should probably be built into the core, and needs to stop
+pandering to DOS habits.  Needs a dose of optimizium too.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Gurusamy Sarathy &lt;<a href="mailto:gsar@activestate.com">gsar@activestate.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<ul>
+<li>
+<p>Support for globally overriding <code>glob()</code> (GSAR 3-JUN-98)</p>
+</li>
+<li>
+<p>Scalar context, independent iterator context fixes (GSAR 15-SEP-97)</p>
+</li>
+<li>
+<p>A few dir-vs-file optimizations result in glob importation being
+10 times faster than using perlglob.exe, and using perlglob.bat is
+only twice as slow as perlglob.exe (GSAR 28-MAY-97)</p>
+</li>
+<li>
+<p>Several cleanups prompted by lack of compatible perlglob.exe
+under Borland (GSAR 27-MAY-97)</p>
+</li>
+<li>
+<p>Initial version (GSAR 20-FEB-97)</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>perl
+
+</p>
+<p>perlglob.bat
+
+</p>
+<p>Text::ParseWords
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::DosGlob - DOS like globbing and then some</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>close - close file handle</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;close - close file handle</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>close - close file (or pipe or socket) handle</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>close FILEHANDLE
+</p>
+<p>close</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Closes the file or pipe associated with the file handle, returning
+true only if IO buffers are successfully flushed and closes the system
+file descriptor.  Closes the currently selected filehandle if the
+argument is omitted.</p>
+<p>You don't have to close FILEHANDLE if you are immediately going to do
+another <code>open</code> on it, because <code>open</code> will close it for you.  (See
+<code>open</code>.)  However, an explicit <code>close</code> on an input file resets the line
+counter (<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$.</code></a>), while the implicit close done by <code>open</code> does not.</p>
+<p>If the file handle came from a piped open, <code>close</code> will additionally
+return false if one of the other system calls involved fails, or if the
+program exits with non-zero status.  (If the only problem was that the
+program exited non-zero, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> will be set to <code>0</code>.)  Closing a pipe
+also waits for the process executing on the pipe to complete, in case you
+want to look at the output of the pipe afterwards, and
+implicitly puts the exit status value of that command into <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a>.</p>
+<p>Prematurely closing the read end of a pipe (i.e. before the process
+writing to it at the other end has closed it) will result in a
+SIGPIPE being delivered to the writer.  If the other end can't
+handle that, be sure to read all the data before closing the pipe.</p>
+<p>Example:</p>
+<pre>
+    open(OUTPUT, '|sort &gt;foo')  # pipe to sort
+        or die &quot;Can't start sort: $!&quot;;
+    #...                        # print stuff to output
+    close OUTPUT                # wait for sort to finish
+        or warn $! ? &quot;Error closing sort pipe: $!&quot;
+                   : &quot;Exit status $? from sort&quot;;
+    open(INPUT, 'foo')          # get sort's results
+        or die &quot;Can't open 'foo' for input: $!&quot;;</pre>
+<p>FILEHANDLE may be an expression whose value can be used as an indirect
+filehandle, usually the real filehandle name.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;close - close file handle</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

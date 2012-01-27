@@ -1,0 +1,237 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>inet_ntoa - load the C socket.h defines and structure manipulators</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;inet_ntoa - load the C socket.h defines and structure manipulators</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Socket, sockaddr_in, sockaddr_un, inet_aton, inet_ntoa - load the C socket.h defines and structure manipulators</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Socket;</pre>
+<pre>
+    $proto = getprotobyname('udp');
+    socket(Socket_Handle, PF_INET, SOCK_DGRAM, $proto);
+    $iaddr = gethostbyname('hishost.com');
+    $port = getservbyname('time', 'udp');
+    $sin = sockaddr_in($port, $iaddr);
+    send(Socket_Handle, 0, 0, $sin);</pre>
+<pre>
+    $proto = getprotobyname('tcp');
+    socket(Socket_Handle, PF_INET, SOCK_STREAM, $proto);
+    $port = getservbyname('smtp', 'tcp');
+    $sin = sockaddr_in($port,inet_aton(&quot;127.1&quot;));
+    $sin = sockaddr_in(7,inet_aton(&quot;localhost&quot;));
+    $sin = sockaddr_in(7,INADDR_LOOPBACK);
+    connect(Socket_Handle,$sin);</pre>
+<pre>
+    ($port, $iaddr) = sockaddr_in(getpeername(Socket_Handle));
+    $peer_host = gethostbyaddr($iaddr, AF_INET);
+    $peer_addr = inet_ntoa($iaddr);</pre>
+<pre>
+    $proto = getprotobyname('tcp');
+    socket(Socket_Handle, PF_UNIX, SOCK_STREAM, $proto);
+    unlink('/var/run/usock');
+    $sun = sockaddr_un('/var/run/usock');
+    connect(Socket_Handle,$sun);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module is just a translation of the C <em>socket.h</em> file.
+Unlike the old mechanism of requiring a translated <em>socket.ph</em>
+file, this uses the <strong>h2xs</strong> program (see the Perl source distribution)
+and your native C compiler.  This means that it has a 
+far more likely chance of getting the numbers right.  This includes
+all of the commonly used pound-defines like AF_INET, SOCK_STREAM, etc.</p>
+<p>Also, some common socket ``newline'' constants are provided: the
+constants <code>CR</code>, <code>LF</code>, and <code>CRLF</code>, as well as <code>$CR</code>, <code>$LF</code>, and
+<code>$CRLF</code>, which map to <code>\015</code>, <code>\012</code>, and <code>\015\012</code>.  If you do
+not want to use the literal characters in your programs, then use
+the constants provided here.  They are not exported by default, but can
+be imported individually, and with the <code>:crlf</code> export tag:</p>
+<pre>
+    use Socket qw(:DEFAULT :crlf);</pre>
+<p>In addition, some structure manipulation functions are available:</p>
+<dl>
+<dt><strong><a name="item_inet_aton">inet_aton HOSTNAME</a></strong>
+
+<dd>
+<p>Takes a string giving the name of a host, and translates that to an
+opaque string (if programming in C, struct in_addr). Takes arguments
+of both the 'rtfm.mit.edu' type and '18.181.0.24'. If the host name
+cannot be resolved, returns undef.  For multi-homed hosts (hosts with
+more than one address), the first address found is returned.</p>
+</dd>
+<dd>
+<p>For portability do not assume that the result of <a href="#item_inet_aton"><code>inet_aton()</code></a> is 32
+bits wide, in other words, that it would contain only the IPv4 address
+in network order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_inet_ntoa_ip_address">inet_ntoa IP_ADDRESS</a></strong>
+
+<dd>
+<p>Takes a string (an opaque string as returned by inet_aton(),
+or a v-string representing the four octets of the IPv4 address in
+network order) and translates it into a string of the form 'd.d.d.d'
+where the 'd's are numbers less than 256 (the normal human-readable
+four dotted number notation for Internet addresses).</p>
+</dd>
+</li>
+<dt><strong><a name="item_inaddr_any">INADDR_ANY</a></strong>
+
+<dd>
+<p>Note: does not return a number, but a packed string.</p>
+</dd>
+<dd>
+<p>Returns the 4-byte wildcard ip address which specifies any
+of the hosts ip addresses.  (A particular machine can have
+more than one ip address, each address corresponding to
+a particular network interface. This wildcard address
+allows you to bind to all of them simultaneously.)
+Normally equivalent to inet_aton('0.0.0.0').</p>
+</dd>
+</li>
+<dt><strong><a name="item_inaddr_broadcast">INADDR_BROADCAST</a></strong>
+
+<dd>
+<p>Note: does not return a number, but a packed string.</p>
+</dd>
+<dd>
+<p>Returns the 4-byte 'this-lan' ip broadcast address.
+This can be useful for some protocols to solicit information
+from all servers on the same LAN cable.
+Normally equivalent to inet_aton('255.255.255.255').</p>
+</dd>
+</li>
+<dt><strong><a name="item_inaddr_loopback">INADDR_LOOPBACK</a></strong>
+
+<dd>
+<p>Note - does not return a number.</p>
+</dd>
+<dd>
+<p>Returns the 4-byte loopback address.  Normally equivalent
+to inet_aton('localhost').</p>
+</dd>
+</li>
+<dt><strong><a name="item_inaddr_none">INADDR_NONE</a></strong>
+
+<dd>
+<p>Note - does not return a number.</p>
+</dd>
+<dd>
+<p>Returns the 4-byte 'invalid' ip address.  Normally equivalent
+to inet_aton('255.255.255.255').</p>
+</dd>
+</li>
+<dt><strong><a name="item_sockaddr_family">sockaddr_family SOCKADDR</a></strong>
+
+<dd>
+<p>Takes a sockaddr structure (as returned by pack_sockaddr_in(),
+<a href="#item_pack_sockaddr_un"><code>pack_sockaddr_un()</code></a> or the perl builtin functions <code>getsockname()</code> and
+<code>getpeername())</code> and returns the address family tag.  It will match the
+constant AF_INET for a sockaddr_in and AF_UNIX for a sockaddr_un.  It
+can be used to figure out what unpacker to use for a sockaddr of
+unknown type.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sockaddr_in">sockaddr_in PORT, ADDRESS</a></strong>
+
+<dt><strong><a name="item_sockaddr_in_sockaddr_in">sockaddr_in SOCKADDR_IN</a></strong>
+
+<dd>
+<p>In a list context, unpacks its SOCKADDR_IN argument and returns an array
+consisting of (PORT, ADDRESS).  In a scalar context, packs its (PORT,
+ADDRESS) arguments as a SOCKADDR_IN and returns it.  If this is confusing,
+use <code>pack_sockaddr_in()</code> and <code>unpack_sockaddr_in()</code> explicitly.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pack_sockaddr_in_port_2c_ip_address">pack_sockaddr_in PORT, IP_ADDRESS</a></strong>
+
+<dd>
+<p>Takes two arguments, a port number and an opaque string, IP_ADDRESS
+(as returned by inet_aton(), or a v-string).  Returns the sockaddr_in
+structure with those arguments packed in with AF_INET filled in.  For
+Internet domain sockets, this structure is normally what you need for
+the arguments in bind(), connect(), and send(), and is also returned
+by getpeername(), <code>getsockname()</code> and recv().</p>
+</dd>
+</li>
+<dt><strong><a name="item_unpack_sockaddr_in_sockaddr_in">unpack_sockaddr_in SOCKADDR_IN</a></strong>
+
+<dd>
+<p>Takes a sockaddr_in structure (as returned by <code>pack_sockaddr_in())</code> and
+returns an array of two elements: the port and an opaque string
+representing the IP address (you can use <code>inet_ntoa()</code> to convert the
+address to the four-dotted numeric format).  Will croak if the
+structure does not have AF_INET in the right place.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sockaddr_un">sockaddr_un PATHNAME</a></strong>
+
+<dt><strong><a name="item_sockaddr_un_sockaddr_un">sockaddr_un SOCKADDR_UN</a></strong>
+
+<dd>
+<p>In a list context, unpacks its SOCKADDR_UN argument and returns an array
+consisting of (PATHNAME).  In a scalar context, packs its PATHNAME
+arguments as a SOCKADDR_UN and returns it.  If this is confusing, use
+<a href="#item_pack_sockaddr_un"><code>pack_sockaddr_un()</code></a> and <code>unpack_sockaddr_un()</code> explicitly.
+These are only supported if your system has &lt;<em>sys/un.h</em>&gt;.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pack_sockaddr_un">pack_sockaddr_un PATH</a></strong>
+
+<dd>
+<p>Takes one argument, a pathname. Returns the sockaddr_un structure with
+that path packed in with AF_UNIX filled in. For unix domain sockets, this
+structure is normally what you need for the arguments in bind(),
+connect(), and send(), and is also returned by getpeername(),
+<code>getsockname()</code> and recv().</p>
+</dd>
+</li>
+<dt><strong><a name="item_unpack_sockaddr_un_sockaddr_un">unpack_sockaddr_un SOCKADDR_UN</a></strong>
+
+<dd>
+<p>Takes a sockaddr_un structure (as returned by <a href="#item_pack_sockaddr_un"><code>pack_sockaddr_un())</code></a>
+and returns the pathname.  Will croak if the structure does not
+have AF_UNIX in the right place.</p>
+</dd>
+</li>
+</dl>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;inet_ntoa - load the C socket.h defines and structure manipulators</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>AnyDBM_File - provide framework for multiple DBMs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;AnyDBM_File - provide framework for multiple DBMs</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#dbm_comparisons">DBM Comparisons</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>AnyDBM_File - provide framework for multiple DBMs</p>
+<p>NDBM_File, DB_File, GDBM_File, SDBM_File, ODBM_File - various DBM implementations</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use AnyDBM_File;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module is a ``pure virtual base class''--it has nothing of its own.
+It's just there to inherit from one of the various DBM packages.  It
+prefers ndbm for compatibility reasons with Perl 4, then Berkeley DB (See
+<a href="/usr/lib/perl5/5.8/html/./ext/DB_File/DB_File.html">the DB_File manpage</a>), GDBM, SDBM (which is always there--it comes with Perl), and
+finally ODBM.   This way old programs that used to use NDBM via <code>dbmopen()</code>
+can still do so, but new ones can reorder @ISA:</p>
+<pre>
+    BEGIN { @AnyDBM_File::ISA = qw(DB_File GDBM_File NDBM_File) }
+    use AnyDBM_File;</pre>
+<p>Having multiple DBM implementations makes it trivial to copy database formats:</p>
+<pre>
+    use POSIX; use NDBM_File; use DB_File;
+    tie %newhash,  'DB_File', $new_filename, O_CREAT|O_RDWR;
+    tie %oldhash,  'NDBM_File', $old_filename, 1, 0;
+    %newhash = %oldhash;</pre>
+<p>
+</p>
+<h2><a name="dbm_comparisons">DBM Comparisons</a></h2>
+<p>Here's a partial table of features the different packages offer:</p>
+<pre>
+                         odbm    ndbm    sdbm    gdbm    bsd-db
+                         ----    ----    ----    ----    ------
+ Linkage comes w/ perl   yes     yes     yes     yes     yes
+ Src comes w/ perl       no      no      yes     no      no
+ Comes w/ many unix os   yes     yes[0]  no      no      no
+ Builds ok on !unix      ?       ?       yes     yes     ?
+ Code Size               ?       ?       small   big     big
+ Database Size           ?       ?       small   big?    ok[1]
+ Speed                   ?       ?       slow    ok      fast
+ FTPable                 no      no      yes     yes     yes
+ Easy to build          N/A     N/A      yes     yes     ok[2]
+ Size limits             1k      4k      1k[3]   none    none
+ Byte-order independent  no      no      no      no      yes
+ Licensing restrictions  ?       ?       no      yes     no</pre>
+<dl>
+<dt><strong><a name="item__5b0_5d">[0]</a></strong>
+
+<dd>
+<p>on mixed universe machines, may be in the bsd compat library,
+which is often shunned.</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b1_5d">[1]</a></strong>
+
+<dd>
+<p>Can be trimmed if you compile for one access method.</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b2_5d">[2]</a></strong>
+
+<dd>
+<p>See <a href="/usr/lib/perl5/5.8/html/./ext/DB_File/DB_File.html">the DB_File manpage</a>. 
+Requires symbolic links.</p>
+</dd>
+</li>
+<dt><strong><a name="item__5b3_5d">[3]</a></strong>
+
+<dd>
+<p>By default, but can be redefined.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>dbm(3), ndbm(3), DB_File(3), <a href="/usr/lib/perl5/5.8/html/./pod/perldbmfilter.html">the perldbmfilter manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;AnyDBM_File - provide framework for multiple DBMs</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

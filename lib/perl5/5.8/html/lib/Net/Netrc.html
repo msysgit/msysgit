@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Net::Netrc - OO interface to users netrc file</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::Netrc - OO interface to users netrc file</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#the__netrc_file">THE .netrc FILE</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Net::Netrc - OO interface to users netrc file</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Net::Netrc;</pre>
+<pre>
+    $mach = Net::Netrc-&gt;lookup('some.machine');
+    $login = $mach-&gt;login;
+    ($login, $password, $account) = $mach-&gt;lpa;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Net::Netrc</code> is a class implementing a simple interface to the .netrc file
+used as by the ftp program.</p>
+<p><code>Net::Netrc</code> also implements security checks just like the ftp program,
+these checks are, first that the .netrc file must be owned by the user and 
+second the ownership permissions should be such that only the owner has
+read and write access. If these conditions are not met then a warning is
+output and the .netrc file is not read.</p>
+<p>
+</p>
+<hr />
+<h1><a name="the__netrc_file">THE .netrc FILE</a></h1>
+<p>The .netrc file contains login and initialization information used by the
+auto-login process.  It resides in the user's home directory.  The following
+tokens are recognized; they may be separated by spaces, tabs, or new-lines:</p>
+<dl>
+<dt><strong><a name="item_machine_name">machine name</a></strong>
+
+<dd>
+<p>Identify a remote machine name. The auto-login process searches
+the .netrc file for a machine token that matches the remote machine
+specified.  Once a match is made, the subsequent .netrc tokens
+are processed, stopping when the end of file is reached or an-
+other machine or a default token is encountered.</p>
+</dd>
+</li>
+<dt><strong><a name="item_default">default</a></strong>
+
+<dd>
+<p>This is the same as machine name except that default matches
+any name.  There can be only one default token, and it must be
+after all machine tokens.  This is normally used as:</p>
+</dd>
+<dd>
+<pre>
+    default login anonymous password user@site</pre>
+</dd>
+<dd>
+<p>thereby giving the user automatic anonymous login to machines
+not specified in .netrc.</p>
+</dd>
+</li>
+<dt><strong><a name="item_login_name">login name</a></strong>
+
+<dd>
+<p>Identify a user on the remote machine.  If this token is present,
+the auto-login process will initiate a login using the
+specified name.</p>
+</dd>
+</li>
+<dt><strong><a name="item_password_string">password string</a></strong>
+
+<dd>
+<p>Supply a password.  If this token is present, the auto-login
+process will supply the specified string if the remote server
+requires a password as part of the login process.</p>
+</dd>
+</li>
+<dt><strong><a name="item_account_string">account string</a></strong>
+
+<dd>
+<p>Supply an additional account password.  If this token is present,
+the auto-login process will supply the specified string
+if the remote server requires an additional account password.</p>
+</dd>
+</li>
+<dt><strong><a name="item_macdef_name">macdef name</a></strong>
+
+<dd>
+<p>Define a macro. <code>Net::Netrc</code> only parses this field to be compatible
+with <em>ftp</em>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<p>The constructor for a <code>Net::Netrc</code> object is not called new as it does not
+really create a new object. But instead is called <a href="#item_lookup"><code>lookup</code></a> as this is
+essentially what it does.</p>
+<dl>
+<dt><strong><a name="item_lookup">lookup ( MACHINE [, LOGIN ])</a></strong>
+
+<dd>
+<p>Lookup and return a reference to the entry for <code>MACHINE</code>. If <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html#item_login"><code>LOGIN</code></a> is given
+then the entry returned will have the given login. If <a href="/usr/lib/perl5/5.8/html/./pod/perlrun.html#item_login"><code>LOGIN</code></a> is not given then
+the first entry in the .netrc file for <code>MACHINE</code> will be returned.</p>
+</dd>
+<dd>
+<p>If a matching entry cannot be found, and a default entry exists, then a
+reference to the default entry is returned.</p>
+</dd>
+<dd>
+<p>If there is no matching entry found and there is no default defined, or
+no .netrc file is found, then <code>undef</code> is returned.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<dl>
+<dt><strong><a name="item_login">login ()</a></strong>
+
+<dd>
+<p>Return the login id for the netrc entry</p>
+</dd>
+</li>
+<dt><strong><a name="item_password">password ()</a></strong>
+
+<dd>
+<p>Return the password for the netrc entry</p>
+</dd>
+</li>
+<dt><strong><a name="item_account">account ()</a></strong>
+
+<dd>
+<p>Return the account information for the netrc entry</p>
+</dd>
+</li>
+<dt><strong><a name="item_lpa">lpa ()</a></strong>
+
+<dd>
+<p>Return a list of login, password and account information fir the netrc entry</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Graham Barr &lt;<a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Net/Netrc.html">the Net::Netrc manpage</a>
+<a href="/usr/lib/perl5/5.8/html/./lib/Net/Cmd.html">the Net::Cmd manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1995-1998 Graham Barr. All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<hr><p>$Id: //depot/libnet/Net/Netrc.pm#13 $</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::Netrc - OO interface to users netrc file</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

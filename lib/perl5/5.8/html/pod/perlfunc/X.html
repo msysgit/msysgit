@@ -1,0 +1,158 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>-X - a file test</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;-X - a file test</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>-X - a file test (-r, -x, etc)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>-X FILEHANDLE
+
+</p>
+<p>-X EXPR</p>
+<p>-X</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>A file test, where X is one of the letters listed below.  This unary
+operator takes one argument, either a filename or a filehandle, and
+tests the associated file to see if something is true about it.  If the
+argument is omitted, tests <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a>, except for <code>-t</code>, which tests STDIN.
+Unless otherwise documented, it returns <code>1</code> for true and <code>''</code> for false, or
+the undefined value if the file doesn't exist.  Despite the funny
+names, precedence is the same as any other named unary operator, and
+the argument may be parenthesized like any other unary operator.  The
+operator may be any of:</p>
+<pre>
+    -r  File is readable by effective uid/gid.
+    -w  File is writable by effective uid/gid.
+    -x  File is executable by effective uid/gid.
+    -o  File is owned by effective uid.</pre>
+<pre>
+    -R  File is readable by real uid/gid.
+    -W  File is writable by real uid/gid.
+    -X  File is executable by real uid/gid.
+    -O  File is owned by real uid.</pre>
+<pre>
+    -e  File exists.
+    -z  File has zero size (is empty).
+    -s  File has nonzero size (returns size in bytes).</pre>
+<pre>
+    -f  File is a plain file.
+    -d  File is a directory.
+    -l  File is a symbolic link.
+    -p  File is a named pipe (FIFO), or Filehandle is a pipe.
+    -S  File is a socket.
+    -b  File is a block special file.
+    -c  File is a character special file.
+    -t  Filehandle is opened to a tty.</pre>
+<pre>
+    -u  File has setuid bit set.
+    -g  File has setgid bit set.
+    -k  File has sticky bit set.</pre>
+<pre>
+    -T  File is an ASCII text file (heuristic guess).
+    -B  File is a &quot;binary&quot; file (opposite of -T).</pre>
+<pre>
+    -M  Script start time minus file modification time, in days.
+    -A  Same for access time.
+    -C  Same for inode change time (Unix, may differ for other platforms)</pre>
+<p>Example:</p>
+<pre>
+    while (&lt;&gt;) {
+        chomp;
+        next unless -f $_;      # ignore specials
+        #...
+    }</pre>
+<p>The interpretation of the file permission operators <code>-r</code>, <code>-R</code>,
+<code>-w</code>, <code>-W</code>, <code>-x</code>, and <code>-X</code> is by default based solely on the mode
+of the file and the uids and gids of the user.  There may be other
+reasons you can't actually read, write, or execute the file.  Such
+reasons may be for example network filesystem access controls, ACLs
+(access control lists), read-only filesystems, and unrecognized
+executable formats.</p>
+<p>Also note that, for the superuser on the local filesystems, the <code>-r</code>,
+<code>-R</code>, <code>-w</code>, and <code>-W</code> tests always return 1, and <code>-x</code> and <code>-X</code> return 1
+if any execute bit is set in the mode.  Scripts run by the superuser
+may thus need to do a <code>stat()</code> to determine the actual mode of the file,
+or temporarily set their effective uid to something else.</p>
+<p>If you are using ACLs, there is a pragma called <code>filetest</code> that may
+produce more accurate results than the bare <code>stat()</code> mode bits.
+When under the <code>use filetest 'access'</code> the above-mentioned filetests
+will test whether the permission can (not) be granted using the
+<code>access()</code> family of system calls.  Also note that the <code>-x</code> and <code>-X</code> may
+under this pragma return true even if there are no execute permission
+bits set (nor any extra execute permission ACLs).  This strangeness is
+due to the underlying system calls' definitions.  Read the
+documentation for the <code>filetest</code> pragma for more information.</p>
+<p>Note that <code>-s/a/b/</code> does not do a negated substitution.  Saying
+<code>-exp($foo)</code> still works as expected, however--only single letters
+following a minus are interpreted as file tests.</p>
+<p>The <code>-T</code> and <code>-B</code> switches work as follows.  The first block or so of the
+file is examined for odd characters such as strange control codes or
+characters with the high bit set.  If too many strange characters (&gt;30%)
+are found, it's a <code>-B</code> file; otherwise it's a <code>-T</code> file.  Also, any file
+containing null in the first block is considered a binary file.  If <code>-T</code>
+or <code>-B</code> is used on a filehandle, the current IO buffer is examined
+rather than the first block.  Both <code>-T</code> and <code>-B</code> return true on a null
+file, or a file at EOF when testing a filehandle.  Because you have to
+read a file to do the <code>-T</code> test, on most occasions you want to use a <code>-f</code>
+against the file first, as in <code>next unless -f $file &amp;&amp; -T $file</code>.</p>
+<p>If any of the file tests (or either the <code>stat</code> or <code>lstat</code> operators) are given
+the special filehandle consisting of a solitary underline, then the stat
+structure of the previous file test (or stat operator) is used, saving
+a system call.  (This doesn't work with <code>-t</code>, and you need to remember
+that <code>lstat()</code> and <code>-l</code> will leave values in the stat structure for the
+symbolic link, not the real file.)  (Also, if the stat buffer was filled by
+an <code>lstat</code> call, <code>-T</code> and <code>-B</code> will reset it with the results of <code>stat _</code>).
+Example:</p>
+<pre>
+    print &quot;Can do.\n&quot; if -r $a || -w _ || -x _;</pre>
+<pre>
+    stat($filename);
+    print &quot;Readable\n&quot; if -r _;
+    print &quot;Writable\n&quot; if -w _;
+    print &quot;Executable\n&quot; if -x _;
+    print &quot;Setuid\n&quot; if -u _;
+    print &quot;Setgid\n&quot; if -g _;
+    print &quot;Sticky\n&quot; if -k _;
+    print &quot;Text\n&quot; if -T _;
+    print &quot;Binary\n&quot; if -B _;</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;-X - a file test</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

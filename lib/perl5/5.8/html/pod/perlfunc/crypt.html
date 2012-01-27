@@ -1,0 +1,117 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>crypt - one-way passwd-style encryption</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;crypt - one-way passwd-style encryption</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>crypt - one-way passwd-style encryption</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>crypt PLAINTEXT,SALT
+     
+  </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Creates a digest string exactly like the <code>crypt(3)</code> function in the C
+library (assuming that you actually have a version there that has not
+been extirpated as a potential munitions).</p>
+<p><code>crypt()</code> is a one-way hash function.  The PLAINTEXT and SALT is turned
+into a short string, called a digest, which is returned.  The same
+PLAINTEXT and SALT will always return the same string, but there is no
+(known) way to get the original PLAINTEXT from the hash.  Small
+changes in the PLAINTEXT or SALT will result in large changes in the
+digest.</p>
+<p>There is no decrypt function.  This function isn't all that useful for
+cryptography (for that, look for <em>Crypt</em> modules on your nearby CPAN
+mirror) and the name ``crypt'' is a bit of a misnomer.  Instead it is
+primarily used to check if two pieces of text are the same without
+having to transmit or store the text itself.  An example is checking
+if a correct password is given.  The digest of the password is stored,
+not the password itself.  The user types in a password that is
+crypt()'d with the same salt as the stored digest.  If the two digests
+match the password is correct.</p>
+<p>When verifying an existing digest string you should use the digest as
+the salt (like <code>crypt($plain, $digest) eq $digest</code>).  The SALT used
+to create the digest is visible as part of the digest.  This ensures
+<code>crypt()</code> will hash the new string with the same salt as the digest.
+This allows your code to work with the standard <a href="#crypt">crypt</a> and
+with more exotic implementations.  In other words, do not assume
+anything about the returned string itself, or how many bytes in the
+digest matter.</p>
+<p>Traditionally the result is a string of 13 bytes: two first bytes of
+the salt, followed by 11 bytes from the set <code>[./0-9A-Za-z]</code>, and only
+the first eight bytes of the digest string mattered, but alternative
+hashing schemes (like MD5), higher level security schemes (like C2),
+and implementations on non-UNIX platforms may produce different
+strings.</p>
+<p>When choosing a new salt create a random two character string whose
+characters come from the set <code>[./0-9A-Za-z]</code> (like <code>join '', ('.',
+'/', 0..9, 'A'..'Z', 'a'..'z')[rand 64, rand 64]</code>).  This set of
+characters is just a recommendation; the characters allowed in
+the salt depend solely on your system's crypt library, and Perl can't
+restrict what salts <code>crypt()</code> accepts.</p>
+<p>Here's an example that makes sure that whoever runs this program knows
+their password:</p>
+<pre>
+    $pwd = (getpwuid($&lt;))[1];</pre>
+<pre>
+    system &quot;stty -echo&quot;;
+    print &quot;Password: &quot;;
+    chomp($word = &lt;STDIN&gt;);
+    print &quot;\n&quot;;
+    system &quot;stty echo&quot;;</pre>
+<pre>
+    if (crypt($word, $pwd) ne $pwd) {
+        die &quot;Sorry...\n&quot;;
+    } else {
+        print &quot;ok\n&quot;;
+    }</pre>
+<p>Of course, typing in your own password to whoever asks you
+for it is unwise.</p>
+<p>The <a href="#crypt">crypt</a> function is unsuitable for hashing large quantities
+of data, not least of all because you can't get the information
+back.  Look at the <a href="/usr/lib/perl5/5.8/html/./lib/Digest.html">the Digest manpage</a> module for more robust algorithms.</p>
+<p>If using <code>crypt()</code> on a Unicode string (which <em>potentially</em> has
+characters with codepoints above 255), Perl tries to make sense
+of the situation by trying to downgrade (a copy of the string)
+the string back to an eight-bit byte string before calling <code>crypt()</code>
+(on that copy).  If that works, good.  If not, <code>crypt()</code> dies with
+<code>Wide character in crypt</code>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;crypt - one-way passwd-style encryption</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

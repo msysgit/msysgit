@@ -1,0 +1,185 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>README.qnx - Perl version 5 on QNX</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.qnx - Perl version 5 on QNX</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#required_software_for_compiling_perl_on_qnx4">Required Software for Compiling Perl on QNX4</a></li>
+		<li><a href="#outstanding_issues_with_perl_on_qnx4">Outstanding Issues with Perl on QNX4</a></li>
+		<li><a href="#qnx_auxiliary_files">QNX auxiliary files</a></li>
+		<li><a href="#outstanding_issues_with_perl_under_qnx6">Outstanding issues with perl under QNX6</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>README.qnx - Perl version 5 on QNX</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>As of perl5.7.2 all tests pass under:</p>
+<pre>
+  QNX 4.24G
+  Watcom 10.6 with Beta/970211.wcc.update.tar.F
+  socket3r.lib Nov21 1996.</pre>
+<p>As of perl5.8.1 there is at least one test still failing.</p>
+<p>Some tests may complain under known circumstances.</p>
+<p>See below and hints/qnx.sh for more information.</p>
+<p>Under QNX 6.2.0 there are still a few tests which fail.
+See below and hints/qnx.sh for more information.</p>
+<p>
+</p>
+<h2><a name="required_software_for_compiling_perl_on_qnx4">Required Software for Compiling Perl on QNX4</a></h2>
+<p>As with many unix ports, this one depends on a few ``standard''
+unix utilities which are not necessarily standard for QNX4.</p>
+<dl>
+<dt><strong><a name="item__2fbin_2fsh">/bin/sh</a></strong>
+
+<dd>
+<p>This is used heavily by Configure and then by
+perl itself. QNX4's version is fine, but Configure
+will choke on the 16-bit version, so if you are
+running QNX 4.22, link /bin/sh to /bin32/ksh</p>
+</dd>
+</li>
+<dt><strong><a name="item_ar">ar</a></strong>
+
+<dd>
+<p>This is the standard unix library builder.
+We use wlib. With Watcom 10.6, when wlib is
+linked as ``ar'', it behaves like ar and all is
+fine. Under 9.5, a cover is required. One is
+included in ../qnx</p>
+</dd>
+</li>
+<dt><strong><a name="item_nm">nm</a></strong>
+
+<dd>
+<p>This is used (optionally) by configure to list
+the contents of libraries. I will generate
+a cover function on the fly in the UU directory.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cpp">cpp</a></strong>
+
+<dd>
+<p>Configure and perl need a way to invoke a C
+preprocessor. I have created a simple cover
+for cc which does the right thing. Without this,
+Configure will create its own wrapper which works,
+but it doesn't handle some of the command line arguments
+that perl will throw at it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_make">make</a></strong>
+
+<dd>
+<p>You really need GNU make to compile this. GNU make
+ships by default with QNX 4.23, but you can get it
+from quics for earlier versions.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="outstanding_issues_with_perl_on_qnx4">Outstanding Issues with Perl on QNX4</a></h2>
+<p>There is no support for dynamically linked libraries in QNX4.</p>
+<p>If you wish to compile with the Socket extension, you need
+to have the TCP/IP toolkit, and you need to make sure that
+-lsocket locates the correct copy of socket3r.lib. Beware
+that the Watcom compiler ships with a stub version of
+socket3r.lib which has very little functionality. Also
+beware the order in which wlink searches directories for
+libraries. You may have /usr/lib/socket3r.lib pointing to
+the correct library, but wlink may pick up
+/usr/watcom/10.6/usr/lib/socket3r.lib instead. Make sure
+they both point to the correct library, that is,
+/usr/tcptk/current/usr/lib/socket3r.lib.</p>
+<p>The following tests may report errors under QNX4:</p>
+<p>ext/Cwd/Cwd.t will complain if `pwd` and cwd don't give
+the same results. cwd calls `fullpath -t`, so if you
+cd `fullpath -t` before running the test, it will
+pass.</p>
+<p>lib/File/Find/taint.t will complain if '.' is in your
+PATH. The PATH test is triggered because cwd calls
+`fullpath -t`.</p>
+<p>ext/IO/lib/IO/t/io_sock.t: Subtests 14 and 22 are skipped due to
+the fact that the functionality to read back the non-blocking
+status of a socket is not implemented in QNX's TCP/IP. This has
+been reported to QNX and it may work with later versions of
+TCP/IP.</p>
+<p>t/io/tell.t: Subtest 27 is failing. We are still investigating.</p>
+<p>
+</p>
+<h2><a name="qnx_auxiliary_files">QNX auxiliary files</a></h2>
+<p>The files in the ``qnx'' directory are:</p>
+<dl>
+<dt><strong><a name="item_qnx_2far">qnx/ar</a></strong>
+
+<dd>
+<p>A script that emulates the standard unix archive (aka library)
+utility.  Under Watcom 10.6, ar is linked to wlib and provides the
+expected interface. With Watcom 9.5, a cover function is
+required. This one is fairly crude but has proved adequate for
+compiling perl.</p>
+</dd>
+</li>
+<dt><strong><a name="item_qnx_2fcpp">qnx/cpp</a></strong>
+
+<dd>
+<p>A script that provides C preprocessing functionality.  Configure can
+generate a similar cover, but it doesn't handle all the command-line
+options that perl throws at it. This might be reasonably placed in
+/usr/local/bin.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="outstanding_issues_with_perl_under_qnx6">Outstanding issues with perl under QNX6</a></h2>
+<p>The following tests are still failing for Perl 5.8.1 under QNX 6.2.0:</p>
+<pre>
+  op/sprintf.........................FAILED at test 91
+  lib/Benchmark......................FAILED at test 26</pre>
+<p>This is due to a bug in the C library's printf routine.
+printf(``'%e''', 0. ) produces '0.000000e+0', but ANSI requires
+'0.000000e+00'. QNX has acknowledged the bug.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Norton T. Allen (<a href="mailto:allen@huarp.harvard.edu">allen@huarp.harvard.edu</a>)</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.qnx - Perl version 5 on QNX</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

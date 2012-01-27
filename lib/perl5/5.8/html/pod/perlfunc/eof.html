@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>eof - test a filehandle for its end</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;eof - test a filehandle for its end</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>eof - test a filehandle for its end</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>eof FILEHANDLE
+
+
+</p>
+<p>eof ()</p>
+<p>eof</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Returns 1 if the next read on FILEHANDLE will return end of file, or if
+FILEHANDLE is not open.  FILEHANDLE may be an expression whose value
+gives the real filehandle.  (Note that this function actually
+reads a character and then <code>ungetc</code>s it, so isn't very useful in an
+interactive context.)  Do not read from a terminal file (or call
+<code>eof(FILEHANDLE)</code> on it) after end-of-file is reached.  File types such
+as terminals may lose the end-of-file condition if you do.</p>
+<p>An <code>eof</code> without an argument uses the last file read.  Using <code>eof()</code>
+with empty parentheses is very different.  It refers to the pseudo file
+formed from the files listed on the command line and accessed via the
+<code>&lt;&gt;</code> operator.  Since <code>&lt;&gt;</code> isn't explicitly opened,
+as a normal filehandle is, an <code>eof()</code> before <code>&lt;&gt;</code> has been
+used will cause <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> to be examined to determine if input is
+available.   Similarly, an <code>eof()</code> after <code>&lt;&gt;</code> has returned
+end-of-file will assume you are processing another <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a> list,
+and if you haven't set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__argv"><code>@ARGV</code></a>, will read input from <code>STDIN</code>;
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#i_o_operators">I/O Operators in the perlop manpage</a>.</p>
+<p>In a <code>while (&lt;&gt;)</code> loop, <code>eof</code> or <code>eof(ARGV)</code> can be used to
+detect the end of each file, <code>eof()</code> will only detect the end of the
+last file.  Examples:</p>
+<pre>
+    # reset line numbering on each input file
+    while (&lt;&gt;) {
+        next if /^\s*#/;        # skip comments
+        print &quot;$.\t$_&quot;;
+    } continue {
+        close ARGV  if eof;     # Not eof()!
+    }</pre>
+<pre>
+    # insert dashes just before last line of last file
+    while (&lt;&gt;) {
+        if (eof()) {            # check for end of last file
+            print &quot;--------------\n&quot;;
+        }
+        print;
+        last if eof();          # needed if we're reading from a terminal
+    }</pre>
+<p>Practical hint: you almost never need to use <code>eof</code> in Perl, because the
+input operators typically return <code>undef</code> when they run out of data, or if
+there was an error.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;eof - test a filehandle for its end</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

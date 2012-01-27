@@ -1,0 +1,285 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>XSLoader - Dynamically load C libraries into Perl code</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;XSLoader - Dynamically load C libraries into Perl code</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#version">VERSION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#migration_from_dynaloader">Migration from <code>DynaLoader</code></a></li>
+		<li><a href="#backward_compatible_boilerplate">Backward compatible boilerplate</a></li>
+	</ul>
+
+	<li><a href="#order_of_initialization__early_load__">Order of initialization: early <code>load()</code></a></li>
+	<ul>
+
+		<li><a href="#the_most_hairy_case">The most hairy case</a></li>
+	</ul>
+
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#limitations">LIMITATIONS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>XSLoader - Dynamically load C libraries into Perl code</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">VERSION</a></h1>
+<p>Version 0.06</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    package YourPackage;
+    use XSLoader;</pre>
+<pre>
+    XSLoader::load 'YourPackage', $YourPackage::VERSION;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module defines a standard <em>simplified</em> interface to the dynamic
+linking mechanisms available on many platforms.  Its primary purpose is
+to implement cheap automatic dynamic loading of Perl modules.</p>
+<p>For a more complicated interface, see <a href="/usr/lib/perl5/5.8/html/./ext/DynaLoader/DynaLoader.html">the DynaLoader manpage</a>.  Many (most)
+features of <code>DynaLoader</code> are not implemented in <code>XSLoader</code>, like for
+example the <code>dl_load_flags</code>, not honored by <code>XSLoader</code>.</p>
+<p>
+</p>
+<h2><a name="migration_from_dynaloader">Migration from <code>DynaLoader</code></a></h2>
+<p>A typical module using <a href="/usr/lib/perl5/5.8/html/./ext/DynaLoader/DynaLoader.html">DynaLoader</a> starts like this:</p>
+<pre>
+    package YourPackage;
+    require DynaLoader;</pre>
+<pre>
+    our @ISA = qw( OnePackage OtherPackage DynaLoader );
+    our $VERSION = '0.01';
+    bootstrap YourPackage $VERSION;</pre>
+<p>Change this to</p>
+<pre>
+    package YourPackage;
+    use XSLoader;</pre>
+<pre>
+    our @ISA = qw( OnePackage OtherPackage );
+    our $VERSION = '0.01';
+    XSLoader::load 'YourPackage', $VERSION;</pre>
+<p>In other words: replace <code>require DynaLoader</code> by <code>use XSLoader</code>, remove
+<code>DynaLoader</code> from <code>@ISA</code>, change <code>bootstrap</code> by <code>XSLoader::load</code>.  Do not
+forget to quote the name of your package on the <code>XSLoader::load</code> line,
+and add comma (<code>,</code>) before the arguments (<code>$VERSION</code> above).</p>
+<p>Of course, if <code>@ISA</code> contained only <code>DynaLoader</code>, there is no need to have
+the <code>@ISA</code> assignment at all; moreover, if instead of <code>our</code> one uses the
+more backward-compatible</p>
+<pre>
+    use vars qw($VERSION @ISA);</pre>
+<p>one can remove this reference to <code>@ISA</code> together with the <code>@ISA</code> assignment.</p>
+<p>If no <code>$VERSION</code> was specified on the <code>bootstrap</code> line, the last line becomes</p>
+<pre>
+    XSLoader::load 'YourPackage';</pre>
+<p>
+</p>
+<h2><a name="backward_compatible_boilerplate">Backward compatible boilerplate</a></h2>
+<p>If you want to have your cake and eat it too, you need a more complicated
+boilerplate.</p>
+<pre>
+    package YourPackage;
+    use vars qw($VERSION @ISA);</pre>
+<pre>
+    @ISA = qw( OnePackage OtherPackage );
+    $VERSION = '0.01';
+    eval {
+       require XSLoader;
+       XSLoader::load('YourPackage', $VERSION);
+       1;
+    } or do {
+       require DynaLoader;
+       push @ISA, 'DynaLoader';
+       bootstrap YourPackage $VERSION;
+    };</pre>
+<p>The parentheses about <a href="#item_load"><code>XSLoader::load()</code></a> arguments are needed since we replaced
+<code>use XSLoader</code> by <code>require</code>, so the compiler does not know that a function
+<a href="#item_load"><code>XSLoader::load()</code></a> is present.</p>
+<p>This boilerplate uses the low-overhead <code>XSLoader</code> if present; if used with
+an antic Perl which has no <code>XSLoader</code>, it falls back to using <code>DynaLoader</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="order_of_initialization__early_load__">Order of initialization: early <a href="#item_load"><code>load()</code></a></a></h1>
+<p><em>Skip this section if the XSUB functions are supposed to be called from other
+modules only; read it only if you call your XSUBs from the code in your module,
+or have a <code>BOOT:</code> section in your XS file (see <a href="/usr/lib/perl5/5.8/html/./pod/perlxs.html#the_boot__keyword">The BOOT: Keyword in the perlxs manpage</a>).
+What is described here is equally applicable to the <a href="/usr/lib/perl5/5.8/html/./ext/DynaLoader/DynaLoader.html">DynaLoader</a>
+interface.</em></p>
+<p>A sufficiently complicated module using XS would have both Perl code (defined
+in <em>YourPackage.pm</em>) and XS code (defined in <em>YourPackage.xs</em>).  If this
+Perl code makes calls into this XS code, and/or this XS code makes calls to
+the Perl code, one should be careful with the order of initialization.</p>
+<p>The call to <a href="#item_load"><code>XSLoader::load()</code></a> (or <code>bootstrap()</code>) has three side effects:</p>
+<ul>
+<li>
+<p>if <code>$VERSION</code> was specified, a sanity check is done to ensure that the
+versions of the <em>.pm</em> and the (compiled) <em>.xs</em> parts are compatible;</p>
+</li>
+<li>
+<p>the XSUBs are made accessible from Perl;</p>
+</li>
+<li>
+<p>if a <code>BOOT:</code> section was present in the <em>.xs</em> file, the code there is called.</p>
+</li>
+</ul>
+<p>Consequently, if the code in the <em>.pm</em> file makes calls to these XSUBs, it is
+convenient to have XSUBs installed before the Perl code is defined; for
+example, this makes prototypes for XSUBs visible to this Perl code.
+Alternatively, if the <code>BOOT:</code> section makes calls to Perl functions (or
+uses Perl variables) defined in the <em>.pm</em> file, they must be defined prior to
+the call to <a href="#item_load"><code>XSLoader::load()</code></a> (or <code>bootstrap()</code>).</p>
+<p>The first situation being much more frequent, it makes sense to rewrite the
+boilerplate as</p>
+<pre>
+    package YourPackage;
+    use XSLoader;
+    use vars qw($VERSION @ISA);</pre>
+<pre>
+    BEGIN {
+       @ISA = qw( OnePackage OtherPackage );
+       $VERSION = '0.01';</pre>
+<pre>
+       # Put Perl code used in the BOOT: section here</pre>
+<pre>
+       XSLoader::load 'YourPackage', $VERSION;
+    }</pre>
+<pre>
+    # Put Perl code making calls into XSUBs here</pre>
+<p>
+</p>
+<h2><a name="the_most_hairy_case">The most hairy case</a></h2>
+<p>If the interdependence of your <code>BOOT:</code> section and Perl code is
+more complicated than this (e.g., the <code>BOOT:</code> section makes calls to Perl
+functions which make calls to XSUBs with prototypes), get rid of the <code>BOOT:</code>
+section altogether.  Replace it with a function <code>onBOOT()</code>, and call it like
+this:</p>
+<pre>
+    package YourPackage;
+    use XSLoader;
+    use vars qw($VERSION @ISA);</pre>
+<pre>
+    BEGIN {
+       @ISA = qw( OnePackage OtherPackage );
+       $VERSION = '0.01';
+       XSLoader::load 'YourPackage', $VERSION;
+    }</pre>
+<pre>
+    # Put Perl code used in onBOOT() function here; calls to XSUBs are
+    # prototype-checked.</pre>
+<pre>
+    onBOOT;</pre>
+<pre>
+    # Put Perl initialization code assuming that XS is initialized here</pre>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<dl>
+<dt><strong><a name="item_can_27t_find__27_25s_27_symbol_in__25s">Can't find '%s' symbol in %s</a></strong>
+
+<dd>
+<p><strong>(F)</strong> The bootstrap symbol could not be found in the extension module.</p>
+</dd>
+</li>
+<dt><strong><a name="item_can_27t_load__27_25s_27_for_module__25s_3a__25s">Can't load '%s' for module %s: %s</a></strong>
+
+<dd>
+<p><strong>(F)</strong> The loading or initialisation of the extension module failed.
+The detailed error follows.</p>
+</dd>
+</li>
+<dt><strong><a name="item_undefined_symbols_present_after_loading__25s_3a__2">Undefined symbols present after loading %s: %s</a></strong>
+
+<dd>
+<p><strong>(W)</strong> As the message says, some symbols stay undefined although the
+extension module was correctly loaded and initialised. The list of undefined
+symbols follows.</p>
+</dd>
+</li>
+<dt><strong><a name="item_load">XSLoader::load('Your::Module', $Your::Module::VERSION)</a></strong>
+
+<dd>
+<p><strong>(F)</strong> You tried to invoke <a href="#item_load"><code>load()</code></a> without any argument. You must supply
+a module name, and optionally its version.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="limitations">LIMITATIONS</a></h1>
+<p>To reduce the overhead as much as possible, only one possible location
+is checked to find the extension DLL (this location is where <code>make install</code>
+would put the DLL).  If not found, the search for the DLL is transparently
+delegated to <code>DynaLoader</code>, which looks for the DLL along the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> list.</p>
+<p>In particular, this is applicable to the structure of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> used for testing
+not-yet-installed extensions.  This means that running uninstalled extensions
+may have much more overhead than running the same extensions after
+<code>make install</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Please report any bugs or feature requests via the <code>perlbug(1)</code> utility.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/DynaLoader/DynaLoader.html">the DynaLoader manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Ilya Zakharevich originally extracted <code>XSLoader</code> from <code>DynaLoader</code>.</p>
+<p>CPAN version is currently maintained by S&eacute;bastien Aperghis-Tramoni
+&lt;<a href="mailto:sebastien@aperghis.net">sebastien@aperghis.net</a>&gt;</p>
+<p>Previous maintainer was Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;XSLoader - Dynamically load C libraries into Perl code</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

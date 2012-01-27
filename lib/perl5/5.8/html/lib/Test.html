@@ -1,0 +1,593 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test - provides a simple framework for writing test scripts</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test - provides a simple framework for writing test scripts</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#quick_start_guide">QUICK START GUIDE</a></li>
+	<ul>
+
+		<li><a href="#functions">Functions</a></li>
+	</ul>
+
+	<li><a href="#test_types">TEST TYPES</a></li>
+	<li><a href="#onfail">ONFAIL</a></li>
+	<li><a href="#bugs_and_caveats">BUGS and CAVEATS</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test - provides a simple framework for writing test scripts</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use strict;
+  use Test;</pre>
+<pre>
+  # use a BEGIN block so we print our plan before MyModule is loaded
+  BEGIN { plan tests =&gt; 14, todo =&gt; [3,4] }</pre>
+<pre>
+  # load your module...
+  use MyModule;</pre>
+<pre>
+  # Helpful notes.  All note-lines must start with a &quot;#&quot;.
+  print &quot;# I'm testing MyModule version $MyModule::VERSION\n&quot;;</pre>
+<pre>
+  ok(0); # failure
+  ok(1); # success</pre>
+<pre>
+  ok(0); # ok, expected failure (see todo list, above)
+  ok(1); # surprise success!</pre>
+<pre>
+  ok(0,1);             # failure: '0' ne '1'
+  ok('broke','fixed'); # failure: 'broke' ne 'fixed'
+  ok('fixed','fixed'); # success: 'fixed' eq 'fixed'
+  ok('fixed',qr/x/);   # success: 'fixed' =~ qr/x/</pre>
+<pre>
+  ok(sub { 1+1 }, 2);  # success: '2' eq '2'
+  ok(sub { 1+1 }, 3);  # failure: '2' ne '3'</pre>
+<pre>
+  my @list = (0,0);
+  ok @list, 3, &quot;\@list=&quot;.join(',',@list);      #extra notes
+  ok 'segmentation fault', '/(?i)success/';    #regex match</pre>
+<pre>
+  skip(
+    $^O =~ m/MSWin/ ? &quot;Skip if MSWin&quot; : 0,  # whether to skip
+    $foo, $bar  # arguments just like for ok(...)
+  );
+  skip(
+    $^O =~ m/MSWin/ ? 0 : &quot;Skip unless MSWin&quot;,  # whether to skip
+    $foo, $bar  # arguments just like for ok(...)
+  );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module simplifies the task of writing test files for Perl modules,
+such that their output is in the format that
+<a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">Test::Harness</a> expects to see.</p>
+<p>
+</p>
+<hr />
+<h1><a name="quick_start_guide">QUICK START GUIDE</a></h1>
+<p>To write a test for your new (and probably not even done) module, create
+a new file called <em>t/test.t</em> (in a new <em>t</em> directory). If you have
+multiple test files, to test the ``foo'', ``bar'', and ``baz'' feature sets,
+then feel free to call your files <em>t/foo.t</em>, <em>t/bar.t</em>, and
+<em>t/baz.t</em></p>
+<p>
+</p>
+<h2><a name="functions">Functions</a></h2>
+<p>This module defines three public functions, <a href="#item_plan"><code>plan(...)</code></a>, <a href="#item_ok"><code>ok(...)</code></a>,
+and <a href="#item_skip"><code>skip(...)</code></a>.  By default, all three are exported by
+the <code>use Test;</code> statement.</p>
+<dl>
+<dt><strong><a name="item_plan"><code>plan(...)</code></a></strong>
+
+<dd>
+<pre>
+     BEGIN { plan %theplan; }</pre>
+</dd>
+<dd>
+<p>This should be the first thing you call in your test script.  It
+declares your testing plan, how many there will be, if any of them
+should be allowed to fail, and so on.</p>
+</dd>
+<dd>
+<p>Typical usage is just:</p>
+</dd>
+<dd>
+<pre>
+     use Test;
+     BEGIN { plan tests =&gt; 23 }</pre>
+</dd>
+<dd>
+<p>These are the things that you can put in the parameters to plan:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_tests__3d_3e_number"><code>tests =&gt; number</code></a></strong>
+
+<dd>
+<p>The number of tests in your script.
+This means all <a href="#item_ok"><code>ok()</code></a> and <a href="#item_skip"><code>skip()</code></a> calls.</p>
+</dd>
+</li>
+<dt><strong><a name="item_todo__3d_3e__5b1_2c5_2c14_5d"><code>todo =&gt; [1,5,14]</code></a></strong>
+
+<dd>
+<p>A reference to a list of tests which are allowed to fail.
+See <a href="#item_todo_tests">TODO TESTS</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_onfail__3d_3e_sub__7b__2e_2e_2e__7d"><code>onfail =&gt; sub { ... }</code></a></strong>
+
+<dt><strong><a name="item_onfail__3d_3e__5c_26some_sub"><code>onfail =&gt; \&amp;some_sub</code></a></strong>
+
+<dd>
+<p>A subroutine reference to be run at the end of the test script, if
+any of the tests fail.  See <a href="#onfail">ONFAIL</a>.</p>
+</dd>
+</li>
+</dl>
+<p>You must call <a href="#item_plan"><code>plan(...)</code></a> once and only once.  You should call it
+in a <code>BEGIN {...}</code> block, like so:</p>
+<pre>
+     BEGIN { plan tests =&gt; 23 }</pre>
+<dt><strong><a name="item_ok"><code>ok(...)</code></a></strong>
+
+<dd>
+<pre>
+  ok(1 + 1 == 2);
+  ok($have, $expect);
+  ok($have, $expect, $diagnostics);</pre>
+</dd>
+<dd>
+<p>This function is the reason for <code>Test</code>'s existence.  It's
+the basic function that
+handles printing ``<a href="#item_ok"><code>ok</code></a>'' or ``<code>not ok</code>'', along with the
+current test number.  (That's what <code>Test::Harness</code> wants to see.)</p>
+</dd>
+<dd>
+<p>In its most basic usage, <a href="#item_ok"><code>ok(...)</code></a> simply takes a single scalar
+expression.  If its value is true, the test passes; if false,
+the test fails.  Examples:</p>
+</dd>
+<dd>
+<pre>
+    # Examples of ok(scalar)</pre>
+</dd>
+<dd>
+<pre>
+    ok( 1 + 1 == 2 );           # ok if 1 + 1 == 2
+    ok( $foo =~ /bar/ );        # ok if $foo contains 'bar'
+    ok( baz($x + $y) eq 'Armondo' );    # ok if baz($x + $y) returns
+                                        # 'Armondo'
+    ok( @a == @b );             # ok if @a and @b are the same length</pre>
+</dd>
+<dd>
+<p>The expression is evaluated in scalar context.  So the following will
+work:</p>
+</dd>
+<dd>
+<pre>
+    ok( @stuff );                       # ok if @stuff has any elements
+    ok( !grep !defined $_, @stuff );    # ok if everything in @stuff is
+                                        # defined.</pre>
+</dd>
+<dd>
+<p>A special case is if the expression is a subroutine reference (in either
+<code>sub {...}</code> syntax or <code>\&amp;foo</code> syntax).  In
+that case, it is executed and its value (true or false) determines if
+the test passes or fails.  For example,</p>
+</dd>
+<dd>
+<pre>
+    ok( sub {   # See whether sleep works at least passably
+      my $start_time = time;
+      sleep 5;
+      time() - $start_time  &gt;= 4
+    });</pre>
+</dd>
+<dd>
+<p>In its two-argument form, <a href="#item_ok"><code>ok(arg1, arg2)</code></a> compares the two
+scalar values to see if they match.  They match if both are undefined,
+or if <em>arg2</em> is a regex that matches <em>arg1</em>, or if they compare equal
+with <code>eq</code>.</p>
+</dd>
+<dd>
+<pre>
+    # Example of ok(scalar, scalar)</pre>
+</dd>
+<dd>
+<pre>
+    ok( &quot;this&quot;, &quot;that&quot; );               # not ok, 'this' ne 'that'
+    ok( &quot;&quot;, undef );                    # not ok, &quot;&quot; is defined</pre>
+</dd>
+<dd>
+<p>The second argument is considered a regex if it is either a regex
+object or a string that looks like a regex.  Regex objects are
+constructed with the qr// operator in recent versions of perl.  A
+string is considered to look like a regex if its first and last
+characters are ``/'', or if the first character is ``m''
+and its second and last characters are both the
+same non-alphanumeric non-whitespace character.  These regexp</p>
+</dd>
+<dd>
+<p>Regex examples:</p>
+</dd>
+<dd>
+<pre>
+    ok( 'JaffO', '/Jaff/' );    # ok, 'JaffO' =~ /Jaff/
+    ok( 'JaffO', 'm|Jaff|' );   # ok, 'JaffO' =~ m|Jaff|
+    ok( 'JaffO', qr/Jaff/ );    # ok, 'JaffO' =~ qr/Jaff/;
+    ok( 'JaffO', '/(?i)jaff/ ); # ok, 'JaffO' =~ /jaff/i;</pre>
+</dd>
+<dd>
+<p>If either (or both!) is a subroutine reference, it is run and used
+as the value for comparing.  For example:</p>
+</dd>
+<dd>
+<pre>
+    ok sub {
+        open(OUT, &quot;&gt;x.dat&quot;) || die $!;
+        print OUT &quot;\x{e000}&quot;;
+        close OUT;
+        my $bytecount = -s 'x.dat';
+        unlink 'x.dat' or warn &quot;Can't unlink : $!&quot;;
+        return $bytecount;
+      },
+      4
+    ;</pre>
+</dd>
+<dd>
+<p>The above test passes two values to <a href="#item_ok"><code>ok(arg1, arg2)</code></a> -- the first 
+a coderef, and the second is the number 4.  Before <a href="#item_ok"><code>ok</code></a> compares them,
+it calls the coderef, and uses its return value as the real value of
+this parameter. Assuming that <code>$bytecount</code> returns 4, <a href="#item_ok"><code>ok</code></a> ends up
+testing <code>4 eq 4</code>.  Since that's true, this test passes.</p>
+</dd>
+<dd>
+<p>Finally, you can append an optional third argument, in
+<a href="#item_ok"><code>ok(arg1,arg2, note)</code></a>, where <em>note</em> is a string value that
+will be printed if the test fails.  This should be some useful
+information about the test, pertaining to why it failed, and/or
+a description of the test.  For example:</p>
+</dd>
+<dd>
+<pre>
+    ok( grep($_ eq 'something unique', @stuff), 1,
+        &quot;Something that should be unique isn't!\n&quot;.
+        '@stuff = '.join ', ', @stuff
+      );</pre>
+</dd>
+<dd>
+<p>Unfortunately, a note cannot be used with the single argument
+style of <a href="#item_ok"><code>ok()</code></a>.  That is, if you try <a href="#item_ok"><code>ok(arg1, note)</code></a>, then
+<code>Test</code> will interpret this as <a href="#item_ok"><code>ok(arg1, arg2)</code></a>, and probably
+end up testing <code>arg1 eq arg2</code> -- and that's not what you want!</p>
+</dd>
+<dd>
+<p>All of the above special cases can occasionally cause some
+problems.  See <a href="#bugs_and_caveats">BUGS and CAVEATS</a>.</p>
+</dd>
+<dt><strong><a name="item_skip"><code>skip(skip_if_true, args...)</code></a></strong>
+
+<dd>
+<p>This is used for tests that under some conditions can be skipped.  It's
+basically equivalent to:</p>
+</dd>
+<dd>
+<pre>
+  if( $skip_if_true ) {
+    ok(1);
+  } else {
+    ok( args... );
+  }</pre>
+</dd>
+<dd>
+<p>...except that the <a href="#item_ok"><code>ok(1)</code></a> emits not just ``<code>ok testnum</code>'' but
+actually ``<code>ok testnum # skip_if_true_value</code>''.</p>
+</dd>
+<dd>
+<p>The arguments after the <em>skip_if_true</em> are what is fed to <a href="#item_ok"><code>ok(...)</code></a> if
+this test isn't skipped.</p>
+</dd>
+<dd>
+<p>Example usage:</p>
+</dd>
+<dd>
+<pre>
+  my $if_MSWin =
+    $^O =~ m/MSWin/ ? 'Skip if under MSWin' : '';</pre>
+</dd>
+<dd>
+<pre>
+  # A test to be skipped if under MSWin (i.e., run except under MSWin)
+  skip($if_MSWin, thing($foo), thing($bar) );</pre>
+</dd>
+<dd>
+<p>Or, going the other way:</p>
+</dd>
+<dd>
+<pre>
+  my $unless_MSWin =
+    $^O =~ m/MSWin/ ? '' : 'Skip unless under MSWin';</pre>
+</dd>
+<dd>
+<pre>
+  # A test to be skipped unless under MSWin (i.e., run only under MSWin)
+  skip($unless_MSWin, thing($foo), thing($bar) );</pre>
+</dd>
+<dd>
+<p>The tricky thing to remember is that the first parameter is true if
+you want to <em>skip</em> the test, not <em>run</em> it; and it also doubles as a
+note about why it's being skipped. So in the first codeblock above, read
+the code as ``skip if MSWin -- (otherwise) test whether <code>thing($foo)</code> is
+<code>thing($bar)</code>'' or for the second case, ``skip unless MSWin...''.</p>
+</dd>
+<dd>
+<p>Also, when your <em>skip_if_reason</em> string is true, it really should (for
+backwards compatibility with older Test.pm versions) start with the
+string ``Skip'', as shown in the above examples.</p>
+</dd>
+<dd>
+<p>Note that in the above cases, <code>thing($foo)</code> and <code>thing($bar)</code>
+<em>are</em> evaluated -- but as long as the <code>skip_if_true</code> is true,
+then we <a href="#item_skip"><code>skip(...)</code></a> just tosses out their value (i.e., not
+bothering to treat them like values to <a href="#item_ok"><code>ok(...)</code></a>.  But if
+you need to <em>not</em> eval the arguments when skipping the
+test, use
+this format:</p>
+</dd>
+<dd>
+<pre>
+  skip( $unless_MSWin,
+    sub {
+      # This code returns true if the test passes.
+      # (But it doesn't even get called if the test is skipped.)
+      thing($foo) eq thing($bar)
+    }
+  );</pre>
+</dd>
+<dd>
+<p>or even this, which is basically equivalent:</p>
+</dd>
+<dd>
+<pre>
+  skip( $unless_MSWin,
+    sub { thing($foo) }, sub { thing($bar) }
+  );</pre>
+</dd>
+<dd>
+<p>That is, both are like this:</p>
+</dd>
+<dd>
+<pre>
+  if( $unless_MSWin ) {
+    ok(1);  # but it actually appends &quot;# $unless_MSWin&quot;
+            #  so that Test::Harness can tell it's a skip
+  } else {
+    # Not skipping, so actually call and evaluate...
+    ok( sub { thing($foo) }, sub { thing($bar) } );
+  }</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="test_types">TEST TYPES</a></h1>
+<ul>
+<li><strong><a name="item_normal_tests">NORMAL TESTS</a></strong>
+
+<p>These tests are expected to succeed.  Usually, most or all of your tests
+are in this category.  If a normal test doesn't succeed, then that
+means that something is <em>wrong</em>.</p>
+</li>
+<li><strong><a name="item_skipped_tests">SKIPPED TESTS</a></strong>
+
+<p>The <a href="#item_skip"><code>skip(...)</code></a> function is for tests that might or might not be
+possible to run, depending
+on the availability of platform-specific features.  The first argument
+should evaluate to true (think ``yes, please skip'') if the required
+feature is <em>not</em> available.  After the first argument, <a href="#item_skip"><code>skip(...)</code></a> works
+exactly the same way as <a href="#item_ok"><code>ok(...)</code></a> does.</p>
+</li>
+<li><strong><a name="item_todo_tests">TODO TESTS</a></strong>
+
+<p>TODO tests are designed for maintaining an <strong>executable TODO list</strong>.
+These tests are <em>expected to fail.</em>  If a TODO test does succeed,
+then the feature in question shouldn't be on the TODO list, now
+should it?</p>
+<p>Packages should NOT be released with succeeding TODO tests.  As soon
+as a TODO test starts working, it should be promoted to a normal test,
+and the newly working feature should be documented in the release
+notes or in the change log.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="onfail">ONFAIL</a></h1>
+<pre>
+  BEGIN { plan test =&gt; 4, onfail =&gt; sub { warn &quot;CALL 911!&quot; } }</pre>
+<p>Although test failures should be enough, extra diagnostics can be
+triggered at the end of a test run.  <code>onfail</code> is passed an array ref
+of hash refs that describe each test failure.  Each hash will contain
+at least the following fields: <code>package</code>, <code>repetition</code>, and
+<code>result</code>.  (You shouldn't rely on any other fields being present.)  If the test
+had an expected value or a diagnostic (or ``note'') string, these will also be
+included.</p>
+<p>The <em>optional</em> <code>onfail</code> hook might be used simply to print out the
+version of your package and/or how to report problems.  It might also
+be used to generate extremely sophisticated diagnostics for a
+particularly bizarre test failure.  However it's not a panacea.  Core
+dumps or other unrecoverable errors prevent the <code>onfail</code> hook from
+running.  (It is run inside an <code>END</code> block.)  Besides, <code>onfail</code> is
+probably over-kill in most cases.  (Your test code should be simpler
+than the code it is testing, yes?)</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs_and_caveats">BUGS and CAVEATS</a></h1>
+<ul>
+<li>
+<p><a href="#item_ok"><code>ok(...)</code></a>'s special handing of strings which look like they might be
+regexes can also cause unexpected behavior.  An innocent:</p>
+<pre>
+    ok( $fileglob, '/path/to/some/*stuff/' );</pre>
+<p>will fail, since Test.pm considers the second argument to be a regex!
+The best bet is to use the one-argument form:</p>
+<pre>
+    ok( $fileglob eq '/path/to/some/*stuff/' );</pre>
+</li>
+<li>
+<p><a href="#item_ok"><code>ok(...)</code></a>'s use of string <code>eq</code> can sometimes cause odd problems
+when comparing
+numbers, especially if you're casting a string to a number:</p>
+<pre>
+    $foo = &quot;1.0&quot;;
+    ok( $foo, 1 );      # not ok, &quot;1.0&quot; ne 1</pre>
+<p>Your best bet is to use the single argument form:</p>
+<pre>
+    ok( $foo == 1 );    # ok &quot;1.0&quot; == 1</pre>
+</li>
+<li>
+<p>As you may have inferred from the above documentation and examples,
+<a href="#item_ok"><code>ok</code></a>'s prototype is <code>($;$$)</code> (and, incidentally, <a href="#item_skip"><code>skip</code></a>'s is
+<code>($;$$$)</code>). This means, for example, that you can do <code>ok @foo, @bar</code>
+to compare the <em>size</em> of the two arrays. But don't be fooled into
+thinking that <code>ok @foo, @bar</code> means a comparison of the contents of two
+arrays -- you're comparing <em>just</em> the number of elements of each. It's
+so easy to make that mistake in reading <code>ok @foo, @bar</code> that you might
+want to be very explicit about it, and instead write <code>ok scalar(@foo),
+scalar(@bar)</code>.</p>
+</li>
+<li>
+<p>This almost definitely doesn't do what you expect:</p>
+<pre>
+     ok $thingy-&gt;can('some_method');</pre>
+<p>Why?  Because <code>can</code> returns a coderef to mean ``yes it can (and the
+method is this...)'', and then <a href="#item_ok"><code>ok</code></a> sees a coderef and thinks you're
+passing a function that you want it to call and consider the truth of
+the result of!  I.e., just like:</p>
+<pre>
+     ok $thingy-&gt;can('some_method')-&gt;();</pre>
+<p>What you probably want instead is this:</p>
+<pre>
+     ok $thingy-&gt;can('some_method') &amp;&amp; 1;</pre>
+<p>If the <code>can</code> returns false, then that is passed to <a href="#item_ok"><code>ok</code></a>.  If it
+returns true, then the larger expression <code>&lt;
+$thingy-</code>can('some_method')&nbsp;&amp;&amp;&nbsp;1&nbsp;&gt; &gt;&gt; returns 1, which <a href="#item_ok"><code>ok</code></a> sees as
+a simple signal of success, as you would expect.</p>
+</li>
+<li>
+<p>The syntax for <a href="#item_skip"><code>skip</code></a> is about the only way it can be, but it's still
+quite confusing.  Just start with the above examples and you'll
+be okay.</p>
+<p>Moreover, users may expect this:</p>
+<pre>
+  skip $unless_mswin, foo($bar), baz($quux);</pre>
+<p>to not evaluate <code>foo($bar)</code> and <code>baz($quux)</code> when the test is being
+skipped.  But in reality, they <em>are</em> evaluated, but <a href="#item_skip"><code>skip</code></a> just won't
+bother comparing them if <code>$unless_mswin</code> is true.</p>
+<p>You could do this:</p>
+<pre>
+  skip $unless_mswin, sub{foo($bar)}, sub{baz($quux)};</pre>
+<p>But that's not terribly pretty.  You may find it simpler or clearer in
+the long run to just do things like this:</p>
+<pre>
+  if( $^O =~ m/MSWin/ ) {
+    print &quot;# Yay, we're under $^O\n&quot;;
+    ok foo($bar), baz($quux);
+    ok thing($whatever), baz($stuff);
+    ok blorp($quux, $whatever);
+    ok foo($barzbarz), thang($quux);
+  } else {
+    print &quot;# Feh, we're under $^O.  Watch me skip some tests...\n&quot;;
+    for(1 .. 4) { skip &quot;Skip unless under MSWin&quot; }
+  }</pre>
+<p>But be quite sure that <a href="#item_ok"><code>ok</code></a> is called exactly as many times in the
+first block as <a href="#item_skip"><code>skip</code></a> is called in the second block.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<p>If <code>PERL_TEST_DIFF</code> environment variable is set, it will be used as a
+command for comparing unexpected multiline results.  If you have GNU
+diff installed, you might want to set <code>PERL_TEST_DIFF</code> to <code>diff -u</code>.
+If you don't have a suitable program, you might install the
+<code>Text::Diff</code> module and then set <code>PERL_TEST_DIFF</code> to be <code>perl
+-MText::Diff -e 'print diff(@ARGV)'</code>.  If <code>PERL_TEST_DIFF</code> isn't set
+but the <code>Algorithm::Diff</code> module is available, then it will be used
+to show the differences in multiline results.</p>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>A past developer of this module once said that it was no longer being
+actively developed.  However, rumors of its demise were greatly
+exaggerated.  Feedback and suggestions are quite welcome.</p>
+<p>Be aware that the main value of this module is its simplicity.  Note
+that there are already more ambitious modules out there, such as
+<a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a> and <a href="/usr/lib/perl5/5.8/html/Test/Unit.html">the Test::Unit manpage</a>.</p>
+<p>Some earlier versions of this module had docs with some confusing
+typoes in the description of <a href="#item_skip"><code>skip(...)</code></a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a></p>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Simple.html">the Test::Simple manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a>, <a href="/usr/lib/perl5/5.8/html/Devel/Cover.html">the Devel::Cover manpage</a></p>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Builder.html">the Test::Builder manpage</a> for building your own testing library.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Unit.html">the Test::Unit manpage</a> is an interesting XUnit-style testing library.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Inline.html">the Test::Inline manpage</a> and <em>SelfTest</em> let you embed tests in code.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (c) 1998-2000 Joshua Nathaniel Pritikin.  All rights reserved.</p>
+<p>Copyright (c) 2001-2002 Michael G. Schwern.</p>
+<p>Copyright (c) 2002-2004 and counting Sean M. Burke.</p>
+<p>Current maintainer: Sean M. Burke. &lt;<a href="mailto:sburke@cpan.org">sburke@cpan.org</a>&gt;</p>
+<p>This package is free software and is provided ``as is'' without express
+or implied warranty.  It may be used, redistributed and/or modified
+under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test - provides a simple framework for writing test scripts</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

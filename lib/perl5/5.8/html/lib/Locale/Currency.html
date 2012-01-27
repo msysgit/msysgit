@@ -1,0 +1,248 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Locale::Currency - ISO three letter codes for currency identification</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Currency - ISO three letter codes for currency identification</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#conversion_routines">CONVERSION ROUTINES</a></li>
+	<li><a href="#query_routines">QUERY ROUTINES</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Locale::Currency - ISO three letter codes for currency identification (ISO 4217)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Locale::Currency;</pre>
+<pre>
+    $curr = code2currency('usd');     # $curr gets 'US Dollar'
+    $code = currency2code('Euro');    # $code gets 'eur'</pre>
+<pre>
+    @codes   = all_currency_codes();
+    @names   = all_currency_names();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Locale::Currency</code> module provides access to the ISO three-letter
+codes for identifying currencies and funds, as defined in ISO 4217.
+You can either access the codes via the <a href="#conversion_routines">conversion routines</a>
+(described below),
+or with the two functions which return lists of all currency codes or
+all currency names.</p>
+<p>There are two special codes defined by the standard which aren't
+understood by this module:</p>
+<dl>
+<dt><strong><a name="item_xts">XTS</a></strong>
+
+<dd>
+<p>Specifically reserved for testing purposes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xxx">XXX</a></strong>
+
+<dd>
+<p>For transactions where no currency is involved.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="conversion_routines">CONVERSION ROUTINES</a></h1>
+<p>There are two conversion routines: <a href="#item_code2currency"><code>code2currency()</code></a> and <a href="#item_currency2code"><code>currency2code()</code></a>.</p>
+<dl>
+<dt><strong><a name="item_code2currency"><code>code2currency()</code></a></strong>
+
+<dd>
+<p>This function takes a three letter currency code and returns a string
+which contains the name of the currency identified. If the code is
+not a valid currency code, as defined by ISO 4217, then <code>undef</code>
+will be returned.</p>
+</dd>
+<dd>
+<pre>
+    $curr = code2currency($code);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_currency2code"><code>currency2code()</code></a></strong>
+
+<dd>
+<p>This function takes a currency name and returns the corresponding
+three letter currency code, if such exists.
+If the argument could not be identified as a currency name,
+then <code>undef</code> will be returned.</p>
+</dd>
+<dd>
+<pre>
+    $code = currency2code('French Franc');</pre>
+</dd>
+<dd>
+<p>The case of the currency name is not important.
+See the section <a href="#known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a> below.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="query_routines">QUERY ROUTINES</a></h1>
+<p>There are two function which can be used to obtain a list of all
+currency codes, or all currency names:</p>
+<dl>
+<dt><strong><a name="item_all_currency_codes"><code>all_currency_codes()</code></a></strong>
+
+<dd>
+<p>Returns a list of all three-letter currency codes.
+The codes are guaranteed to be all lower-case,
+and not in any particular order.</p>
+</dd>
+</li>
+<dt><strong><a name="item_all_currency_names"><code>all_currency_names()</code></a></strong>
+
+<dd>
+<p>Returns a list of all currency names for which there is a corresponding
+three-letter currency code. The names are capitalised, and not returned
+in any particular order.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>The following example illustrates use of the <a href="#item_code2currency"><code>code2currency()</code></a> function.
+The user is prompted for a currency code, and then told the corresponding
+currency name:</p>
+<pre>
+    $| = 1;    # turn off buffering</pre>
+<pre>
+    print &quot;Enter currency code: &quot;;
+    chop($code = &lt;STDIN&gt;);
+    $curr = code2currency($code);
+    if (defined $curr)
+    {
+        print &quot;$code = $curr\n&quot;;
+    }
+    else
+    {
+        print &quot;'$code' is not a valid currency code!\n&quot;;
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="known_bugs_and_limitations">KNOWN BUGS AND LIMITATIONS</a></h1>
+<ul>
+<li>
+<p>In the current implementation, all data is read in when the
+module is loaded, and then held in memory.
+A lazy implementation would be more memory friendly.</p>
+</li>
+<li>
+<p>This module also includes the special codes which are
+not for a currency, such as Gold, Platinum, etc.
+This might cause a problem if you're using this module
+to display a list of currencies.
+Let Neil know if this does cause a problem, and we can
+do something about it.</p>
+</li>
+<li>
+<p>ISO 4217 also defines a numeric code for each currency.
+Currency codes are not currently supported by this module,
+in the same way Locale::Country supports multiple codesets.</p>
+</li>
+<li>
+<p>There are three cases where there is more than one
+code for the same currency name.
+Kwacha has two codes: mwk for Malawi, and zmk for Zambia.
+The Russian Ruble has two codes: rub and rur.
+The Belarussian Ruble has two codes: byr and byb.
+The <a href="#item_currency2code"><code>currency2code()</code></a> function only returns one code, so
+you might not get back the code you expected.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_locale_3a_3acountry">Locale::Country</a></strong>
+
+<dd>
+<p>ISO codes for identification of country (ISO 3166).</p>
+</dd>
+</li>
+<dt><strong><a name="item_locale_3a_3ascript">Locale::Script</a></strong>
+
+<dd>
+<p>ISO codes for identification of written scripts (ISO 15924).</p>
+</dd>
+</li>
+<dt><strong><a name="item_iso_4217_3a1995">ISO 4217:1995</a></strong>
+
+<dd>
+<p>Code for the representation of currencies and funds.</p>
+</dd>
+</li>
+<dt><strong><a name="item_http_3a_2f_2fwww_2ebsi_2dglobal_2ecom_2fiso4217cur"><a href="http://www.bsi-global.com/iso4217currency">http://www.bsi-global.com/iso4217currency</a></a></strong>
+
+<dd>
+<p>Official web page for the ISO 4217 maintenance agency.
+This has the latest list of codes, in MS Word format. Boo.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Michael Hennecke &lt;<a href="mailto:hennecke@rz.uni-karlsruhe.de">hennecke@rz.uni-karlsruhe.de</a>&gt;
+and
+Neil Bowers &lt;<a href="mailto:neil@bowers.com">neil@bowers.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (C) 2002-2004, Neil Bowers.</p>
+<p>Copyright (c) 2001 Michael Hennecke and
+Canon Research Centre Europe (CRE).</p>
+<p>This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Locale::Currency - ISO three letter codes for currency identification</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,198 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Pod::PlainText - Convert POD data to formatted ASCII text</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::PlainText - Convert POD data to formatted ASCII text</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#restrictions">RESTRICTIONS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Pod::PlainText - Convert POD data to formatted ASCII text</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Pod::PlainText;
+    my $parser = Pod::PlainText-&gt;new (sentence =&gt; 0, width =&gt; 78);</pre>
+<pre>
+    # Read POD from STDIN and write to STDOUT.
+    $parser-&gt;parse_from_filehandle;</pre>
+<pre>
+    # Read POD from file.pod and write to file.txt.
+    $parser-&gt;parse_from_file ('file.pod', 'file.txt');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Pod::PlainText is a module that can convert documentation in the POD format (the
+preferred language for documenting Perl) into formatted ASCII.  It uses no
+special formatting controls or codes whatsoever, and its output is therefore
+suitable for nearly any device.</p>
+<p>As a derived class from Pod::Parser, Pod::PlainText supports the same methods and
+interfaces.  See <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Parser.html">the Pod::Parser manpage</a> for all the details; briefly, one creates a
+new parser with <code>Pod::PlainText-&gt;new()</code> and then calls either
+<code>parse_from_filehandle()</code> or parse_from_file().</p>
+<p><code>new()</code> can take options, in the form of key/value pairs, that control the
+behavior of the parser.  The currently recognized options are:</p>
+<dl>
+<dt><strong><a name="item_alt">alt</a></strong>
+
+<dd>
+<p>If set to a true value, selects an alternate output format that, among other
+things, uses a different heading style and marks <code>=item</code> entries with a
+colon in the left margin.  Defaults to false.</p>
+</dd>
+</li>
+<dt><strong><a name="item_indent">indent</a></strong>
+
+<dd>
+<p>The number of spaces to indent regular text, and the default indentation for
+<code>=over</code> blocks.  Defaults to 4.</p>
+</dd>
+</li>
+<dt><strong><a name="item_loose">loose</a></strong>
+
+<dd>
+<p>If set to a true value, a blank line is printed after a <code>=head1</code> heading.
+If set to false (the default), no blank line is printed after <code>=head1</code>,
+although one is still printed after <code>=head2</code>.  This is the default because
+it's the expected formatting for manual pages; if you're formatting
+arbitrary text documents, setting this to true may result in more pleasing
+output.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sentence">sentence</a></strong>
+
+<dd>
+<p>If set to a true value, Pod::PlainText will assume that each sentence ends in two
+spaces, and will try to preserve that spacing.  If set to false, all
+consecutive whitespace in non-verbatim paragraphs is compressed into a
+single space.  Defaults to true.</p>
+</dd>
+</li>
+<dt><strong><a name="item_width">width</a></strong>
+
+<dd>
+<p>The column at which to wrap text on the right-hand side.  Defaults to 76.</p>
+</dd>
+</li>
+</dl>
+<p>The standard Pod::Parser method <code>parse_from_filehandle()</code> takes up to two
+arguments, the first being the file handle to read POD from and the second
+being the file handle to write the formatted output to.  The first defaults
+to STDIN if not given, and the second defaults to STDOUT.  The method
+<code>parse_from_file()</code> is almost identical, except that its two arguments are the
+input and output disk files instead.  See <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Parser.html">the Pod::Parser manpage</a> for the specific
+details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<dl>
+<dt><strong><a name="item_bizarre_space_in_item">Bizarre space in item</a></strong>
+
+<dd>
+<p>(W) Something has gone wrong in internal <code>=item</code> processing.  This message
+indicates a bug in Pod::PlainText; you should never see it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_can_27t_open__25s_for_reading_3a__25s">Can't open %s for reading: %s</a></strong>
+
+<dd>
+<p>(F) Pod::PlainText was invoked via the compatibility mode <code>pod2text()</code> interface
+and the input file it was given could not be opened.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unknown_escape_3a__25s">Unknown escape: %s</a></strong>
+
+<dd>
+<p>(W) The POD source contained an <code>E&lt;&gt;</code> escape that Pod::PlainText didn't
+know about.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unknown_sequence_3a__25s">Unknown sequence: %s</a></strong>
+
+<dd>
+<p>(W) The POD source contained a non-standard internal sequence (something of
+the form <code>X&lt;&gt;</code>) that Pod::PlainText didn't know about.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unmatched__3dback">Unmatched =back</a></strong>
+
+<dd>
+<p>(W) Pod::PlainText encountered a <code>=back</code> command that didn't correspond to an
+<code>=over</code> command.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="restrictions">RESTRICTIONS</a></h1>
+<p>Embedded Ctrl-As (octal 001) in the input will be mapped to spaces on
+output, due to an internal implementation detail.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>This is a replacement for an earlier Pod::Text module written by Tom
+Christiansen.  It has a revamped interface, since it now uses Pod::Parser,
+but an interface roughly compatible with the old Pod::Text::pod2text()
+function is still available.  Please change to the new calling convention,
+though.</p>
+<p>The original Pod::Text contained code to do formatting via termcap
+sequences, although it wasn't turned on by default and it was problematic to
+get it to work at all.  This rewrite doesn't even try to do that, but a
+subclass of it does.  Look for <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Text/Termcap.html">Pod::Text::Termcap</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Pod/Parser.html">Pod::Parser</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Text/Termcap.html">Pod::Text::Termcap</a>,
+<code>pod2text(1)</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Please report bugs using <a href="http://rt.cpan.org">http://rt.cpan.org</a>.</p>
+<p>Russ Allbery &lt;<a href="mailto:rra@stanford.edu">rra@stanford.edu</a>&gt;, based <em>very</em> heavily on the
+original Pod::Text by Tom Christiansen &lt;<a href="mailto:tchrist@mox.perl.com">tchrist@mox.perl.com</a>&gt; and
+its conversion to Pod::Parser by Brad Appleton
+&lt;<a href="mailto:bradapp@enteract.com">bradapp@enteract.com</a>&gt;.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::PlainText - Convert POD data to formatted ASCII text</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

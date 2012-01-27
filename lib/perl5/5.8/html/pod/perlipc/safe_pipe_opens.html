@@ -1,0 +1,140 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Safe Pipe Opens</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Safe Pipe Opens</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#safe_pipe_opens">Safe Pipe Opens</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="safe_pipe_opens">Safe Pipe Opens</a></h2>
+<p>Another interesting approach to IPC is making your single program go
+multiprocess and communicate between (or even amongst) yourselves.  The
+<code>open()</code> function will accept a file argument of either <code>&quot;-|&quot;</code> or <code>&quot;|-&quot;</code>
+to do a very interesting thing: it forks a child connected to the
+filehandle you've opened.  The child is running the same program as the
+parent.  This is useful for safely opening a file when running under an
+assumed UID or GID, for example.  If you open a pipe <em>to</em> minus, you can
+write to the filehandle you opened and your kid will find it in his
+STDIN.  If you open a pipe <em>from</em> minus, you can read from the filehandle
+you opened whatever your kid writes to his STDOUT.</p>
+<pre>
+    use English '-no_match_vars';
+    my $sleep_count = 0;</pre>
+<pre>
+    do {
+        $pid = open(KID_TO_WRITE, &quot;|-&quot;);
+        unless (defined $pid) {
+            warn &quot;cannot fork: $!&quot;;
+            die &quot;bailing out&quot; if $sleep_count++ &gt; 6;
+            sleep 10;
+        }
+    } until defined $pid;</pre>
+<pre>
+    if ($pid) {  # parent
+        print KID_TO_WRITE @some_data;
+        close(KID_TO_WRITE) || warn &quot;kid exited $?&quot;;
+    } else {     # child
+        ($EUID, $EGID) = ($UID, $GID); # suid progs only
+        open (FILE, &quot;&gt; /safe/file&quot;)
+            || die &quot;can't open /safe/file: $!&quot;;
+        while (&lt;STDIN&gt;) {
+            print FILE; # child's STDIN is parent's KID
+        }
+        exit;  # don't forget this
+    }</pre>
+<p>Another common use for this construct is when you need to execute
+something without the shell's interference.  With system(), it's
+straightforward, but you can't use a pipe open or backticks safely.
+That's because there's no way to stop the shell from getting its hands on
+your arguments.   Instead, use lower-level control to call <code>exec()</code> directly.</p>
+<p>Here's a safe backtick or pipe open for read:</p>
+<pre>
+    # add error processing as above
+    $pid = open(KID_TO_READ, &quot;-|&quot;);</pre>
+<pre>
+    if ($pid) {   # parent
+        while (&lt;KID_TO_READ&gt;) {
+            # do something interesting
+        }
+        close(KID_TO_READ) || warn &quot;kid exited $?&quot;;</pre>
+<pre>
+    } else {      # child
+        ($EUID, $EGID) = ($UID, $GID); # suid only
+        exec($program, @options, @args)
+            || die &quot;can't exec program: $!&quot;;
+        # NOTREACHED
+    }</pre>
+<p>And here's a safe pipe open for writing:</p>
+<pre>
+    # add error processing as above
+    $pid = open(KID_TO_WRITE, &quot;|-&quot;);
+    $SIG{PIPE} = sub { die &quot;whoops, $program pipe broke&quot; };</pre>
+<pre>
+    if ($pid) {  # parent
+        for (@data) {
+            print KID_TO_WRITE;
+        }
+        close(KID_TO_WRITE) || warn &quot;kid exited $?&quot;;</pre>
+<pre>
+    } else {     # child
+        ($EUID, $EGID) = ($UID, $GID);
+        exec($program, @options, @args)
+            || die &quot;can't exec program: $!&quot;;
+        # NOTREACHED
+    }</pre>
+<p>Since Perl 5.8.0, you can also use the list form of <code>open</code> for pipes :
+the syntax</p>
+<pre>
+    open KID_PS, &quot;-|&quot;, &quot;ps&quot;, &quot;aux&quot; or die $!;</pre>
+<p>forks the <code>ps(1)</code> command (without spawning a shell, as there are more than
+three arguments to open()), and reads its standard output via the
+<code>KID_PS</code> filehandle.  The corresponding syntax to write to command
+pipes (with <code>&quot;|-&quot;</code> in place of <code>&quot;-|&quot;</code>) is also implemented.</p>
+<p>Note that these operations are full Unix forks, which means they may not be
+correctly implemented on alien systems.  Additionally, these are not true
+multithreading.  If you'd like to learn more about threading, see the
+<em>modules</em> file mentioned below in the SEE ALSO section.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/complete_dissociation_of_child_from_parent.html">Complete Dissociation of Child from Parent in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/bidirectional_communication_with_another_process.html">Bidirectional Communication with Another Process in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Safe Pipe Opens</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>
