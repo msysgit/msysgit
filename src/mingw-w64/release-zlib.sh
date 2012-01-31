@@ -3,12 +3,12 @@
 cd "$(dirname "$0")"
 srcdir=$(pwd)
 
-mirror=http://www.zlib.net/
-file=zlib-1.2.5.tar.gz
+mirror=http://zlib.net/
+file=zlib-1.2.6.tar.gz
 dir=${file%.tar.gz}
 
 # download it
-test -f $file || curl $mirror$file > $file || exit
+test -f $file || curl $mirror$file -o $file || exit
 
 # unpack it
 test -d $dir || tar xzf $file || exit
