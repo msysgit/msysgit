@@ -8,7 +8,14 @@ file=zlib-1.2.6.tar.gz
 dir=${file%.tar.gz}
 
 # download it
-test -f $file || curl $mirror$file -o $file || exit
+if ! (test -f $file || curl $mirror$file -o $file)
+then
+	echo "Could not download $file"
+	echo "If you do not have a direct network connection please download"
+	echo "$mirror$file"
+	echo "place it in $srcdir and restart this script"
+	exit 1
+fi
 
 # unpack it
 test -d $dir || tar xzf $file || exit
