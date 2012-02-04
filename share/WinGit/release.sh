@@ -73,7 +73,11 @@ test "$do_compile" && {
 		(cd git &&
 		 create_msysgit_tag $version &&
 		 make install) &&
-		(cd src/git-cheetah/explorer/ && make)
+		/src/mingw-w64/release-easy.sh &&
+		/src/mingw-w64/release-zlib.sh &&
+		(cd src/git-cheetah/explorer/ &&
+		 make objects-clean && make &&
+		 make objects-clean && make W64=1)
 	} || exit 1
 }
 
