@@ -48,10 +48,10 @@ Name: icons; Description: Additional icons; Types: custom
 Name: icons\quicklaunch; Description: In the Quick Launch; Types: custom
 Name: icons\desktop; Description: On the Desktop; Types: custom
 Name: ext; Description: Windows Explorer integration; Types: custom
-Name: ext\reg; Description: Context menu entries; Flags: exclusive; Types: custom
+Name: ext\reg; Description: Simple context menu (Registry based); Flags: exclusive; Types: custom
 Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
 Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
-Name: ext\cheetah; Description: git-cheetah shell extension; Flags: exclusive; Types: custom
+Name: ext\cheetah; Description: Advanced context menu (git-cheetah plugin); Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
 Name: assoc_sh; Description: Associate .sh files to be run with Bash; Types: custom
 Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
