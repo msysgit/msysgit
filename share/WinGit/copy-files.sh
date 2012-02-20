@@ -86,6 +86,7 @@ cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
 md5sum $MSYSGITROOT/bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
+cp $MSYSGITROOT/etc/bash_profile etc/ &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
 cp $MSYSGITROOT/etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
