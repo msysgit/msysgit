@@ -91,6 +91,7 @@ cp $MSYSGITROOT/etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
 cp $MSYSGITROOT/etc/gitattributes etc/ &&
 cp $MSYSGITROOT/etc/gitignore etc/ &&
+cp $MSYSGITROOT/etc/ssh_config etc/ &&
 cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
 cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
