@@ -1,0 +1,537 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DynaLoader - Dynamically load C libraries into Perl code</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DynaLoader - Dynamically load C libraries into Perl code</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DynaLoader - Dynamically load C libraries into Perl code</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    package YourPackage;
+    require DynaLoader;
+    @ISA = qw(... DynaLoader ...);
+    bootstrap YourPackage;</pre>
+<pre>
+    # optional method for 'global' loading
+    sub dl_load_flags { 0x01 }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This document defines a standard generic interface to the dynamic
+linking mechanisms available on many platforms.  Its primary purpose is
+to implement automatic dynamic loading of Perl modules.</p>
+<p>This document serves as both a specification for anyone wishing to
+implement the DynaLoader for a new platform and as a guide for
+anyone wishing to use the DynaLoader directly in an application.</p>
+<p>The DynaLoader is designed to be a very simple high-level
+interface that is sufficiently general to cover the requirements
+of SunOS, HP-UX, NeXT, Linux, VMS and other platforms.</p>
+<p>It is also hoped that the interface will cover the needs of OS/2, NT
+etc and also allow pseudo-dynamic linking (using <code>ld -A</code> at runtime).</p>
+<p>It must be stressed that the DynaLoader, by itself, is practically
+useless for accessing non-Perl libraries because it provides almost no
+Perl-to-C 'glue'.  There is, for example, no mechanism for calling a C
+library function or supplying arguments.  A C::DynaLib module
+is available from CPAN sites which performs that function for some
+common system types.  And since the year 2000, there's also Inline::C,
+a module that allows you to write Perl subroutines in C.  Also available
+from your local CPAN site.</p>
+<p>DynaLoader Interface Summary</p>
+<pre>
+  @dl_library_path
+  @dl_resolve_using
+  @dl_require_symbols
+  $dl_debug
+  @dl_librefs
+  @dl_modules
+  @dl_shared_objects
+                                                  Implemented in:
+  bootstrap($modulename)                               Perl
+  @filepaths = dl_findfile(@names)                     Perl
+  $flags = $modulename-&gt;dl_load_flags                  Perl
+  $symref  = dl_find_symbol_anywhere($symbol)          Perl</pre>
+<pre>
+  $libref  = dl_load_file($filename, $flags)           C
+  $status  = dl_unload_file($libref)                   C
+  $symref  = dl_find_symbol($libref, $symbol)          C
+  @symbols = dl_undef_symbols()                        C
+  dl_install_xsub($name, $symref [, $filename])        C
+  $message = dl_error                                  C</pre>
+<dl>
+<dt><strong><a name="item__dl_library_path">@dl_library_path</a></strong>
+
+<dd>
+<p>The standard/default list of directories in which <a href="#item_dl_findfile"><code>dl_findfile()</code></a> will
+search for libraries etc.  Directories are searched in order:
+$dl_library_path[0], [1], ... etc</p>
+</dd>
+<dd>
+<p>@dl_library_path is initialised to hold the list of 'normal' directories
+(<em>/usr/lib</em>, etc) determined by <strong>Configure</strong> (<code>$Config{'libpth'}</code>).  This should
+ensure portability across a wide range of platforms.</p>
+</dd>
+<dd>
+<p>@dl_library_path should also be initialised with any other directories
+that can be determined from the environment at runtime (such as
+LD_LIBRARY_PATH for SunOS).</p>
+</dd>
+<dd>
+<p>After initialisation @dl_library_path can be manipulated by an
+application using push and unshift before calling dl_findfile().
+Unshift can be used to add directories to the front of the search order
+either to save search time or to override libraries with the same name
+in the 'normal' directories.</p>
+</dd>
+<dd>
+<p>The load function that <a href="#item_dl_load_file"><code>dl_load_file()</code></a> calls may require an absolute
+pathname.  The <a href="#item_dl_findfile"><code>dl_findfile()</code></a> function and @dl_library_path can be
+used to search for and return the absolute pathname for the
+library/object that you wish to load.</p>
+</dd>
+</li>
+<dt><strong><a name="item__dl_resolve_using">@dl_resolve_using</a></strong>
+
+<dd>
+<p>A list of additional libraries or other shared objects which can be
+used to resolve any undefined symbols that might be generated by a
+later call to load_file().</p>
+</dd>
+<dd>
+<p>This is only required on some platforms which do not handle dependent
+libraries automatically.  For example the Socket Perl extension
+library (<em>auto/Socket/Socket.so</em>) contains references to many socket
+functions which need to be resolved when it's loaded.  Most platforms
+will automatically know where to find the 'dependent' library (e.g.,
+<em>/usr/lib/libsocket.so</em>).  A few platforms need to be told the
+location of the dependent library explicitly.  Use @dl_resolve_using
+for this.</p>
+</dd>
+<dd>
+<p>Example usage:</p>
+</dd>
+<dd>
+<pre>
+    @dl_resolve_using = dl_findfile('-lsocket');</pre>
+</dd>
+</li>
+<dt><strong><a name="item__dl_require_symbols">@dl_require_symbols</a></strong>
+
+<dd>
+<p>A list of one or more symbol names that are in the library/object file
+to be dynamically loaded.  This is only required on some platforms.</p>
+</dd>
+</li>
+<dt><strong><a name="item__dl_librefs">@dl_librefs</a></strong>
+
+<dd>
+<p>An array of the handles returned by successful calls to dl_load_file(),
+made by bootstrap, in the order in which they were loaded.
+Can be used with <a href="#item_dl_find_symbol"><code>dl_find_symbol()</code></a> to look for a symbol in any of
+the loaded files.</p>
+</dd>
+</li>
+<dt><strong><a name="item__dl_modules">@dl_modules</a></strong>
+
+<dd>
+<p>An array of module (package) names that have been bootstrap'ed.</p>
+</dd>
+</li>
+<dt><strong><a name="item__dl_shared_objects">@dl_shared_objects</a></strong>
+
+<dd>
+<p>An array of file names for the shared objects that were loaded.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_error"><code>dl_error()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $message = dl_error();</pre>
+</dd>
+<dd>
+<p>Error message text from the last failed DynaLoader function.  Note
+that, similar to errno in unix, a successful function call does not
+reset this message.</p>
+</dd>
+<dd>
+<p>Implementations should detect the error as soon as it occurs in any of
+the other functions and save the corresponding message for later
+retrieval.  This will avoid problems on some platforms (such as SunOS)
+where the error message is very temporary (e.g., dlerror()).</p>
+</dd>
+</li>
+<dt><strong><a name="item__dl_debug">$dl_debug</a></strong>
+
+<dd>
+<p>Internal debugging messages are enabled when $dl_debug is set true.
+Currently setting $dl_debug only affects the Perl side of the
+DynaLoader.  These messages should help an application developer to
+resolve any DynaLoader usage problems.</p>
+</dd>
+<dd>
+<p>$dl_debug is set to <code>$ENV{'PERL_DL_DEBUG'}</code> if defined.</p>
+</dd>
+<dd>
+<p>For the DynaLoader developer/porter there is a similar debugging
+variable added to the C code (see dlutils.c) and enabled if Perl was
+built with the <strong>-DDEBUGGING</strong> flag.  This can also be set via the
+PERL_DL_DEBUG environment variable.  Set to 1 for minimal information or
+higher for more.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_findfile"><code>dl_findfile()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    @filepaths = dl_findfile(@names)</pre>
+</dd>
+<dd>
+<p>Determine the full paths (including file suffix) of one or more
+loadable files given their generic names and optionally one or more
+directories.  Searches directories in @dl_library_path by default and
+returns an empty list if no files were found.</p>
+</dd>
+<dd>
+<p>Names can be specified in a variety of platform independent forms.  Any
+names in the form <strong>-lname</strong> are converted into <em>libname.*</em>, where <em>.*</em> is
+an appropriate suffix for the platform.</p>
+</dd>
+<dd>
+<p>If a name does not already have a suitable prefix and/or suffix then
+the corresponding file will be searched for by trying combinations of
+prefix and suffix appropriate to the platform: ``$name.o'', ``lib$name.*''
+and ``$name''.</p>
+</dd>
+<dd>
+<p>If any directories are included in @names they are searched before
+@dl_library_path.  Directories may be specified as <strong>-Ldir</strong>.  Any other
+names are treated as filenames to be searched for.</p>
+</dd>
+<dd>
+<p>Using arguments of the form <code>-Ldir</code> and <code>-lname</code> is recommended.</p>
+</dd>
+<dd>
+<p>Example:</p>
+</dd>
+<dd>
+<pre>
+    @dl_resolve_using = dl_findfile(qw(-L/usr/5lib -lposix));</pre>
+</dd>
+</li>
+<dt><strong><a name="item_dl_expandspec"><code>dl_expandspec()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $filepath = dl_expandspec($spec)</pre>
+</dd>
+<dd>
+<p>Some unusual systems, such as VMS, require special filename handling in
+order to deal with symbolic names for files (i.e., VMS's Logical Names).</p>
+</dd>
+<dd>
+<p>To support these systems a <a href="#item_dl_expandspec"><code>dl_expandspec()</code></a> function can be implemented
+either in the <em>dl_*.xs</em> file or code can be added to the autoloadable
+<a href="#item_dl_expandspec"><code>dl_expandspec()</code></a> function in <em>DynaLoader.pm</em>.  See <em>DynaLoader.pm</em> for
+more information.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_load_file"><code>dl_load_file()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $libref = dl_load_file($filename, $flags)</pre>
+</dd>
+<dd>
+<p>Dynamically load $filename, which must be the path to a shared object
+or library.  An opaque 'library reference' is returned as a handle for
+the loaded object.  Returns undef on error.</p>
+</dd>
+<dd>
+<p>The $flags argument to alters dl_load_file behaviour.  
+Assigned bits:</p>
+</dd>
+<dd>
+<pre>
+ 0x01  make symbols available for linking later dl_load_file's.
+       (only known to work on Solaris 2 using dlopen(RTLD_GLOBAL))
+       (ignored under VMS; this is a normal part of image linking)</pre>
+</dd>
+<dd>
+<p>(On systems that provide a handle for the loaded object such as SunOS
+and HPUX, $libref will be that handle.  On other systems $libref will
+typically be $filename or a pointer to a buffer containing $filename.
+The application should not examine or alter $libref in any way.)</p>
+</dd>
+<dd>
+<p>This is the function that does the real work.  It should use the
+current values of @dl_require_symbols and @dl_resolve_using if required.</p>
+</dd>
+<dd>
+<pre>
+    SunOS: dlopen($filename)
+    HP-UX: shl_load($filename)
+    Linux: dld_create_reference(@dl_require_symbols); dld_link($filename)
+    NeXT:  rld_load($filename, @dl_resolve_using)
+    VMS:   lib$find_image_symbol($filename,$dl_require_symbols[0])</pre>
+</dd>
+<dd>
+<p>(The <code>dlopen()</code> function is also used by Solaris and some versions of
+Linux, and is a common choice when providing a ``wrapper'' on other
+mechanisms as is done in the OS/2 port.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_unload_file"><code>dl_unload_file()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $status = dl_unload_file($libref)</pre>
+</dd>
+<dd>
+<p>Dynamically unload $libref, which must be an opaque 'library reference' as
+returned from dl_load_file.  Returns one on success and zero on failure.</p>
+</dd>
+<dd>
+<p>This function is optional and may not necessarily be provided on all platforms.
+If it is defined, it is called automatically when the interpreter exits for
+every shared object or library loaded by DynaLoader::bootstrap.  All such
+library references are stored in @dl_librefs by DynaLoader::Bootstrap as it
+loads the libraries.  The files are unloaded in last-in, first-out order.</p>
+</dd>
+<dd>
+<p>This unloading is usually necessary when embedding a shared-object perl (e.g.
+one configured with -Duseshrplib) within a larger application, and the perl
+interpreter is created and destroyed several times within the lifetime of the
+application.  In this case it is possible that the system dynamic linker will
+unload and then subsequently reload the shared libperl without relocating any
+references to it from any files DynaLoaded by the previous incarnation of the
+interpreter.  As a result, any shared objects opened by DynaLoader may point to
+a now invalid 'ghost' of the libperl shared object, causing apparently random
+memory corruption and crashes.  This behaviour is most commonly seen when using
+Apache and mod_perl built with the APXS mechanism.</p>
+</dd>
+<dd>
+<pre>
+    SunOS: dlclose($libref)
+    HP-UX: ???
+    Linux: ???
+    NeXT:  ???
+    VMS:   ???</pre>
+</dd>
+<dd>
+<p>(The <code>dlclose()</code> function is also used by Solaris and some versions of
+Linux, and is a common choice when providing a ``wrapper'' on other
+mechanisms as is done in the OS/2 port.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_load_flags"><code>dl_load_flags()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $flags = dl_load_flags $modulename;</pre>
+</dd>
+<dd>
+<p>Designed to be a method call, and to be overridden by a derived class
+(i.e. a class which has DynaLoader in its @ISA).  The definition in
+DynaLoader itself returns 0, which produces standard behavior from
+dl_load_file().</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_find_symbol"><code>dl_find_symbol()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $symref = dl_find_symbol($libref, $symbol)</pre>
+</dd>
+<dd>
+<p>Return the address of the symbol $symbol or <code>undef</code> if not found.  If the
+target system has separate functions to search for symbols of different
+types then <a href="#item_dl_find_symbol"><code>dl_find_symbol()</code></a> should search for function symbols first and
+then other types.</p>
+</dd>
+<dd>
+<p>The exact manner in which the address is returned in $symref is not
+currently defined.  The only initial requirement is that $symref can
+be passed to, and understood by, dl_install_xsub().</p>
+</dd>
+<dd>
+<pre>
+    SunOS: dlsym($libref, $symbol)
+    HP-UX: shl_findsym($libref, $symbol)
+    Linux: dld_get_func($symbol) and/or dld_get_symbol($symbol)
+    NeXT:  rld_lookup(&quot;_$symbol&quot;)
+    VMS:   lib$find_image_symbol($libref,$symbol)</pre>
+</dd>
+</li>
+<dt><strong><a name="item_dl_find_symbol_anywhere"><code>dl_find_symbol_anywhere()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    $symref = dl_find_symbol_anywhere($symbol)</pre>
+</dd>
+<dd>
+<p>Applies <a href="#item_dl_find_symbol"><code>dl_find_symbol()</code></a> to the members of @dl_librefs and returns
+the first match found.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_undef_symbols"><code>dl_undef_symbols()</code></a></strong>
+
+<dd>
+<p>Example</p>
+</dd>
+<dd>
+<pre>
+    @symbols = dl_undef_symbols()</pre>
+</dd>
+<dd>
+<p>Return a list of symbol names which remain undefined after load_file().
+Returns <code>()</code> if not known.  Don't worry if your platform does not provide
+a mechanism for this.  Most do not need it and hence do not provide it,
+they just return an empty list.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dl_install_xsub"><code>dl_install_xsub()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<pre>
+    dl_install_xsub($perl_name, $symref [, $filename])</pre>
+</dd>
+<dd>
+<p>Create a new Perl external subroutine named $perl_name using $symref as
+a pointer to the function which implements the routine.  This is simply
+a direct call to newXSUB().  Returns a reference to the installed
+function.</p>
+</dd>
+<dd>
+<p>The $filename parameter is used by Perl to identify the source file for
+the function if required by die(), <code>caller()</code> or the debugger.  If
+$filename is not defined then ``DynaLoader'' will be used.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bootstrap"><code>bootstrap()</code></a></strong>
+
+<dd>
+<p>Syntax:</p>
+</dd>
+<dd>
+<p><a href="#item_bootstrap"><code>bootstrap($module)</code></a></p>
+</dd>
+<dd>
+<p>This is the normal entry point for automatic dynamic loading in Perl.</p>
+</dd>
+<dd>
+<p>It performs the following actions:</p>
+</dd>
+<ul>
+<li>
+<p>locates an auto/$module directory by searching @INC</p>
+</li>
+<li>
+<p>uses <a href="#item_dl_findfile"><code>dl_findfile()</code></a> to determine the filename to load</p>
+</li>
+<li>
+<p>sets @dl_require_symbols to <code>(&quot;boot_$module&quot;)</code></p>
+</li>
+<li>
+<p>executes an <em>auto/$module/$module.bs</em> file if it exists
+(typically used to add to @dl_resolve_using any files which
+are required to load the module on the current platform)</p>
+</li>
+<li>
+<p>calls <a href="#item_dl_load_flags"><code>dl_load_flags()</code></a> to determine how to load the file.</p>
+</li>
+<li>
+<p>calls <a href="#item_dl_load_file"><code>dl_load_file()</code></a> to load the file</p>
+</li>
+<li>
+<p>calls <a href="#item_dl_undef_symbols"><code>dl_undef_symbols()</code></a> and warns if any symbols are undefined</p>
+</li>
+<li>
+<p>calls <a href="#item_dl_find_symbol"><code>dl_find_symbol()</code></a> for ``boot_$module''</p>
+</li>
+<li>
+<p>calls <a href="#item_dl_install_xsub"><code>dl_install_xsub()</code></a> to install it as ``${module}::bootstrap''</p>
+</li>
+<li>
+<p>calls &amp;{``${module}::bootstrap''} to bootstrap the module (actually
+it uses the function reference returned by dl_install_xsub for speed)</p>
+</li>
+</ul>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tim Bunce, 11 August 1994.</p>
+<p>This interface is based on the work and comments of (in no particular
+order): Larry Wall, Robert Sanders, Dean Roehrich, Jeff Okamoto, Anno
+Siegel, Thomas Neumann, Paul Marquess, Charles Bailey, myself and others.</p>
+<p>Larry Wall designed the elegant inherited bootstrap mechanism and
+implemented the first Perl 5 dynamic loader using it.</p>
+<p>Solaris global loading added by Nick Ing-Simmons with design/coding
+assistance from Tim Bunce, January 1996.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DynaLoader - Dynamically load C libraries into Perl code</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

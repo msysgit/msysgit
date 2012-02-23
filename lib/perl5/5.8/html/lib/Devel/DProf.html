@@ -1,0 +1,210 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Devel::DProf - a Perl code profiler</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::DProf - a Perl code profiler</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#profile_format">PROFILE FORMAT</a></li>
+	<li><a href="#autoload">AUTOLOAD</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Devel::DProf - a Perl code profiler</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        perl -d:DProf test.pl</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Devel::DProf package is a Perl code profiler.  This will collect
+information on the execution time of a Perl script and of the subs in that
+script.  This information can be used to determine which subroutines are
+using the most time and which subroutines are being called most often.  This
+information can also be used to create an execution graph of the script,
+showing subroutine relationships.</p>
+<p>To profile a Perl script run the perl interpreter with the <strong>-d</strong> debugging
+switch.  The profiler uses the debugging hooks.  So to profile script
+<em>test.pl</em> the following command should be used:</p>
+<pre>
+        perl -d:DProf test.pl</pre>
+<p>When the script terminates (or when the output buffer is filled) the
+profiler will dump the profile information to a file called
+<em>tmon.out</em>.  A tool like <em>dprofpp</em> can be used to interpret the
+information which is in that profile.  The following command will
+print the top 15 subroutines which used the most time:</p>
+<pre>
+        dprofpp</pre>
+<p>To print an execution graph of the subroutines in the script use the
+following command:</p>
+<pre>
+        dprofpp -T</pre>
+<p>Consult <a href="/usr/lib/perl5/5.8/html/./utils/dprofpp.html">the dprofpp manpage</a> for other options.</p>
+<p>
+</p>
+<hr />
+<h1><a name="profile_format">PROFILE FORMAT</a></h1>
+<p>The old profile is a text file which looks like this:</p>
+<pre>
+        #fOrTyTwO
+        $hz=100;
+        $XS_VERSION='DProf 19970606';
+        # All values are given in HZ
+        $rrun_utime=2; $rrun_stime=0; $rrun_rtime=7
+        PART2
+        + 26 28 566822884 DynaLoader::import
+        - 26 28 566822884 DynaLoader::import
+        + 27 28 566822885 main::bar
+        - 27 28 566822886 main::bar
+        + 27 28 566822886 main::baz
+        + 27 28 566822887 main::bar
+        - 27 28 566822888 main::bar
+        [....]</pre>
+<p>The first line is the magic number.  The second line is the hertz value, or
+clock ticks, of the machine where the profile was collected.  The third line
+is the name and version identifier of the tool which created the profile.
+The fourth line is a comment.  The fifth line contains three variables
+holding the user time, system time, and realtime of the process while it was
+being profiled.  The sixth line indicates the beginning of the sub
+entry/exit profile section.</p>
+<p>The columns in <strong>PART2</strong> are:</p>
+<pre>
+        sub entry(+)/exit(-) mark
+        app's user time at sub entry/exit mark, in ticks
+        app's system time at sub entry/exit mark, in ticks
+        app's realtime at sub entry/exit mark, in ticks
+        fully-qualified sub name, when possible</pre>
+<p>With newer perls another format is used, which may look like this:</p>
+<pre>
+        #fOrTyTwO
+        $hz=10000;
+        $XS_VERSION='DProf 19971213';
+        # All values are given in HZ
+        $over_utime=5917; $over_stime=0; $over_rtime=5917;
+        $over_tests=10000;
+        $rrun_utime=1284; $rrun_stime=0; $rrun_rtime=1284;
+        $total_marks=6;</pre>
+<pre>
+        PART2
+        @ 406 0 406
+        &amp; 2 main bar
+        + 2
+        @ 456 0 456
+        - 2
+        @ 1 0 1
+        &amp; 3 main baz
+        + 3
+        @ 141 0 141
+        + 2
+        @ 141 0 141
+        - 2
+        @ 1 0 1
+        &amp; 4 main foo
+        + 4
+        @ 142 0 142
+        + &amp; Devel::DProf::write
+        @ 5 0 5
+        - &amp; Devel::DProf::write</pre>
+<p>(with high value of $ENV{PERL_DPROF_TICKS}).</p>
+<p>New <code>$over_*</code> values show the measured overhead of making $over_tests
+calls to the profiler These values are used by the profiler to
+subtract the overhead from the runtimes.</p>
+<p>The lines starting with <code>@</code> mark time passed from the previous <code>@</code>
+line.  The lines starting with <code>&amp;</code> introduce new subroutine <em>id</em> and
+show the package and the subroutine name of this id.  Lines starting
+with <code>+</code>, <code>-</code> and <code>*</code> mark entering and exit of subroutines by
+<em>id</em>s, and <code>goto &amp;subr</code>.</p>
+<p>The <em>old-style</em> <code>+</code>- and <code>-</code>-lines are used to mark the overhead
+related to writing to profiler-output file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="autoload">AUTOLOAD</a></h1>
+<p>When Devel::DProf finds a call to an <code>&amp;AUTOLOAD</code> subroutine it looks at the
+<code>$AUTOLOAD</code> variable to find the real name of the sub being called.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html#autoloading">Autoloading in the perlsub manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<p><code>PERL_DPROF_BUFFER</code> sets size of output buffer in words.  Defaults to 2**14.</p>
+<p><code>PERL_DPROF_TICKS</code> sets number of ticks per second on some systems where
+a replacement for <code>times()</code> is used.  Defaults to the value of <code>HZ</code> macro.</p>
+<p><code>PERL_DPROF_OUT_FILE_NAME</code> sets the name of the output file.  If not set,
+defaults to tmon.out.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Builtin functions cannot be measured by Devel::DProf.</p>
+<p>With a newer Perl DProf relies on the fact that the numeric slot of
+$DB::sub contains an address of a subroutine.  Excessive manipulation
+of this variable may overwrite this slot, as in</p>
+<pre>
+  $DB::sub = 'current_sub';
+  ...
+  $addr = $DB::sub + 0;</pre>
+<p>will set this numeric slot to numeric value of the string
+<code>current_sub</code>, i.e., to <code>0</code>.  This will cause a segfault on the exit
+from this subroutine.  Note that the first assignment above does not
+change the numeric slot (it will <em>mark</em> it as invalid, but will not
+write over it).</p>
+<p>Another problem is that if a subroutine exits using goto(LABEL),
+<code>last(LABEL)</code> or <code>next(LABEL)</code> then perl may crash or Devel::DProf will die
+with the error:</p>
+<pre>
+   panic: Devel::DProf inconsistent subroutine return</pre>
+<p>For example, this code will break under Devel::DProf:</p>
+<pre>
+   sub foo {
+     last FOO;
+   }
+   FOO: {
+     foo();
+   }</pre>
+<p>A pattern like this is used by Test::More's <code>skip()</code> function, for
+example.  See <a href="/usr/lib/perl5/5.8/html/./pod/perldiag.html">the perldiag manpage</a> for more details.</p>
+<p>Mail bug reports and feature requests to the perl5-porters mailing list at
+<em>&lt;<a href="mailto:perl5-porters@perl.org">perl5-porters@perl.org</a>&gt;</em>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perl.html">the perl manpage</a>, <a href="/usr/lib/perl5/5.8/html/./utils/dprofpp.html">the dprofpp manpage</a>, <code>times(2)</code></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Devel::DProf - a Perl code profiler</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

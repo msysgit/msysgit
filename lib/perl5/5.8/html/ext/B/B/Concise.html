@@ -1,0 +1,869 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>B::Concise - Walk Perl syntax tree, printing concise info about ops</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::Concise - Walk Perl syntax tree, printing concise info about ops</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#options">OPTIONS</a></li>
+	<ul>
+
+		<li><a href="#options_for_opcode_ordering">Options for Opcode Ordering</a></li>
+		<li><a href="#options_for_linestyle">Options for Line-Style</a></li>
+		<li><a href="#options_for_treespecific_formatting">Options for tree-specific formatting</a></li>
+		<li><a href="#options_controlling_sequence_numbering">Options controlling sequence numbering</a></li>
+		<li><a href="#other_options">Other options</a></li>
+		<li><a href="#option_stickiness">Option Stickiness</a></li>
+	</ul>
+
+	<li><a href="#abbreviations">ABBREVIATIONS</a></li>
+	<ul>
+
+		<li><a href="#op_class_abbreviations">OP class abbreviations</a></li>
+		<li><a href="#op_flags_abbreviations">OP flags abbreviations</a></li>
+	</ul>
+
+	<li><a href="#formatting_specifications">FORMATTING SPECIFICATIONS</a></li>
+	<ul>
+
+		<li><a href="#special_patterns">Special Patterns</a></li>
+		<li><a href="#__variables"># Variables</a></li>
+	</ul>
+
+	<li><a href="#using_b__concise_outside_of_the_o_framework">Using B::Concise outside of the O framework</a></li>
+	<ul>
+
+		<li><a href="#example__altering_concise_renderings">Example: Altering Concise Renderings</a></li>
+		<li><a href="#set_style__"><code>set_style()</code></a></li>
+		<li><a href="#set_style_standard__name_"><code>set_style_standard($name)</code></a></li>
+		<li><a href="#add_style__"><code>add_style()</code></a></li>
+		<li><a href="#add_callback__"><code>add_callback()</code></a></li>
+		<li><a href="#running_b__concise__compile__">Running B::Concise::compile()</a></li>
+		<li><a href="#b__concise__reset_sequence__">B::Concise::reset_sequence()</a></li>
+		<li><a href="#errors">Errors</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>B::Concise - Walk Perl syntax tree, printing concise info about ops</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    perl -MO=Concise[,OPTIONS] foo.pl</pre>
+<pre>
+    use B::Concise qw(set_style add_callback);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This compiler backend prints the internal OPs of a Perl program's syntax
+tree in one of several space-efficient text formats suitable for debugging
+the inner workings of perl or other compiler backends. It can print OPs in
+the order they appear in the OP tree, in the order they will execute, or
+in a text approximation to their tree structure, and the format of the
+information displayed is customizable. Its function is similar to that of
+perl's <strong>-Dx</strong> debugging flag or the <strong>B::Terse</strong> module, but it is more
+sophisticated and flexible.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<p>Here's an example of 2 outputs (aka 'renderings'), using the
+-exec and -basic (i.e. default) formatting conventions on the same code
+snippet.</p>
+<pre>
+    % perl -MO=Concise,-exec -e '$a = $b + 42'
+    1  &lt;0&gt; enter
+    2  &lt;;&gt; nextstate(main 1 -e:1) v
+    3  &lt;#&gt; gvsv[*b] s
+    4  &lt;$&gt; const[IV 42] s
+ *  5  &lt;2&gt; add[t3] sK/2
+    6  &lt;#&gt; gvsv[*a] s
+    7  &lt;2&gt; sassign vKS/2
+    8  &lt;@&gt; leave[1 ref] vKP/REFC</pre>
+<p>Each line corresponds to an opcode. The opcode marked with '*' is used
+in a few examples below.</p>
+<p>The 1st column is the op's sequence number, starting at 1, and is
+displayed in base 36 by default.  This rendering is in -exec (i.e.
+execution) order.</p>
+<p>The symbol between angle brackets indicates the op's type, for
+example; &lt;2&gt; is a BINOP, &lt;@&gt; a LISTOP, and &lt;#&gt; is a PADOP, which is
+used in threaded perls. (see <a href="#op_class_abbreviations">OP class abbreviations</a>).</p>
+<p>The opname, as in <strong>'add[t1]'</strong>, which may be followed by op-specific
+information in parentheses or brackets (ex <strong>'[t1]'</strong>).</p>
+<p>The op-flags (ex <strong>'sK/2'</strong>) follow, and are described in (<a href="#op_flags_abbreviations">OP flags abbreviations</a>).</p>
+<pre>
+    % perl -MO=Concise -e '$a = $b + 42'
+    8  &lt;@&gt; leave[1 ref] vKP/REFC -&gt;(end)
+    1     &lt;0&gt; enter -&gt;2
+    2     &lt;;&gt; nextstate(main 1 -e:1) v -&gt;3
+    7     &lt;2&gt; sassign vKS/2 -&gt;8
+ *  5        &lt;2&gt; add[t1] sK/2 -&gt;6
+    -           &lt;1&gt; ex-rv2sv sK/1 -&gt;4
+    3              &lt;$&gt; gvsv(*b) s -&gt;4
+    4           &lt;$&gt; const(IV 42) s -&gt;5
+    -        &lt;1&gt; ex-rv2sv sKRM*/1 -&gt;7
+    6           &lt;$&gt; gvsv(*a) s -&gt;7</pre>
+<p>The default rendering is top-down, so they're not in execution order.
+This form reflects the way the stack is used to parse and evaluate
+expressions; the add operates on the two terms below it in the tree.</p>
+<p>Nullops appear as <code>ex-opname</code>, where <em>opname</em> is an op that has been
+optimized away by perl.  They're displayed with a sequence-number of
+'-', because they are not executed (they don't appear in previous
+example), they're printed here because they reflect the parse.</p>
+<p>The arrow points to the sequence number of the next op; they're not
+displayed in -exec mode, for obvious reasons.</p>
+<p>Note that because this rendering was done on a non-threaded perl, the
+PADOPs in the previous examples are now SVOPs, and some (but not all)
+of the square brackets have been replaced by round ones.  This is a
+subtle feature to provide some visual distinction between renderings
+on threaded and un-threaded perls.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options">OPTIONS</a></h1>
+<p>Arguments that don't start with a hyphen are taken to be the names of
+subroutines to print the OPs of; if no such functions are specified,
+the main body of the program (outside any subroutines, and not
+including use'd or require'd files) is rendered.  Passing <code>BEGIN</code>,
+<code>CHECK</code>, <code>INIT</code>, or <code>END</code> will cause all of the corresponding
+special blocks to be printed.</p>
+<p>Options affect how things are rendered (ie printed).  They're presented
+here by their visual effect, 1st being strongest.  They're grouped
+according to how they interrelate; within each group the options are
+mutually exclusive (unless otherwise stated).</p>
+<p>
+</p>
+<h2><a name="options_for_opcode_ordering">Options for Opcode Ordering</a></h2>
+<p>These options control the 'vertical display' of opcodes.  The display
+'order' is also called 'mode' elsewhere in this document.</p>
+<dl>
+<dt><strong><a name="item__2dbasic"><strong>-basic</strong></a></strong>
+
+<dd>
+<p>Print OPs in the order they appear in the OP tree (a preorder
+traversal, starting at the root). The indentation of each OP shows its
+level in the tree, and the '-&gt;' at the end of the line indicates the
+next opcode in execution order.  This mode is the default, so the flag
+is included simply for completeness.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dexec"><strong>-exec</strong></a></strong>
+
+<dd>
+<p>Print OPs in the order they would normally execute (for the majority
+of constructs this is a postorder traversal of the tree, ending at the
+root). In most cases the OP that usually follows a given OP will
+appear directly below it; alternate paths are shown by indentation. In
+cases like loops when control jumps out of a linear path, a 'goto'
+line is generated.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dtree"><strong>-tree</strong></a></strong>
+
+<dd>
+<p>Print OPs in a text approximation of a tree, with the root of the tree
+at the left and 'left-to-right' order of children transformed into
+'top-to-bottom'. Because this mode grows both to the right and down,
+it isn't suitable for large programs (unless you have a very wide
+terminal).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="options_for_linestyle">Options for Line-Style</a></h2>
+<p>These options select the line-style (or just style) used to render
+each opcode, and dictates what info is actually printed into each line.</p>
+<dl>
+<dt><strong><a name="item__2dconcise"><strong>-concise</strong></a></strong>
+
+<dd>
+<p>Use the author's favorite set of formatting conventions. This is the
+default, of course.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dterse"><strong>-terse</strong></a></strong>
+
+<dd>
+<p>Use formatting conventions that emulate the output of <strong>B::Terse</strong>. The
+basic mode is almost indistinguishable from the real <strong>B::Terse</strong>, and the
+exec mode looks very similar, but is in a more logical order and lacks
+curly brackets. <strong>B::Terse</strong> doesn't have a tree mode, so the tree mode
+is only vaguely reminiscent of <strong>B::Terse</strong>.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dlinenoise"><strong>-linenoise</strong></a></strong>
+
+<dd>
+<p>Use formatting conventions in which the name of each OP, rather than being
+written out in full, is represented by a one- or two-character abbreviation.
+This is mainly a joke.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddebug"><strong>-debug</strong></a></strong>
+
+<dd>
+<p>Use formatting conventions reminiscent of <strong>B::Debug</strong>; these aren't
+very concise at all.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2denv"><strong>-env</strong></a></strong>
+
+<dd>
+<p>Use formatting conventions read from the environment variables
+<code>B_CONCISE_FORMAT</code>, <code>B_CONCISE_GOTO_FORMAT</code>, and <code>B_CONCISE_TREE_FORMAT</code>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="options_for_treespecific_formatting">Options for tree-specific formatting</a></h2>
+<dl>
+<dt><strong><a name="item__2dcompact"><strong>-compact</strong></a></strong>
+
+<dd>
+<p>Use a tree format in which the minimum amount of space is used for the
+lines connecting nodes (one character in most cases). This squeezes out
+a few precious columns of screen real estate.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dloose"><strong>-loose</strong></a></strong>
+
+<dd>
+<p>Use a tree format that uses longer edges to separate OP nodes. This format
+tends to look better than the compact one, especially in ASCII, and is
+the default.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dvt"><strong>-vt</strong></a></strong>
+
+<dd>
+<p>Use tree connecting characters drawn from the VT100 line-drawing set.
+This looks better if your terminal supports it.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dascii"><strong>-ascii</strong></a></strong>
+
+<dd>
+<p>Draw the tree with standard ASCII characters like <code>+</code> and <code>|</code>. These don't
+look as clean as the VT100 characters, but they'll work with almost any
+terminal (or the horizontal scrolling mode of <code>less(1))</code> and are suitable
+for text documentation or email. This is the default.</p>
+</dd>
+</li>
+</dl>
+<p>These are pairwise exclusive, i.e. compact or loose, vt or ascii.</p>
+<p>
+</p>
+<h2><a name="options_controlling_sequence_numbering">Options controlling sequence numbering</a></h2>
+<dl>
+<dt><strong><a name="item__2dbasen"><strong>-base</strong><em>n</em></a></strong>
+
+<dd>
+<p>Print OP sequence numbers in base <em>n</em>. If <em>n</em> is greater than 10, the
+digit for 11 will be 'a', and so on. If <em>n</em> is greater than 36, the digit
+for 37 will be 'A', and so on until 62. Values greater than 62 are not
+currently supported. The default is 36.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dbigendian"><strong>-bigendian</strong></a></strong>
+
+<dd>
+<p>Print sequence numbers with the most significant digit first. This is the
+usual convention for Arabic numerals, and the default.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dlittleendian"><strong>-littleendian</strong></a></strong>
+
+<dd>
+<p>Print seqence numbers with the least significant digit first.  This is
+obviously mutually exclusive with bigendian.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="other_options">Other options</a></h2>
+<p>These are pairwise exclusive.</p>
+<dl>
+<dt><strong><a name="item__2dmain"><strong>-main</strong></a></strong>
+
+<dd>
+<p>Include the main program in the output, even if subroutines were also
+specified.  This rendering is normally suppressed when a subroutine
+name or reference is given.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dnomain"><strong>-nomain</strong></a></strong>
+
+<dd>
+<p>This restores the default behavior after you've changed it with '-main'
+(it's not normally needed).  If no subroutine name/ref is given, main is
+rendered, regardless of this flag.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dnobanner"><strong>-nobanner</strong></a></strong>
+
+<dd>
+<p>Renderings usually include a banner line identifying the function name
+or stringified subref.  This suppresses the printing of the banner.</p>
+</dd>
+<dd>
+<p>TBC: Remove the stringified coderef; while it provides a 'cookie' for
+each function rendered, the cookies used should be 1,2,3.. not a
+random hex-address.  It also complicates string comparison of two
+different trees.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dbanner"><strong>-banner</strong></a></strong>
+
+<dd>
+<p>restores default banner behavior.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dbanneris__3d_3e_subref"><strong>-banneris</strong> =&gt; subref</a></strong>
+
+<dd>
+<p>TBC: a hookpoint (and an option to set it) for a user-supplied
+function to produce a banner appropriate for users needs.  It's not
+ideal, because the rendering-state variables, which are a natural
+candidate for use in concise.t, are unavailable to the user.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="option_stickiness">Option Stickiness</a></h2>
+<p>If you invoke Concise more than once in a program, you should know that
+the options are 'sticky'.  This means that the options you provide in
+the first call will be remembered for the 2nd call, unless you
+re-specify or change them.</p>
+<p>
+</p>
+<hr />
+<h1><a name="abbreviations">ABBREVIATIONS</a></h1>
+<p>The concise style uses symbols to convey maximum info with minimal
+clutter (like hex addresses).  With just a little practice, you can
+start to see the flowers, not just the branches, in the trees.</p>
+<p>
+</p>
+<h2><a name="op_class_abbreviations">OP class abbreviations</a></h2>
+<p>These symbols appear before the op-name, and indicate the
+B:: namespace that represents the ops in your Perl code.</p>
+<pre>
+    0      OP (aka BASEOP)  An OP with no children
+    1      UNOP             An OP with one child
+    2      BINOP            An OP with two children
+    |      LOGOP            A control branch OP
+    @      LISTOP           An OP that could have lots of children
+    /      PMOP             An OP with a regular expression
+    $      SVOP             An OP with an SV
+    &quot;      PVOP             An OP with a string
+    {      LOOP             An OP that holds pointers for a loop
+    ;      COP              An OP that marks the start of a statement
+    #      PADOP            An OP with a GV on the pad</pre>
+<p>
+</p>
+<h2><a name="op_flags_abbreviations">OP flags abbreviations</a></h2>
+<p>OP flags are either public or private.  The public flags alter the
+behavior of each opcode in consistent ways, and are represented by 0
+or more single characters.</p>
+<pre>
+    v      OPf_WANT_VOID    Want nothing (void context)
+    s      OPf_WANT_SCALAR  Want single value (scalar context)
+    l      OPf_WANT_LIST    Want list of any length (list context)
+                            Want is unknown
+    K      OPf_KIDS         There is a firstborn child.
+    P      OPf_PARENS       This operator was parenthesized.
+                             (Or block needs explicit scope entry.)
+    R      OPf_REF          Certified reference.
+                             (Return container, not containee).
+    M      OPf_MOD          Will modify (lvalue).
+    S      OPf_STACKED      Some arg is arriving on the stack.
+    *      OPf_SPECIAL      Do something weird for this op (see op.h)</pre>
+<p>Private flags, if any are set for an opcode, are displayed after a '/'</p>
+<pre>
+    8  &lt;@&gt; leave[1 ref] vKP/REFC -&gt;(end)
+    7     &lt;2&gt; sassign vKS/2 -&gt;8</pre>
+<p>They're opcode specific, and occur less often than the public ones, so
+they're represented by short mnemonics instead of single-chars; see
+<em>op.h</em> for gory details, or try this quick 2-liner:</p>
+<pre>
+  $&gt; perl -MB::Concise -de 1
+  DB&lt;1&gt; |x \%B::Concise::priv</pre>
+<p>
+</p>
+<hr />
+<h1><a name="formatting_specifications">FORMATTING SPECIFICATIONS</a></h1>
+<p>For each line-style ('concise', 'terse', 'linenoise', etc.) there are
+3 format-specs which control how OPs are rendered.</p>
+<p>The first is the 'default' format, which is used in both basic and exec
+modes to print all opcodes.  The 2nd, goto-format, is used in exec
+mode when branches are encountered.  They're not real opcodes, and are
+inserted to look like a closing curly brace.  The tree-format is tree
+specific.</p>
+<p>When a line is rendered, the correct format-spec is copied and scanned
+for the following items; data is substituted in, and other
+manipulations like basic indenting are done, for each opcode rendered.</p>
+<p>There are 3 kinds of items that may be populated; special patterns,
+#vars, and literal text, which is copied verbatim.  (Yes, it's a set
+of s///g steps.)</p>
+<p>
+</p>
+<h2><a name="special_patterns">Special Patterns</a></h2>
+<p>These items are the primitives used to perform indenting, and to
+select text from amongst alternatives.</p>
+<dl>
+<dt><strong><a name="item_x"><strong>(x(</strong><em>exec_text</em><strong>;</strong><em>basic_text</em><strong>)x)</strong></a></strong>
+
+<dd>
+<p>Generates <em>exec_text</em> in exec mode, or <em>basic_text</em> in basic mode.</p>
+</dd>
+</li>
+<dt><strong><a name="item__28_2a_28text_29_2a_29"><strong>(*(</strong><em>text</em><strong>)*)</strong></a></strong>
+
+<dd>
+<p>Generates one copy of <em>text</em> for each indentation level.</p>
+</dd>
+</li>
+<dt><strong><a name="item__28_2a_28text1_3btext2_29_2a_29"><strong>(*(</strong><em>text1</em><strong>;</strong><em>text2</em><strong>)*)</strong></a></strong>
+
+<dd>
+<p>Generates one fewer copies of <em>text1</em> than the indentation level, followed
+by one copy of <em>text2</em> if the indentation level is more than 0.</p>
+</dd>
+</li>
+<dt><strong><a name="item__28_3f_28text1_23vartext2_29_3f_29"><strong>(?(</strong><em>text1</em><strong>#</strong><em>var</em><em>Text2</em><strong>)?)</strong></a></strong>
+
+<dd>
+<p>If the value of <em>var</em> is true (not empty or zero), generates the
+value of <em>var</em> surrounded by <em>text1</em> and <em>Text2</em>, otherwise
+nothing.</p>
+</dd>
+</li>
+<dt><strong><a name="item__7e"><strong>~</strong></a></strong>
+
+<dd>
+<p>Any number of tildes and surrounding whitespace will be collapsed to
+a single space.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="__variables"># Variables</a></h2>
+<p>These #vars represent opcode properties that you may want as part of
+your rendering.  The '#' is intended as a private sigil; a #var's
+value is interpolated into the style-line, much like ``read $this''.</p>
+<p>These vars take 3 forms:</p>
+<dl>
+<dt><strong><a name="item__23var"><strong>#</strong><em>var</em></a></strong>
+
+<dd>
+<p>A property named 'var' is assumed to exist for the opcodes, and is
+interpolated into the rendering.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23varn"><strong>#</strong><em>var</em><em>N</em></a></strong>
+
+<dd>
+<p>Generates the value of <em>var</em>, left justified to fill <em>N</em> spaces.
+Note that this means while you can have properties 'foo' and 'foo2',
+you cannot render 'foo2', but you could with 'foo2a'.  You would be
+wise not to rely on this behavior going forward ;-)</p>
+</dd>
+</li>
+<dt><strong><a name="item__23var"><strong>#</strong><em>Var</em></a></strong>
+
+<dd>
+<p>This ucfirst form of #var generates a tag-value form of itself for
+display; it converts '#Var' into a 'Var =&gt; #var' style, which is then
+handled as described above.  (Imp-note: #Vars cannot be used for
+conditional-fills, because the =&gt; #var transform is done after the check
+for #Var's value).</p>
+</dd>
+</li>
+</dl>
+<p>The following variables are 'defined' by B::Concise; when they are
+used in a style, their respective values are plugged into the
+rendering of each opcode.</p>
+<p>Only some of these are used by the standard styles, the others are
+provided for you to delve into optree mechanics, should you wish to
+add a new style (see <a href="#add_style">add_style</a> below) that uses them.  You can
+also add new ones using <a href="#add_callback">add_callback</a>.</p>
+<dl>
+<dt><strong><a name="item__23addr"><strong>#addr</strong></a></strong>
+
+<dd>
+<p>The address of the OP, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23arg"><strong>#arg</strong></a></strong>
+
+<dd>
+<p>The OP-specific information of the OP (such as the SV for an SVOP, the
+non-local exit pointers for a LOOP, etc.) enclosed in parentheses.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23class"><strong>#class</strong></a></strong>
+
+<dd>
+<p>The B-determined class of the OP, in all caps.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23classsym"><strong>#classsym</strong></a></strong>
+
+<dd>
+<p>A single symbol abbreviating the class of the OP.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23coplabel"><strong>#coplabel</strong></a></strong>
+
+<dd>
+<p>The label of the statement or block the OP is the start of, if any.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23exname"><strong>#exname</strong></a></strong>
+
+<dd>
+<p>The name of the OP, or 'ex-foo' if the OP is a null that used to be a foo.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23extarg"><strong>#extarg</strong></a></strong>
+
+<dd>
+<p>The target of the OP, or nothing for a nulled OP.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23firstaddr"><strong>#firstaddr</strong></a></strong>
+
+<dd>
+<p>The address of the OP's first child, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23flags"><strong>#flags</strong></a></strong>
+
+<dd>
+<p>The OP's flags, abbreviated as a series of symbols.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23flagval"><strong>#flagval</strong></a></strong>
+
+<dd>
+<p>The numeric value of the OP's flags.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23hyphseq"><strong>#hyphseq</strong></a></strong>
+
+<dd>
+<p>The sequence number of the OP, or a hyphen if it doesn't have one.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23label"><strong>#label</strong></a></strong>
+
+<dd>
+<p>'NEXT', 'LAST', or 'REDO' if the OP is a target of one of those in exec
+mode, or empty otherwise.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23lastaddr"><strong>#lastaddr</strong></a></strong>
+
+<dd>
+<p>The address of the OP's last child, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23name"><strong>#name</strong></a></strong>
+
+<dd>
+<p>The OP's name.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23name"><strong>#NAME</strong></a></strong>
+
+<dd>
+<p>The OP's name, in all caps.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23next"><strong>#next</strong></a></strong>
+
+<dd>
+<p>The sequence number of the OP's next OP.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23nextaddr"><strong>#nextaddr</strong></a></strong>
+
+<dd>
+<p>The address of the OP's next OP, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23noise"><strong>#noise</strong></a></strong>
+
+<dd>
+<p>A one- or two-character abbreviation for the OP's name.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23private"><strong>#private</strong></a></strong>
+
+<dd>
+<p>The OP's private flags, rendered with abbreviated names if possible.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23privval"><strong>#privval</strong></a></strong>
+
+<dd>
+<p>The numeric value of the OP's private flags.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23seq"><strong>#seq</strong></a></strong>
+
+<dd>
+<p>The sequence number of the OP. Note that this is a sequence number
+generated by B::Concise.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23seqnum"><strong>#seqnum</strong></a></strong>
+
+<dd>
+<p>5.8.x and earlier only. 5.9 and later do not provide this.</p>
+</dd>
+<dd>
+<p>The real sequence number of the OP, as a regular number and not adjusted
+to be relative to the start of the real program. (This will generally be
+a fairly large number because all of <strong>B::Concise</strong> is compiled before
+your program is).</p>
+</dd>
+</li>
+<dt><strong><a name="item__23opt"><strong>#opt</strong></a></strong>
+
+<dd>
+<p>Whether or not the op has been optimised by the peephole optimiser.</p>
+</dd>
+<dd>
+<p>Only available in 5.9 and later.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23static"><strong>#static</strong></a></strong>
+
+<dd>
+<p>Whether or not the op is statically defined.  This flag is used by the
+B::C compiler backend and indicates that the op should not be freed.</p>
+</dd>
+<dd>
+<p>Only available in 5.9 and later.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23sibaddr"><strong>#sibaddr</strong></a></strong>
+
+<dd>
+<p>The address of the OP's next youngest sibling, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23svaddr"><strong>#svaddr</strong></a></strong>
+
+<dd>
+<p>The address of the OP's SV, if it has an SV, in hexadecimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23svclass"><strong>#svclass</strong></a></strong>
+
+<dd>
+<p>The class of the OP's SV, if it has one, in all caps (e.g., 'IV').</p>
+</dd>
+</li>
+<dt><strong><a name="item__23svval"><strong>#svval</strong></a></strong>
+
+<dd>
+<p>The value of the OP's SV, if it has one, in a short human-readable format.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23targ"><strong>#targ</strong></a></strong>
+
+<dd>
+<p>The numeric value of the OP's targ.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23targarg"><strong>#targarg</strong></a></strong>
+
+<dd>
+<p>The name of the variable the OP's targ refers to, if any, otherwise the
+letter t followed by the OP's targ in decimal.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23targarglife"><strong>#targarglife</strong></a></strong>
+
+<dd>
+<p>Same as <strong>#targarg</strong>, but followed by the COP sequence numbers that delimit
+the variable's lifetime (or 'end' for a variable in an open scope) for a
+variable.</p>
+</dd>
+</li>
+<dt><strong><a name="item__23typenum"><strong>#typenum</strong></a></strong>
+
+<dd>
+<p>The numeric value of the OP's type, in decimal.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="using_b__concise_outside_of_the_o_framework">Using B::Concise outside of the O framework</a></h1>
+<p>The common (and original) usage of B::Concise was for command-line
+renderings of simple code, as given in EXAMPLE.  But you can also use
+<strong>B::Concise</strong> from your code, and call <code>compile()</code> directly, and
+repeatedly.  By doing so, you can avoid the compile-time only
+operation of O.pm, and even use the debugger to step through
+B::Concise::compile() itself.</p>
+<p>Once you're doing this, you may alter Concise output by adding new
+rendering styles, and by optionally adding callback routines which
+populate new variables, if such were referenced from those (just
+added) styles.</p>
+<p>
+</p>
+<h2><a name="example__altering_concise_renderings">Example: Altering Concise Renderings</a></h2>
+<pre>
+    use B::Concise qw(set_style add_callback);
+    add_style($yourStyleName =&gt; $defaultfmt, $gotofmt, $treefmt);
+    add_callback
+      ( sub {
+            my ($h, $op, $format, $level, $stylename) = @_;
+            $h-&gt;{variable} = some_func($op);
+        });
+    $walker = B::Concise::compile(@options,@subnames,@subrefs);
+    $walker-&gt;();</pre>
+<p>
+</p>
+<h2><a name="set_style__"><code>set_style()</code></a></h2>
+<p><strong>set_style</strong> accepts 3 arguments, and updates the three format-specs
+comprising a line-style (basic-exec, goto, tree).  It has one minor
+drawback though; it doesn't register the style under a new name.  This
+can become an issue if you render more than once and switch styles.
+Thus you may prefer to use <code>add_style()</code> and/or <code>set_style_standard()</code>
+instead.</p>
+<p>
+</p>
+<h2><a name="set_style_standard__name_"><code>set_style_standard($name)</code></a></h2>
+<p>This restores one of the standard line-styles: <code>terse</code>, <code>concise</code>,
+<code>linenoise</code>, <code>debug</code>, <code>env</code>, into effect.  It also accepts style
+names previously defined with add_style().</p>
+<p>
+</p>
+<h2><a name="add_style__"><code>add_style()</code></a></h2>
+<p>This subroutine accepts a new style name and three style arguments as
+above, and creates, registers, and selects the newly named style.  It is
+an error to re-add a style; call <code>set_style_standard()</code> to switch between
+several styles.</p>
+<p>
+</p>
+<h2><a name="add_callback__"><code>add_callback()</code></a></h2>
+<p>If your newly minted styles refer to any new #variables, you'll need
+to define a callback subroutine that will populate (or modify) those
+variables.  They are then available for use in the style you've
+chosen.</p>
+<p>The callbacks are called for each opcode visited by Concise, in the
+same order as they are added.  Each subroutine is passed five
+parameters.</p>
+<pre>
+  1. A hashref, containing the variable names and values which are
+     populated into the report-line for the op
+  2. the op, as a B&lt;B::OP&gt; object
+  3. a reference to the format string
+  4. the formatting (indent) level
+  5. the selected stylename</pre>
+<p>To define your own variables, simply add them to the hash, or change
+existing values if you need to.  The level and format are passed in as
+references to scalars, but it is unlikely that they will need to be
+changed or even used.</p>
+<p>
+</p>
+<h2><a name="running_b__concise__compile__">Running B::Concise::compile()</a></h2>
+<p><strong>compile</strong> accepts options as described above in <a href="#options">OPTIONS</a>, and
+arguments, which are either coderefs, or subroutine names.</p>
+<p>It constructs and returns a $treewalker coderef, which when invoked,
+traverses, or walks, and renders the optrees of the given arguments to
+STDOUT.  You can reuse this, and can change the rendering style used
+each time; thereafter the coderef renders in the new style.</p>
+<p><strong>walk_output</strong> lets you change the print destination from STDOUT to
+another open filehandle, or into a string passed as a ref (unless
+you've built perl with -Uuseperlio).</p>
+<pre>
+    my $walker = B::Concise::compile('-terse','aFuncName', \&amp;aSubRef);  # 1
+    walk_output(\my $buf);
+    $walker-&gt;();                        # 1 renders -terse
+    set_style_standard('concise');      # 2
+    $walker-&gt;();                        # 2 renders -concise
+    $walker-&gt;(@new);                    # 3 renders whatever
+    print &quot;3 different renderings: terse, concise, and @new: $buf\n&quot;;</pre>
+<p>When $walker is called, it traverses the subroutines supplied when it
+was created, and renders them using the current style.  You can change
+the style afterwards in several different ways:</p>
+<pre>
+  1. call C&lt;compile&gt;, altering style or mode/order
+  2. call C&lt;set_style_standard&gt;
+  3. call $walker, passing @new options</pre>
+<p>Passing new options to the $walker is the easiest way to change
+amongst any pre-defined styles (the ones you add are automatically
+recognized as options), and is the only way to alter rendering order
+without calling compile again.  Note however that rendering state is
+still shared amongst multiple $walker objects, so they must still be
+used in a coordinated manner.</p>
+<p>
+</p>
+<h2><a name="b__concise__reset_sequence__">B::Concise::reset_sequence()</a></h2>
+<p>This function (not exported) lets you reset the sequence numbers (note
+that they're numbered arbitrarily, their goal being to be human
+readable).  Its purpose is mostly to support testing, i.e. to compare
+the concise output from two identical anonymous subroutines (but
+different instances).  Without the reset, B::Concise, seeing that
+they're separate optrees, generates different sequence numbers in
+the output.</p>
+<p>
+</p>
+<h2><a name="errors">Errors</a></h2>
+<p>Errors in rendering (non-existent function-name, non-existent coderef)
+are written to the STDOUT, or wherever you've set it via
+walk_output().</p>
+<p>Errors using the various *style* calls, and bad args to walk_output(),
+result in die().  Use an eval if you wish to catch these errors and
+continue processing.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Stephen McCamant, &lt;<a href="mailto:smcc@CSUA.Berkeley.EDU">smcc@CSUA.Berkeley.EDU</a>&gt;.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::Concise - Walk Perl syntax tree, printing concise info about ops</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

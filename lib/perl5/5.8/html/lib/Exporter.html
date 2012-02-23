@@ -1,0 +1,369 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exporter - Implements default import method for modules</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Exporter - Implements default import method for modules</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#how_to_export">How to Export</a></li>
+		<li><a href="#selecting_what_to_export">Selecting What To Export</a></li>
+		<li><a href="#how_to_import">How to Import</a></li>
+	</ul>
+
+	<li><a href="#advanced_features">Advanced features</a></li>
+	<ul>
+
+		<li><a href="#specialised_import_lists">Specialised Import Lists</a></li>
+		<li><a href="#exporting_without_using_exporter_s_import_method">Exporting without using Exporter's import method</a></li>
+		<li><a href="#exporting_without_inheriting_from_exporter">Exporting without inheriting from Exporter</a></li>
+		<li><a href="#module_version_checking">Module Version Checking</a></li>
+		<li><a href="#managing_unknown_symbols">Managing Unknown Symbols</a></li>
+		<li><a href="#tag_handling_utility_functions">Tag Handling Utility Functions</a></li>
+		<li><a href="#generating_combined_tags">Generating combined tags</a></li>
+		<li><a href="#autoloaded_constants"><code>AUTOLOAD</code>ed Constants</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Exporter - Implements default import method for modules</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>In module YourModule.pm:</p>
+<pre>
+  package YourModule;
+  require Exporter;
+  @ISA = qw(Exporter);
+  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request</pre>
+<p>or</p>
+<pre>
+  package YourModule;
+  use Exporter 'import'; # gives you Exporter's import() method directly
+  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request</pre>
+<p>In other files which wish to use YourModule:</p>
+<pre>
+  use ModuleName qw(frobnicate);      # import listed symbols
+  frobnicate ($left, $right)          # calls YourModule::frobnicate</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Exporter module implements an <code>import</code> method which allows a module
+to export functions and variables to its users' namespaces. Many modules
+use Exporter rather than implementing their own <code>import</code> method because
+Exporter provides a highly flexible interface, with an implementation optimised
+for the common case.</p>
+<p>Perl automatically calls the <code>import</code> method when processing a
+<code>use</code> statement for a module. Modules and <code>use</code> are documented
+in <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>. Understanding the concept of
+modules and how the <code>use</code> statement operates is important to
+understanding the Exporter.</p>
+<p>
+</p>
+<h2><a name="how_to_export">How to Export</a></h2>
+<p>The arrays <code>@EXPORT</code> and <code>@EXPORT_OK</code> in a module hold lists of
+symbols that are going to be exported into the users name space by
+default, or which they can request to be exported, respectively.  The
+symbols can represent functions, scalars, arrays, hashes, or typeglobs.
+The symbols must be given by full name with the exception that the
+ampersand in front of a function is optional, e.g.</p>
+<pre>
+    @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
+    @EXPORT_OK = qw(&amp;bfunc %hash *typeglob); # explicit prefix on &amp;bfunc</pre>
+<p>If you are only exporting function names it is recommended to omit the
+ampersand, as the implementation is faster this way.</p>
+<p>
+</p>
+<h2><a name="selecting_what_to_export">Selecting What To Export</a></h2>
+<p>Do <strong>not</strong> export method names!</p>
+<p>Do <strong>not</strong> export anything else by default without a good reason!</p>
+<p>Exports pollute the namespace of the module user.  If you must export
+try to use @EXPORT_OK in preference to @EXPORT and avoid short or
+common symbol names to reduce the risk of name clashes.</p>
+<p>Generally anything not exported is still accessible from outside the
+module using the ModuleName::item_name (or $blessed_ref-&gt;method)
+syntax.  By convention you can use a leading underscore on names to
+informally indicate that they are 'internal' and not for public use.</p>
+<p>(It is actually possible to get private functions by saying:</p>
+<pre>
+  my $subref = sub { ... };
+  $subref-&gt;(@args);            # Call it as a function
+  $obj-&gt;$subref(@args);        # Use it as a method</pre>
+<p>However if you use them for methods it is up to you to figure out
+how to make inheritance work.)</p>
+<p>As a general rule, if the module is trying to be object oriented
+then export nothing. If it's just a collection of functions then
+@EXPORT_OK anything but use @EXPORT with caution. For function and
+method names use barewords in preference to names prefixed with
+ampersands for the export lists.</p>
+<p>Other module design guidelines can be found in <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>.</p>
+<p>
+</p>
+<h2><a name="how_to_import">How to Import</a></h2>
+<p>In other files which wish to use your module there are three basic ways for
+them to load your module and import its symbols:</p>
+<dl>
+<dt><strong><a name="item_use_modulename_3b"><code>use ModuleName;</code></a></strong>
+
+<dd>
+<p>This imports all the symbols from ModuleName's @EXPORT into the namespace
+of the <code>use</code> statement.</p>
+</dd>
+</li>
+<dt><strong><a name="item_modulename"><code>use ModuleName ();</code></a></strong>
+
+<dd>
+<p>This causes perl to load your module but does not import any symbols.</p>
+</dd>
+</li>
+<dt><strong><a name="item_qw"><code>use ModuleName qw(...);</code></a></strong>
+
+<dd>
+<p>This imports only the symbols listed by the caller into their namespace.
+All listed symbols must be in your @EXPORT or @EXPORT_OK, else an error
+occurs. The advanced export features of Exporter are accessed like this,
+but with list entries that are syntactically distinct from symbol names.</p>
+</dd>
+</li>
+</dl>
+<p>Unless you want to use its advanced features, this is probably all you
+need to know to use Exporter.</p>
+<p>
+</p>
+<hr />
+<h1><a name="advanced_features">Advanced features</a></h1>
+<p>
+</p>
+<h2><a name="specialised_import_lists">Specialised Import Lists</a></h2>
+<p>If any of the entries in an import list begins with !, : or / then
+the list is treated as a series of specifications which either add to
+or delete from the list of names to import. They are processed left to
+right. Specifications are in the form:</p>
+<pre>
+    [!]name         This name only
+    [!]:DEFAULT     All names in @EXPORT
+    [!]:tag         All names in $EXPORT_TAGS{tag} anonymous list
+    [!]/pattern/    All names in @EXPORT and @EXPORT_OK which match</pre>
+<p>A leading ! indicates that matching names should be deleted from the
+list of names to import.  If the first specification is a deletion it
+is treated as though preceded by :DEFAULT. If you just want to import
+extra names in addition to the default set you will still need to
+include :DEFAULT explicitly.</p>
+<p>e.g., Module.pm defines:</p>
+<pre>
+    @EXPORT      = qw(A1 A2 A3 A4 A5);
+    @EXPORT_OK   = qw(B1 B2 B3 B4 B5);
+    %EXPORT_TAGS = (T1 =&gt; [qw(A1 A2 B1 B2)], T2 =&gt; [qw(A1 A2 B3 B4)]);</pre>
+<pre>
+    Note that you cannot use tags in @EXPORT or @EXPORT_OK.
+    Names in EXPORT_TAGS must also appear in @EXPORT or @EXPORT_OK.</pre>
+<p>An application using Module can say something like:</p>
+<pre>
+    use Module qw(:DEFAULT :T2 !B3 A3);</pre>
+<p>Other examples include:</p>
+<pre>
+    use Socket qw(!/^[AP]F_/ !SOMAXCONN !SOL_SOCKET);
+    use POSIX  qw(:errno_h :termios_h !TCSADRAIN !/^EXIT/);</pre>
+<p>Remember that most patterns (using //) will need to be anchored
+with a leading ^, e.g., <code>/^EXIT/</code> rather than <code>/EXIT/</code>.</p>
+<p>You can say <code>BEGIN { $Exporter::Verbose=1 }</code> to see how the
+specifications are being processed and what is actually being imported
+into modules.</p>
+<p>
+</p>
+<h2><a name="exporting_without_using_exporter_s_import_method">Exporting without using Exporter's import method</a></h2>
+<p>Exporter has a special method, 'export_to_level' which is used in situations
+where you can't directly call Exporter's import method. The export_to_level
+method looks like:</p>
+<pre>
+    MyPackage-&gt;export_to_level($where_to_export, $package, @what_to_export);</pre>
+<p>where $where_to_export is an integer telling how far up the calling stack
+to export your symbols, and @what_to_export is an array telling what
+symbols *to* export (usually this is @_).  The $package argument is
+currently unused.</p>
+<p>For example, suppose that you have a module, A, which already has an
+import function:</p>
+<pre>
+    package A;</pre>
+<pre>
+    @ISA = qw(Exporter);
+    @EXPORT_OK = qw ($b);</pre>
+<pre>
+    sub import
+    {
+        $A::b = 1;     # not a very useful import method
+    }</pre>
+<p>and you want to Export symbol $A::b back to the module that called 
+package A. Since Exporter relies on the import method to work, via 
+inheritance, as it stands Exporter::import() will never get called. 
+Instead, say the following:</p>
+<pre>
+    package A;
+    @ISA = qw(Exporter);
+    @EXPORT_OK = qw ($b);</pre>
+<pre>
+    sub import
+    {
+        $A::b = 1;
+        A-&gt;export_to_level(1, @_);
+    }</pre>
+<p>This will export the symbols one level 'above' the current package - ie: to 
+the program or module that used package A.</p>
+<p>Note: Be careful not to modify <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a> at all before you call export_to_level
+- or people using your package will get very unexplained results!</p>
+<p>
+</p>
+<h2><a name="exporting_without_inheriting_from_exporter">Exporting without inheriting from Exporter</a></h2>
+<p>By including Exporter in your @ISA you inherit an Exporter's <code>import()</code> method
+but you also inherit several other helper methods which you probably don't
+want. To avoid this you can do</p>
+<pre>
+  package YourModule;
+  use Exporter qw( import );</pre>
+<p>which will export Exporter's own <code>import()</code> method into YourModule.
+Everything will work as before but you won't need to include Exporter in
+@YourModule::ISA.</p>
+<p>
+</p>
+<h2><a name="module_version_checking">Module Version Checking</a></h2>
+<p>The Exporter module will convert an attempt to import a number from a
+module into a call to $module_name-&gt;require_version($value). This can
+be used to validate that the version of the module being used is
+greater than or equal to the required version.</p>
+<p>The Exporter module supplies a default require_version method which
+checks the value of $VERSION in the exporting module.</p>
+<p>Since the default require_version method treats the $VERSION number as
+a simple numeric value it will regard version 1.10 as lower than
+1.9. For this reason it is strongly recommended that you use numbers
+with at least two decimal places, e.g., 1.09.</p>
+<p>
+</p>
+<h2><a name="managing_unknown_symbols">Managing Unknown Symbols</a></h2>
+<p>In some situations you may want to prevent certain symbols from being
+exported. Typically this applies to extensions which have functions
+or constants that may not exist on some systems.</p>
+<p>The names of any symbols that cannot be exported should be listed
+in the <code>@EXPORT_FAIL</code> array.</p>
+<p>If a module attempts to import any of these symbols the Exporter
+will give the module an opportunity to handle the situation before
+generating an error. The Exporter will call an export_fail method
+with a list of the failed symbols:</p>
+<pre>
+  @failed_symbols = $module_name-&gt;export_fail(@failed_symbols);</pre>
+<p>If the export_fail method returns an empty list then no error is
+recorded and all the requested symbols are exported. If the returned
+list is not empty then an error is generated for each symbol and the
+export fails. The Exporter provides a default export_fail method which
+simply returns the list unchanged.</p>
+<p>Uses for the export_fail method include giving better error messages
+for some symbols and performing lazy architectural checks (put more
+symbols into @EXPORT_FAIL by default and then take them out if someone
+actually tries to use them and an expensive check shows that they are
+usable on that platform).</p>
+<p>
+</p>
+<h2><a name="tag_handling_utility_functions">Tag Handling Utility Functions</a></h2>
+<p>Since the symbols listed within %EXPORT_TAGS must also appear in either
+@EXPORT or @EXPORT_OK, two utility functions are provided which allow
+you to easily add tagged sets of symbols to @EXPORT or @EXPORT_OK:</p>
+<pre>
+  %EXPORT_TAGS = (foo =&gt; [qw(aa bb cc)], bar =&gt; [qw(aa cc dd)]);</pre>
+<pre>
+  Exporter::export_tags('foo');     # add aa, bb and cc to @EXPORT
+  Exporter::export_ok_tags('bar');  # add aa, cc and dd to @EXPORT_OK</pre>
+<p>Any names which are not tags are added to @EXPORT or @EXPORT_OK
+unchanged but will trigger a warning (with <code>-w</code>) to avoid misspelt tags
+names being silently added to @EXPORT or @EXPORT_OK. Future versions
+may make this a fatal error.</p>
+<p>
+</p>
+<h2><a name="generating_combined_tags">Generating combined tags</a></h2>
+<p>If several symbol categories exist in %EXPORT_TAGS, it's usually
+useful to create the utility ``:all'' to simplify ``use'' statements.</p>
+<p>The simplest way to do this is:</p>
+<pre>
+  %EXPORT_TAGS = (foo =&gt; [qw(aa bb cc)], bar =&gt; [qw(aa cc dd)]);</pre>
+<pre>
+  # add all the other &quot;:class&quot; tags to the &quot;:all&quot; class,
+  # deleting duplicates
+  {
+    my %seen;</pre>
+<pre>
+    push @{$EXPORT_TAGS{all}},
+      grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} foreach keys %EXPORT_TAGS;
+  }</pre>
+<p>CGI.pm creates an ``:all'' tag which contains some (but not really
+all) of its categories.  That could be done with one small
+change:</p>
+<pre>
+  # add some of the other &quot;:class&quot; tags to the &quot;:all&quot; class,
+  # deleting duplicates
+  {
+    my %seen;</pre>
+<pre>
+    push @{$EXPORT_TAGS{all}},
+      grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}}
+        foreach qw/html2 html3 netscape form cgi internal/;
+  }</pre>
+<p>Note that the tag names in %EXPORT_TAGS don't have the leading ':'.</p>
+<p>
+</p>
+<h2><a name="autoloaded_constants"><code>AUTOLOAD</code>ed Constants</a></h2>
+<p>Many modules make use of <code>AUTOLOAD</code>ing for constant subroutines to
+avoid having to compile and waste memory on rarely used values (see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a> for details on constant subroutines).  Calls to such
+constant subroutines are not optimized away at compile time because
+they can't be checked at compile time for constancy.</p>
+<p>Even if a prototype is available at compile time, the body of the
+subroutine is not (it hasn't been <code>AUTOLOAD</code>ed yet). perl needs to
+examine both the <code>()</code> prototype and the body of a subroutine at
+compile time to detect that it can safely replace calls to that
+subroutine with the constant value.</p>
+<p>A workaround for this is to call the constants once in a <code>BEGIN</code> block:</p>
+<pre>
+   package My ;</pre>
+<pre>
+   use Socket ;</pre>
+<pre>
+   foo( SO_LINGER );     ## SO_LINGER NOT optimized away; called at runtime
+   BEGIN { SO_LINGER }
+   foo( SO_LINGER );     ## SO_LINGER optimized away at compile time.</pre>
+<p>This forces the <code>AUTOLOAD</code> for <code>SO_LINGER</code> to take place before
+SO_LINGER is encountered later in <code>My</code> package.</p>
+<p>If you are writing a package that <code>AUTOLOAD</code>s, consider forcing
+an <code>AUTOLOAD</code> for any constants explicitly imported by other packages
+or which are usually used when your package is <code>use</code>d.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Exporter - Implements default import method for modules</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,146 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode::Alias - alias definitions to encodings</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Alias - alias definitions to encodings</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<ul>
+
+			<li><a href="#changes_in_code_reference_aliasing">Changes in code reference aliasing</a></li>
+		</ul>
+
+		<li><a href="#alias_overloading">Alias overloading</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode::Alias - alias definitions to encodings</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Encode;
+  use Encode::Alias;
+  define_alias( newName =&gt; ENCODING);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Allows newName to be used as an alias for ENCODING. ENCODING may be
+either the name of an encoding or an encoding object (as described 
+in <a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a>).</p>
+<p>Currently <em>newName</em> can be specified in the following ways:</p>
+<dl>
+<dt><strong><a name="item_as_a_simple_string_2e">As a simple string.</a></strong>
+
+<dt><strong><a name="item_as_a_qr_2f_2f_compiled_regular_expression_2c_e_2eg">As a qr// compiled regular expression, e.g.:</a></strong>
+
+<dd>
+<pre>
+  define_alias( qr/^iso8859-(\d+)$/i =&gt; '&quot;iso-8859-$1&quot;' );</pre>
+</dd>
+<dd>
+<p>In this case, if <em>ENCODING</em> is not a reference, it is <code>eval</code>-ed
+in order to allow <code>$1</code> etc. to be substituted.  The example is one
+way to alias names as used in X11 fonts to the MIME names for the
+iso-8859-* family.  Note the double quotes inside the single quotes.</p>
+</dd>
+<dd>
+<p>(or, you don't have to do this yourself because this example is predefined)</p>
+</dd>
+<dd>
+<p>If you are using a regex here, you have to use the quotes as shown or
+it won't work.  Also note that regex handling is tricky even for the
+experienced.  Use this feature with caution.</p>
+</dd>
+<dt><strong><a name="item_as_a_code_reference_2c_e_2eg_2e_3a">As a code reference, e.g.:</a></strong>
+
+<dd>
+<pre>
+  define_alias( sub {shift =~ /^iso8859-(\d+)$/i ? &quot;iso-8859-$1&quot; : undef } );</pre>
+</dd>
+<dd>
+<p>The same effect as the example above in a different way.  The coderef
+takes the alias name as an argument and returns a canonical name on
+success or undef if not.  Note the second argument is not required.
+Use this with even more caution than the regex version.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h3><a name="changes_in_code_reference_aliasing">Changes in code reference aliasing</a></h3>
+<p>As of Encode 1.87, the older form</p>
+<pre>
+  define_alias( sub { return  /^iso8859-(\d+)$/i ? &quot;iso-8859-$1&quot; : undef } );</pre>
+<p>no longer works.</p>
+<p>Encode up to 1.86 internally used ``local $_'' to implement ths older
+form.  But consider the code below;</p>
+<pre>
+  use Encode;
+  $_ = &quot;eeeee&quot; ;
+  while (/(e)/g) {
+    my $utf = decode('aliased-encoding-name', $1);
+    print &quot;position:&quot;,pos,&quot;\n&quot;;
+  }</pre>
+<p>Prior to Encode 1.86 this fails because of ``local $_''.</p>
+<p>
+</p>
+<h2><a name="alias_overloading">Alias overloading</a></h2>
+<p>You can override predefined aliases by simply applying define_alias().
+The new alias is always evaluated first, and when necessary,
+<code>define_alias()</code> flushes the internal cache to make the new definition
+available.</p>
+<pre>
+  # redirect SHIFT_JIS to MS/IBM Code Page 932, which is a
+  # superset of SHIFT_JIS</pre>
+<pre>
+  define_alias( qr/shift.*jis$/i  =&gt; '&quot;cp932&quot;' );
+  define_alias( qr/sjis$/i        =&gt; '&quot;cp932&quot;' );</pre>
+<p>If you want to zap all predefined aliases, you can use</p>
+<pre>
+  Encode::Alias-&gt;undef_aliases;</pre>
+<p>to do so.  And</p>
+<pre>
+  Encode::Alias-&gt;init_aliases;</pre>
+<p>gets the factory settings back.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/Encode/Encode.html">the Encode manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Supported.html">the Encode::Supported manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::Alias - alias definitions to encodings</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

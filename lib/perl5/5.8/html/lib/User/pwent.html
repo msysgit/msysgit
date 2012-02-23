@@ -1,0 +1,164 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>User::pwent - by-name interface to Perl's built-in getpw* functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;User::pwent - by-name interface to Perl's built-in getpw* functions</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#system_specifics">System Specifics</a></li>
+	</ul>
+
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>User::pwent - by-name interface to Perl's built-in getpw*() functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use User::pwent;
+ $pw = getpwnam('daemon')       || die &quot;No daemon user&quot;;
+ if ( $pw-&gt;uid == 1 &amp;&amp; $pw-&gt;dir =~ m#^/(bin|tmp)?\z#s ) {
+     print &quot;gid 1 on root dir&quot;;
+ }</pre>
+<pre>
+ $real_shell = $pw-&gt;shell || '/bin/sh';</pre>
+<pre>
+ for (($fullname, $office, $workphone, $homephone) =
+        split /\s*,\s*/, $pw-&gt;gecos)
+ {
+    s/&amp;/ucfirst(lc($pw-&gt;name))/ge;
+ }</pre>
+<pre>
+ use User::pwent qw(:FIELDS);
+ getpwnam('daemon')             || die &quot;No daemon user&quot;;
+ if ( $pw_uid == 1 &amp;&amp; $pw_dir =~ m#^/(bin|tmp)?\z#s ) {
+     print &quot;gid 1 on root dir&quot;;
+ }</pre>
+<pre>
+ $pw = getpw($whoever);</pre>
+<pre>
+ use User::pwent qw/:DEFAULT pw_has/;
+ if (pw_has(qw[gecos expire quota])) { .... }
+ if (pw_has(&quot;name uid gid passwd&quot;))  { .... }
+ print &quot;Your struct pwd has: &quot;, scalar pw_has(), &quot;\n&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module's default exports override the core getpwent(), getpwuid(),
+and <code>getpwnam()</code> functions, replacing them with versions that return
+<code>User::pwent</code> objects.  This object has methods that return the
+similarly named structure field name from the C's passwd structure
+from <em>pwd.h</em>, stripped of their leading ``pw_'' parts, namely <code>name</code>,
+<code>passwd</code>, <code>uid</code>, <code>gid</code>, <code>change</code>, <code>age</code>, <code>quota</code>, <code>comment</code>,
+<code>class</code>, <code>gecos</code>, <code>dir</code>, <code>shell</code>, and <code>expire</code>.  The <code>passwd</code>,
+<code>gecos</code>, and <code>shell</code> fields are tainted when running in taint mode.</p>
+<p>You may also import all the structure fields directly into your
+namespace as regular variables using the :FIELDS import tag.  (Note
+that this still overrides your core functions.)  Access these fields
+as variables named with a preceding <code>pw_</code> in front their method
+names.  Thus, <code>$passwd_obj-&gt;shell</code> corresponds to $pw_shell
+if you import the fields.</p>
+<p>The <code>getpw()</code> function is a simple front-end that forwards
+a numeric argument to <code>getpwuid()</code> and the rest to getpwnam().</p>
+<p>To access this functionality without the core overrides, pass the
+<code>use</code> an empty import list, and then access function functions
+with their full qualified names.  The built-ins are always still
+available via the <code>CORE::</code> pseudo-package.</p>
+<p>
+</p>
+<h2><a name="system_specifics">System Specifics</a></h2>
+<p>Perl believes that no machine ever has more than one of <code>change</code>,
+<code>age</code>, or <code>quota</code> implemented, nor more than one of either
+<code>comment</code> or <code>class</code>.  Some machines do not support <code>expire</code>,
+<code>gecos</code>, or allegedly, <code>passwd</code>.  You may call these methods
+no matter what machine you're on, but they return <code>undef</code> if
+unimplemented.</p>
+<p>You may ask whether one of these was implemented on the system Perl
+was built on by asking the importable <code>pw_has</code> function about them.
+This function returns true if all parameters are supported fields
+on the build platform, false if one or more were not, and raises
+an exception if you asked about a field that Perl never knows how
+to provide.  Parameters may be in a space-separated string, or as
+separate arguments.  If you pass no parameters, the function returns
+the list of <code>struct pwd</code> fields supported by your build platform's
+C library, as a list in list context, or a space-separated string
+in scalar context.  Note that just because your C library had
+a field doesn't necessarily mean that it's fully implemented on
+that system.</p>
+<p>Interpretation of the <code>gecos</code> field varies between systems, but
+traditionally holds 4 comma-separated fields containing the user's
+full name, office location, work phone number, and home phone number.
+An <code>&amp;</code> in the gecos field should be replaced by the user's properly
+capitalized login <code>name</code>.  The <code>shell</code> field, if blank, must be
+assumed to be <em>/bin/sh</em>.  Perl does not do this for you.  The
+<code>passwd</code> is one-way hashed garble, not clear text, and may not be
+unhashed save by brute-force guessing.  Secure systems use more a
+more secure hashing than DES.  On systems supporting shadow password
+systems, Perl automatically returns the shadow password entry when
+called by a suitably empowered user, even if your underlying
+vendor-provided C library was too short-sighted to realize it should
+do this.</p>
+<p>See <code>passwd(5)</code> and <code>getpwent(3)</code> for details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>While this class is currently implemented using the Class::Struct
+module to build a struct-like class, you shouldn't rely upon this.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tom Christiansen</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<dl>
+<dt><strong><a name="item_march_18th_2c_2000">March 18th, 2000</a></strong>
+
+<dd>
+<p>Reworked internals to support better interface to dodgey fields
+than normal Perl function provides.  Added <code>pw_has()</code> field.  Improved
+documentation.</p>
+</dd>
+</li>
+</dl>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;User::pwent - by-name interface to Perl's built-in getpw* functions</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

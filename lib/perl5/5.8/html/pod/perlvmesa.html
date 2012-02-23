@@ -1,0 +1,166 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>README.vmesa - building and installing Perl for VM/ESA.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.vmesa - building and installing Perl for VM/ESA.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#unpacking_perl_distribution_on_vm_esa">Unpacking Perl Distribution on VM/ESA</a></li>
+		<li><a href="#setup_perl_and_utilities_on_vm_esa">Setup Perl and utilities on VM/ESA</a></li>
+		<li><a href="#configure_perl_on_vm_esa">Configure Perl on VM/ESA</a></li>
+		<li><a href="#testing_anomalies_of_perl_on_vm_esa">Testing Anomalies of Perl on VM/ESA</a></li>
+		<li><a href="#usage_hints_for_perl_on_vm_esa">Usage Hints for Perl on VM/ESA</a></li>
+	</ul>
+
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<ul>
+
+		<li><a href="#mailing_list_for_perl_on_vm_esa">Mailing list for Perl on VM/ESA</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>README.vmesa - building and installing Perl for VM/ESA.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>This document will help you Configure, build, test and install Perl
+on VM/ESA.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a fully ported perl for VM/ESA 2.3.0.  It may work on
+other versions, but that's the one we've tested it on.</p>
+<p>If you've downloaded the binary distribution, it needs to be
+installed below /usr/local.  Source code distributions have an
+automated ``make install'' step that means you do not need to extract
+the source code below /usr/local (though that is where it will be
+installed by default).  You may need to worry about the networking
+configuration files discussed in the last bullet below.</p>
+<p>
+</p>
+<h2><a name="unpacking_perl_distribution_on_vm_esa">Unpacking Perl Distribution on VM/ESA</a></h2>
+<p>To extract an ASCII tar archive on VM/ESA, try this:</p>
+<pre>
+   pax -o to=IBM-1047,from=ISO8859-1 -r &lt; latest.tar</pre>
+<p>
+</p>
+<h2><a name="setup_perl_and_utilities_on_vm_esa">Setup Perl and utilities on VM/ESA</a></h2>
+<p>GNU make for VM/ESA, which may be required for the build of perl,
+is available from:</p>
+<pre>
+  <a href="http://vm.marist.edu/~neale/vmoe.html">http://vm.marist.edu/~neale/vmoe.html</a></pre>
+<p>
+</p>
+<h2><a name="configure_perl_on_vm_esa">Configure Perl on VM/ESA</a></h2>
+<p>Once you've unpacked the distribution, run Configure (see INSTALL for
+full discussion of the Configure options), and then run make, then
+``make test'' then ``make install'' (this last step may require UID=0
+privileges).</p>
+<p>There is a ``hints'' file for vmesa that specifies the correct values
+for most things.  Some things to watch out for are:</p>
+<ul>
+<li>
+<p>this port does support dynamic loading but it's not had much testing</p>
+</li>
+<li>
+<p>Don't turn on the compiler optimization flag ``-O''.  There's
+a bug in the compiler (APAR PQ18812) that generates some bad code
+the optimizer is on.</p>
+</li>
+<li>
+<p>As VM/ESA doesn't fully support the <code>fork()</code> API programs relying on
+this call will not work. I've replaced <code>fork()/exec()</code> with <code>spawn()</code>
+and the standalone <code>exec()</code> with spawn(). This has a side effect when
+opening unnamed pipes in a shell script: there is no child process
+generated under.</p>
+</li>
+<li>
+<p>At the moment the hints file for VM/ESA basically bypasses all of the
+automatic configuration process.  This is because Configure relies on:
+1. The header files living in the Byte File System (you could put the
+there if you want); 2. The C preprocessor including the #include 
+statements in the preprocessor output (.i) file.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="testing_anomalies_of_perl_on_vm_esa">Testing Anomalies of Perl on VM/ESA</a></h2>
+<p>The ``make test'' step runs a Perl Verification Procedure, usually before
+installation.  As the 5.6.1 kit was being assembled
+the following ``failures'' were known to appear on some machines
+during ``make test'' (mostly due to ASCII vs. EBCDIC conflicts),
+your results may differ:</p>
+<p>[the list of failures being compiled]</p>
+<p>
+</p>
+<h2><a name="usage_hints_for_perl_on_vm_esa">Usage Hints for Perl on VM/ESA</a></h2>
+<p>When using perl on VM/ESA please keep in mind that the EBCDIC and ASCII
+character sets are different.  Perl builtin functions that may behave
+differently under EBCDIC are mentioned in the perlport.pod document.</p>
+<p>OpenEdition (UNIX System Services) does not (yet) support the #! means
+of script invocation.
+See:</p>
+<pre>
+    head `whence <a href="/usr/lib/perl5/5.8/html/./pod/perldoc.html">perldoc</a>`</pre>
+<p>for an example of how to use the ``eval exec'' trick to ask the shell to
+have perl run your scripts for you.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Neale Ferguson.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./INSTALL.html">the INSTALL manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlebcdic.html">the perlebcdic manpage</a>.</p>
+<p>
+</p>
+<h2><a name="mailing_list_for_perl_on_vm_esa">Mailing list for Perl on VM/ESA</a></h2>
+<p>If you are interested in the VM/ESA, z/OS (formerly known as OS/390)
+and POSIX-BC (BS2000) ports of Perl then see the perl-mvs mailing list.
+To subscribe, send an empty message to <a href="mailto:perl-mvs-subscribe@perl.org.">perl-mvs-subscribe@perl.org.</a></p>
+<p>See also:</p>
+<pre>
+    <a href="http://lists.perl.org/showlist.cgi?name=perl-mvs">http://lists.perl.org/showlist.cgi?name=perl-mvs</a></pre>
+<p>There are web archives of the mailing list at:</p>
+<pre>
+    <a href="http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/">http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/</a>
+    <a href="http://archive.develooper.com/perl-mvs@perl.org/">http://archive.develooper.com/perl-mvs@perl.org/</a></pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.vmesa - building and installing Perl for VM/ESA.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

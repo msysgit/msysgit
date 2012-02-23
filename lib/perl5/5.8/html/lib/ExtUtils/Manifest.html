@@ -1,0 +1,341 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ExtUtils::Manifest - utilities to write and check a MANIFEST file</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Manifest - utilities to write and check a MANIFEST file</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#functions">Functions</a></li>
+		<li><a href="#manifest">MANIFEST</a></li>
+		<li><a href="#manifest_skip">MANIFEST.SKIP</a></li>
+		<li><a href="#export_ok">EXPORT_OK</a></li>
+		<li><a href="#global_variables">GLOBAL VARIABLES</a></li>
+	</ul>
+
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ExtUtils::Manifest - utilities to write and check a MANIFEST file</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use ExtUtils::Manifest qw(...funcs to import...);</pre>
+<pre>
+    mkmanifest();</pre>
+<pre>
+    my @missing_files    = manicheck;
+    my @skipped          = skipcheck;
+    my @extra_files      = filecheck;
+    my($missing, $extra) = fullcheck;</pre>
+<pre>
+    my $found    = manifind();</pre>
+<pre>
+    my $manifest = maniread();</pre>
+<pre>
+    manicopy($read,$target);</pre>
+<pre>
+    maniadd({$file =&gt; $comment, ...});</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="functions">Functions</a></h2>
+<p>ExtUtils::Manifest exports no functions by default.  The following are
+exported on request</p>
+<dl>
+<dt><strong><a name="item_mkmanifest">mkmanifest</a></strong>
+
+<dd>
+<pre>
+    mkmanifest();</pre>
+</dd>
+<dd>
+<p>Writes all files in and below the current directory to your <em>MANIFEST</em>.
+It works similar to</p>
+</dd>
+<dd>
+<pre>
+    find . &gt; MANIFEST</pre>
+</dd>
+<dd>
+<p>All files that match any regular expression in a file <em>MANIFEST.SKIP</em>
+(if it exists) are ignored.</p>
+</dd>
+<dd>
+<p>Any existing <em>MANIFEST</em> file will be saved as <em>MANIFEST.bak</em>.  Lines
+from the old <em>MANIFEST</em> file is preserved, including any comments
+that are found in the existing <em>MANIFEST</em> file in the new one.</p>
+</dd>
+<dt><strong><a name="item_manifind">manifind</a></strong>
+
+<dd>
+<pre>
+    my $found = manifind();</pre>
+</dd>
+<dd>
+<p>returns a hash reference. The keys of the hash are the files found
+below the current directory.</p>
+</dd>
+<dt><strong><a name="item_manicheck">manicheck</a></strong>
+
+<dd>
+<pre>
+    my @missing_files = manicheck();</pre>
+</dd>
+<dd>
+<p>checks if all the files within a <code>MANIFEST</code> in the current directory
+really do exist. If <code>MANIFEST</code> and the tree below the current
+directory are in sync it silently returns an empty list.
+Otherwise it returns a list of files which are listed in the
+<code>MANIFEST</code> but missing from the directory, and by default also
+outputs these names to STDERR.</p>
+</dd>
+<dt><strong><a name="item_filecheck">filecheck</a></strong>
+
+<dd>
+<pre>
+    my @extra_files = filecheck();</pre>
+</dd>
+<dd>
+<p>finds files below the current directory that are not mentioned in the
+<code>MANIFEST</code> file. An optional file <code>MANIFEST.SKIP</code> will be
+consulted. Any file matching a regular expression in such a file will
+not be reported as missing in the <code>MANIFEST</code> file. The list of any
+extraneous files found is returned, and by default also reported to
+STDERR.</p>
+</dd>
+<dt><strong><a name="item_fullcheck">fullcheck</a></strong>
+
+<dd>
+<pre>
+    my($missing, $extra) = fullcheck();</pre>
+</dd>
+<dd>
+<p>does both a <a href="#item_manicheck"><code>manicheck()</code></a> and a filecheck(), returning then as two array
+refs.</p>
+</dd>
+<dt><strong><a name="item_skipcheck">skipcheck</a></strong>
+
+<dd>
+<pre>
+    my @skipped = skipcheck();</pre>
+</dd>
+<dd>
+<p>lists all the files that are skipped due to your <code>MANIFEST.SKIP</code>
+file.</p>
+</dd>
+<dt><strong><a name="item_maniread">maniread</a></strong>
+
+<dd>
+<pre>
+    my $manifest = maniread();
+    my $manifest = maniread($manifest_file);</pre>
+</dd>
+<dd>
+<p>reads a named <code>MANIFEST</code> file (defaults to <code>MANIFEST</code> in the current
+directory) and returns a HASH reference with files being the keys and
+comments being the values of the HASH.  Blank lines and lines which
+start with <code>#</code> in the <code>MANIFEST</code> file are discarded.</p>
+</dd>
+<dt><strong><a name="item_manicopy">manicopy</a></strong>
+
+<dd>
+<pre>
+    manicopy(\%src, $dest_dir);
+    manicopy(\%src, $dest_dir, $how);</pre>
+</dd>
+<dd>
+<p>Copies the files that are the keys in %src to the $dest_dir.  %src is
+typically returned by the <a href="#item_maniread"><code>maniread()</code></a> function.</p>
+</dd>
+<dd>
+<pre>
+    manicopy( maniread(), $dest_dir );</pre>
+</dd>
+<dd>
+<p>This function is useful for producing a directory tree identical to the 
+intended distribution tree.</p>
+</dd>
+<dd>
+<p>$how can be used to specify a different methods of ``copying''.  Valid
+values are <code>cp</code>, which actually copies the files, <code>ln</code> which creates
+hard links, and <code>best</code> which mostly links the files but copies any
+symbolic link to make a tree without any symbolic link.  <code>cp</code> is the 
+default.</p>
+</dd>
+<dt><strong><a name="item_maniadd">maniadd</a></strong>
+
+<dd>
+<pre>
+  maniadd({ $file =&gt; $comment, ...});</pre>
+</dd>
+<dd>
+<p>Adds an entry to an existing <em>MANIFEST</em> unless its already there.</p>
+</dd>
+<dd>
+<p>$file will be normalized (ie. Unixified).  <strong>UNIMPLEMENTED</strong></p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="manifest">MANIFEST</a></h2>
+<p>A list of files in the distribution, one file per line.  The MANIFEST
+always uses Unix filepath conventions even if you're not on Unix.  This
+means <em>foo/bar</em> style not <em>foo\bar</em>.</p>
+<p>Anything between white space and an end of line within a <code>MANIFEST</code>
+file is considered to be a comment.  Any line beginning with # is also
+a comment.</p>
+<pre>
+    # this a comment
+    some/file
+    some/other/file            comment about some/file</pre>
+<p>
+</p>
+<h2><a name="manifest_skip">MANIFEST.SKIP</a></h2>
+<p>The file MANIFEST.SKIP may contain regular expressions of files that
+should be ignored by <a href="#item_mkmanifest"><code>mkmanifest()</code></a> and filecheck(). The regular
+expressions should appear one on each line. Blank lines and lines
+which start with <code>#</code> are skipped.  Use <code>\#</code> if you need a regular
+expression to start with a <code>#</code>.</p>
+<p>For example:</p>
+<pre>
+    # Version control files and dirs.
+    \bRCS\b
+    \bCVS\b
+    ,v$
+    \B\.svn\b</pre>
+<pre>
+    # Makemaker generated files and dirs.
+    ^MANIFEST\.
+    ^Makefile$
+    ^blib/
+    ^MakeMaker-\d</pre>
+<pre>
+    # Temp, old and emacs backup files.
+    ~$
+    \.old$
+    ^#.*#$
+    ^\.#</pre>
+<p>If no MANIFEST.SKIP file is found, a default set of skips will be
+used, similar to the example above.  If you want nothing skipped,
+simply make an empty MANIFEST.SKIP file.</p>
+<p>
+</p>
+<h2><a name="export_ok">EXPORT_OK</a></h2>
+<p><code>&amp;mkmanifest</code>, <code>&amp;manicheck</code>, <code>&amp;filecheck</code>, <code>&amp;fullcheck</code>,
+<code>&amp;maniread</code>, and <code>&amp;manicopy</code> are exportable.</p>
+<p>
+</p>
+<h2><a name="global_variables">GLOBAL VARIABLES</a></h2>
+<p><code>$ExtUtils::Manifest::MANIFEST</code> defaults to <code>MANIFEST</code>. Changing it
+results in both a different <code>MANIFEST</code> and a different
+<code>MANIFEST.SKIP</code> file. This is useful if you want to maintain
+different distributions for different audiences (say a user version
+and a developer version including RCS).</p>
+<p><code>$ExtUtils::Manifest::Quiet</code> defaults to 0. If set to a true value,
+all functions act silently.</p>
+<p><code>$ExtUtils::Manifest::Debug</code> defaults to 0.  If set to a true value,
+or if PERL_MM_MANIFEST_DEBUG is true, debugging output will be
+produced.</p>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<p>All diagnostic output is sent to <code>STDERR</code>.</p>
+<dl>
+<dt><strong><a name="item_not_in_manifest_3a_file"><code>Not in MANIFEST:</code> <em>file</em></a></strong>
+
+<dd>
+<p>is reported if a file is found which is not in <code>MANIFEST</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_skipping_file"><code>Skipping</code> <em>file</em></a></strong>
+
+<dd>
+<p>is reported if a file is skipped due to an entry in <code>MANIFEST.SKIP</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_no_such_file_3a_file"><code>No such file:</code> <em>file</em></a></strong>
+
+<dd>
+<p>is reported if a file mentioned in a <code>MANIFEST</code> file does not
+exist.</p>
+</dd>
+</li>
+<dt><strong><a name="item_manifest_3a__24_21"><code>MANIFEST:</code> <em>$!</em></a></strong>
+
+<dd>
+<p>is reported if <code>MANIFEST</code> could not be opened.</p>
+</dd>
+</li>
+<dt><strong><a name="item_added_to_manifest_3a_file"><code>Added to MANIFEST:</code> <em>file</em></a></strong>
+
+<dd>
+<p>is reported by <a href="#item_mkmanifest"><code>mkmanifest()</code></a> if $Verbose is set and a file is added
+to MANIFEST. $Verbose is set to 1 by default.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<dl>
+<dt><strong><a name="item_perl_mm_manifest_debug"><strong>PERL_MM_MANIFEST_DEBUG</strong></a></strong>
+
+<dd>
+<p>Turns on debugging</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/ExtUtils/MakeMaker.html">the ExtUtils::MakeMaker manpage</a> which has handy targets for most of the functionality.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Andreas Koenig <code>andreas.koenig@anima.de</code></p>
+<p>Currently maintained by Michael G Schwern <code>schwern@pobox.com</code></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Manifest - utilities to write and check a MANIFEST file</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

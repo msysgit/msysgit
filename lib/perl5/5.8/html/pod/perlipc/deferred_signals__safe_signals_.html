@@ -1,0 +1,187 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Deferred Signals</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Deferred Signals</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#deferred_signals__safe_signals_">Deferred Signals (Safe Signals)</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="deferred_signals__safe_signals_">Deferred Signals (Safe Signals)</a></h2>
+<p>In Perls before Perl 5.7.3 by installing Perl code to deal with
+signals, you were exposing yourself to danger from two things.  First,
+few system library functions are re-entrant.  If the signal interrupts
+while Perl is executing one function (like <code>malloc(3)</code> or printf(3)),
+and your signal handler then calls the same function again, you could
+get unpredictable behavior--often, a core dump.  Second, Perl isn't
+itself re-entrant at the lowest levels.  If the signal interrupts Perl
+while Perl is changing its own internal data structures, similarly
+unpredictable behaviour may result.</p>
+<p>There were two things you could do, knowing this: be paranoid or be
+pragmatic.  The paranoid approach was to do as little as possible in your
+signal handler.  Set an existing integer variable that already has a
+value, and return.  This doesn't help you if you're in a slow system call,
+which will just restart.  That means you have to <code>die</code> to <code>longjump(3)</code> out
+of the handler.  Even this is a little cavalier for the true paranoiac,
+who avoids <code>die</code> in a handler because the system <em>is</em> out to get you.
+The pragmatic approach was to say ``I know the risks, but prefer the
+convenience'', and to do anything you wanted in your signal handler,
+and be prepared to clean up core dumps now and again.</p>
+<p>In Perl 5.7.3 and later to avoid these problems signals are
+``deferred''-- that is when the signal is delivered to the process by
+the system (to the C code that implements Perl) a flag is set, and the
+handler returns immediately. Then at strategic ``safe'' points in the
+Perl interpreter (e.g. when it is about to execute a new opcode) the
+flags are checked and the Perl level handler from %SIG is
+executed. The ``deferred'' scheme allows much more flexibility in the
+coding of signal handler as we know Perl interpreter is in a safe
+state, and that we are not in a system library function when the
+handler is called.  However the implementation does differ from
+previous Perls in the following ways:</p>
+<dl>
+<dt><strong><a name="item_long_running_opcodes">Long running opcodes</a></strong>
+
+<dd>
+<p>As Perl interpreter only looks at the signal flags when it about to
+execute a new opcode if a signal arrives during a long running opcode
+(e.g. a regular expression operation on a very large string) then
+signal will not be seen until operation completes.</p>
+</dd>
+</li>
+<dt><strong><a name="item_interrupting_io">Interrupting IO</a></strong>
+
+<dd>
+<p>When a signal is delivered (e.g. INT control-C) the operating system
+breaks into IO operations like <code>read</code> (used to implement Perls
+&lt;&gt; operator). On older Perls the handler was called
+immediately (and as <code>read</code> is not ``unsafe'' this worked well). With
+the ``deferred'' scheme the handler is not called immediately, and if
+Perl is using system's <code>stdio</code> library that library may re-start the
+<code>read</code> without returning to Perl and giving it a chance to call the
+%SIG handler. If this happens on your system the solution is to use
+<code>:perlio</code> layer to do IO - at least on those handles which you want
+to be able to break into with signals. (The <code>:perlio</code> layer checks
+the signal flags and calls %SIG handlers before resuming IO operation.)</p>
+</dd>
+<dd>
+<p>Note that the default in Perl 5.7.3 and later is to automatically use
+the <code>:perlio</code> layer.</p>
+</dd>
+<dd>
+<p>Note that some networking library functions like <code>gethostbyname()</code> are
+known to have their own implementations of timeouts which may conflict
+with your timeouts.  If you are having problems with such functions,
+you can try using the POSIX <code>sigaction()</code> function, which bypasses the
+Perl safe signals (note that this means subjecting yourself to
+possible memory corruption, as described above).  Instead of setting
+<code>$SIG{ALRM}</code>:</p>
+</dd>
+<dd>
+<pre>
+   local $SIG{ALRM} = sub { die &quot;alarm&quot; };</pre>
+</dd>
+<dd>
+<p>try something like the following:</p>
+</dd>
+<dd>
+<pre>
+    use POSIX qw(SIGALRM);
+    POSIX::sigaction(SIGALRM,
+                     POSIX::SigAction-&gt;new(sub { die &quot;alarm&quot; }))
+          or die &quot;Error setting SIGALRM handler: $!\n&quot;;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_restartable_system_calls">Restartable system calls</a></strong>
+
+<dd>
+<p>On systems that supported it, older versions of Perl used the
+SA_RESTART flag when installing %SIG handlers.  This meant that
+restartable system calls would continue rather than returning when
+a signal arrived.  In order to deliver deferred signals promptly,
+Perl 5.7.3 and later do <em>not</em> use SA_RESTART.  Consequently, 
+restartable system calls can fail (with $! set to <code>EINTR</code>) in places
+where they previously would have succeeded.</p>
+</dd>
+<dd>
+<p>Note that the default <code>:perlio</code> layer will retry <code>read</code>, <code>write</code>
+and <code>close</code> as described above and that interrupted <code>wait</code> and 
+<code>waitpid</code> calls will always be retried.</p>
+</dd>
+</li>
+<dt><strong><a name="item_signals_as__22faults_22">Signals as ``faults''</a></strong>
+
+<dd>
+<p>Certain signals e.g. SEGV, ILL, BUS are generated as a result of
+virtual memory or other ``faults''. These are normally fatal and there
+is little a Perl-level handler can do with them. (In particular the
+old signal scheme was particularly unsafe in such cases.)  However if
+a %SIG handler is set the new scheme simply sets a flag and returns as
+described above. This may cause the operating system to try the
+offending machine instruction again and - as nothing has changed - it
+will generate the signal again. The result of this is a rather odd
+``loop''. In future Perl's signal mechanism may be changed to avoid this
+- perhaps by simply disallowing %SIG handlers on signals of that
+type. Until then the work-round is not to set a %SIG handler on those
+signals. (Which signals they are is operating system dependent.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_signals_triggered_by_operating_system_state">Signals triggered by operating system state</a></strong>
+
+<dd>
+<p>On some operating systems certain signal handlers are supposed to ``do
+something'' before returning. One example can be CHLD or CLD which
+indicates a child process has completed. On some operating systems the
+signal handler is expected to <code>wait</code> for the completed child
+process. On such systems the deferred signal scheme will not work for
+those signals (it does not do the <code>wait</code>). Again the failure will
+look like a loop as the operating system will re-issue the signal as
+there are un-waited-for completed child processes.</p>
+</dd>
+</li>
+</dl>
+<p>If you want the old signal behaviour back regardless of possible
+memory corruption, set the environment variable <code>PERL_SIGNALS</code> to
+<code>&quot;unsafe&quot;</code> (a new feature since Perl 5.8.1).</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/named_pipes.html">Named Pipes in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/using_open___for_ipc.html">Using open() for IPC in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Deferred Signals</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

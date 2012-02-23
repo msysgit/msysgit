@@ -1,0 +1,251 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Internet TCP Clients and Servers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Internet TCP Clients and Servers</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#internet_tcp_clients_and_servers">Internet TCP Clients and Servers</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="internet_tcp_clients_and_servers">Internet TCP Clients and Servers</a></h2>
+<p>Use Internet-domain sockets when you want to do client-server
+communication that might extend to machines outside of your own system.</p>
+<p>Here's a sample TCP client using Internet-domain sockets:</p>
+<pre>
+    #!/usr/bin/perl -w
+    use strict;
+    use Socket;
+    my ($remote,$port, $iaddr, $paddr, $proto, $line);</pre>
+<pre>
+    $remote  = shift || 'localhost';
+    $port    = shift || 2345;  # random port
+    if ($port =~ /\D/) { $port = getservbyname($port, 'tcp') }
+    die &quot;No port&quot; unless $port;
+    $iaddr   = inet_aton($remote)               || die &quot;no host: $remote&quot;;
+    $paddr   = sockaddr_in($port, $iaddr);</pre>
+<pre>
+    $proto   = getprotobyname('tcp');
+    socket(SOCK, PF_INET, SOCK_STREAM, $proto)  || die &quot;socket: $!&quot;;
+    connect(SOCK, $paddr)    || die &quot;connect: $!&quot;;
+    while (defined($line = &lt;SOCK&gt;)) {
+        print $line;
+    }</pre>
+<pre>
+    close (SOCK)            || die &quot;close: $!&quot;;
+    exit;</pre>
+<p>And here's a corresponding server to go along with it.  We'll
+leave the address as INADDR_ANY so that the kernel can choose
+the appropriate interface on multihomed hosts.  If you want sit
+on a particular interface (like the external side of a gateway
+or firewall machine), you should fill this in with your real address
+instead.</p>
+<pre>
+    #!/usr/bin/perl -Tw
+    use strict;
+    BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }
+    use Socket;
+    use Carp;
+    my $EOL = &quot;\015\012&quot;;</pre>
+<pre>
+    sub logmsg { print &quot;$0 $$: @_ at &quot;, scalar localtime, &quot;\n&quot; }</pre>
+<pre>
+    my $port = shift || 2345;
+    my $proto = getprotobyname('tcp');</pre>
+<pre>
+    ($port) = $port =~ /^(\d+)$/                        or die &quot;invalid port&quot;;</pre>
+<pre>
+    socket(Server, PF_INET, SOCK_STREAM, $proto)        || die &quot;socket: $!&quot;;
+    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR,
+                                        pack(&quot;l&quot;, 1))   || die &quot;setsockopt: $!&quot;;
+    bind(Server, sockaddr_in($port, INADDR_ANY))        || die &quot;bind: $!&quot;;
+    listen(Server,SOMAXCONN)                            || die &quot;listen: $!&quot;;</pre>
+<pre>
+    logmsg &quot;server started on port $port&quot;;</pre>
+<pre>
+    my $paddr;</pre>
+<pre>
+    $SIG{CHLD} = \&amp;REAPER;</pre>
+<pre>
+    for ( ; $paddr = accept(Client,Server); close Client) {
+        my($port,$iaddr) = sockaddr_in($paddr);
+        my $name = gethostbyaddr($iaddr,AF_INET);</pre>
+<pre>
+        logmsg &quot;connection from $name [&quot;,
+                inet_ntoa($iaddr), &quot;]
+                at port $port&quot;;</pre>
+<pre>
+        print Client &quot;Hello there, $name, it's now &quot;,
+                        scalar localtime, $EOL;
+    }</pre>
+<p>And here's a multithreaded version.  It's multithreaded in that
+like most typical servers, it spawns (forks) a slave server to
+handle the client request so that the master server can quickly
+go back to service a new client.</p>
+<pre>
+    #!/usr/bin/perl -Tw
+    use strict;
+    BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }
+    use Socket;
+    use Carp;
+    my $EOL = &quot;\015\012&quot;;</pre>
+<pre>
+    sub spawn;  # forward declaration
+    sub logmsg { print &quot;$0 $$: @_ at &quot;, scalar localtime, &quot;\n&quot; }</pre>
+<pre>
+    my $port = shift || 2345;
+    my $proto = getprotobyname('tcp');</pre>
+<pre>
+    ($port) = $port =~ /^(\d+)$/                        or die &quot;invalid port&quot;;</pre>
+<pre>
+    socket(Server, PF_INET, SOCK_STREAM, $proto)        || die &quot;socket: $!&quot;;
+    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR,
+                                        pack(&quot;l&quot;, 1))   || die &quot;setsockopt: $!&quot;;
+    bind(Server, sockaddr_in($port, INADDR_ANY))        || die &quot;bind: $!&quot;;
+    listen(Server,SOMAXCONN)                            || die &quot;listen: $!&quot;;</pre>
+<pre>
+    logmsg &quot;server started on port $port&quot;;</pre>
+<pre>
+    my $waitedpid = 0;
+    my $paddr;</pre>
+<pre>
+    use POSIX &quot;:sys_wait_h&quot;;
+    sub REAPER {
+        my $child;
+        while (($waitedpid = waitpid(-1,WNOHANG)) &gt; 0) {
+            logmsg &quot;reaped $waitedpid&quot; . ($? ? &quot; with exit $?&quot; : '');
+        }
+        $SIG{CHLD} = \&amp;REAPER;  # loathe sysV
+    }</pre>
+<pre>
+    $SIG{CHLD} = \&amp;REAPER;</pre>
+<pre>
+    for ( $waitedpid = 0;
+          ($paddr = accept(Client,Server)) || $waitedpid;
+          $waitedpid = 0, close Client)
+    {
+        next if $waitedpid and not $paddr;
+        my($port,$iaddr) = sockaddr_in($paddr);
+        my $name = gethostbyaddr($iaddr,AF_INET);</pre>
+<pre>
+        logmsg &quot;connection from $name [&quot;,
+                inet_ntoa($iaddr), &quot;]
+                at port $port&quot;;</pre>
+<pre>
+        spawn sub {
+            $|=1;
+            print &quot;Hello there, $name, it's now &quot;, scalar localtime, $EOL;
+            exec '/usr/games/fortune'           # XXX: `wrong' line terminators
+                or confess &quot;can't exec fortune: $!&quot;;
+        };</pre>
+<pre>
+    }</pre>
+<pre>
+    sub spawn {
+        my $coderef = shift;</pre>
+<pre>
+        unless (@_ == 0 &amp;&amp; $coderef &amp;&amp; ref($coderef) eq 'CODE') {
+            confess &quot;usage: spawn CODEREF&quot;;
+        }</pre>
+<pre>
+        my $pid;
+        if (!defined($pid = fork)) {
+            logmsg &quot;cannot fork: $!&quot;;
+            return;
+        } elsif ($pid) {
+            logmsg &quot;begat $pid&quot;;
+            return; # I'm the parent
+        }
+        # else I'm the child -- go spawn</pre>
+<pre>
+        open(STDIN,  &quot;&lt;&amp;Client&quot;)   || die &quot;can't dup client to stdin&quot;;
+        open(STDOUT, &quot;&gt;&amp;Client&quot;)   || die &quot;can't dup client to stdout&quot;;
+        ## open(STDERR, &quot;&gt;&amp;STDOUT&quot;) || die &quot;can't dup stdout to stderr&quot;;
+        exit &amp;$coderef();
+    }</pre>
+<p>This server takes the trouble to clone off a child version via <code>fork()</code> for
+each incoming request.  That way it can handle many requests at once,
+which you might not always want.  Even if you don't fork(), the <code>listen()</code>
+will allow that many pending connections.  Forking servers have to be
+particularly careful about cleaning up their dead children (called
+``zombies'' in Unix parlance), because otherwise you'll quickly fill up your
+process table.</p>
+<p>We suggest that you use the <strong>-T</strong> flag to use taint checking (see <a href="/usr/lib/perl5/5.8/html/./pod/perlsec.html">the perlsec manpage</a>)
+even if we aren't running setuid or setgid.  This is always a good idea
+for servers and other programs run on behalf of someone else (like CGI
+scripts), because it lessens the chances that people from the outside will
+be able to compromise your system.</p>
+<p>Let's look at another TCP client.  This one connects to the TCP ``time''
+service on a number of different machines and shows how far their clocks
+differ from the system on which it's being run:</p>
+<pre>
+    #!/usr/bin/perl  -w
+    use strict;
+    use Socket;</pre>
+<pre>
+    my $SECS_of_70_YEARS = 2208988800;
+    sub ctime { scalar localtime(shift) }</pre>
+<pre>
+    my $iaddr = gethostbyname('localhost');
+    my $proto = getprotobyname('tcp');
+    my $port = getservbyname('time', 'tcp');
+    my $paddr = sockaddr_in(0, $iaddr);
+    my($host);</pre>
+<pre>
+    $| = 1;
+    printf &quot;%-24s %8s %s\n&quot;,  &quot;localhost&quot;, 0, ctime(time());</pre>
+<pre>
+    foreach $host (@ARGV) {
+        printf &quot;%-24s &quot;, $host;
+        my $hisiaddr = inet_aton($host)     || die &quot;unknown host&quot;;
+        my $hispaddr = sockaddr_in($port, $hisiaddr);
+        socket(SOCKET, PF_INET, SOCK_STREAM, $proto)   || die &quot;socket: $!&quot;;
+        connect(SOCKET, $hispaddr)          || die &quot;bind: $!&quot;;
+        my $rtime = '    ';
+        read(SOCKET, $rtime, 4);
+        close(SOCKET);
+        my $histime = unpack(&quot;N&quot;, $rtime) - $SECS_of_70_YEARS;
+        printf &quot;%8d %s\n&quot;, $histime - time, ctime($histime);
+    }</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/internet_line_terminators.html">Internet Line Terminators in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/unixdomain_tcp_clients_and_servers.html">Unix-Domain TCP Clients and Servers in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Internet TCP Clients and Servers</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

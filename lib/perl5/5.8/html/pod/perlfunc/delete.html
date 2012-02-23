@@ -1,0 +1,105 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>delete - deletes a value from a hash</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;delete - deletes a value from a hash</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>delete - deletes a value from a hash</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>delete EXPR
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Given an expression that specifies a hash element, array element, hash slice,
+or array slice, deletes the specified <code>element(s)</code> from the hash or array.
+In the case of an array, if the array elements happen to be at the end,
+the size of the array will shrink to the highest element that tests
+true for <code>exists()</code> (or 0 if no such element exists).</p>
+<p>Returns a list with the same number of elements as the number of elements
+for which deletion was attempted.  Each element of that list consists of
+either the value of the element deleted, or the undefined value.  In scalar
+context, this means that you get the value of the last element deleted (or
+the undefined value if that element did not exist).</p>
+<pre>
+    %hash = (foo =&gt; 11, bar =&gt; 22, baz =&gt; 33);
+    $scalar = delete $hash{foo};             # $scalar is 11
+    $scalar = delete @hash{qw(foo bar)};     # $scalar is 22
+    @array  = delete @hash{qw(foo bar baz)}; # @array  is (undef,undef,33)</pre>
+<p>Deleting from <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__env"><code>%ENV</code></a> modifies the environment.  Deleting from
+a hash tied to a DBM file deletes the entry from the DBM file.  Deleting
+from a <code>tie</code>d hash or array may not necessarily return anything.</p>
+<p>Deleting an array element effectively returns that position of the array
+to its initial, uninitialized state.  Subsequently testing for the same
+element with <code>exists()</code> will return false.  Also, deleting array elements
+in the middle of an array will not shift the index of the elements
+after them down.  Use <code>splice()</code> for that.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exists.html">exists in the perlfunc manpage</a>.</p>
+<p>The following (inefficiently) deletes all the values of %HASH and @ARRAY:</p>
+<pre>
+    foreach $key (keys %HASH) {
+        delete $HASH{$key};
+    }</pre>
+<pre>
+    foreach $index (0 .. $#ARRAY) {
+        delete $ARRAY[$index];
+    }</pre>
+<p>And so do these:</p>
+<pre>
+    delete @HASH{keys %HASH};</pre>
+<pre>
+    delete @ARRAY[0 .. $#ARRAY];</pre>
+<p>But both of these are slower than just assigning the empty list
+or undefining %HASH or @ARRAY:</p>
+<pre>
+    %HASH = ();         # completely empty %HASH
+    undef %HASH;        # forget %HASH ever existed</pre>
+<pre>
+    @ARRAY = ();        # completely empty @ARRAY
+    undef @ARRAY;       # forget @ARRAY ever existed</pre>
+<p>Note that the EXPR can be arbitrarily complicated as long as the final
+operation is a hash element, array element,  hash slice, or array slice
+lookup:</p>
+<pre>
+    delete $ref-&gt;[$x][$y]{$key};
+    delete @{$ref-&gt;[$x][$y]}{$key1, $key2, @morekeys};</pre>
+<pre>
+    delete $ref-&gt;[$x][$y][$index];
+    delete @{$ref-&gt;[$x][$y]}[$index1, $index2, @moreindices];</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;delete - deletes a value from a hash</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

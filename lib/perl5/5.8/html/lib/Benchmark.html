@@ -1,0 +1,514 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Benchmark - benchmark running times of Perl code</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Benchmark - benchmark running times of Perl code</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#methods">Methods</a></li>
+		<li><a href="#standard_exports">Standard Exports</a></li>
+		<li><a href="#optional_exports">Optional Exports</a></li>
+		<li><a href="#_hireswallclock">:hireswallclock</a></li>
+	</ul>
+
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#inheritance">INHERITANCE</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#modification_history">MODIFICATION HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Benchmark - benchmark running times of Perl code</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Benchmark qw(:all) ;</pre>
+<pre>
+    timethis ($count, &quot;code&quot;);</pre>
+<pre>
+    # Use Perl code in strings...
+    timethese($count, {
+        'Name1' =&gt; '...code1...',
+        'Name2' =&gt; '...code2...',
+    });</pre>
+<pre>
+    # ... or use subroutine references.
+    timethese($count, {
+        'Name1' =&gt; sub { ...code1... },
+        'Name2' =&gt; sub { ...code2... },
+    });</pre>
+<pre>
+    # cmpthese can be used both ways as well
+    cmpthese($count, {
+        'Name1' =&gt; '...code1...',
+        'Name2' =&gt; '...code2...',
+    });</pre>
+<pre>
+    cmpthese($count, {
+        'Name1' =&gt; sub { ...code1... },
+        'Name2' =&gt; sub { ...code2... },
+    });</pre>
+<pre>
+    # ...or in two stages
+    $results = timethese($count, 
+        {
+            'Name1' =&gt; sub { ...code1... },
+            'Name2' =&gt; sub { ...code2... },
+        },
+        'none'
+    );
+    cmpthese( $results ) ;</pre>
+<pre>
+    $t = timeit($count, '...other code...')
+    print &quot;$count loops of other code took:&quot;,timestr($t),&quot;\n&quot;;</pre>
+<pre>
+    $t = countit($time, '...other code...')
+    $count = $t-&gt;iters ;
+    print &quot;$count loops of other code took:&quot;,timestr($t),&quot;\n&quot;;</pre>
+<pre>
+    # enable hires wallclock timing if possible
+    use Benchmark ':hireswallclock';</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Benchmark module encapsulates a number of routines to help you
+figure out how long it takes to execute some code.</p>
+<p>timethis - run a chunk of code several times</p>
+<p>timethese - run several chunks of code several times</p>
+<p>cmpthese - print results of timethese as a comparison chart</p>
+<p>timeit - run a chunk of code and see how long it goes</p>
+<p>countit - see how many times a chunk of code runs in a given time</p>
+<p>
+</p>
+<h2><a name="methods">Methods</a></h2>
+<dl>
+<dt><strong><a name="item_new">new</a></strong>
+
+<dd>
+<p>Returns the current time.   Example:</p>
+</dd>
+<dd>
+<pre>
+    use Benchmark;
+    $t0 = new Benchmark;
+    # ... your code here ...
+    $t1 = new Benchmark;
+    $td = timediff($t1, $t0);
+    print &quot;the code took:&quot;,timestr($td),&quot;\n&quot;;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_debug">debug</a></strong>
+
+<dd>
+<p>Enables or disable debugging by setting the <code>$Benchmark::Debug</code> flag:</p>
+</dd>
+<dd>
+<pre>
+    debug Benchmark 1;
+    $t = timeit(10, ' 5 ** $Global ');
+    debug Benchmark 0;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_iters">iters</a></strong>
+
+<dd>
+<p>Returns the number of iterations.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="standard_exports">Standard Exports</a></h2>
+<p>The following routines will be exported into your namespace
+if you use the Benchmark module:</p>
+<dl>
+<dt><strong><a name="item_timeit">timeit(COUNT, CODE)</a></strong>
+
+<dd>
+<p>Arguments: COUNT is the number of times to run the loop, and CODE is
+the code to run.  CODE may be either a code reference or a string to
+be eval'd; either way it will be run in the caller's package.</p>
+</dd>
+<dd>
+<p>Returns: a Benchmark object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_timethis">timethis ( COUNT, CODE, [ TITLE, [ STYLE ]] )</a></strong>
+
+<dd>
+<p>Time COUNT iterations of CODE. CODE may be a string to eval or a
+code reference; either way the CODE will run in the caller's package.
+Results will be printed to STDOUT as TITLE followed by the times.
+TITLE defaults to ``timethis COUNT'' if none is provided. STYLE
+determines the format of the output, as described for <a href="#item_timestr"><code>timestr()</code></a> below.</p>
+</dd>
+<dd>
+<p>The COUNT can be zero or negative: this means the <em>minimum number of
+CPU seconds</em> to run.  A zero signifies the default of 3 seconds.  For
+example to run at least for 10 seconds:</p>
+</dd>
+<dd>
+<pre>
+        timethis(-10, $code)</pre>
+</dd>
+<dd>
+<p>or to run two pieces of code tests for at least 3 seconds:</p>
+</dd>
+<dd>
+<pre>
+        timethese(0, { test1 =&gt; '...', test2 =&gt; '...'})</pre>
+</dd>
+<dd>
+<p>CPU seconds is, in UNIX terms, the user time plus the system time of
+the process itself, as opposed to the real (wallclock) time and the
+time spent by the child processes.  Less than 0.1 seconds is not
+accepted (-0.01 as the count, for example, will cause a fatal runtime
+exception).</p>
+</dd>
+<dd>
+<p>Note that the CPU seconds is the <strong>minimum</strong> time: CPU scheduling and
+other operating system factors may complicate the attempt so that a
+little bit more time is spent.  The benchmark output will, however,
+also tell the number of <code>$code</code> runs/second, which should be a more
+interesting number than the actually spent seconds.</p>
+</dd>
+<dd>
+<p>Returns a Benchmark object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_timethese">timethese ( COUNT, CODEHASHREF, [ STYLE ] )</a></strong>
+
+<dd>
+<p>The CODEHASHREF is a reference to a hash containing names as keys
+and either a string to eval or a code reference for each value.
+For each (KEY, VALUE) pair in the CODEHASHREF, this routine will
+call</p>
+</dd>
+<dd>
+<pre>
+        timethis(COUNT, VALUE, KEY, STYLE)</pre>
+</dd>
+<dd>
+<p>The routines are called in string comparison order of KEY.</p>
+</dd>
+<dd>
+<p>The COUNT can be zero or negative, see timethis().</p>
+</dd>
+<dd>
+<p>Returns a hash of Benchmark objects, keyed by name.</p>
+</dd>
+</li>
+<dt><strong><a name="item_timediff">timediff ( T1, T2 )</a></strong>
+
+<dd>
+<p>Returns the difference between two Benchmark times as a Benchmark
+object suitable for passing to timestr().</p>
+</dd>
+</li>
+<dt><strong><a name="item_timestr">timestr ( TIMEDIFF, [ STYLE, [ FORMAT ] ] )</a></strong>
+
+<dd>
+<p>Returns a string that formats the times in the TIMEDIFF object in
+the requested STYLE. TIMEDIFF is expected to be a Benchmark object
+similar to that returned by timediff().</p>
+</dd>
+<dd>
+<p>STYLE can be any of 'all', 'none', 'noc', 'nop' or 'auto'. 'all' shows
+each of the 5 times available ('wallclock' time, user time, system time,
+user time of children, and system time of children). 'noc' shows all
+except the two children times. 'nop' shows only wallclock and the
+two children times. 'auto' (the default) will act as 'all' unless
+the children times are both zero, in which case it acts as 'noc'.
+'none' prevents output.</p>
+</dd>
+<dd>
+<p>FORMAT is the <em>printf(3)</em>-style format specifier (without the
+leading '%') to use to print the times. It defaults to '5.2f'.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="optional_exports">Optional Exports</a></h2>
+<p>The following routines will be exported into your namespace
+if you specifically ask that they be imported:</p>
+<dl>
+<dt><strong><a name="item_clearcache">clearcache ( COUNT )</a></strong>
+
+<dd>
+<p>Clear the cached time for COUNT rounds of the null loop.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clearallcache">clearallcache ( )</a></strong>
+
+<dd>
+<p>Clear all cached times.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cmpthese">cmpthese ( COUNT, CODEHASHREF, [ STYLE ] )</a></strong>
+
+<dt><strong>cmpthese ( RESULTSHASHREF, [ STYLE ] )</strong>
+
+<dd>
+<p>Optionally calls timethese(), then outputs comparison chart.  This:</p>
+</dd>
+<dd>
+<pre>
+    cmpthese( -1, { a =&gt; &quot;++\$i&quot;, b =&gt; &quot;\$i *= 2&quot; } ) ;</pre>
+</dd>
+<dd>
+<p>outputs a chart like:</p>
+</dd>
+<dd>
+<pre>
+           Rate    b    a
+    b 2831802/s   -- -61%
+    a 7208959/s 155%   --</pre>
+</dd>
+<dd>
+<p>This chart is sorted from slowest to fastest, and shows the percent speed
+difference between each pair of tests.</p>
+</dd>
+<dd>
+<p>c&lt;cmpthese&gt; can also be passed the data structure that <a href="#item_timethese"><code>timethese()</code></a> returns:</p>
+</dd>
+<dd>
+<pre>
+    $results = timethese( -1, { a =&gt; &quot;++\$i&quot;, b =&gt; &quot;\$i *= 2&quot; } ) ;
+    cmpthese( $results );</pre>
+</dd>
+<dd>
+<p>in case you want to see both sets of results.</p>
+</dd>
+<dd>
+<p>Returns a reference to an ARRAY of rows, each row is an ARRAY of cells from the
+above chart, including labels. This:</p>
+</dd>
+<dd>
+<pre>
+    my $rows = cmpthese( -1, { a =&gt; '++$i', b =&gt; '$i *= 2' }, &quot;none&quot; );</pre>
+</dd>
+<dd>
+<p>returns a data structure like:</p>
+</dd>
+<dd>
+<pre>
+    [
+        [ '',       'Rate',   'b',    'a' ],
+        [ 'b', '2885232/s',  '--', '-59%' ],
+        [ 'a', '7099126/s', '146%',  '--' ],
+    ]</pre>
+</dd>
+<dd>
+<p><strong>NOTE</strong>: This result value differs from previous versions, which returned
+the <a href="#item_timethese"><code>timethese()</code></a> result structure.  If you want that, just use the two
+statement <a href="#item_timethese"><code>timethese</code></a>...<a href="#item_cmpthese"><code>cmpthese</code></a> idiom shown above.</p>
+</dd>
+<dd>
+<p>Incidently, note the variance in the result values between the two examples;
+this is typical of benchmarking.  If this were a real benchmark, you would
+probably want to run a lot more iterations.</p>
+</dd>
+</li>
+<dt><strong><a name="item_countit">countit(TIME, CODE)</a></strong>
+
+<dd>
+<p>Arguments: TIME is the minimum length of time to run CODE for, and CODE is
+the code to run.  CODE may be either a code reference or a string to
+be eval'd; either way it will be run in the caller's package.</p>
+</dd>
+<dd>
+<p>TIME is <em>not</em> negative.  <a href="#item_countit"><code>countit()</code></a> will run the loop many times to
+calculate the speed of CODE before running it for TIME.  The actual
+time run for will usually be greater than TIME due to system clock
+resolution, so it's best to look at the number of iterations divided
+by the times that you are concerned with, not just the iterations.</p>
+</dd>
+<dd>
+<p>Returns: a Benchmark object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_disablecache">disablecache ( )</a></strong>
+
+<dd>
+<p>Disable caching of timings for the null loop. This will force Benchmark
+to recalculate these timings for each new piece of code timed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_enablecache">enablecache ( )</a></strong>
+
+<dd>
+<p>Enable caching of timings for the null loop. The time taken for COUNT
+rounds of the null loop will be calculated only once for each
+different COUNT used.</p>
+</dd>
+</li>
+<dt><strong><a name="item_timesum">timesum ( T1, T2 )</a></strong>
+
+<dd>
+<p>Returns the sum of two Benchmark times as a Benchmark object suitable
+for passing to timestr().</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="_hireswallclock">:hireswallclock</a></h2>
+<p>If the Time::HiRes module has been installed, you can specify the
+special tag <code>:hireswallclock</code> for Benchmark (if Time::HiRes is not
+available, the tag will be silently ignored).  This tag will cause the
+wallclock time to be measured in microseconds, instead of integer
+seconds.  Note though that the speed computations are still conducted
+in CPU time, not wallclock time.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>The data is stored as a list of values from the time and times
+functions:</p>
+<pre>
+      ($real, $user, $system, $children_user, $children_system, $iters)</pre>
+<p>in seconds for the whole loop (not divided by the number of rounds).</p>
+<p>The timing is done using <code>time(3)</code> and times(3).</p>
+<p>Code is executed in the caller's package.</p>
+<p>The time of the null loop (a loop with the same
+number of rounds but empty loop body) is subtracted
+from the time of the real loop.</p>
+<p>The null loop times can be cached, the key being the
+number of rounds. The caching can be controlled using
+calls like these:</p>
+<pre>
+    clearcache($key);
+    clearallcache();</pre>
+<pre>
+    disablecache();
+    enablecache();</pre>
+<p>Caching is off by default, as it can (usually slightly) decrease
+accuracy and does not usually noticably affect runtimes.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>For example,</p>
+<pre>
+    use Benchmark qw( cmpthese ) ;
+    $x = 3;
+    cmpthese( -5, {
+        a =&gt; sub{$x*$x},
+        b =&gt; sub{$x**2},
+    } );</pre>
+<p>outputs something like this:</p>
+<pre>
+   Benchmark: running a, b, each for at least 5 CPU seconds...
+          Rate    b    a
+   b 1559428/s   -- -62%
+   a 4152037/s 166%   --</pre>
+<p>while</p>
+<pre>
+    use Benchmark qw( timethese cmpthese ) ;
+    $x = 3;
+    $r = timethese( -5, {
+        a =&gt; sub{$x*$x},
+        b =&gt; sub{$x**2},
+    } );
+    cmpthese $r;</pre>
+<p>outputs something like this:</p>
+<pre>
+    Benchmark: running a, b, each for at least 5 CPU seconds...
+             a: 10 wallclock secs ( 5.14 usr +  0.13 sys =  5.27 CPU) @ 3835055.60/s (n=20210743)
+             b:  5 wallclock secs ( 5.41 usr +  0.00 sys =  5.41 CPU) @ 1574944.92/s (n=8520452)
+           Rate    b    a
+    b 1574945/s   -- -59%
+    a 3835056/s 144%   --</pre>
+<p>
+</p>
+<hr />
+<h1><a name="inheritance">INHERITANCE</a></h1>
+<p>Benchmark inherits from no other class, except of course
+for Exporter.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>Comparing eval'd strings with code references will give you
+inaccurate results: a code reference will show a slightly slower
+execution time than the equivalent eval'd string.</p>
+<p>The real time timing is done using <code>time(2)</code> and
+the granularity is therefore only one second.</p>
+<p>Short tests may produce negative figures because perl
+can appear to take longer to execute the empty loop
+than a short test; try:</p>
+<pre>
+    timethis(100,'1');</pre>
+<p>The system time of the null loop might be slightly
+more than the system time of the loop with the actual
+code and therefore the difference might end up being &lt; 0.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Devel/DProf.html">the Devel::DProf manpage</a> - a Perl code profiler</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Jarkko Hietaniemi &lt;<em><a href="mailto:jhi@iki.fi">jhi@iki.fi</a></em>&gt;, Tim Bunce &lt;<em><a href="mailto:Tim.Bunce@ig.co.uk">Tim.Bunce@ig.co.uk</a></em>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="modification_history">MODIFICATION HISTORY</a></h1>
+<p>September 8th, 1994; by Tim Bunce.</p>
+<p>March 28th, 1997; by Hugo van der Sanden: added support for code
+references and the already documented 'debug' method; revamped
+documentation.</p>
+<p>April 04-07th, 1997: by Jarkko Hietaniemi, added the run-for-some-time
+functionality.</p>
+<p>September, 1999; by Barrie Slaymaker: math fixes and accuracy and 
+efficiency tweaks.  Added cmpthese().  A result is now returned from 
+timethese().  Exposed <a href="#item_countit"><code>countit()</code></a> (was runfor()).</p>
+<p>December, 2001; by Nicholas Clark: make <a href="#item_timestr"><code>timestr()</code></a> recognise the style 'none'
+and return an empty string. If cmpthese is calling timethese, make it pass the
+style in. (so that 'none' will suppress output). Make sub new dump its
+debugging output to STDERR, to be consistent with everything else.
+All bugs found while writing a regression test.</p>
+<p>September, 2002; by Jarkko Hietaniemi: add ':hireswallclock' special tag.</p>
+<p>February, 2004; by Chia-liang Kao: make cmpthese and timestr use time
+statistics for children instead of parent when the style is 'nop'.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Benchmark - benchmark running times of Perl code</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

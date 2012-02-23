@@ -1,0 +1,166 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>VMS::Filespec - convert between VMS and Unix file specification syntax</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;VMS::Filespec - convert between VMS and Unix file specification syntax</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#rmsexpand">rmsexpand</a></li>
+		<li><a href="#vmsify">vmsify</a></li>
+		<li><a href="#unixify">unixify</a></li>
+		<li><a href="#pathify">pathify</a></li>
+		<li><a href="#fileify">fileify</a></li>
+		<li><a href="#vmspath">vmspath</a></li>
+		<li><a href="#unixpath">unixpath</a></li>
+		<li><a href="#candelete">candelete</a></li>
+	</ul>
+
+	<li><a href="#revision">REVISION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>VMS::Filespec - convert between VMS and Unix file specification syntax</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>use VMS::Filespec;
+$fullspec = rmsexpand('[.VMS]file.specification'[, 'default:[file.spec]']);
+$vmsspec = vmsify('/my/Unix/file/specification');
+$unixspec = unixify('my:[VMS]file.specification');
+$path = pathify('my:[VMS.or.Unix.directory]specification.dir');
+$dirfile = fileify('my:[VMS.or.Unix.directory.specification]');
+$vmsdir = vmspath('my/VMS/or/Unix/directory/specification.dir');
+$unixdir = unixpath('my:[VMS.or.Unix.directory]specification.dir');
+candelete('my:[VMS.or.Unix]file.specification');</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package provides routines to simplify conversion between VMS and
+Unix syntax when processing file specifications.  This is useful when
+porting scripts designed to run under either OS, and also allows you
+to take advantage of conveniences provided by either syntax (<em>e.g.</em>
+ability to easily concatenate Unix-style specifications).  In
+addition, it provides an additional file test routine, <code>candelete</code>,
+which determines whether you have delete access to a file.</p>
+<p>If you're running under VMS, the routines in this package are special,
+in that they're automatically made available to any Perl script,
+whether you're running <em>miniperl</em> or the full <em>perl</em>.  The <code>use
+VMS::Filespec</code> or <code>require VMS::Filespec; import VMS::Filespec ...</code>
+statement can be used to import the function names into the current
+package, but they're always available if you use the fully qualified
+name, whether or not you've mentioned the <em>.pm</em> file in your script. 
+If you're running under another OS and have installed this package, it
+behaves like a normal Perl extension (in fact, you're using Perl
+substitutes to emulate the necessary VMS system calls).</p>
+<p>Each of these routines accepts a file specification in either VMS or
+Unix syntax, and returns the converted file specification, or <code>undef</code>
+if an error occurs.  The conversions are, for the most part, simply
+string manipulations; the routines do not check the details of syntax
+(e.g. that only legal characters are used).  There is one exception:
+when running under VMS, conversions from VMS syntax use the $PARSE
+service to expand specifications, so illegal syntax, or a relative
+directory specification which extends above the tope of the current
+directory path (e.g [---.foo] when in dev:[dir.sub]) will cause
+errors.  In general, any legal file specification will be converted
+properly, but garbage input tends to produce garbage output.</p>
+<p>Each of these routines is prototyped as taking a single scalar
+argument, so you can use them as unary operators in complex
+expressions (as long as you don't use the <code>&amp;</code> form of
+subroutine call, which bypasses prototype checking).</p>
+<p>The routines provided are:</p>
+<p>
+</p>
+<h2><a name="rmsexpand">rmsexpand</a></h2>
+<p>Uses the RMS $PARSE and $SEARCH services to expand the input
+specification to its fully qualified form, except that a null type
+or version is not added unless it was present in either the original
+file specification or the default specification passed to <code>rmsexpand</code>.
+(If the file does not exist, the input specification is expanded as much
+as possible.)  If an error occurs, returns <code>undef</code> and sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a>
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___e"><code>$^E</code></a>.</p>
+<p>
+</p>
+<h2><a name="vmsify">vmsify</a></h2>
+<p>Converts a file specification to VMS syntax.</p>
+<p>
+</p>
+<h2><a name="unixify">unixify</a></h2>
+<p>Converts a file specification to Unix syntax.</p>
+<p>
+</p>
+<h2><a name="pathify">pathify</a></h2>
+<p>Converts a directory specification to a path - that is, a string you
+can prepend to a file name to form a valid file specification.  If the
+input file specification uses VMS syntax, the returned path does, too;
+likewise for Unix syntax (Unix paths are guaranteed to end with '/').
+Note that this routine will insist that the input be a legal directory
+file specification; the file type and version, if specified, must be
+<em>.DIR;1</em>.  For compatibility with Unix usage, the type and version
+may also be omitted.</p>
+<p>
+</p>
+<h2><a name="fileify">fileify</a></h2>
+<p>Converts a directory specification to the file specification of the
+directory file - that is, a string you can pass to functions like
+<code>stat</code> or <code>rmdir</code> to manipulate the directory file.  If the
+input directory specification uses VMS syntax, the returned file
+specification does, too; likewise for Unix syntax.  As with
+<code>pathify</code>, the input file specification must have a type and
+version of <em>.DIR;1</em>, or the type and version must be omitted.</p>
+<p>
+</p>
+<h2><a name="vmspath">vmspath</a></h2>
+<p>Acts like <code>pathify</code>, but insures the returned path uses VMS syntax.</p>
+<p>
+</p>
+<h2><a name="unixpath">unixpath</a></h2>
+<p>Acts like <code>pathify</code>, but insures the returned path uses Unix syntax.</p>
+<p>
+</p>
+<h2><a name="candelete">candelete</a></h2>
+<p>Determines whether you have delete access to a file.  If you do, <code>candelete</code>
+returns true.  If you don't, or its argument isn't a legal file specification,
+<code>candelete</code> returns FALSE.  Unlike other file tests, the argument to
+<code>candelete</code> must be a file name (not a FileHandle), and, since it's an XSUB,
+it's a list operator, so you need to be careful about parentheses.  Both of
+these restrictions may be removed in the future if the functionality of
+<code>candelete</code> becomes part of the Perl core.</p>
+<p>
+</p>
+<hr />
+<h1><a name="revision">REVISION</a></h1>
+<p>This document was last revised 22-Feb-1996, for Perl 5.002.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;VMS::Filespec - convert between VMS and Unix file specification syntax</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

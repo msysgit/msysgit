@@ -1,0 +1,309 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Net::POP3 - Post Office Protocol 3 Client class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::POP3 - Post Office Protocol 3 Client class</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Net::POP3 - Post Office Protocol 3 Client class (RFC1939)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Net::POP3;</pre>
+<pre>
+    # Constructors
+    $pop = Net::POP3-&gt;new('pop3host');
+    $pop = Net::POP3-&gt;new('pop3host', Timeout =&gt; 60);</pre>
+<pre>
+    if ($pop-&gt;login($username, $password) &gt; 0) {
+      my $msgnums = $pop-&gt;list; # hashref of msgnum =&gt; size
+      foreach my $msgnum (keys %$msgnums) {
+        my $msg = $pop-&gt;get($msgnum);
+        print @$msg;
+        $pop-&gt;delete($msgnum);
+      }
+    }</pre>
+<pre>
+    $pop-&gt;quit;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module implements a client interface to the POP3 protocol, enabling
+a perl5 application to talk to POP3 servers. This documentation assumes
+that you are familiar with the POP3 protocol described in RFC1939.</p>
+<p>A new Net::POP3 object must be created with the <em>new</em> method. Once
+this has been done, all POP3 commands are accessed via method calls
+on the object.</p>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_new">new ( [ HOST ] [, OPTIONS ] 0</a></strong>
+
+<dd>
+<p>This is the constructor for a new Net::POP3 object. <code>HOST</code> is the
+name of the remote host to which an POP3 connection is required.</p>
+</dd>
+<dd>
+<p><code>HOST</code> is optional. If <code>HOST</code> is not given then it may instead be
+passed as the <code>Host</code> option described below. If neither is given then
+the <code>POP3_Hosts</code> specified in <code>Net::Config</code> will be used.</p>
+</dd>
+<dd>
+<p><code>OPTIONS</code> are passed in a hash like fashion, using key and value pairs.
+Possible options are:</p>
+</dd>
+<dd>
+<p><strong>Host</strong> - POP3 host to connect to. It may be a single scalar, as defined for
+the <code>PeerAddr</code> option in <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket/INET.html">the IO::Socket::INET manpage</a>, or a reference to
+an array with hosts to try in turn. The <a href="#host">host</a> method will return the value
+which was used to connect to the host.</p>
+</dd>
+<dd>
+<p><strong>ResvPort</strong> - If given then the socket for the <code>Net::POP3</code> object
+will be bound to the local port given using <code>bind</code> when the socket is
+created.</p>
+</dd>
+<dd>
+<p><strong>Timeout</strong> - Maximum time, in seconds, to wait for a response from the
+POP3 server (default: 120)</p>
+</dd>
+<dd>
+<p><strong>Debug</strong> - Enable debugging information</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>Unless otherwise stated all methods return either a <em>true</em> or <em>false</em>
+value, with <em>true</em> meaning that the operation was a success. When a method
+states that it returns a value, failure will be returned as <em>undef</em> or an
+empty list.</p>
+<dl>
+<dt><strong><a name="item_auth">auth ( USERNAME, PASSWORD )</a></strong>
+
+<dd>
+<p>Attempt SASL authentication.</p>
+</dd>
+</li>
+<dt><strong><a name="item_user">user ( USER )</a></strong>
+
+<dd>
+<p>Send the USER command.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pass">pass ( PASS )</a></strong>
+
+<dd>
+<p>Send the PASS command. Returns the number of messages in the mailbox.</p>
+</dd>
+</li>
+<dt><strong><a name="item_login">login ( [ USER [, PASS ]] )</a></strong>
+
+<dd>
+<p>Send both the USER and PASS commands. If <code>PASS</code> is not given the
+<code>Net::POP3</code> uses <code>Net::Netrc</code> to lookup the password using the host
+and username. If the username is not specified then the current user name
+will be used.</p>
+</dd>
+<dd>
+<p>Returns the number of messages in the mailbox. However if there are no
+messages on the server the string <code>&quot;0E0&quot;</code> will be returned. This is
+will give a true value in a boolean context, but zero in a numeric context.</p>
+</dd>
+<dd>
+<p>If there was an error authenticating the user then <em>undef</em> will be returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_apop">apop ( [ USER [, PASS ]] )</a></strong>
+
+<dd>
+<p>Authenticate with the server identifying as <code>USER</code> with password <code>PASS</code>.
+Similar to <a href="#item_login">login</a>, but the password is not sent in clear text.</p>
+</dd>
+<dd>
+<p>To use this method you must have the Digest::MD5 or the MD5 module installed,
+otherwise this method will return <em>undef</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_banner">banner ()</a></strong>
+
+<dd>
+<p>Return the sever's connection banner</p>
+</dd>
+</li>
+<dt><strong><a name="item_capa">capa ()</a></strong>
+
+<dd>
+<p>Return a reference to a hash of the capabilties of the server.  APOP
+is added as a pseudo capability.  Note that I've been unable to
+find a list of the standard capability values, and some appear to
+be multi-word and some are not.  We make an attempt at intelligently
+parsing them, but it may not be correct.</p>
+</dd>
+</li>
+<dt><strong><a name="item_capabilities">capabilities ()</a></strong>
+
+<dd>
+<p>Just like capa, but only uses a cache from the last time we asked
+the server, so as to avoid asking more than once.</p>
+</dd>
+</li>
+<dt><strong><a name="item_top">top ( MSGNUM [, NUMLINES ] )</a></strong>
+
+<dd>
+<p>Get the header and the first <code>NUMLINES</code> of the body for the message
+<code>MSGNUM</code>. Returns a reference to an array which contains the lines of text
+read from the server.</p>
+</dd>
+</li>
+<dt><strong><a name="item_list">list ( [ MSGNUM ] )</a></strong>
+
+<dd>
+<p>If called with an argument the <a href="#item_list"><code>list</code></a> returns the size of the message
+in octets.</p>
+</dd>
+<dd>
+<p>If called without arguments a reference to a hash is returned. The
+keys will be the <code>MSGNUM</code>'s of all undeleted messages and the values will
+be their size in octets.</p>
+</dd>
+</li>
+<dt><strong><a name="item_get">get ( MSGNUM [, FH ] )</a></strong>
+
+<dd>
+<p>Get the message <code>MSGNUM</code> from the remote mailbox. If <code>FH</code> is not given
+then get returns a reference to an array which contains the lines of
+text read from the server. If <code>FH</code> is given then the lines returned
+from the server are printed to the filehandle <code>FH</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getfh">getfh ( MSGNUM )</a></strong>
+
+<dd>
+<p>As per get(), but returns a tied filehandle.  Reading from this
+filehandle returns the requested message.  The filehandle will return
+EOF at the end of the message and should not be reused.</p>
+</dd>
+</li>
+<dt><strong><a name="item_last">last ()</a></strong>
+
+<dd>
+<p>Returns the highest <code>MSGNUM</code> of all the messages accessed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_popstat">popstat ()</a></strong>
+
+<dd>
+<p>Returns a list of two elements. These are the number of undeleted
+elements and the size of the mbox in octets.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ping">ping ( USER )</a></strong>
+
+<dd>
+<p>Returns a list of two elements. These are the number of new messages
+and the total number of messages for <code>USER</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_uidl">uidl ( [ MSGNUM ] )</a></strong>
+
+<dd>
+<p>Returns a unique identifier for <code>MSGNUM</code> if given. If <code>MSGNUM</code> is not
+given <a href="#item_uidl"><code>uidl</code></a> returns a reference to a hash where the keys are the
+message numbers and the values are the unique identifiers.</p>
+</dd>
+</li>
+<dt><strong><a name="item_delete">delete ( MSGNUM )</a></strong>
+
+<dd>
+<p>Mark message <code>MSGNUM</code> to be deleted from the remote mailbox. All messages
+that are marked to be deleted will be removed from the remote mailbox
+when the server connection closed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_reset">reset ()</a></strong>
+
+<dd>
+<p>Reset the status of the remote POP3 server. This includes reseting the
+status of all messages to not be deleted.</p>
+</dd>
+</li>
+<dt><strong><a name="item_quit">quit ()</a></strong>
+
+<dd>
+<p>Quit and close the connection to the remote POP3 server. Any messages marked
+as deleted will be deleted from the remote mailbox.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>If a <code>Net::POP3</code> object goes out of scope before <a href="#item_quit"><code>quit</code></a> method is called
+then the <a href="#item_reset"><code>reset</code></a> method will called before the connection is closed. This
+means that any messages marked to be deleted will not be.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Net/Netrc.html">the Net::Netrc manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/Net/Cmd.html">the Net::Cmd manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Graham Barr &lt;<a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1995-2003 Graham Barr. All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::POP3 - Post Office Protocol 3 Client class</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

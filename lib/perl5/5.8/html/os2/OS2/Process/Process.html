@@ -1,0 +1,1309 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OS2::Process - exports constants for system call, and process control on OS2.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::Process - exports constants for system call, and process control on OS2.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#optional_argument_to_system__">Optional argument to <code>system()</code></a></li>
+		<li><a href="#access_to_process_properties">Access to process properties</a></li>
+		<li><a href="#control_of_vio_sessions">Control of VIO sessions</a></li>
+		<li><a href="#control_of_the_process_list">Control of the process list</a></li>
+		<li><a href="#control_of_the_pm_windows">Control of the PM windows</a></li>
+		<li><a href="#control_of_the_pm_data">Control of the PM data</a></li>
+	</ul>
+
+	<li><a href="#os2__localmorphpm_class">OS2::localMorphPM class</a></li>
+	<li><a href="#todo">TODO</a></li>
+	<li><a href="#__e">$^E</a></li>
+	<li><a href="#exports">EXPORTS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>OS2::Process - exports constants for <code>system()</code> call, and process control on OS2.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use OS2::Process;
+    $pid = system(P_PM | P_BACKGROUND, &quot;epm.exe&quot;);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="optional_argument_to_system__">Optional argument to <code>system()</code></a></h2>
+<p>the builtin function <code>system()</code> under OS/2 allows an optional first
+argument which denotes the mode of the process. Note that this argument is
+recognized only if it is strictly numerical.</p>
+<p>You can use either one of the process modes:</p>
+<pre>
+        P_WAIT (0)      = wait until child terminates (default)
+        P_NOWAIT        = do not wait until child terminates
+        P_SESSION       = new session
+        P_DETACH        = detached
+        P_PM            = PM program</pre>
+<p>and optionally add PM and session option bits:</p>
+<pre>
+        P_DEFAULT (0)   = default
+        P_MINIMIZE      = minimized
+        P_MAXIMIZE      = maximized
+        P_FULLSCREEN    = fullscreen (session only)
+        P_WINDOWED      = windowed (session only)</pre>
+<pre>
+        P_FOREGROUND    = foreground (if running in foreground)
+        P_BACKGROUND    = background</pre>
+<pre>
+        P_NOCLOSE       = don't close window on exit (session only)</pre>
+<pre>
+        P_QUOTE         = quote all arguments
+        P_TILDE         = MKS argument passing convention
+        P_UNRELATED     = do not kill child when father terminates</pre>
+<p>
+</p>
+<h2><a name="access_to_process_properties">Access to process properties</a></h2>
+<p>On OS/2 processes have the usual <em>parent/child</em> semantic;
+additionally, there is a hierarchy of sessions with their own
+<em>parent/child</em> tree.  A session is either a FS session, or a windowed
+pseudo-session created by PM.  A session is a ``unit of user
+interaction'', a change to in/out settings in one of them does not
+affect other sessions.</p>
+<dl>
+<dt><strong><a name="item_my_type"><code>my_type()</code></a></strong>
+
+<dd>
+<p>returns the type of the current process (one of
+``FS'', ``DOS'', ``VIO'', ``PM'', ``DETACH'' and ``UNKNOWN''), or <code>undef</code> on error.</p>
+</dd>
+</li>
+<dt><strong><a name="item_file_type"><code>file_type(file)</code></a></strong>
+
+<dd>
+<p>returns the type of the executable file <code>file</code>, or
+dies on error.  The bits 0-2 of the result contain one of the values</p>
+</dd>
+<dl>
+<dt><strong><a name="item_t_notspec"><code>T_NOTSPEC</code> (0)</a></strong>
+
+<dd>
+<p>Application type is not specified in the executable header.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_notwindowcompat"><code>T_NOTWINDOWCOMPAT</code> (1)</a></strong>
+
+<dd>
+<p>Application type is not-window-compatible.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_windowcompat"><code>T_WINDOWCOMPAT</code> (2)</a></strong>
+
+<dd>
+<p>Application type is window-compatible.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_windowapi"><code>T_WINDOWAPI</code> (3)</a></strong>
+
+<dd>
+<p>Application type is window-API.</p>
+</dd>
+</li>
+</dl>
+<p>The remaining bits should be masked with the following values to
+determine the type of the executable:</p>
+<dl>
+<dt><strong><a name="item_t_bound"><code>T_BOUND</code> (8)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file has been ``bound'' (by the BIND command)
+as a Family API application. Bits 0, 1, and 2 still apply.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_dll"><code>T_DLL</code> (0x10)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file is a dynamic link library (DLL)
+module. Bits 0, 1, 2, 3, and 5 will be set to 0.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_dos"><code>T_DOS</code> (0x20)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file is in PC/DOS format. Bits 0, 1, 2, 3,
+and 4 will be set to 0.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_physdrv"><code>T_PHYSDRV</code> (0x40)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file is a physical device driver.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_virtdrv"><code>T_VIRTDRV</code> (0x80)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file is a virtual device driver.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_protdll"><code>T_PROTDLL</code> (0x100)</a></strong>
+
+<dd>
+<p>Set to 1 if the executable file is a protected-memory dynamic link
+library module.</p>
+</dd>
+</li>
+<dt><strong><a name="item_t_32bit"><code>T_32BIT</code> (0x4000)</a></strong>
+
+<dd>
+<p>Set to 1 for 32-bit executable files.</p>
+</dd>
+</li>
+</dl>
+<p><a href="#item_file_type"><code>file_type()</code></a> may croak with one of the strings <code>&quot;Invalid EXE
+signature&quot;</code> or <code>&quot;EXE marked invalid&quot;</code> to indicate typical error
+conditions.  If given non-absolute path, will look on <code>PATH</code>, will
+add extension <em>.exe</em> if no extension is present (add extension <em>.</em>
+to suppress).</p>
+<dt><strong><a name="item_process_codepages"><code>@list = process_codepages()</code></a></strong>
+
+<dd>
+<p>the first element is the currently active codepage, up to 2 additional
+entries specify the system's ``prepared codepages'': the codepages the
+user can switch to.  The active codepage of a process is one of the
+prepared codepages of the system (if present).</p>
+</dd>
+</li>
+<dt><strong><a name="item_process_codepage_set"><code>process_codepage_set($cp)</code></a></strong>
+
+<dd>
+<p>sets the currently active codepage.  [Affects printer output, in/out
+codepages of sessions started by this process, and the default
+codepage for drawing in PM; is inherited by kids.  Does not affect the
+out- and in-codepages of the session.]</p>
+</dd>
+</li>
+<dt><strong><a name="item_ppid"><code>ppid()</code></a></strong>
+
+<dd>
+<p>returns the PID of the parent process.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ppidof"><code>ppidOf($pid = $$)</code></a></strong>
+
+<dd>
+<p>returns the PID of the parent process of $pid.  -1 on error.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sidof"><code>sidOf($pid = $$)</code></a></strong>
+
+<dd>
+<p>returns the session id of the process id $pid.  -1 on error.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="control_of_vio_sessions">Control of VIO sessions</a></h2>
+<p>VIO applications are applications running in a text-mode session.</p>
+<dl>
+<dt><strong><a name="item_out_codepage"><code>out_codepage()</code></a></strong>
+
+<dd>
+<p>gets code page used for screen output (glyphs).  -1 means that a user font
+was loaded.</p>
+</dd>
+</li>
+<dt><strong><a name="item_out_codepage_set"><code>out_codepage_set($cp)</code></a></strong>
+
+<dd>
+<p>sets code page used for screen output (glyphs).  -1 switches to a preloaded
+user font.  -2 switches off the preloaded user font.</p>
+</dd>
+</li>
+<dt><strong><a name="item_in_codepage"><code>in_codepage()</code></a></strong>
+
+<dd>
+<p>gets code page used for keyboard input.  0 means that a hardware codepage
+is used.</p>
+</dd>
+</li>
+<dt><strong><a name="item_in_codepage_set"><code>in_codepage_set($cp)</code></a></strong>
+
+<dd>
+<p>sets code page used for keyboard input.</p>
+</dd>
+</li>
+<dt><strong><a name="item_scrsize"><code>($w, $h) = scrsize()</code></a></strong>
+
+<dd>
+<p>width and height of the given console window in character cells.</p>
+</dd>
+</li>
+<dt><strong><a name="item_scrsize_set"><code>scrsize_set([$w, ] $h)</code></a></strong>
+
+<dd>
+<p>set height (and optionally width) of the given console window in
+character cells.  Use 0 size to keep the old size.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cursor"><code>($s, $e, $w, $a) = cursor()</code></a></strong>
+
+<dd>
+<p>gets start/end lines of the blinking cursor in the charcell, its width
+(1 on text modes) and attribute (-1 for hidden, in text modes other
+values mean visible, in graphic modes color).</p>
+</dd>
+</li>
+<dt><strong><a name="item_cursor_set"><code>cursor_set($s, $e, [$w [, $a]])</code></a></strong>
+
+<dd>
+<p>sets start/end lines of the blinking cursor in the charcell.  Negative
+values mean percents of the character cell height.</p>
+</dd>
+</li>
+<dt><strong><a name="item_screen"><code>screen()</code></a></strong>
+
+<dd>
+<p>gets a buffer with characters and attributes of the screen.</p>
+</dd>
+</li>
+<dt><strong><a name="item_screen_set"><code>screen_set($buffer)</code></a></strong>
+
+<dd>
+<p>restores the screen given the result of screen().  E.g., if the file
+<code>$file</code> contains the screen contents, then</p>
+</dd>
+<dd>
+<pre>
+  open IN, $file or die;
+  binmode IN;
+  read IN, $in, -s IN;
+  $s = screen;
+  $in .= qq(\0) x (length($s) - length $in);
+  substr($in, length $s) = '';
+  screen_set $in;</pre>
+</dd>
+<dd>
+<p>will restore the screen content even if the height of the window
+changed (if the width changed, more manipulation is needed).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="control_of_the_process_list">Control of the process list</a></h2>
+<p>With the exception of Title_set(), all these calls require that PM is
+running, they would not work under alternative Session Managers.</p>
+<dl>
+<dt><strong><a name="item_process_entry"><code>process_entry()</code></a></strong>
+
+<dd>
+<p>returns a list of the following data:</p>
+</dd>
+<dl>
+<dt>
+<dd>
+<p>Title of the process (in the <code>Ctrl-Esc</code> list);</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>window handle of switch entry of the process (in the <code>Ctrl-Esc</code> list);</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>window handle of the icon of the process;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>process handle of the owner of the entry in <code>Ctrl-Esc</code> list;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>process id of the owner of the entry in <code>Ctrl-Esc</code> list;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>session id of the owner of the entry in <code>Ctrl-Esc</code> list;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>whether visible in <code>Ctrl-Esc</code> list;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>whether item cannot be switched to (note that it is not actually
+grayed in the <code>Ctrl-Esc</code> list));</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>whether participates in jump sequence;</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>program type.  Possible values are:</p>
+</dd>
+<dd>
+<pre>
+     PROG_DEFAULT                       0
+     PROG_FULLSCREEN                    1
+     PROG_WINDOWABLEVIO                 2
+     PROG_PM                            3
+     PROG_VDM                           4
+     PROG_WINDOWEDVDM                   7</pre>
+</dd>
+<dd>
+<p>Although there are several other program types for WIN-OS/2 programs,
+these do not show up in this field. Instead, the PROG_VDM or
+PROG_WINDOWEDVDM program types are used. For instance, for
+PROG_31_STDSEAMLESSVDM, PROG_WINDOWEDVDM is used. This is because all
+the WIN-OS/2 programs run in DOS sessions. For example, if a program
+is a windowed WIN-OS/2 program, it runs in a PROG_WINDOWEDVDM
+session. Likewise, if it's a full-screen WIN-OS/2 program, it runs in
+a PROG_VDM session.</p>
+</dd>
+</li>
+<dt>
+<dd>
+<p>switch-entry handle.</p>
+</dd>
+</li>
+</dl>
+<p>Optional arguments: the pid and the window-handle of the application running
+in the OS/2 session to query.</p>
+<dt><strong><a name="item_process_hentry"><code>process_hentry()</code></a></strong>
+
+<dd>
+<p>similar to process_entry(), but returns a hash reference, the keys being</p>
+</dd>
+<dd>
+<pre>
+  title owner_hwnd icon_hwnd owner_phandle owner_pid owner_sid
+  visible nonswitchable jumpable ptype sw_entry</pre>
+</dd>
+<dd>
+<p>(a copy of the list of keys is in @hentry_fields).</p>
+</dd>
+</li>
+<dt><strong><a name="item_process_entries"><code>process_entries()</code></a></strong>
+
+<dd>
+<p>similar to process_entry(), but returns a list of array reference for all
+the elements in the switch list (one controlling <code>Ctrl-Esc</code> window).</p>
+</dd>
+</li>
+<dt><strong><a name="item_process_hentries"><code>process_hentries()</code></a></strong>
+
+<dd>
+<p>similar to process_hentry(), but returns a list of hash reference for all
+the elements in the switch list (one controlling <code>Ctrl-Esc</code> window).</p>
+</dd>
+</li>
+<dt><strong><a name="item_change_entry"><code>change_entry()</code></a></strong>
+
+<dd>
+<p>changes a process entry, arguments are the same as <a href="#item_process_entry"><code>process_entry()</code></a> returns.</p>
+</dd>
+</li>
+<dt><strong><a name="item_change_entryh"><code>change_entryh()</code></a></strong>
+
+<dd>
+<p>Similar to change_entry(), but takes a hash reference as an argument.</p>
+</dd>
+</li>
+<dt><strong><a name="item_process_hwnd"><code>process_hwnd()</code></a></strong>
+
+<dd>
+<p>returns the <code>owner_hwnd</code> of the process entry (for VIO windowed processes
+this is the frame window of the session).</p>
+</dd>
+</li>
+<dt><strong><a name="item_title"><code>Title()</code></a></strong>
+
+<dd>
+<p>returns the text of the task switch menu entry of the current session.
+(There is no way to get this info in non-standard Session Managers.  This
+implementation is a shortcut via <a href="#item_process_entry"><code>process_entry().)</code></a></p>
+</dd>
+</li>
+<dt><strong><a name="item_title_set"><code>Title_set(newtitle)</code></a></strong>
+
+<dd>
+<p>tries two different interfaces.  The Session Manager one does not work
+with some windows (if the title is set from the start).
+This is a limitation of OS/2, in such a case $^E is set to 372 (type</p>
+</dd>
+<dd>
+<pre>
+  help 372</pre>
+</dd>
+<dd>
+<p>for a funny - and wrong  - explanation ;-).  In such cases a
+direct-manipulation of low-level entries is used (same as bothTitle_set()).
+Keep in mind that some versions of OS/2 leak memory with such a manipulation.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wintitle"><code>winTitle()</code></a></strong>
+
+<dd>
+<p>returns text of the titlebar of the current process' window.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wintitle_set"><code>winTitle_set(newtitle)</code></a></strong>
+
+<dd>
+<p>sets text of the titlebar of the current process' window.  The change does not
+affect the text of the switch entry of the current window.</p>
+</dd>
+</li>
+<dt><strong><a name="item_swtitle_set"><code>swTitle_set(newtitle)</code></a></strong>
+
+<dd>
+<p>sets text of the task switch menu entry of the current process' window.  [There
+is no API to query this title.]  Does it via SwitchEntry interface,
+not Session manager interface.  The change does not affect the text of the
+titlebar of the current window.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bothtitle_set"><code>bothTitle_set(newtitle)</code></a></strong>
+
+<dd>
+<p>sets text of the titlebar and task switch menu of the current process' window
+via direct manipulation of the windows' texts.</p>
+</dd>
+</li>
+<dt><strong><a name="item_switchtoprogram"><code>SwitchToProgram([$sw_entry])</code></a></strong>
+
+<dd>
+<p>switch to session given by a switch list handle (defaults to the entry of our process).</p>
+</dd>
+<dd>
+<p>Use of this function causes another window (and its related windows)
+of a PM session to appear on the front of the screen, or a switch to
+another session in the case of a non-PM program. In either case,
+the keyboard (and mouse for the non-PM case) input is directed to
+the new program.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="control_of_the_pm_windows">Control of the PM windows</a></h2>
+<p>Some of these API's require sending a message to the specified window.
+In such a case the process needs to be a PM process, or to be morphed
+to a PM process via OS2::MorphPM().</p>
+<p>For a temporary morphing to PM use <a href="#os2__localmorphpm_class">OS2::localMorphPM class</a>.</p>
+<p>Keep in mind that PM windows are engaged in 2 ``orthogonal'' window
+trees, as well as in the z-order list.</p>
+<p>One tree is given by the <em>parent/child</em> relationship.  This
+relationship affects drawing (child is drawn relative to its parent
+(lower-left corner), and the drawing is clipped by the parent's
+boundary; parent may request that <em>it's</em> drawing is clipped to be
+confined to the outsize of the childs and/or siblings' windows);
+hiding; minimizing/restoring; and destroying windows.</p>
+<p>Another tree (not necessarily connected?) is given by <em>ownership</em>
+relationship.  Ownership relationship assumes cooperation of the
+engaged windows via passing messages on ``important events''; e.g.,
+scrollbars send information messages when the ``bar'' is moved, menus
+send messages when an item is selected; frames
+move/hide/unhide/minimize/restore/change-z-order-of owned frames when
+the owner is moved/etc., and destroy the owned frames (even when these
+frames are not descendants) when the owner is destroyed; etc.  [An
+important restriction on ownership is that owner should be created by
+the same thread as the owned thread, so they engage in the same
+message queue.]</p>
+<p>Windows may be in many different state: Focused (take keyboard events) or not,
+Activated (=Frame windows in the <em>parent/child</em> tree between the root and
+the window with the focus; usually indicate such ``active state'' by titlebar
+highlights, and take mouse events) or not, Enabled/Disabled (this influences
+the ability to update the graphic, and may change appearance, as for 
+enabled/disabled buttons), Visible/Hidden, Minimized/Maximized/Restored, Modal
+or not, etc.</p>
+<p>The APIs below all <code>die()</code> on error with the message being $^E.</p>
+<dl>
+<dt><strong><a name="item_windowtext"><code>WindowText($hwnd)</code></a></strong>
+
+<dd>
+<p>gets ``a text content'' of a window.  Requires (morphing to) PM.</p>
+</dd>
+</li>
+<dt><strong><a name="item_windowtext_set"><code>WindowText_set($hwnd, $text)</code></a></strong>
+
+<dd>
+<p>sets ``a text content'' of a window.  Requires (morphing to) PM.</p>
+</dd>
+</li>
+<dt><strong><a name="item_windowpos"><code>($x, $y, $flags, $width, $height, $behind, @rest) = WindowPos($hwnd)</code></a></strong>
+
+<dd>
+<p>gets window position info as 8 integers (of <code>SWP</code>), in the order suitable
+for WindowPos_set().  @rest is marked as ``reserved'' in PM docs.  $flags
+is a combination of <code>SWP_*</code> constants.</p>
+</dd>
+</li>
+<dt><strong><a name="item_hwindowpos"><code>$hash = hWindowPos($hwnd)</code></a></strong>
+
+<dd>
+<p>gets window position info as a hash reference; the keys are <code>flags width
+height x y behind hwnd reserved1 reserved2</code>.</p>
+</dd>
+<dd>
+<p>Example:</p>
+</dd>
+<dd>
+<pre>
+  exit unless $hash-&gt;{flags} &amp; SWP_MAXIMIZE;    # Maximized</pre>
+</dd>
+</li>
+<dt><strong><a name="item_windowpos_set"><code>WindowPos_set($hwnd, $x, $y, $flags = SWP_MOVE, $width = 0, $height = 0, $behind = HWND_TOP)</code></a></strong>
+
+<dd>
+<p>Set state of the window: position, size, zorder, show/hide, activation,
+minimize/maximize/restore etc.  Which of these operations to perform
+is governed by $flags.</p>
+</dd>
+</li>
+<dt><strong><a name="item_hwindowpos_set"><code>hWindowPos_set($hash, [$hwnd])</code></a></strong>
+
+<dd>
+<p>Same as <a href="#item_windowpos_set"><code>WindowPos_set</code></a>, but takes the position from keys <code>fl width height
+x y behind hwnd</code> of the hash referenced by $hash.  If $hwnd is explicitly
+specified, it overrides <code>$hash-</code>{hwnd}&gt;.  If $hash-&gt;{flags} is not specified,
+it is calculated basing on the existing keys of $hash.  Requires (morphing to) PM.</p>
+</dd>
+<dd>
+<p>Example:</p>
+</dd>
+<dd>
+<pre>
+  hWindowPos_set {flags =&gt; SWP_MAXIMIZE}, $hwnd; # Maximize</pre>
+</dd>
+</li>
+<dt><strong><a name="item_windowprocess"><code>($pid, $tid) = WindowProcess($hwnd)</code></a></strong>
+
+<dd>
+<p>gets <em>PID</em> and <em>TID</em> of the process associated to the window.</p>
+</dd>
+</li>
+<dt><strong><a name="item_classname"><code>ClassName($hwnd)</code></a></strong>
+
+<dd>
+<p>returns the class name of the window.</p>
+</dd>
+<dd>
+<p>If this window is of any of the preregistered WC_* classes the class
+name returned is in the form ``#nnnnn'', where ``nnnnn'' is a group
+of up to five digits that corresponds to the value of the WC_* class name
+constant.</p>
+</dd>
+</li>
+<dt><strong><a name="item_focuswindow"><code>FocusWindow()</code></a></strong>
+
+<dd>
+<p>returns the handle of the focus window.  Optional argument for specifying
+the desktop to use.</p>
+</dd>
+</li>
+<dt><strong><a name="item_focuswindow_set"><code>FocusWindow_set($hwnd)</code></a></strong>
+
+<dd>
+<p>set the focus window by handle.  Optional argument for specifying the desktop
+to use.  E.g, the first entry in <code>program_entries()</code> is the <code>Ctrl-Esc</code> list.
+To show an application, use either one of</p>
+</dd>
+<dd>
+<pre>
+       WinShowWindow( $hwnd, 1 );
+       FocusWindow_set( $hwnd );
+       SwitchToProgram($switch_handle);</pre>
+</dd>
+<dd>
+<p>(Which work with alternative focus-to-front policies?)  Requires
+(morphing to) PM.</p>
+</dd>
+<dd>
+<p>Switching focus to currently-unfocused window moves the window to the
+front in Z-order; use <a href="#item_focuswindow_set_keep_zorder"><code>FocusWindow_set_keep_Zorder()</code></a> to avoid this.</p>
+</dd>
+</li>
+<dt><strong><a name="item_focuswindow_set_keep_zorder"><code>FocusWindow_set_keep_Zorder($hwnd)</code></a></strong>
+
+<dd>
+<p>same as FocusWindow_set(), but preserves the Z-order of windows.</p>
+</dd>
+</li>
+<dt><strong><a name="item_activewindow"><code>ActiveWindow([$parentHwnd])</code></a></strong>
+
+<dd>
+<p>gets the active subwindow's handle for $parentHwnd or desktop.
+Returns FALSE if none.</p>
+</dd>
+</li>
+<dt><strong><a name="item_activewindow_set"><code>ActiveWindow_set($hwnd, [$parentHwnd])</code></a></strong>
+
+<dd>
+<p>sets the active subwindow's handle for $parentHwnd or desktop.  Requires (morphing to) PM.</p>
+</dd>
+</li>
+<dt><strong><a name="item_showwindow"><code>ShowWindow($hwnd [, $show])</code></a></strong>
+
+<dd>
+<p>Set visible/hidden flag of the window.  Default: $show is TRUE.</p>
+</dd>
+</li>
+<dt><strong><a name="item_enablewindowupdate"><code>EnableWindowUpdate($hwnd [, $update])</code></a></strong>
+
+<dd>
+<p>Set window visibility state flag for the window for subsequent drawing.
+No actual drawing is done at this moment.  Use <a href="#item_showwindow"><code>ShowWindow($hwnd, $state)</code></a>
+when redrawing is needed.  While update is disabled, changes to the ``window
+state'' do not change the appearance of the window.  Default: $update is TRUE.</p>
+</dd>
+<dd>
+<p>(What is manipulated is the bit <code>WS_VISIBLE</code> of the window style.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_enablewindow"><code>EnableWindow($hwnd [, $enable])</code></a></strong>
+
+<dd>
+<p>Set the window enabled state.  Default: $enable is TRUE.</p>
+</dd>
+<dd>
+<p>Results in <code>WM_ENABLED</code> message sent to the window.  Typically, this
+would change the appearence of the window.  If at the moment of disabling
+focus is in the window (or a descendant), focus is lost (no focus anywhere).
+If focus is needed, it can be reassigned explicitly later.</p>
+</dd>
+</li>
+<dt><strong><a name="item_iswindowenabled">IsWindowEnabled(), IsWindowVisible(), <code>IsWindowShowing()</code></a></strong>
+
+<dd>
+<p>these functions take $hwnd as an argument.  <a href="#item_iswindowenabled"><code>IsWindowEnabled()</code></a> queries
+the state changed by EnableWindow(), <code>IsWindowVisible()</code> the state changed
+by ShowWindow(), <code>IsWindowShowing()</code> is true if there is a part of the window
+visible on the screen.</p>
+</dd>
+</li>
+<dt><strong><a name="item_postmsg"><code>PostMsg($hwnd, $msg, $mp1, $mp2)</code></a></strong>
+
+<dd>
+<p>post message to a window.  The meaning of $mp1, $mp2 is specific for each
+message id $msg, they default to 0.  E.g.,</p>
+</dd>
+<dd>
+<pre>
+  use OS2::Process qw(:DEFAULT WM_SYSCOMMAND WM_CONTEXTMENU
+                      WM_SAVEAPPLICATION WM_QUIT WM_CLOSE
+                      SC_MAXIMIZE SC_RESTORE);
+  $hwnd = process_hentry()-&gt;{owner_hwnd};
+  # Emulate choosing `Restore' from the window menu:
+  PostMsg $hwnd, WM_SYSCOMMAND, MPFROMSHORT(SC_RESTORE); # Not immediate</pre>
+</dd>
+<dd>
+<pre>
+  # Emulate `Show-Contextmenu' (Double-Click-2), two ways:
+  PostMsg ActiveWindow, WM_CONTEXTMENU;
+  PostMsg FocusWindow, WM_CONTEXTMENU;</pre>
+</dd>
+<dd>
+<pre>
+  /* Emulate `Close' */
+  PostMsg ActiveWindow, WM_CLOSE;</pre>
+</dd>
+<dd>
+<pre>
+  /* Same but with some &quot;warnings&quot; to the application */
+  $hwnd = ActiveWindow;
+  PostMsg $hwnd, WM_SAVEAPPLICATION;
+  PostMsg $hwnd, WM_CLOSE;
+  PostMsg $hwnd, WM_QUIT;</pre>
+</dd>
+<dd>
+<p>In fact, <code>MPFROMSHORT()</code> may be omitted above.</p>
+</dd>
+<dd>
+<p>For messages to other processes, messages which take/return a pointer are
+not supported.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mp_2a_28_29"><code>MP*()</code></a></strong>
+
+<dd>
+<p>The functions MPFROMSHORT(), MPVOID(), MPFROMCHAR(), MPFROM2SHORT(),
+MPFROMSH2CH(), <code>MPFROMLONG()</code> can be used the same way as from C.  Use them
+to construct parameters $m1, $m2 to PostMsg().</p>
+</dd>
+<dd>
+<p>These functions are not exported by default.</p>
+</dd>
+</li>
+<dt><strong><a name="item_beginenumwindows"><code>$eh = BeginEnumWindows($hwnd)</code></a></strong>
+
+<dd>
+<p>starts enumerating immediate child windows of $hwnd in z-order.  The
+enumeration reflects the state at the moment of <a href="#item_beginenumwindows"><code>BeginEnumWindows()</code></a> calls;
+use <a href="#item_iswindow"><code>IsWindow()</code></a> to be sure.  All the functions in this group require (morphing to) PM.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getnextwindow"><code>$kid_hwnd = GetNextWindow($eh)</code></a></strong>
+
+<dd>
+<p>gets the next kid in the list.  Gets 0 on error or when the list ends.</p>
+</dd>
+</li>
+<dt><strong><a name="item_endenumwindows"><code>EndEnumWindows($eh)</code></a></strong>
+
+<dd>
+<p>End enumeration and release the list.</p>
+</dd>
+</li>
+<dt><strong><a name="item_childwindows"><code>@list = ChildWindows([$hwnd])</code></a></strong>
+
+<dd>
+<p>returns the list of child windows at the moment of the call.  Same remark
+as for enumeration interface applies.  Defaults to HWND_DESKTOP.
+Example of usage:</p>
+</dd>
+<dd>
+<pre>
+  sub l {
+    my ($o,$h) = @_;
+    printf ' ' x $o . &quot;%#x\n&quot;, $h;
+    l($o+2,$_) for ChildWindows $h;
+  }
+  l 0, $HWND_DESKTOP</pre>
+</dd>
+</li>
+<dt><strong><a name="item_iswindow"><code>IsWindow($hwnd)</code></a></strong>
+
+<dd>
+<p>true if the window handle is still valid.</p>
+</dd>
+</li>
+<dt><strong><a name="item_querywindow"><code>QueryWindow($hwnd, $type)</code></a></strong>
+
+<dd>
+<p>gets the handle of a related window.  $type should be one of <code>QW_*</code> constants.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ischild"><code>IsChild($hwnd, $parent)</code></a></strong>
+
+<dd>
+<p>return TRUE if $hwnd is a descendant of $parent.</p>
+</dd>
+</li>
+<dt><strong><a name="item_windowfromid"><code>WindowFromId($hwnd, $id)</code></a></strong>
+
+<dd>
+<p>return a window handle of a child of $hwnd with the given $id.</p>
+</dd>
+<dd>
+<pre>
+  hwndSysMenu = WinWindowFromID(hwndDlg, FID_SYSMENU);
+  WinSendMsg(hwndSysMenu, MM_SETITEMATTR,
+      MPFROM2SHORT(SC_CLOSE, TRUE),
+      MPFROM2SHORT(MIA_DISABLED, MIA_DISABLED));</pre>
+</dd>
+</li>
+<dt><strong><a name="item_windowfrompoint"><code>WindowFromPoint($x, $y [, $hwndParent [, $descedantsToo]])</code></a></strong>
+
+<dd>
+<p>gets a handle of a child of $hwndParent at <code>($x,$y)</code>.  If $descedantsToo
+(defaulting to 1) then children of children may be returned too.  May return
+$hwndParent (defaults to desktop) if no suitable children are found,
+or 0 if the point is outside the parent.</p>
+</dd>
+<dd>
+<p>$x and $y are relative to $hwndParent.</p>
+</dd>
+</li>
+<dt><strong><a name="item_enumdlgitem"><code>EnumDlgItem($dlgHwnd, $type [, $relativeHwnd])</code></a></strong>
+
+<dd>
+<p>gets a dialog item window handle for an item of type $type of $dlgHwnd
+relative to $relativeHwnd, which is descendant of $dlgHwnd.
+$relativeHwnd may be specified if $type is EDI_FIRSTTABITEM or
+EDI_LASTTABITEM.</p>
+</dd>
+<dd>
+<p>The return is always an immediate child of hwndDlg, even if hwnd is
+not an immediate child window.  $type may be</p>
+</dd>
+<dl>
+<dt><strong><a name="item_edi_firstgroupitem">EDI_FIRSTGROUPITEM</a></strong>
+
+<dd>
+<p>First item in the same group.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_firsttabitem">EDI_FIRSTTABITEM</a></strong>
+
+<dd>
+<p>First item in dialog with style WS_TABSTOP. hwnd is ignored.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_lastgroupitem">EDI_LASTGROUPITEM</a></strong>
+
+<dd>
+<p>Last item in the same group.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_lasttabitem">EDI_LASTTABITEM</a></strong>
+
+<dd>
+<p>Last item in dialog with style WS_TABSTOP. hwnd is ignored.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_nextgroupitem">EDI_NEXTGROUPITEM</a></strong>
+
+<dd>
+<p>Next item in the same group. Wraps around to beginning of group when
+the end of the group is reached.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_nexttabitem">EDI_NEXTTABITEM</a></strong>
+
+<dd>
+<p>Next item with style WS_TABSTOP. Wraps around to beginning of dialog
+item list when end is reached.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_prevgroupitem">EDI_PREVGROUPITEM</a></strong>
+
+<dd>
+<p>Previous item in the same group. Wraps around to end of group when the
+start of the group is reached. For information on the WS_GROUP style,
+see Window Styles.</p>
+</dd>
+</li>
+<dt><strong><a name="item_edi_prevtabitem">EDI_PREVTABITEM</a></strong>
+
+<dd>
+<p>Previous item with style WS_TABSTOP. Wraps around to end of dialog
+item list when beginning is reached.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item_desktopwindow"><code>DesktopWindow()</code></a></strong>
+
+<dd>
+<p>gets the actual window handle of the PM desktop; most APIs accept the
+pseudo-handle <code>HWND_DESKTOP</code> instead.  Keep in mind that the WPS
+desktop (one with <a href="#item_windowtext"><code>WindowText()</code></a> being <code>&quot;Desktop&quot;</code>) is a different beast?!</p>
+</dd>
+</li>
+<dt><strong><a name="item_toplevel"><code>TopLevel($hwnd)</code></a></strong>
+
+<dd>
+<p>gets the toplevel window of $hwnd.</p>
+</dd>
+</li>
+<dt><strong><a name="item_resetwinerror"><code>ResetWinError()</code></a></strong>
+
+<dd>
+<p>Resets $^E.  One may need to call it before the <code>Win*</code>-class APIs which may
+return 0 during normal operation.  In such a case one should check both
+for return value being zero and $^E being non-zero.  The following APIs
+do <a href="#item_resetwinerror"><code>ResetWinError()</code></a> themselves, thus do not need an explicit one:</p>
+</dd>
+<dd>
+<pre>
+  WindowPtr
+  WindowULong
+  WindowUShort
+  WindowTextLength
+  ActiveWindow
+  PostMsg</pre>
+</dd>
+<dd>
+<p>This function is normally not needed.  Not exported by default.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="control_of_the_pm_data">Control of the PM data</a></h2>
+<dl>
+<dt><strong><a name="item_activedesktoppathname"><code>ActiveDesktopPathname()</code></a></strong>
+
+<dd>
+<p>gets the path of the directory which corresponds to Desktop.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clipbrdtext"><code>ClipbrdText()</code></a></strong>
+
+<dd>
+<p>gets the content of the clipboard.  An optional argument is the format
+of the data in the clipboard (defaults to <code>CF_TEXT</code>).</p>
+</dd>
+<dd>
+<p>Note that the usual convention is to have clipboard data with
+<code>&quot;\r\n&quot;</code> as line separators.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clipbrdtext_set"><code>ClipbrdText_set($txt)</code></a></strong>
+
+<dd>
+<p>sets the text content of the clipboard.  Unless the optional argument
+is TRUE, will convert newlines to <code>&quot;\r\n&quot;</code>.  Another optional
+argument is the format of the data in the clipboard (defaults to
+<code>CF_TEXT</code>).</p>
+</dd>
+</li>
+<dt><strong><a name="item_invalidaterect">InvalidateRect</a></strong>
+
+<dt><strong><a name="item_createframecontrol">CreateFrameControl</a></strong>
+
+<dt><strong><a name="item_clipbrdfmtinfo">ClipbrdFmtInfo</a></strong>
+
+<dt><strong><a name="item_clipbrdowner">ClipbrdOwner</a></strong>
+
+<dt><strong><a name="item_clipbrdviewer">ClipbrdViewer</a></strong>
+
+<dt><strong><a name="item_clipbrddata">ClipbrdData</a></strong>
+
+<dt><strong><a name="item_openclipbrd">OpenClipbrd</a></strong>
+
+<dt><strong><a name="item_closeclipbrd">CloseClipbrd</a></strong>
+
+<dt><strong><a name="item_clipbrddata_set">ClipbrdData_set</a></strong>
+
+<dt><strong><a name="item_clipbrdowner_set">ClipbrdOwner_set</a></strong>
+
+<dt><strong><a name="item_clipbrdviewer_set">ClipbrdViewer_set</a></strong>
+
+<dt><strong><a name="item_enumclipbrdfmts">EnumClipbrdFmts</a></strong>
+
+<dt><strong><a name="item_emptyclipbrd">EmptyClipbrd</a></strong>
+
+<dt><strong><a name="item_addatom">AddAtom</a></strong>
+
+<dt><strong><a name="item_findatom">FindAtom</a></strong>
+
+<dt><strong><a name="item_deleteatom">DeleteAtom</a></strong>
+
+<dt><strong><a name="item_atomusage">AtomUsage</a></strong>
+
+<dt><strong><a name="item_atomname">AtomName</a></strong>
+
+<dt><strong><a name="item_atomlength">AtomLength</a></strong>
+
+<dt><strong><a name="item_systematomtable">SystemAtomTable</a></strong>
+
+<dt><strong><a name="item_createatomtable">CreateAtomTable</a></strong>
+
+<dt><strong><a name="item_destroyatomtable">DestroyAtomTable</a></strong>
+
+<dd>
+<p>Low-level methods to access clipboard and the atom table(s).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="os2__localmorphpm_class">OS2::localMorphPM class</a></h1>
+<p>This class morphs the process to PM for the duration of the given scope.</p>
+<pre>
+  {
+    my $h = OS2::localMorphPM-&gt;new(0);
+    # Do something
+  }</pre>
+<p>The argument has the same meaning as one to OS2::MorphPM().  Calls can
+nest with internal ones being NOPs.</p>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<p>Add tests for:</p>
+<pre>
+        SwitchToProgram
+        ClassName
+        out_codepage
+        out_codepage_set
+        in_codepage
+        in_codepage_set
+        cursor
+        cursor_set
+        screen
+        screen_set
+        process_codepages
+        QueryWindow
+        EnumDlgItem
+        WindowPtr
+        WindowULong
+        WindowUShort
+        SetWindowBits
+        SetWindowPtr
+        SetWindowULong
+        SetWindowUShort
+        my_type
+        file_type
+        scrsize
+        scrsize_set</pre>
+<p>Document and test: Query/SetWindowULong/Short/Ptr, SetWindowBits.
+InvalidateRect, CreateFrameControl, ClipbrdFmtInfo ClipbrdOwner
+ClipbrdViewer ClipbrdData OpenClipbrd CloseClipbrd ClipbrdData_set
+ClipbrdOwner_set ClipbrdViewer_set EnumClipbrdFmts EmptyClipbrd
+AddAtom FindAtom DeleteAtom AtomUsage AtomName AtomLength
+SystemAtomTable CreateAtomTable DestroyAtomTable</p>
+<p>Implement SOMETHINGFROMMR.</p>
+<pre>
+  &gt;But I wish to change the default button if the user enters some
+  &gt;text into an entryfield.  I can detect the entry ok, but can't
+  &gt;seem to get the button to change to default.
+  &gt;
+  &gt;No matter what message I send it, it's being ignored.</pre>
+<pre>
+  You need to get the style of the buttons using WinQueryWindowULong/QWL_STYLE,
+  set and reset the BS_DEFAULT bits as appropriate and then use
+  WinSetWindowULong/QWL_STYLE to set the button style.
+  Something like this:
+    hwnd1 = WinWindowFromID (hwnd, id1);
+    hwnd2 = WinWindowFromID (hwnd, id2);
+    style1 = WinQueryWindowULong (hwnd1, QWL_STYLE);
+    style2 = WinQueryWindowULong (hwnd2, QWL_STYLE);
+    style1 |= style2 &amp; BS_DEFAULT;
+    style2 &amp;= ~BS_DEFAULT;
+    WinSetWindowULong (hwnd1, QWL_STYLE, style1);
+    WinSetWindowULong (hwnd2, QWL_STYLE, style2);</pre>
+<pre>
+ &gt; How to do query and change a frame creation flags for existing window?</pre>
+<pre>
+ Set the style bits that correspond to the FCF_* flag for the frame
+ window and then send a WM_UPDATEFRAME message with the appropriate FCF_*
+ flag in mp1.</pre>
+<pre>
+ ULONG ulFrameStyle;
+ ulFrameStyle = WinQueryWindowULong( WinQueryWindow(hwnd, QW_PARENT),
+ QWL_STYLE );
+ ulFrameStyle = (ulFrameStyle &amp; ~FS_SIZEBORDER) | FS_BORDER;
+ WinSetWindowULong(   WinQueryWindow(hwnd, QW_PARENT),
+                      QWL_STYLE,
+                      ulFrameStyle );
+ WinSendMsg( WinQueryWindow(hwnd, QW_PARENT),
+             WM_UPDATEFRAME,
+             MPFROMP(FCF_SIZEBORDER),
+             MPVOID );</pre>
+<pre>
+ If the FCF_* flags you want to change does not have a corresponding FS_*
+ style (i.e. the FCF_* flag corresponds to the presence/lack of a frame
+ control rather than a property of the frame itself) then you create or
+ destroy the appropriate control window using the correct FID_* window
+ identifier and then send the WM_UPDATEFRAME message with the appropriate
+ FCF_* flag in mp1.</pre>
+<pre>
+ /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*
+  |  SetFrameBorder()                                                          |
+  |    Changes a frame window's border to the requested type.                  |
+  |                                                                            |
+  |  Parameters on entry:                                                      |
+  |    hwndFrame     -&gt; Frame window whose border is to be changed.            |
+  |    ulBorderStyle -&gt; Type of border to change to.                           |
+  |                                                                            |
+  |  Returns:                                                                  |
+  |    BOOL          -&gt; Success indicator.                                     |
+  |                                                                            |
+  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+ BOOL SetFrameBorder( HWND hwndFrame, ULONG ulBorderType )  {
+   ULONG  ulFrameStyle;
+   BOOL   fSuccess = TRUE;</pre>
+<pre>
+   ulFrameStyle = WinQueryWindowULong( hwndFrame, QWL_STYLE );</pre>
+<pre>
+   switch ( ulBorderType )  {
+     case FS_SIZEBORDER :
+       ulFrameStyle = (ulFrameStyle &amp; ~(FS_DLGBORDER | FS_BORDER))
+                      | FS_SIZEBORDER;
+       break;</pre>
+<pre>
+     case FS_DLGBORDER :
+       ulFrameStyle = (ulFrameStyle &amp; ~(FS_SIZEBORDER | FS_BORDER))
+                      | FS_DLGBORDER;
+       break;</pre>
+<pre>
+     case FS_BORDER :
+       ulFrameStyle = (ulFrameStyle &amp; ~(FS_SIZEBORDER | FS_DLGBORDER))
+                      | FS_BORDER;
+       break;</pre>
+<pre>
+     default :
+       fSuccess = FALSE;
+       break;
+   }  // end switch</pre>
+<pre>
+   if ( fSuccess )  {
+     fSuccess = WinSetWindowULong( hwndFrame, QWL_STYLE, ulFrameStyle );</pre>
+<pre>
+     if ( fSuccess )  {
+       fSuccess = (BOOL)WinSendMsg( hwndFrame, WM_UPDATEFRAME, 0, 0 );
+       if ( fSuccess )
+         fSuccess = WinInvalidateRect( hwndFrame, NULL, TRUE );
+     }
+   }</pre>
+<pre>
+   return ( fSuccess );</pre>
+<pre>
+ }  // End SetFrameBorder()</pre>
+<pre>
+         hwndMenu=WinLoadMenu(hwndParent,NULL,WND_IMAGE);
+         WinSetWindowUShort(hwndMenu,QWS_ID,FID_MENU);
+         ulStyle=WinQueryWindowULong(hwndMenu,QWL_STYLE);
+         WinSetWindowULong(hwndMenu,QWL_STYLE,ulStyle|MS_ACTIONBAR);
+         WinSendMsg(hwndParent,WM_UPDATEFRAME,MPFROMSHORT(FCF_MENU),0L);</pre>
+<pre>
+  OS/2-windows have another &quot;parent&quot; called the *owner*,
+  which must be set separately - to get a close relationship:</pre>
+<pre>
+    WinSetOwner (hwndFrameChild, hwndFrameMain);</pre>
+<pre>
+  Now your child should move with your main window!
+  And always stays on top of it....</pre>
+<pre>
+  To avoid this, for example for dialogwindows, you can
+  also &quot;disconnect&quot; this relationship with:</pre>
+<pre>
+    WinSetWindowBits (hwndFrameChild, QWL_STYLE
+                      , FS_NOMOVEWITHOWNER
+                      , FS_NOMOVEWITHOWNER);</pre>
+<pre>
+ Adding a button icon later:</pre>
+<pre>
+ /* switch the button style to BS_MINIICON */
+ WinSetWindowBits(hwndBtn, QWL_STYLE, BS_MINIICON, BS_MINIICON) ;</pre>
+<pre>
+ /* set up button control data */
+ BTNCDATA    bcd;
+ bcd.cb = sizeof(BTNCDATA);
+ bcd.hImage = WinLoadPointer(HWND_DESKTOP, dllHandle, ID_ICON_BUTTON1) ;
+ bcd.fsCheckState = bcd.fsHiliteState = 0 ;</pre>
+<pre>
+ WNDPARAMS   wp;
+ wp.fsStatus = WPM_CTLDATA;
+ wp.pCtlData = &amp;bcd;</pre>
+<pre>
+ /* add the icon on the button */
+ WinSendMsg(hwndBtn, WM_SETWINDOWPARAMS, (MPARAM)&amp;wp, NULL);</pre>
+<pre>
+ MO&gt; Can anyone tell what OS/2 expects of an application to be properly
+ MO&gt; minimized to the desktop?
+ case WM MINMAXFRAME :
+ {
+   BOOL  fShow = ! (((PSWP) mp1)-&gt;fl &amp; SWP MINIMIZE);
+   HENUM henum;</pre>
+<pre>
+   HWND  hwndChild;</pre>
+<pre>
+   WinEnableWindowUpdate ( hwnd, FALSE );</pre>
+<pre>
+   for (henum=WinBeginEnumWindows(hwnd);
+        (hwndChild = WinGetNextWindow (henum)) != 0; )
+   WinShowWindow ( hwndChild, fShow );</pre>
+<pre>
+   WinEndEnumWindows ( henum );
+   WinEnableWindowUpdate ( hwnd, TRUE );
+ }
+ break;</pre>
+<p>Why <code>hWindowPos DesktopWindow</code> gives <code>behind =&gt; HWND_TOP</code>?</p>
+<p>
+</p>
+<hr />
+<h1><a name="__e">$^E</a></h1>
+<p>the majority of the APIs of this module set $^E on failure (no matter
+whether they <code>die()</code> on failure or not).  By the semantic of PM API
+which returns something other than a boolean, it is impossible to
+distinguish failure from a ``normal'' 0-return.  In such cases <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___e"><code>$^E ==
+0</code></a> indicates an absence of error.</p>
+<p>
+</p>
+<hr />
+<h1><a name="exports">EXPORTS</a></h1>
+<p>In addition to symbols described above, the following constants (available
+also via module <code>OS2::Process::Const</code>) are exportable.  Note that these
+symbols live in package <code>OS2::Process::Const</code>, they are not available
+by full name through <code>OS2::Process</code>!</p>
+<pre>
+  HWND_*                Standard (abstract) window handles
+  WM_*                  Message ids
+  SC_*                  WM_SYSCOMMAND flavor
+  SWP_*                 Size/move etc flag
+  WC_*                  Standard window classes
+  PROG_*                Program category (PM, VIO etc)
+  QW_*                  Query-Window flag
+  EDI_*                 Enumerate-Dialog-Item code
+  WS_*                  Window Style flag
+  QWS_*                 Query-window-UShort offsets
+  QWP_*                 Query-window-pointer offsets
+  QWL_*                 Query-window-ULong offsets
+  FF_*                  Frame-window state flags
+  FI_*                  Frame-window information flags
+  LS_*                  List box styles
+  FS_*                  Frame style
+  FCF_*                 Frame creation flags
+  BS_*                  Button style
+  MS_*                  Menu style
+  TBM_*                 Title bar messages?
+  CF_*                  Clipboard formats
+  CFI_*                 Clipboard storage type
+  FID_*                 ids of subwindows of frames</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>whether a given API dies or returns FALSE/empty-list on error may be
+confusing.  This may change in the future.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Andreas Kaiser &lt;<a href="mailto:ak@ananke.s.bawue.de">ak@ananke.s.bawue.de</a>&gt;,
+Ilya Zakharevich &lt;<a href="mailto:ilya@math.ohio-state.edu">ilya@math.ohio-state.edu</a>&gt;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><code>spawn*</code>() system calls, <a href="/usr/lib/perl5/5.8/html/OS2/Proc.html">the OS2::Proc manpage</a> and <a href="/usr/lib/perl5/5.8/html/OS2/WinObject.html">the OS2::WinObject manpage</a> modules.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::Process - exports constants for system call, and process control on OS2.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

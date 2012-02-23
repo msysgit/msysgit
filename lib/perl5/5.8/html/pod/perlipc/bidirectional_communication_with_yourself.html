@@ -1,0 +1,117 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Bidirectional Communication with Yourself</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Bidirectional Communication with Yourself</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#bidirectional_communication_with_yourself">Bidirectional Communication with Yourself</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="bidirectional_communication_with_yourself">Bidirectional Communication with Yourself</a></h2>
+<p>If you want, you may make low-level <code>pipe()</code> and <code>fork()</code>
+to stitch this together by hand.  This example only
+talks to itself, but you could reopen the appropriate
+handles to STDIN and STDOUT and call other processes.</p>
+<pre>
+    #!/usr/bin/perl -w
+    # pipe1 - bidirectional communication using two pipe pairs
+    #         designed for the socketpair-challenged
+    use IO::Handle;     # thousands of lines just for autoflush :-(
+    pipe(PARENT_RDR, CHILD_WTR);                # XXX: failure?
+    pipe(CHILD_RDR,  PARENT_WTR);               # XXX: failure?
+    CHILD_WTR-&gt;autoflush(1);
+    PARENT_WTR-&gt;autoflush(1);</pre>
+<pre>
+    if ($pid = fork) {
+        close PARENT_RDR; close PARENT_WTR;
+        print CHILD_WTR &quot;Parent Pid $$ is sending this\n&quot;;
+        chomp($line = &lt;CHILD_RDR&gt;);
+        print &quot;Parent Pid $$ just read this: `$line'\n&quot;;
+        close CHILD_RDR; close CHILD_WTR;
+        waitpid($pid,0);
+    } else {
+        die &quot;cannot fork: $!&quot; unless defined $pid;
+        close CHILD_RDR; close CHILD_WTR;
+        chomp($line = &lt;PARENT_RDR&gt;);
+        print &quot;Child Pid $$ just read this: `$line'\n&quot;;
+        print PARENT_WTR &quot;Child Pid $$ is sending this\n&quot;;
+        close PARENT_RDR; close PARENT_WTR;
+        exit;
+    }</pre>
+<p>But you don't actually have to make two pipe calls.  If you
+have the <code>socketpair()</code> system call, it will do this all for you.</p>
+<pre>
+    #!/usr/bin/perl -w
+    # pipe2 - bidirectional communication using socketpair
+    #   &quot;the best ones always go both ways&quot;</pre>
+<pre>
+    use Socket;
+    use IO::Handle;     # thousands of lines just for autoflush :-(
+    # We say AF_UNIX because although *_LOCAL is the
+    # POSIX 1003.1g form of the constant, many machines
+    # still don't have it.
+    socketpair(CHILD, PARENT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
+                                or  die &quot;socketpair: $!&quot;;</pre>
+<pre>
+    CHILD-&gt;autoflush(1);
+    PARENT-&gt;autoflush(1);</pre>
+<pre>
+    if ($pid = fork) {
+        close PARENT;
+        print CHILD &quot;Parent Pid $$ is sending this\n&quot;;
+        chomp($line = &lt;CHILD&gt;);
+        print &quot;Parent Pid $$ just read this: `$line'\n&quot;;
+        close CHILD;
+        waitpid($pid,0);
+    } else {
+        die &quot;cannot fork: $!&quot; unless defined $pid;
+        close CHILD;
+        chomp($line = &lt;PARENT&gt;);
+        print &quot;Child Pid $$ just read this: `$line'\n&quot;;
+        print PARENT &quot;Child Pid $$ is sending this\n&quot;;
+        close PARENT;
+        exit;
+    }</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/bidirectional_communication_with_another_process.html">Bidirectional Communication with Another Process in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/sockets__client_server_communication.html">Sockets: Client/Server Communication in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Bidirectional Communication with Yourself</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

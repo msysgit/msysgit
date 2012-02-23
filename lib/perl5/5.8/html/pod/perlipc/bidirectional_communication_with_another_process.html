@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Bidirectional Communication with Another Process</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Bidirectional Communication with Another Process</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#bidirectional_communication_with_another_process">Bidirectional Communication with Another Process</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="bidirectional_communication_with_another_process">Bidirectional Communication with Another Process</a></h2>
+<p>While this works reasonably well for unidirectional communication, what
+about bidirectional communication?  The obvious thing you'd like to do
+doesn't actually work:</p>
+<pre>
+    open(PROG_FOR_READING_AND_WRITING, &quot;| some program |&quot;)</pre>
+<p>and if you forget to use the <code>use warnings</code> pragma or the <strong>-w</strong> flag,
+then you'll miss out entirely on the diagnostic message:</p>
+<pre>
+    Can't do bidirectional pipe at -e line 1.</pre>
+<p>If you really want to, you can use the standard <code>open2()</code> library function
+to catch both ends.  There's also an <code>open3()</code> for tridirectional I/O so you
+can also catch your child's STDERR, but doing so would then require an
+awkward <code>select()</code> loop and wouldn't allow you to use normal Perl input
+operations.</p>
+<p>If you look at its source, you'll see that <code>open2()</code> uses low-level
+primitives like Unix <code>pipe()</code> and <code>exec()</code> calls to create all the connections.
+While it might have been slightly more efficient by using socketpair(), it
+would have then been even less portable than it already is.  The <code>open2()</code>
+and <code>open3()</code> functions are  unlikely to work anywhere except on a Unix
+system or some other one purporting to be POSIX compliant.</p>
+<p>Here's an example of using open2():</p>
+<pre>
+    use FileHandle;
+    use IPC::Open2;
+    $pid = open2(*Reader, *Writer, &quot;cat -u -n&quot; );
+    print Writer &quot;stuff\n&quot;;
+    $got = &lt;Reader&gt;;</pre>
+<p>The problem with this is that Unix buffering is really going to
+ruin your day.  Even though your <code>Writer</code> filehandle is auto-flushed,
+and the process on the other end will get your data in a timely manner,
+you can't usually do anything to force it to give it back to you
+in a similarly quick fashion.  In this case, we could, because we
+gave <em>cat</em> a <strong>-u</strong> flag to make it unbuffered.  But very few Unix
+commands are designed to operate over pipes, so this seldom works
+unless you yourself wrote the program on the other end of the
+double-ended pipe.</p>
+<p>A solution to this is the nonstandard <em>Comm.pl</em> library.  It uses
+pseudo-ttys to make your program behave more reasonably:</p>
+<pre>
+    require 'Comm.pl';
+    $ph = open_proc('cat -n');
+    for (1..10) {
+        print $ph &quot;a line\n&quot;;
+        print &quot;got back &quot;, scalar &lt;$ph&gt;;
+    }</pre>
+<p>This way you don't have to have control over the source code of the
+program you're using.  The <em>Comm</em> library also has <code>expect()</code>
+and <code>interact()</code> functions.  Find the library (and we hope its
+successor <em>IPC::Chat</em>) at your nearest CPAN archive as detailed
+in the SEE ALSO section below.</p>
+<p>The newer Expect.pm module from CPAN also addresses this kind of thing.
+This module requires two other modules from CPAN: IO::Pty and IO::Stty.
+It sets up a pseudo-terminal to interact with programs that insist on
+using talking to the terminal device driver.  If your system is
+amongst those supported, this may be your best bet.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/safe_pipe_opens.html">Safe Pipe Opens in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/bidirectional_communication_with_yourself.html">Bidirectional Communication with Yourself in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Bidirectional Communication with Another Process</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Builder::Module - Base class for test modules</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder::Module - Base class for test modules</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#importing">Importing</a></li>
+		<ul>
+
+			<li><a href="#import">import</a></li>
+			<li><a href="#import_extra">import_extra</a></li>
+		</ul>
+
+		<li><a href="#builder">Builder</a></li>
+		<ul>
+
+			<li><a href="#builder">builder</a></li>
+		</ul>
+
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Builder::Module - Base class for test modules</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  # Emulates Test::Simple
+  package Your::Module;</pre>
+<pre>
+  my $CLASS = __PACKAGE__;</pre>
+<pre>
+  use base 'Test::Builder::Module';
+  @EXPORT = qw(ok);</pre>
+<pre>
+  sub ok ($;$) {
+      my $tb = $CLASS-&gt;builder;
+      return $tb-&gt;ok(@_);
+  }
+  
+  1;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a superclass for Test::Builder-based modules.  It provides a
+handful of common functionality and a method of getting at the underlying
+Test::Builder object.</p>
+<p>
+</p>
+<h2><a name="importing">Importing</a></h2>
+<p>Test::Builder::Module is a subclass of Exporter which means your
+module is also a subclass of Exporter.  @EXPORT, @EXPORT_OK, etc...
+all act normally.</p>
+<p>A few methods are provided to do the <code>use Your::Module tests =</code> 23&gt; part
+for you.</p>
+<p>
+</p>
+<h3><a name="import">import</a></h3>
+<p>Test::Builder::Module provides an <code>import()</code> method which acts in the
+same basic way as Test::More's, setting the plan and controling
+exporting of functions and variables.  This allows your module to set
+the plan independent of Test::More.</p>
+<p>All arguments passed to <code>import()</code> are passed onto 
+<code>Your::Module-&gt;builder-&gt;plan()</code> with the exception of 
+<code>import =</code>[qw(things to import)]&gt;.</p>
+<pre>
+    use Your::Module import =&gt; [qw(this that)], tests =&gt; 23;</pre>
+<p>says to import the functions <code>this()</code> and <code>that()</code> as well as set the plan
+to be 23 tests.</p>
+<p><code>import()</code> also sets the <code>exported_to()</code> attribute of your builder to be
+the caller of the <code>import()</code> function.</p>
+<p>Additional behaviors can be added to your <code>import()</code> method by overriding
+import_extra().</p>
+<p>
+</p>
+<h3><a name="import_extra">import_extra</a></h3>
+<pre>
+    Your::Module-&gt;import_extra(\@import_args);</pre>
+<p><code>import_extra()</code> is called by import().  It provides an opportunity for you
+to add behaviors to your module based on its import list.</p>
+<p>Any extra arguments which shouldn't be passed on to <code>plan()</code> should be 
+stripped off by this method.</p>
+<p>See Test::More for an example of its use.</p>
+<p><strong>NOTE</strong> This mechanism is <em>VERY ALPHA AND LIKELY TO CHANGE</em> as it
+feels like a bit of an ugly hack in its current form.</p>
+<p>
+</p>
+<h2><a name="builder">Builder</a></h2>
+<p>Test::Builder::Module provides some methods of getting at the underlying
+Test::Builder object.</p>
+<p>
+</p>
+<h3><a name="builder">builder</a></h3>
+<pre>
+  my $builder = Your::Class-&gt;builder;</pre>
+<p>This method returns the Test::Builder object associated with Your::Class.
+It is not a constructor so you can call it as often as you like.</p>
+<p>This is the preferred way to get the Test::Builder object.  You should
+<em>not</em> get it via <code>Test::Builder-&gt;new</code> as was previously
+recommended.</p>
+<p>The object returned by <code>builder()</code> may change at runtime so you should
+call <code>builder()</code> inside each function rather than store it in a global.</p>
+<pre>
+  sub ok {
+      my $builder = Your::Class-&gt;builder;</pre>
+<pre>
+      return $builder-&gt;ok(@_);
+  }</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Builder::Module - Base class for test modules</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

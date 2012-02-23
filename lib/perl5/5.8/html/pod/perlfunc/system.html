@@ -1,0 +1,105 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>system - run a separate program</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;system - run a separate program</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>system - run a separate program</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>system LIST
+ </p>
+<p>system PROGRAM LIST</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Does exactly the same thing as <code>exec LIST</code>, except that a fork is
+done first, and the parent process waits for the child process to
+complete.  Note that argument processing varies depending on the
+number of arguments.  If there is more than one argument in LIST,
+or if LIST is an array with more than one value, starts the program
+given by the first element of the list with arguments given by the
+rest of the list.  If there is only one scalar argument, the argument
+is checked for shell metacharacters, and if there are any, the
+entire argument is passed to the system's command shell for parsing
+(this is <code>/bin/sh -c</code> on Unix platforms, but varies on other
+platforms).  If there are no shell metacharacters in the argument,
+it is split into words and passed directly to <code>execvp</code>, which is
+more efficient.</p>
+<p>Beginning with v5.6.0, Perl will attempt to flush all files opened for
+output before any operation that may do a fork, but this may not be
+supported on some platforms (see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a>).  To be safe, you may need
+to set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$|</code></a> ($AUTOFLUSH in English) or call the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item_autoflush"><code>autoflush()</code></a> method
+of <code>IO::Handle</code> on any open handles.</p>
+<p>The return value is the exit status of the program as returned by the
+<code>wait</code> call.  To get the actual exit value, shift right by eight (see
+below). See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.  This is <em>not</em> what you want to use to capture
+the output from a command, for that you should use merely backticks or
+<code>qx//</code>, as described in <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#_string_">`STRING` in the perlop manpage</a>.  Return value of -1
+indicates a failure to start the program or an error of the <code>wait(2)</code> system
+call (inspect $! for the reason).</p>
+<p>Like <code>exec</code>, <code>system</code> allows you to lie to a program about its name if
+you use the <code>system PROGRAM LIST</code> syntax.  Again, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+<p>Since <code>SIGINT</code> and <code>SIGQUIT</code> are ignored during the execution of
+<code>system</code>, if you expect your program to terminate on receipt of these
+signals you will need to arrange to do so yourself based on the return
+value.</p>
+<pre>
+    @args = (&quot;command&quot;, &quot;arg1&quot;, &quot;arg2&quot;);
+    system(@args) == 0
+         or die &quot;system @args failed: $?&quot;</pre>
+<p>You can check all the failure possibilities by inspecting
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> like this:</p>
+<pre>
+    if ($? == -1) {
+        print &quot;failed to execute: $!\n&quot;;
+    }
+    elsif ($? &amp; 127) {
+        printf &quot;child died with signal %d, %s coredump\n&quot;,
+            ($? &amp; 127),  ($? &amp; 128) ? 'with' : 'without';
+    }
+    else {
+        printf &quot;child exited with value %d\n&quot;, $? &gt;&gt; 8;
+    }</pre>
+<p>or more portably by using the W*() calls of the POSIX extension;
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a> for more information.</p>
+<p>When the arguments get executed via the system shell, results
+and return codes will be subject to its quirks and capabilities.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#_string_">`STRING` in the perlop manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a> for details.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;system - run a separate program</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

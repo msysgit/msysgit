@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>bytes - Perl pragma to force byte semantics rather than character semantics</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;bytes - Perl pragma to force byte semantics rather than character semantics</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#limitations">LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>bytes - Perl pragma to force byte semantics rather than character semantics</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use bytes;
+    ... chr(...);       # or bytes::chr
+    ... index(...);     # or bytes::index
+    ... length(...);    # or bytes::length
+    ... ord(...);       # or bytes::ord
+    ... rindex(...);    # or bytes::rindex
+    ... substr(...);    # or bytes::substr
+    no bytes;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>use bytes</code> pragma disables character semantics for the rest of the
+lexical scope in which it appears.  <code>no bytes</code> can be used to reverse
+the effect of <code>use bytes</code> within the current lexical scope.</p>
+<p>Perl normally assumes character semantics in the presence of character
+data (i.e. data that has come from a source that has been marked as
+being of a particular character encoding). When <code>use bytes</code> is in
+effect, the encoding is temporarily ignored, and each string is treated
+as a series of bytes.</p>
+<p>As an example, when Perl sees <code>$x = chr(400)</code>, it encodes the character
+in UTF-8 and stores it in $x. Then it is marked as character data, so,
+for instance, <code>length $x</code> returns <code>1</code>. However, in the scope of the
+<code>bytes</code> pragma, $x is treated as a series of bytes - the bytes that make
+up the UTF8 encoding - and <code>length $x</code> returns <code>2</code>:</p>
+<pre>
+    $x = chr(400);
+    print &quot;Length is &quot;, length $x, &quot;\n&quot;;     # &quot;Length is 1&quot;
+    printf &quot;Contents are %vd\n&quot;, $x;         # &quot;Contents are 400&quot;
+    { 
+        use bytes; # or &quot;require bytes; bytes::length()&quot;
+        print &quot;Length is &quot;, length $x, &quot;\n&quot;; # &quot;Length is 2&quot;
+        printf &quot;Contents are %vd\n&quot;, $x;     # &quot;Contents are 198.144&quot;
+    }</pre>
+<p>chr(), ord(), substr(), <code>index()</code> and <code>rindex()</code> behave similarly.</p>
+<p>For more on the implications and differences between character
+semantics and byte semantics, see <a href="/usr/lib/perl5/5.8/html/./pod/perluniintro.html">the perluniintro manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="limitations">LIMITATIONS</a></h1>
+<p>bytes::substr() does not work as an lvalue().</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perluniintro.html">the perluniintro manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/utf8.html">the utf8 manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;bytes - Perl pragma to force byte semantics rather than character semantics</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

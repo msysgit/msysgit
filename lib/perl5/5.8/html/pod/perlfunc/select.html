@@ -1,0 +1,123 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>select - reset default output or do I/O multiplexing</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;select - reset default output or do I/O multiplexing</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>select - reset default output or do I/O multiplexing</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>select FILEHANDLE
+ </p>
+<p>select</p>
+<p>select RBITS,WBITS,EBITS,TIMEOUT
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Returns the currently selected filehandle.  Sets the current default
+filehandle for output, if FILEHANDLE is supplied.  This has two
+effects: first, a <code>write</code> or a <code>print</code> without a filehandle will
+default to this FILEHANDLE.  Second, references to variables related to
+output will refer to this output channel.  For example, if you have to
+set the top of form format for more than one output channel, you might
+do the following:</p>
+<pre>
+    select(REPORT1);
+    $^ = 'report1_top';
+    select(REPORT2);
+    $^ = 'report2_top';</pre>
+<p>FILEHANDLE may be an expression whose value gives the name of the
+actual filehandle.  Thus:</p>
+<pre>
+    $oldfh = select(STDERR); $| = 1; select($oldfh);</pre>
+<p>Some programmers may prefer to think of filehandles as objects with
+methods, preferring to write the last example as:</p>
+<pre>
+    use IO::Handle;
+    STDERR-&gt;autoflush(1);</pre>
+<p>This calls the <code>select(2)</code> system call with the bit masks specified, which
+can be constructed using <code>fileno</code> and <code>vec</code>, along these lines:</p>
+<pre>
+    $rin = $win = $ein = '';
+    vec($rin,fileno(STDIN),1) = 1;
+    vec($win,fileno(STDOUT),1) = 1;
+    $ein = $rin | $win;</pre>
+<p>If you want to select on many filehandles you might wish to write a
+subroutine:</p>
+<pre>
+    sub fhbits {
+        my(@fhlist) = split(' ',$_[0]);
+        my($bits);
+        for (@fhlist) {
+            vec($bits,fileno($_),1) = 1;
+        }
+        $bits;
+    }
+    $rin = fhbits('STDIN TTY SOCK');</pre>
+<p>The usual idiom is:</p>
+<pre>
+    ($nfound,$timeleft) =
+      select($rout=$rin, $wout=$win, $eout=$ein, $timeout);</pre>
+<p>or to block until something becomes ready just do this</p>
+<pre>
+    $nfound = select($rout=$rin, $wout=$win, $eout=$ein, undef);</pre>
+<p>Most systems do not bother to return anything useful in $timeleft, so
+calling <code>select()</code> in scalar context just returns $nfound.</p>
+<p>Any of the bit masks can also be undef.  The timeout, if specified, is
+in seconds, which may be fractional.  Note: not all implementations are
+capable of returning the $timeleft.  If not, they always return
+$timeleft equal to the supplied $timeout.</p>
+<p>You can effect a sleep of 250 milliseconds this way:</p>
+<pre>
+    select(undef, undef, undef, 0.25);</pre>
+<p>Note that whether <code>select</code> gets restarted after signals (say, SIGALRM)
+is implementation-dependent.  See also <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a> for notes on the
+portability of <code>select</code>.</p>
+<p>On error, <code>select</code> behaves like the <code>select(2)</code> system call : it returns
+-1 and sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a>.</p>
+<p>Note: on some Unixes, the <code>select(2)</code> system call may report a socket file
+descriptor as ``ready for reading'', when actually no data is available,
+thus a subsequent read blocks. It can be avoided using always the
+O_NONBLOCK flag on the socket. See <code>select(2)</code> and <code>fcntl(2)</code> for further
+details.</p>
+<p><strong>WARNING</strong>: One should not attempt to mix buffered I/O (like <code>read</code>
+or &lt;FH&gt;) with <code>select</code>, except as permitted by POSIX, and even
+then only on POSIX systems.  You have to use <code>sysread</code> instead.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;select - reset default output or do I/O multiplexing</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

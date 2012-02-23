@@ -1,0 +1,1096 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::More - yet another framework for writing test scripts</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::More - yet another framework for writing test scripts</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#i_love_it_when_a_plan_comes_together">I love it when a plan comes together</a></li>
+		<li><a href="#test_names">Test names</a></li>
+		<li><a href="#i_m_ok__you_re_not_ok_">I'm ok, you're not ok.</a></li>
+		<li><a href="#module_tests">Module tests</a></li>
+		<li><a href="#complex_data_structures">Complex data structures</a></li>
+		<li><a href="#diagnostics">Diagnostics</a></li>
+		<li><a href="#conditional_tests">Conditional tests</a></li>
+		<li><a href="#test_control">Test control</a></li>
+		<li><a href="#discouraged_comparison_functions">Discouraged comparison functions</a></li>
+		<li><a href="#extending_and_embedding_test__more">Extending and Embedding Test::More</a></li>
+	</ul>
+
+	<li><a href="#exit_codes">EXIT CODES</a></li>
+	<li><a href="#caveats_and_notes">CAVEATS and NOTES</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::More - yet another framework for writing test scripts</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Test::More tests =&gt; $Num_Tests;
+  # or
+  use Test::More qw(no_plan);
+  # or
+  use Test::More skip_all =&gt; $reason;</pre>
+<pre>
+  BEGIN { use_ok( 'Some::Module' ); }
+  require_ok( 'Some::Module' );</pre>
+<pre>
+  # Various ways to say &quot;ok&quot;
+  ok($this eq $that, $test_name);</pre>
+<pre>
+  is  ($this, $that,    $test_name);
+  isnt($this, $that,    $test_name);</pre>
+<pre>
+  # Rather than print STDERR &quot;# here's what went wrong\n&quot;
+  diag(&quot;here's what went wrong&quot;);</pre>
+<pre>
+  like  ($this, qr/that/, $test_name);
+  unlike($this, qr/that/, $test_name);</pre>
+<pre>
+  cmp_ok($this, '==', $that, $test_name);</pre>
+<pre>
+  is_deeply($complex_structure1, $complex_structure2, $test_name);</pre>
+<pre>
+  SKIP: {
+      skip $why, $how_many unless $have_some_feature;</pre>
+<pre>
+      ok( foo(),       $test_name );
+      is( foo(42), 23, $test_name );
+  };</pre>
+<pre>
+  TODO: {
+      local $TODO = $why;</pre>
+<pre>
+      ok( foo(),       $test_name );
+      is( foo(42), 23, $test_name );
+  };</pre>
+<pre>
+  can_ok($module, @methods);
+  isa_ok($object, $class);</pre>
+<pre>
+  pass($test_name);
+  fail($test_name);</pre>
+<pre>
+  BAIL_OUT($why);</pre>
+<pre>
+  # UNIMPLEMENTED!!!
+  my @status = Test::More::status;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>STOP!</strong> If you're just getting started writing tests, have a look at
+Test::Simple first.  This is a drop in replacement for Test::Simple
+which you can switch to once you get the hang of basic testing.</p>
+<p>The purpose of this module is to provide a wide range of testing
+utilities.  Various ways to say ``ok'' with better diagnostics,
+facilities to skip tests, test future features and compare complicated
+data structures.  While you can do almost anything with a simple
+<a href="#item_ok"><code>ok()</code></a> function, it doesn't provide good diagnostic output.</p>
+<p>
+</p>
+<h2><a name="i_love_it_when_a_plan_comes_together">I love it when a plan comes together</a></h2>
+<p>Before anything else, you need a testing plan.  This basically declares
+how many tests your script is going to run to protect against premature
+failure.</p>
+<p>The preferred way to do this is to declare a plan when you <code>use Test::More</code>.</p>
+<pre>
+  use Test::More tests =&gt; $Num_Tests;</pre>
+<p>There are rare cases when you will not know beforehand how many tests
+your script is going to run.  In this case, you can declare that you
+have no plan.  (Try to avoid using this as it weakens your test.)</p>
+<pre>
+  use Test::More qw(no_plan);</pre>
+<p><strong>NOTE</strong>: using no_plan requires a Test::Harness upgrade else it will
+think everything has failed.  See <a href="#caveats_and_notes">CAVEATS and NOTES</a>).</p>
+<p>In some cases, you'll want to completely skip an entire testing script.</p>
+<pre>
+  use Test::More skip_all =&gt; $skip_reason;</pre>
+<p>Your script will declare a skip with the reason why you skipped and
+exit immediately with a zero (success).  See <a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a> for
+details.</p>
+<p>If you want to control what functions Test::More will export, you
+have to use the 'import' option.  For example, to import everything
+but 'fail', you'd do:</p>
+<pre>
+  use Test::More tests =&gt; 23, import =&gt; ['!fail'];</pre>
+<p>Alternatively, you can use the <code>plan()</code> function.  Useful for when you
+have to calculate the number of tests.</p>
+<pre>
+  use Test::More;
+  plan tests =&gt; keys %Stuff * 3;</pre>
+<p>or for deciding between running the tests at all:</p>
+<pre>
+  use Test::More;
+  if( $^O eq 'MacOS' ) {
+      plan skip_all =&gt; 'Test irrelevant on MacOS';
+  }
+  else {
+      plan tests =&gt; 42;
+  }</pre>
+<p>
+</p>
+<h2><a name="test_names">Test names</a></h2>
+<p>By convention, each test is assigned a number in order.  This is
+largely done automatically for you.  However, it's often very useful to
+assign a name to each test.  Which would you rather see:</p>
+<pre>
+  ok 4
+  not ok 5
+  ok 6</pre>
+<p>or</p>
+<pre>
+  ok 4 - basic multi-variable
+  not ok 5 - simple exponential
+  ok 6 - force == mass * acceleration</pre>
+<p>The later gives you some idea of what failed.  It also makes it easier
+to find the test in your script, simply search for ``simple
+exponential''.</p>
+<p>All test functions take a name argument.  It's optional, but highly
+suggested that you use it.</p>
+<p>
+</p>
+<h2><a name="i_m_ok__you_re_not_ok_">I'm ok, you're not ok.</a></h2>
+<p>The basic purpose of this module is to print out either ``ok #'' or ``not
+ok #'' depending on if a given test succeeded or failed.  Everything
+else is just gravy.</p>
+<p>All of the following print ``ok'' or ``not ok'' depending on if the test
+succeeded or failed.  They all also return true or false,
+respectively.</p>
+<dl>
+<dt><strong><a name="item_ok"><strong>ok</strong></a></strong>
+
+<dd>
+<pre>
+  ok($this eq $that, $test_name);</pre>
+</dd>
+<dd>
+<p>This simply evaluates any expression (<code>$this eq $that</code> is just a
+simple example) and uses that to determine if the test succeeded or
+failed.  A true expression passes, a false one fails.  Very simple.</p>
+</dd>
+<dd>
+<p>For example:</p>
+</dd>
+<dd>
+<pre>
+    ok( $exp{9} == 81,                   'simple exponential' );
+    ok( Film-&gt;can('db_Main'),            'set_db()' );
+    ok( $p-&gt;tests == 4,                  'saw tests' );
+    ok( !grep !defined $_, @items,       'items populated' );</pre>
+</dd>
+<dd>
+<p>(Mnemonic:  ``This is ok.'')</p>
+</dd>
+<dd>
+<p>$test_name is a very short description of the test that will be printed
+out.  It makes it very easy to find a test in your script when it fails
+and gives others an idea of your intentions.  $test_name is optional,
+but we <strong>very</strong> strongly encourage its use.</p>
+</dd>
+<dd>
+<p>Should an <a href="#item_ok"><code>ok()</code></a> fail, it will produce some diagnostics:</p>
+</dd>
+<dd>
+<pre>
+    not ok 18 - sufficient mucus
+    #   Failed test 'sufficient mucus'
+    #   in foo.t at line 42.</pre>
+</dd>
+<dd>
+<p>This is actually Test::Simple's <a href="#item_ok"><code>ok()</code></a> routine.</p>
+</dd>
+<dt><strong><a name="item_is"><strong>is</strong></a></strong>
+
+<dt><strong><a name="item_isnt"><strong>isnt</strong></a></strong>
+
+<dd>
+<pre>
+  is  ( $this, $that, $test_name );
+  isnt( $this, $that, $test_name );</pre>
+</dd>
+<dd>
+<p>Similar to ok(), <a href="#item_is"><code>is()</code></a> and <a href="#item_isnt"><code>isnt()</code></a> compare their two arguments
+with <code>eq</code> and <code>ne</code> respectively and use the result of that to
+determine if the test succeeded or failed.  So these:</p>
+</dd>
+<dd>
+<pre>
+    # Is the ultimate answer 42?
+    is( ultimate_answer(), 42,          &quot;Meaning of Life&quot; );</pre>
+</dd>
+<dd>
+<pre>
+    # $foo isn't empty
+    isnt( $foo, '',     &quot;Got some foo&quot; );</pre>
+</dd>
+<dd>
+<p>are similar to these:</p>
+</dd>
+<dd>
+<pre>
+    ok( ultimate_answer() eq 42,        &quot;Meaning of Life&quot; );
+    ok( $foo ne '',     &quot;Got some foo&quot; );</pre>
+</dd>
+<dd>
+<p>(Mnemonic:  ``This is that.''  ``This isn't that.'')</p>
+</dd>
+<dd>
+<p>So why use these?  They produce better diagnostics on failure.  <a href="#item_ok"><code>ok()</code></a>
+cannot know what you are testing for (beyond the name), but <a href="#item_is"><code>is()</code></a> and
+<a href="#item_isnt"><code>isnt()</code></a> know what the test was and why it failed.  For example this
+test:</p>
+</dd>
+<dd>
+<pre>
+    my $foo = 'waffle';  my $bar = 'yarblokos';
+    is( $foo, $bar,   'Is foo the same as bar?' );</pre>
+</dd>
+<dd>
+<p>Will produce something like this:</p>
+</dd>
+<dd>
+<pre>
+    not ok 17 - Is foo the same as bar?
+    #   Failed test 'Is foo the same as bar?'
+    #   in foo.t at line 139.
+    #          got: 'waffle'
+    #     expected: 'yarblokos'</pre>
+</dd>
+<dd>
+<p>So you can figure out what went wrong without rerunning the test.</p>
+</dd>
+<dd>
+<p>You are encouraged to use <a href="#item_is"><code>is()</code></a> and <a href="#item_isnt"><code>isnt()</code></a> over <a href="#item_ok"><code>ok()</code></a> where possible,
+however do not be tempted to use them to find out if something is
+true or false!</p>
+</dd>
+<dd>
+<pre>
+  # XXX BAD!
+  is( exists $brooklyn{tree}, 1, 'A tree grows in Brooklyn' );</pre>
+</dd>
+<dd>
+<p>This does not check if <code>exists $brooklyn{tree}</code> is true, it checks if
+it returns 1.  Very different.  Similar caveats exist for false and 0.
+In these cases, use ok().</p>
+</dd>
+<dd>
+<pre>
+  ok( exists $brooklyn{tree},    'A tree grows in Brooklyn' );</pre>
+</dd>
+<dd>
+<p>For those grammatical pedants out there, there's an <code>isn't()</code>
+function which is an alias of isnt().</p>
+</dd>
+<dt><strong><a name="item_like"><strong>like</strong></a></strong>
+
+<dd>
+<pre>
+  like( $this, qr/that/, $test_name );</pre>
+</dd>
+<dd>
+<p>Similar to ok(), <a href="#item_like"><code>like()</code></a> matches $this against the regex <code>qr/that/</code>.</p>
+</dd>
+<dd>
+<p>So this:</p>
+</dd>
+<dd>
+<pre>
+    like($this, qr/that/, 'this is like that');</pre>
+</dd>
+<dd>
+<p>is similar to:</p>
+</dd>
+<dd>
+<pre>
+    ok( $this =~ /that/, 'this is like that');</pre>
+</dd>
+<dd>
+<p>(Mnemonic ``This is like that''.)</p>
+</dd>
+<dd>
+<p>The second argument is a regular expression.  It may be given as a
+regex reference (i.e. <code>qr//</code>) or (for better compatibility with older
+perls) as a string that looks like a regex (alternative delimiters are
+currently not supported):</p>
+</dd>
+<dd>
+<pre>
+    like( $this, '/that/', 'this is like that' );</pre>
+</dd>
+<dd>
+<p>Regex options may be placed on the end (<code>'/that/i'</code>).</p>
+</dd>
+<dd>
+<p>Its advantages over <a href="#item_ok"><code>ok()</code></a> are similar to that of <a href="#item_is"><code>is()</code></a> and isnt().  Better
+diagnostics on failure.</p>
+</dd>
+<dt><strong><a name="item_unlike"><strong>unlike</strong></a></strong>
+
+<dd>
+<pre>
+  unlike( $this, qr/that/, $test_name );</pre>
+</dd>
+<dd>
+<p>Works exactly as like(), only it checks if $this <strong>does not</strong> match the
+given pattern.</p>
+</dd>
+<dt><strong><a name="item_cmp_ok"><strong>cmp_ok</strong></a></strong>
+
+<dd>
+<pre>
+  cmp_ok( $this, $op, $that, $test_name );</pre>
+</dd>
+<dd>
+<p>Halfway between <a href="#item_ok"><code>ok()</code></a> and <a href="#item_is"><code>is()</code></a> lies cmp_ok().  This allows you to
+compare two arguments using any binary perl operator.</p>
+</dd>
+<dd>
+<pre>
+    # ok( $this eq $that );
+    cmp_ok( $this, 'eq', $that, 'this eq that' );</pre>
+</dd>
+<dd>
+<pre>
+    # ok( $this == $that );
+    cmp_ok( $this, '==', $that, 'this == that' );</pre>
+</dd>
+<dd>
+<pre>
+    # ok( $this &amp;&amp; $that );
+    cmp_ok( $this, '&amp;&amp;', $that, 'this &amp;&amp; that' );
+    ...etc...</pre>
+</dd>
+<dd>
+<p>Its advantage over <a href="#item_ok"><code>ok()</code></a> is when the test fails you'll know what $this
+and $that were:</p>
+</dd>
+<dd>
+<pre>
+    not ok 1
+    #   Failed test in foo.t at line 12.
+    #     '23'
+    #         &amp;&amp;
+    #     undef</pre>
+</dd>
+<dd>
+<p>It's also useful in those cases where you are comparing numbers and
+is()'s use of <code>eq</code> will interfere:</p>
+</dd>
+<dd>
+<pre>
+    cmp_ok( $big_hairy_number, '==', $another_big_hairy_number );</pre>
+</dd>
+<dt><strong><a name="item_can_ok"><strong>can_ok</strong></a></strong>
+
+<dd>
+<pre>
+  can_ok($module, @methods);
+  can_ok($object, @methods);</pre>
+</dd>
+<dd>
+<p>Checks to make sure the $module or $object can do these @methods
+(works with functions, too).</p>
+</dd>
+<dd>
+<pre>
+    can_ok('Foo', qw(this that whatever));</pre>
+</dd>
+<dd>
+<p>is almost exactly like saying:</p>
+</dd>
+<dd>
+<pre>
+    ok( Foo-&gt;can('this') &amp;&amp; 
+        Foo-&gt;can('that') &amp;&amp; 
+        Foo-&gt;can('whatever') 
+      );</pre>
+</dd>
+<dd>
+<p>only without all the typing and with a better interface.  Handy for
+quickly testing an interface.</p>
+</dd>
+<dd>
+<p>No matter how many @methods you check, a single <a href="#item_can_ok"><code>can_ok()</code></a> call counts
+as one test.  If you desire otherwise, use:</p>
+</dd>
+<dd>
+<pre>
+    foreach my $meth (@methods) {
+        can_ok('Foo', $meth);
+    }</pre>
+</dd>
+<dt><strong><a name="item_isa_ok"><strong>isa_ok</strong></a></strong>
+
+<dd>
+<pre>
+  isa_ok($object, $class, $object_name);
+  isa_ok($ref,    $type,  $ref_name);</pre>
+</dd>
+<dd>
+<p>Checks to see if the given <code>$object-&gt;isa($class)</code>.  Also checks to make
+sure the object was defined in the first place.  Handy for this sort
+of thing:</p>
+</dd>
+<dd>
+<pre>
+    my $obj = Some::Module-&gt;new;
+    isa_ok( $obj, 'Some::Module' );</pre>
+</dd>
+<dd>
+<p>where you'd otherwise have to write</p>
+</dd>
+<dd>
+<pre>
+    my $obj = Some::Module-&gt;new;
+    ok( defined $obj &amp;&amp; $obj-&gt;isa('Some::Module') );</pre>
+</dd>
+<dd>
+<p>to safeguard against your test script blowing up.</p>
+</dd>
+<dd>
+<p>It works on references, too:</p>
+</dd>
+<dd>
+<pre>
+    isa_ok( $array_ref, 'ARRAY' );</pre>
+</dd>
+<dd>
+<p>The diagnostics of this test normally just refer to 'the object'.  If
+you'd like them to be more specific, you can supply an $object_name
+(for example 'Test customer').</p>
+</dd>
+<dt><strong><a name="item_pass"><strong>pass</strong></a></strong>
+
+<dt><strong><a name="item_fail"><strong>fail</strong></a></strong>
+
+<dd>
+<pre>
+  pass($test_name);
+  fail($test_name);</pre>
+</dd>
+<dd>
+<p>Sometimes you just want to say that the tests have passed.  Usually
+the case is you've got some complicated condition that is difficult to
+wedge into an ok().  In this case, you can simply use <a href="#item_pass"><code>pass()</code></a> (to
+declare the test ok) or fail (for not ok).  They are synonyms for
+<a href="#item_ok"><code>ok(1)</code></a> and ok(0).</p>
+</dd>
+<dd>
+<p>Use these very, very, very sparingly.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="module_tests">Module tests</a></h2>
+<p>You usually want to test if the module you're testing loads ok, rather
+than just vomiting if its load fails.  For such purposes we have
+<a href="#item_use_ok"><code>use_ok</code></a> and <a href="#item_require_ok"><code>require_ok</code></a>.</p>
+<dl>
+<dt><strong><a name="item_use_ok"><strong>use_ok</strong></a></strong>
+
+<dd>
+<pre>
+   BEGIN { use_ok($module); }
+   BEGIN { use_ok($module, @imports); }</pre>
+</dd>
+<dd>
+<p>These simply use the given $module and test to make sure the load
+happened ok.  It's recommended that you run <a href="#item_use_ok"><code>use_ok()</code></a> inside a BEGIN
+block so its functions are exported at compile-time and prototypes are
+properly honored.</p>
+</dd>
+<dd>
+<p>If @imports are given, they are passed through to the use.  So this:</p>
+</dd>
+<dd>
+<pre>
+   BEGIN { use_ok('Some::Module', qw(foo bar)) }</pre>
+</dd>
+<dd>
+<p>is like doing this:</p>
+</dd>
+<dd>
+<pre>
+   use Some::Module qw(foo bar);</pre>
+</dd>
+<dd>
+<p>Version numbers can be checked like so:</p>
+</dd>
+<dd>
+<pre>
+   # Just like &quot;use Some::Module 1.02&quot;
+   BEGIN { use_ok('Some::Module', 1.02) }</pre>
+</dd>
+<dd>
+<p>Don't try to do this:</p>
+</dd>
+<dd>
+<pre>
+   BEGIN {
+       use_ok('Some::Module');</pre>
+</dd>
+<dd>
+<pre>
+       ...some code that depends on the use...
+       ...happening at compile time...
+   }</pre>
+</dd>
+<dd>
+<p>because the notion of ``compile-time'' is relative.  Instead, you want:</p>
+</dd>
+<dd>
+<pre>
+  BEGIN { use_ok('Some::Module') }
+  BEGIN { ...some code that depends on the use... }</pre>
+</dd>
+<dt><strong><a name="item_require_ok"><strong>require_ok</strong></a></strong>
+
+<dd>
+<pre>
+   require_ok($module);
+   require_ok($file);</pre>
+</dd>
+<dd>
+<p>Like use_ok(), except it requires the $module or $file.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="complex_data_structures">Complex data structures</a></h2>
+<p>Not everything is a simple eq check or regex.  There are times you
+need to see if two data structures are equivalent.  For these
+instances Test::More provides a handful of useful functions.</p>
+<p><strong>NOTE</strong> I'm not quite sure what will happen with filehandles.</p>
+<dl>
+<dt><strong><a name="item_is_deeply"><strong>is_deeply</strong></a></strong>
+
+<dd>
+<pre>
+  is_deeply( $this, $that, $test_name );</pre>
+</dd>
+<dd>
+<p>Similar to is(), except that if $this and $that are references, it
+does a deep comparison walking each data structure to see if they are
+equivalent.  If the two structures are different, it will display the
+place where they start differing.</p>
+</dd>
+<dd>
+<p><a href="#item_is_deeply"><code>is_deeply()</code></a> compares the dereferenced values of references, the
+references themselves (except for their type) are ignored.  This means
+aspects such as blessing and ties are not considered ``different''.</p>
+</dd>
+<dd>
+<p><a href="#item_is_deeply"><code>is_deeply()</code></a> current has very limited handling of function reference
+and globs.  It merely checks if they have the same referent.  This may
+improve in the future.</p>
+</dd>
+<dd>
+<p>Test::Differences and Test::Deep provide more in-depth functionality
+along these lines.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="diagnostics">Diagnostics</a></h2>
+<p>If you pick the right test function, you'll usually get a good idea of
+what went wrong when it failed.  But sometimes it doesn't work out
+that way.  So here we have ways for you to write your own diagnostic
+messages which are safer than just <code>print STDERR</code>.</p>
+<dl>
+<dt><strong><a name="item_diag"><strong>diag</strong></a></strong>
+
+<dd>
+<pre>
+  diag(@diagnostic_message);</pre>
+</dd>
+<dd>
+<p>Prints a diagnostic message which is guaranteed not to interfere with
+test output.  Like <code>print</code> @diagnostic_message is simply concatenated
+together.</p>
+</dd>
+<dd>
+<p>Handy for this sort of thing:</p>
+</dd>
+<dd>
+<pre>
+    ok( grep(/foo/, @users), &quot;There's a foo user&quot; ) or
+        diag(&quot;Since there's no foo, check that /etc/bar is set up right&quot;);</pre>
+</dd>
+<dd>
+<p>which would produce:</p>
+</dd>
+<dd>
+<pre>
+    not ok 42 - There's a foo user
+    #   Failed test 'There's a foo user'
+    #   in foo.t at line 52.
+    # Since there's no foo, check that /etc/bar is set up right.</pre>
+</dd>
+<dd>
+<p>You might remember <a href="#item_ok"><code>ok() or diag()</code></a> with the mnemonic <code>open() or
+die()</code>.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong> The exact formatting of the diagnostic output is still
+changing, but it is guaranteed that whatever you throw at it it won't
+interfere with the test.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="conditional_tests">Conditional tests</a></h2>
+<p>Sometimes running a test under certain conditions will cause the
+test script to die.  A certain function or method isn't implemented
+(such as <code>fork()</code> on MacOS), some resource isn't available (like a 
+net connection) or a module isn't available.  In these cases it's
+necessary to skip tests, or declare that they are supposed to fail
+but will work in the future (a todo test).</p>
+<p>For more details on the mechanics of skip and todo tests see
+<a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a>.</p>
+<p>The way Test::More handles this is with a named block.  Basically, a
+block of tests which can be skipped over or made todo.  It's best if I
+just show you...</p>
+<dl>
+<dt><strong><a name="item_skip_3a_block"><strong>SKIP: BLOCK</strong></a></strong>
+
+<dd>
+<pre>
+  SKIP: {
+      skip $why, $how_many if $condition;</pre>
+</dd>
+<dd>
+<pre>
+      ...normal testing code goes here...
+  }</pre>
+</dd>
+<dd>
+<p>This declares a block of tests that might be skipped, $how_many tests
+there are, $why and under what $condition to skip them.  An example is
+the easiest way to illustrate:</p>
+</dd>
+<dd>
+<pre>
+    SKIP: {
+        eval { require HTML::Lint };</pre>
+</dd>
+<dd>
+<pre>
+        skip &quot;HTML::Lint not installed&quot;, 2 if $@;</pre>
+</dd>
+<dd>
+<pre>
+        my $lint = new HTML::Lint;
+        isa_ok( $lint, &quot;HTML::Lint&quot; );</pre>
+</dd>
+<dd>
+<pre>
+        $lint-&gt;parse( $html );
+        is( $lint-&gt;errors, 0, &quot;No errors found in HTML&quot; );
+    }</pre>
+</dd>
+<dd>
+<p>If the user does not have HTML::Lint installed, the whole block of
+code <em>won't be run at all</em>.  Test::More will output special ok's
+which Test::Harness interprets as skipped, but passing, tests.</p>
+</dd>
+<dd>
+<p>It's important that $how_many accurately reflects the number of tests
+in the SKIP block so the # of tests run will match up with your plan.
+If your plan is <code>no_plan</code> $how_many is optional and will default to 1.</p>
+</dd>
+<dd>
+<p>It's perfectly safe to nest SKIP blocks.  Each SKIP block must have
+the label <code>SKIP</code>, or Test::More can't work its magic.</p>
+</dd>
+<dd>
+<p>You don't skip tests which are failing because there's a bug in your
+program, or for which you don't yet have code written.  For that you
+use TODO.  Read on.</p>
+</dd>
+<dt><strong><a name="item_todo_3a_block"><strong>TODO: BLOCK</strong></a></strong>
+
+<dd>
+<pre>
+    TODO: {
+        local $TODO = $why if $condition;</pre>
+</dd>
+<dd>
+<pre>
+        ...normal testing code goes here...
+    }</pre>
+</dd>
+<dd>
+<p>Declares a block of tests you expect to fail and $why.  Perhaps it's
+because you haven't fixed a bug or haven't finished a new feature:</p>
+</dd>
+<dd>
+<pre>
+    TODO: {
+        local $TODO = &quot;URI::Geller not finished&quot;;</pre>
+</dd>
+<dd>
+<pre>
+        my $card = &quot;Eight of clubs&quot;;
+        is( URI::Geller-&gt;your_card, $card, 'Is THIS your card?' );</pre>
+</dd>
+<dd>
+<pre>
+        my $spoon;
+        URI::Geller-&gt;bend_spoon;
+        is( $spoon, 'bent',    &quot;Spoon bending, that's original&quot; );
+    }</pre>
+</dd>
+<dd>
+<p>With a todo block, the tests inside are expected to fail.  Test::More
+will run the tests normally, but print out special flags indicating
+they are ``todo''.  Test::Harness will interpret failures as being ok.
+Should anything succeed, it will report it as an unexpected success.
+You then know the thing you had todo is done and can remove the
+TODO flag.</p>
+</dd>
+<dd>
+<p>The nice part about todo tests, as opposed to simply commenting out a
+block of tests, is it's like having a programmatic todo list.  You know
+how much work is left to be done, you're aware of what bugs there are,
+and you'll know immediately when they're fixed.</p>
+</dd>
+<dd>
+<p>Once a todo test starts succeeding, simply move it outside the block.
+When the block is empty, delete it.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong>: TODO tests require a Test::Harness upgrade else it will
+treat it as a normal failure.  See <a href="#caveats_and_notes">CAVEATS and NOTES</a>).</p>
+</dd>
+<dt><strong><a name="item_todo_skip"><strong>todo_skip</strong></a></strong>
+
+<dd>
+<pre>
+    TODO: {
+        todo_skip $why, $how_many if $condition;</pre>
+</dd>
+<dd>
+<pre>
+        ...normal testing code...
+    }</pre>
+</dd>
+<dd>
+<p>With todo tests, it's best to have the tests actually run.  That way
+you'll know when they start passing.  Sometimes this isn't possible.
+Often a failing test will cause the whole program to die or hang, even
+inside an <code>eval BLOCK</code> with and using <code>alarm</code>.  In these extreme
+cases you have no choice but to skip over the broken tests entirely.</p>
+</dd>
+<dd>
+<p>The syntax and behavior is similar to a <a href="#item_skip_3a_block"><code>SKIP: BLOCK</code></a> except the
+tests will be marked as failing but todo.  Test::Harness will
+interpret them as passing.</p>
+</dd>
+<dt><strong><a name="item_when_do_i_use_skip_vs_2e_todo_3f">When do I use SKIP vs. TODO?</a></strong>
+
+<dd>
+<p><strong>If it's something the user might not be able to do</strong>, use SKIP.
+This includes optional modules that aren't installed, running under
+an OS that doesn't have some feature (like <code>fork()</code> or symlinks), or maybe
+you need an Internet connection and one isn't available.</p>
+</dd>
+<dd>
+<p><strong>If it's something the programmer hasn't done yet</strong>, use TODO.  This
+is for any code you haven't written yet, or bugs you have yet to fix,
+but want to put tests in your testing script (always a good idea).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="test_control">Test control</a></h2>
+<dl>
+<dt><strong><a name="item_bail_out"><strong>BAIL_OUT</strong></a></strong>
+
+<dd>
+<pre>
+    BAIL_OUT($reason);</pre>
+</dd>
+<dd>
+<p>Incidates to the harness that things are going so badly all testing
+should terminate.  This includes the running any additional test scripts.</p>
+</dd>
+<dd>
+<p>This is typically used when testing cannot continue such as a critical
+module failing to compile or a necessary external utility not being
+available such as a database connection failing.</p>
+</dd>
+<dd>
+<p>The test will exit with 255.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="discouraged_comparison_functions">Discouraged comparison functions</a></h2>
+<p>The use of the following functions is discouraged as they are not
+actually testing functions and produce no diagnostics to help figure
+out what went wrong.  They were written before <a href="#item_is_deeply"><code>is_deeply()</code></a> existed
+because I couldn't figure out how to display a useful diff of two
+arbitrary data structures.</p>
+<p>These functions are usually used inside an ok().</p>
+<pre>
+    ok( eq_array(\@this, \@that) );</pre>
+<p><a href="#item_is_deeply"><code>is_deeply()</code></a> can do that better and with diagnostics.</p>
+<pre>
+    is_deeply( \@this, \@that );</pre>
+<p>They may be deprecated in future versions.</p>
+<dl>
+<dt><strong><a name="item_eq_array"><strong>eq_array</strong></a></strong>
+
+<dd>
+<pre>
+  my $is_eq = eq_array(\@this, \@that);</pre>
+</dd>
+<dd>
+<p>Checks if two arrays are equivalent.  This is a deep check, so
+multi-level structures are handled correctly.</p>
+</dd>
+<dt><strong><a name="item_eq_hash"><strong>eq_hash</strong></a></strong>
+
+<dd>
+<pre>
+  my $is_eq = eq_hash(\%this, \%that);</pre>
+</dd>
+<dd>
+<p>Determines if the two hashes contain the same keys and values.  This
+is a deep check.</p>
+</dd>
+<dt><strong><a name="item_eq_set"><strong>eq_set</strong></a></strong>
+
+<dd>
+<pre>
+  my $is_eq = eq_set(\@this, \@that);</pre>
+</dd>
+<dd>
+<p>Similar to eq_array(), except the order of the elements is <strong>not</strong>
+important.  This is a deep check, but the irrelevancy of order only
+applies to the top level.</p>
+</dd>
+<dd>
+<pre>
+    ok( eq_set(\@this, \@that) );</pre>
+</dd>
+<dd>
+<p>Is better written:</p>
+</dd>
+<dd>
+<pre>
+    is_deeply( [sort @this], [sort @that] );</pre>
+</dd>
+<dd>
+<p><strong>NOTE</strong> By historical accident, this is not a true set comparison.
+While the order of elements does not matter, duplicate elements do.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong> <a href="#item_eq_set"><code>eq_set()</code></a> does not know how to deal with references at the top
+level.  The following is an example of a comparison which might not work:</p>
+</dd>
+<dd>
+<pre>
+    eq_set([\1, \2], [\2, \1]);</pre>
+</dd>
+<dd>
+<p>Test::Deep contains much better set comparison functions.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="extending_and_embedding_test__more">Extending and Embedding Test::More</a></h2>
+<p>Sometimes the Test::More interface isn't quite enough.  Fortunately,
+Test::More is built on top of Test::Builder which provides a single,
+unified backend for any test library to use.  This means two test
+libraries which both use Test::Builder <strong>can be used together in the
+same program</strong>.</p>
+<p>If you simply want to do a little tweaking of how the tests behave,
+you can access the underlying Test::Builder object like so:</p>
+<dl>
+<dt><strong><a name="item_builder"><strong>builder</strong></a></strong>
+
+<dd>
+<pre>
+    my $test_builder = Test::More-&gt;builder;</pre>
+</dd>
+<dd>
+<p>Returns the Test::Builder object underlying Test::More for you to play
+with.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="exit_codes">EXIT CODES</a></h1>
+<p>If all your tests passed, Test::Builder will exit with zero (which is
+normal).  If anything failed it will exit with how many failed.  If
+you run less (or more) tests than you planned, the missing (or extras)
+will be considered failures.  If no tests were ever run Test::Builder
+will throw a warning and exit with 255.  If the test died, even after
+having successfully completed all its tests, it will still be
+considered a failure and will exit with 255.</p>
+<p>So the exit codes are...</p>
+<pre>
+    0                   all tests successful
+    255                 test died or all passed but wrong # of tests run
+    any other number    how many failed (including missing or extras)</pre>
+<p>If you fail more than 254 tests, it will be reported as 254.</p>
+<p><strong>NOTE</strong>  This behavior may go away in future versions.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats_and_notes">CAVEATS and NOTES</a></h1>
+<dl>
+<dt><strong><a name="item_backwards_compatibility">Backwards compatibility</a></strong>
+
+<dd>
+<p>Test::More works with Perls as old as 5.004_05.</p>
+</dd>
+</li>
+<dt><strong><a name="item_overloaded_objects">Overloaded objects</a></strong>
+
+<dd>
+<p>String overloaded objects are compared <strong>as strings</strong> (or in cmp_ok()'s
+case, strings or numbers as appropriate to the comparison op).  This
+prevents Test::More from piercing an object's interface allowing
+better blackbox testing.  So if a function starts returning overloaded
+objects instead of bare strings your tests won't notice the
+difference.  This is good.</p>
+</dd>
+<dd>
+<p>However, it does mean that functions like <a href="#item_is_deeply"><code>is_deeply()</code></a> cannot be used to
+test the internals of string overloaded objects.  In this case I would
+suggest Test::Deep which contains more flexible testing functions for
+complex data structures.</p>
+</dd>
+</li>
+<dt><strong><a name="item_threads">Threads</a></strong>
+
+<dd>
+<p>Test::More will only be aware of threads if ``use threads'' has been done
+<em>before</em> Test::More is loaded.  This is ok:</p>
+</dd>
+<dd>
+<pre>
+    use threads;
+    use Test::More;</pre>
+</dd>
+<dd>
+<p>This may cause problems:</p>
+</dd>
+<dd>
+<pre>
+    use Test::More
+    use threads;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_test_3a_3aharness_upgrade">Test::Harness upgrade</a></strong>
+
+<dd>
+<p>no_plan and todo depend on new Test::Harness features and fixes.  If
+you're going to distribute tests that use no_plan or todo your
+end-users will have to upgrade Test::Harness to the latest one on
+CPAN.  If you avoid no_plan and TODO tests, the stock Test::Harness
+will work fine.</p>
+</dd>
+<dd>
+<p>Installing Test::More should also upgrade Test::Harness.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>This is a case of convergent evolution with Joshua Pritikin's Test
+module.  I was largely unaware of its existence when I'd first
+written my own <a href="#item_ok"><code>ok()</code></a> routines.  This module exists because I can't
+figure out how to easily wedge test names into Test's interface (along
+with a few other problems).</p>
+<p>The goal here is to have a testing utility that's simple to learn,
+quick to use and difficult to trip yourself up with while still
+providing more flexibility than the existing Test.pm.  As such, the
+names of the most common routines are kept tiny, special cases and
+magic side-effects are kept to a minimum.  WYSIWYG.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Simple.html">the Test::Simple manpage</a> if all this confuses you and you just want to write
+some tests.  You can upgrade to Test::More later (it's forward
+compatible).</p>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test.html">the Test manpage</a> is the old testing module.  Its main benefit is that it has
+been distributed with Perl since 5.004_05.</p>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a> for details on how your test results are interpreted
+by Perl.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Differences.html">the Test::Differences manpage</a> for more ways to test complex data structures.
+And it plays well with Test::More.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Class.html">the Test::Class manpage</a> is like XUnit but more perlish.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Deep.html">the Test::Deep manpage</a> gives you more powerful complex data structure testing.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Unit.html">the Test::Unit manpage</a> is XUnit style testing.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Test/Inline.html">the Test::Inline manpage</a> shows the idea of embedded testing.</p>
+<p><a href="/usr/lib/perl5/5.8/html/Bundle/Test.html">the Bundle::Test manpage</a> installs a whole bunch of useful test modules.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt; with much inspiration
+from Joshua Pritikin's Test module and lots of help from Barrie
+Slaymaker, Tony Bowden, blackstar.co.uk, chromatic, Fergal Daly and
+the perl-qa gang.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>See <em><a href="http://rt.cpan.org">http://rt.cpan.org</a></em> to report and view bugs.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2001, 2002, 2004 by Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;.</p>
+<p>This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.</p>
+<p>See <em><a href="http://www.perl.com/perl/misc/Artistic.html">http://www.perl.com/perl/misc/Artistic.html</a></em></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::More - yet another framework for writing test scripts</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

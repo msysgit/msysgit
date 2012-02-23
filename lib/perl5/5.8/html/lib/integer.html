@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>integer - Perl pragma to use integer arithmetic instead of floating point</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;integer - Perl pragma to use integer arithmetic instead of floating point</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>integer - Perl pragma to use integer arithmetic instead of floating point</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use integer;
+    $x = 10/3;
+    # $x is now 3, not 3.33333333333333333</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This tells the compiler to use integer operations from here to the end
+of the enclosing BLOCK.  On many machines, this doesn't matter a great
+deal for most computations, but on those without floating point
+hardware, it can make a big difference in performance.</p>
+<p>Note that this only affects how most of the arithmetic and relational
+<strong>operators</strong> handle their operands and results, and <strong>not</strong> how all
+numbers everywhere are treated.  Specifically, <code>use integer;</code> has the
+effect that before computing the results of the arithmetic operators
+(+, -, *, /, %, +=, -=, *=, /=, %=, and unary minus), the comparison
+operators (&lt;, &lt;=, &gt;, &gt;=, ==, !=, &lt;=&gt;), and the bitwise operators (|, &amp;,
+^, &lt;&lt;, &gt;&gt;, |=, &amp;=, ^=, &lt;&lt;=, &gt;&gt;=), the operands have their fractional
+portions truncated (or floored), and the result will have its
+fractional portion truncated as well.  In addition, the range of
+operands and results is restricted to that of familiar two's complement
+integers, i.e., -(2**31) .. (2**31-1) on 32-bit architectures, and
+-(2**63) .. (2**63-1) on 64-bit architectures.  For example, this code</p>
+<pre>
+    use integer;
+    $x = 5.8;
+    $y = 2.5;
+    $z = 2.7;
+    $a = 2**31 - 1;  # Largest positive integer on 32-bit machines
+    $, = &quot;, &quot;;
+    print $x, -$x, $x + $y, $x - $y, $x / $y, $x * $y, $y == $z, $a, $a + 1;</pre>
+<p>will print:  5.8, -5, 7, 3, 2, 10, 1, 2147483647, -2147483648</p>
+<p>Note that $x is still printed as having its true non-integer value of
+5.8 since it wasn't operated on.  And note too the wrap-around from the
+largest positive integer to the largest negative one.   Also, arguments
+passed to functions and the values returned by them are <strong>not</strong> affected
+by <code>use integer;</code>.  E.g.,</p>
+<pre>
+    srand(1.5);
+    $, = &quot;, &quot;;
+    print sin(.5), cos(.5), atan2(1,2), sqrt(2), rand(10);</pre>
+<p>will give the same result with or without <code>use integer;</code>  The power
+operator <code>**</code> is also not affected, so that 2 ** .5 is always the
+square root of 2.  Now, it so happens that the pre- and post- increment
+and decrement operators, ++ and --, are not affected by <code>use integer;</code>
+either.  Some may rightly consider this to be a bug -- but at least it's
+a long-standing one.</p>
+<p>Finally, <code>use integer;</code> also has an additional affect on the bitwise
+operators.  Normally, the operands and results are treated as
+<strong>unsigned</strong> integers, but with <code>use integer;</code> the operands and results
+are <strong>signed</strong>.  This means, among other things, that ~0 is -1, and -2 &amp;
+-5 is -6.</p>
+<p>Internally, native integer arithmetic (as provided by your C compiler)
+is used.  This means that Perl's own semantics for arithmetic
+operations may not be preserved.  One common source of trouble is the
+modulus of negative numbers, which Perl does one way, but your hardware
+may do another.</p>
+<pre>
+    % perl -le 'print (4 % -3)'
+    -2
+    % perl -Minteger -le 'print (4 % -3)'
+    1</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html#pragmatic_modules">Pragmatic Modules in the perlmodlib manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#integer_arithmetic">Integer Arithmetic in the perlop manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;integer - Perl pragma to use integer arithmetic instead of floating point</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

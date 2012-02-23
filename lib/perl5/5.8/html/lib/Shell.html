@@ -1,0 +1,159 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Shell - run shell commands transparently within perl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Shell - run shell commands transparently within perl</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#caveats">Caveats</a></li>
+		<li><a href="#escaping_magic_characters">Escaping Magic Characters</a></li>
+		<li><a href="#configuration">Configuration</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Shell - run shell commands transparently within perl</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use Shell qw(cat ps cp);
+   $passwd = cat('&lt;/etc/passwd');
+   @pslines = ps('-ww'),
+   cp(&quot;/etc/passwd&quot;, &quot;/tmp/passwd&quot;);</pre>
+<pre>
+   # object oriented 
+   my $sh = Shell-&gt;new;
+   print $sh-&gt;ls('-l');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="caveats">Caveats</a></h2>
+<p>This package is included as a show case, illustrating a few Perl features.
+It shouldn't be used for production programs. Although it does provide a 
+simple interface for obtaining the standard output of arbitrary commands,
+there may be better ways of achieving what you need.</p>
+<p>Running shell commands while obtaining standard output can be done with the
+<code>qx/STRING/</code> operator, or by calling <code>open</code> with a filename expression that
+ends with <code>|</code>, giving you the option to process one line at a time.
+If you don't need to process standard output at all, you might use <code>system</code>
+(in preference of doing a print with the collected standard output).</p>
+<p>Since Shell.pm and all of the aforementioned techniques use your system's
+shell to call some local command, none of them is portable across different 
+systems. Note, however, that there are several built in functions and 
+library packages providing portable implementations of functions operating
+on files, such as: <code>glob</code>, <code>link</code> and <code>unlink</code>, <code>mkdir</code> and <code>rmdir</code>, 
+<code>rename</code>, <code>File::Compare</code>, <code>File::Copy</code>, <code>File::Find</code> etc.</p>
+<p>Using Shell.pm while importing <code>foo</code> creates a subroutine <code>foo</code> in the
+namespace of the importing package. Calling <code>foo</code> with arguments <code>arg1</code>,
+<code>arg2</code>,... results in a shell command <code>foo arg1 arg2...</code>, where the 
+function name and the arguments are joined with a blank. (See the subsection 
+on Escaping magic characters.) Since the result is essentially a command
+line to be passed to the shell, your notion of arguments to the Perl
+function is not necessarily identical to what the shell treats as a
+command line token, to be passed as an individual argument to the program.
+Furthermore, note that this implies that <code>foo</code> is callable by file name
+only, which frequently depends on the setting of the program's environment.</p>
+<p>Creating a Shell object gives you the opportunity to call any command
+in the usual OO notation without requiring you to announce it in the
+<code>use Shell</code> statement. Don't assume any additional semantics being
+associated with a Shell object: in no way is it similar to a shell
+process with its environment or current working directory or any
+other setting.</p>
+<p>
+</p>
+<h2><a name="escaping_magic_characters">Escaping Magic Characters</a></h2>
+<p>It is, in general, impossible to take care of quoting the shell's
+magic characters. For some obscure reason, however, Shell.pm quotes
+apostrophes (<code>'</code>) and backslashes (<code>\</code>) on UNIX, and spaces and
+quotes (<code>&quot;</code>) on Windows.</p>
+<p>
+</p>
+<h2><a name="configuration">Configuration</a></h2>
+<p>If you set $Shell::capture_stderr to true, the module will attempt to
+capture the standard error output of the process as well. This is
+done by adding <code>2&gt;&amp;1</code> to the command line, so don't try this on
+a system not supporting this redirection.</p>
+<p>If you set $Shell::raw to true no quoting whatsoever is done.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Quoting should be off by default.</p>
+<p>It isn't possible to call shell built in commands, but it can be
+done by using a workaround, e.g. shell( '-c', 'set' ).</p>
+<p>Capturing standard error does not work on some systems (e.g. VMS).</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<pre>
+  Date: Thu, 22 Sep 94 16:18:16 -0700
+  Message-Id: &lt;9409222318.AA17072@scalpel.netlabs.com&gt;
+  To: perl5-porters@isu.edu
+  From: Larry Wall &lt;lwall@scalpel.netlabs.com&gt;
+  Subject: a new module I just wrote</pre>
+<p>Here's one that'll whack your mind a little out.</p>
+<pre>
+    #!/usr/bin/perl</pre>
+<pre>
+    use Shell;</pre>
+<pre>
+    $foo = echo(&quot;howdy&quot;, &quot;&lt;funny&gt;&quot;, &quot;world&quot;);
+    print $foo;</pre>
+<pre>
+    $passwd = cat(&quot;&lt;/etc/passwd&quot;);
+    print $passwd;</pre>
+<pre>
+    sub ps;
+    print ps -ww;</pre>
+<pre>
+    cp(&quot;/etc/passwd&quot;, &quot;/etc/passwd.orig&quot;);</pre>
+<p>That's maybe too gonzo.  It actually exports an AUTOLOAD to the current
+package (and uncovered a bug in Beta 3, by the way).  Maybe the usual
+usage should be</p>
+<pre>
+    use Shell qw(echo cat ps cp);</pre>
+<p>Larry Wall</p>
+<p>Changes by <a href="mailto:Jenda@Krynicky.cz">Jenda@Krynicky.cz</a> and Dave Cottle &lt;<a href="mailto:d.cottle@csc.canterbury.ac.nz">d.cottle@csc.canterbury.ac.nz</a>&gt;.</p>
+<p>Changes for OO syntax and bug fixes by Casey West &lt;<a href="mailto:casey@geeknest.com">casey@geeknest.com</a>&gt;.</p>
+<p><code>$Shell::raw</code> and pod rewrite by Wolfgang Laun.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Shell - run shell commands transparently within perl</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

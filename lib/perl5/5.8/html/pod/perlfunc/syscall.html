@@ -1,0 +1,79 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>syscall - execute an arbitrary system call</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;syscall - execute an arbitrary system call</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>syscall - execute an arbitrary system call</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>syscall NUMBER, LIST
+ </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Calls the system call specified as the first element of the list,
+passing the remaining elements as arguments to the system call.  If
+unimplemented, produces a fatal error.  The arguments are interpreted
+as follows: if a given argument is numeric, the argument is passed as
+an int.  If not, the pointer to the string value is passed.  You are
+responsible to make sure a string is pre-extended long enough to
+receive any result that might be written into a string.  You can't use a
+string literal (or other read-only string) as an argument to <code>syscall</code>
+because Perl has to assume that any string pointer might be written
+through.  If your
+integer arguments are not literals and have never been interpreted in a
+numeric context, you may need to add <code>0</code> to them to force them to look
+like numbers.  This emulates the <code>syswrite</code> function (or vice versa):</p>
+<pre>
+    require 'syscall.ph';               # may need to run h2ph
+    $s = &quot;hi there\n&quot;;
+    syscall(&amp;SYS_write, fileno(STDOUT), $s, length $s);</pre>
+<p>Note that Perl supports passing of up to only 14 arguments to your system call,
+which in practice should usually suffice.</p>
+<p>Syscall returns whatever value returned by the system call it calls.
+If the system call fails, <code>syscall</code> returns <code>-1</code> and sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> (errno).
+Note that some system calls can legitimately return <code>-1</code>.  The proper
+way to handle such calls is to assign <code>$!=0;</code> before the call and
+check the value of <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> if syscall returns <code>-1</code>.</p>
+<p>There's a problem with <code>syscall(&amp;SYS_pipe)</code>: it returns the file
+number of the read end of the pipe it creates.  There is no way
+to retrieve the file number of the other end.  You can avoid this
+problem by using <code>pipe</code> instead.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;syscall - execute an arbitrary system call</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

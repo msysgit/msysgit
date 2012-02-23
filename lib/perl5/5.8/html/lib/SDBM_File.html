@@ -1,0 +1,140 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SDBM_File - Tied access to sdbm files</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;SDBM_File - Tied access to sdbm files</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<ul>
+
+		<li><a href="#sdbm_store_returned_1__errno_22__key_____at____"><code>sdbm store returned -1, errno 22, key &quot;...&quot; at ...</code></a></li>
+	</ul>
+
+	<li><a href="#bugs_and_warnings">BUGS AND WARNINGS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>SDBM_File - Tied access to sdbm files</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use Fcntl;   # For O_RDWR, O_CREAT, etc.
+ use SDBM_File;</pre>
+<pre>
+ tie(%h, 'SDBM_File', 'filename', O_RDWR|O_CREAT, 0666)
+   or die &quot;Couldn't tie SDBM file 'filename': $!; aborting&quot;;</pre>
+<pre>
+ # Now read and change the hash
+ $h{newkey} = newvalue;
+ print $h{oldkey}; 
+ ...</pre>
+<pre>
+ untie %h;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>SDBM_File</code> establishes a connection between a Perl hash variable and
+a file in SDBM_File format;.  You can manipulate the data in the file
+just as if it were in a Perl hash, but when your program exits, the
+data will remain in the file, to be used the next time your program
+runs.</p>
+<p>Use <code>SDBM_File</code> with the Perl built-in <code>tie</code> function to establish
+the connection between the variable and the file.  The arguments to
+<code>tie</code> should be:</p>
+<ol>
+<li>
+<p>The hash variable you want to tie.</p>
+</li>
+<li>
+<p>The string <code>&quot;SDBM_File&quot;</code>.  (Ths tells Perl to use the <code>SDBM_File</code>
+package to perform the functions of the hash.)</p>
+</li>
+<li>
+<p>The name of the file you want to tie to the hash.</p>
+</li>
+<li>
+<p>Flags.  Use one of:</p>
+<dl>
+<dt><strong><a name="item_o_rdonly"><code>O_RDONLY</code></a></strong>
+
+<dd>
+<p>Read-only access to the data in the file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_o_wronly"><code>O_WRONLY</code></a></strong>
+
+<dd>
+<p>Write-only access to the data in the file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_o_rdwr"><code>O_RDWR</code></a></strong>
+
+<dd>
+<p>Both read and write access.</p>
+</dd>
+</li>
+</dl>
+<p>If you want to create the file if it does not exist, add <code>O_CREAT</code> to
+any of these, as in the example.  If you omit <code>O_CREAT</code> and the file
+does not already exist, the <code>tie</code> call will fail.</p>
+<li>
+<p>The default permissions to use if a new file is created.  The actual
+permissions will be modified by the user's umask, so you should
+probably use 0666 here. (See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/umask.html">umask in the perlfunc manpage</a>.)</p>
+</li>
+</ol>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<p>On failure, the <code>tie</code> call returns an undefined value and probably
+sets <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> to contain the reason the file could not be tied.</p>
+<p>
+</p>
+<h2><a name="sdbm_store_returned_1__errno_22__key_____at____"><code>sdbm store returned -1, errno 22, key &quot;...&quot; at ...</code></a></h2>
+<p>This warning is emitted when you try to store a key or a value that
+is too long.  It means that the change was not recorded in the
+database.  See BUGS AND WARNINGS below.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs_and_warnings">BUGS AND WARNINGS</a></h1>
+<p>There are a number of limits on the size of the data that you can
+store in the SDBM file.  The most important is that the length of a
+key, plus the length of its associated value, may not exceed 1008
+bytes.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/tie.html">tie in the perlfunc manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perldbmfilter.html">the perldbmfilter manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/Fcntl/Fcntl.html">the Fcntl manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;SDBM_File - Tied access to sdbm files</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

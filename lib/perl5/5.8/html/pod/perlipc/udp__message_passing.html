@@ -1,0 +1,115 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>UDP: Message Passing</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;UDP: Message Passing</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#udp__message_passing">UDP: Message Passing</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="udp__message_passing">UDP: Message Passing</a></h1>
+<p>Another kind of client-server setup is one that uses not connections, but
+messages.  UDP communications involve much lower overhead but also provide
+less reliability, as there are no promises that messages will arrive at
+all, let alone in order and unmangled.  Still, UDP offers some advantages
+over TCP, including being able to ``broadcast'' or ``multicast'' to a whole
+bunch of destination hosts at once (usually on your local subnet).  If you
+find yourself overly concerned about reliability and start building checks
+into your message system, then you probably should use just TCP to start
+with.</p>
+<p>Note that UDP datagrams are <em>not</em> a bytestream and should not be treated
+as such. This makes using I/O mechanisms with internal buffering
+like stdio (i.e. <code>print()</code> and friends) especially cumbersome. Use syswrite(),
+or better send(), like in the example below.</p>
+<p>Here's a UDP program similar to the sample Internet TCP client given
+earlier.  However, instead of checking one host at a time, the UDP version
+will check many of them asynchronously by simulating a multicast and then
+using <code>select()</code> to do a timed-out wait for I/O.  To do something similar
+with TCP, you'd have to use a different socket handle for each host.</p>
+<pre>
+    #!/usr/bin/perl -w
+    use strict;
+    use Socket;
+    use Sys::Hostname;</pre>
+<pre>
+    my ( $count, $hisiaddr, $hispaddr, $histime,
+         $host, $iaddr, $paddr, $port, $proto,
+         $rin, $rout, $rtime, $SECS_of_70_YEARS);</pre>
+<pre>
+    $SECS_of_70_YEARS      = 2208988800;</pre>
+<pre>
+    $iaddr = gethostbyname(hostname());
+    $proto = getprotobyname('udp');
+    $port = getservbyname('time', 'udp');
+    $paddr = sockaddr_in(0, $iaddr); # 0 means let kernel pick</pre>
+<pre>
+    socket(SOCKET, PF_INET, SOCK_DGRAM, $proto)   || die &quot;socket: $!&quot;;
+    bind(SOCKET, $paddr)                          || die &quot;bind: $!&quot;;</pre>
+<pre>
+    $| = 1;
+    printf &quot;%-12s %8s %s\n&quot;,  &quot;localhost&quot;, 0, scalar localtime time;
+    $count = 0;
+    for $host (@ARGV) {
+        $count++;
+        $hisiaddr = inet_aton($host)    || die &quot;unknown host&quot;;
+        $hispaddr = sockaddr_in($port, $hisiaddr);
+        defined(send(SOCKET, 0, 0, $hispaddr))    || die &quot;send $host: $!&quot;;
+    }</pre>
+<pre>
+    $rin = '';
+    vec($rin, fileno(SOCKET), 1) = 1;</pre>
+<pre>
+    # timeout after 10.0 seconds
+    while ($count &amp;&amp; select($rout = $rin, undef, undef, 10.0)) {
+        $rtime = '';
+        ($hispaddr = recv(SOCKET, $rtime, 4, 0))        || die &quot;recv: $!&quot;;
+        ($port, $hisiaddr) = sockaddr_in($hispaddr);
+        $host = gethostbyaddr($hisiaddr, AF_INET);
+        $histime = unpack(&quot;N&quot;, $rtime) - $SECS_of_70_YEARS;
+        printf &quot;%-12s &quot;, $host;
+        printf &quot;%8d %s\n&quot;, $histime - time, scalar localtime($histime);
+        $count--;
+    }</pre>
+<p>Note that this example does not include any retries and may consequently
+fail to contact a reachable host. The most prominent reason for this
+is congestion of the queues on the sending host if the number of
+list of hosts to contact is sufficiently large.</p>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/tcp_servers_with_io__socket.html">TCP Servers with IO::Socket in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/sysv_ipc.html">SysV IPC in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;UDP: Message Passing</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

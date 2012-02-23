@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>tie - bind a variable to an object class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;tie - bind a variable to an object class</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>tie - bind a variable to an object class</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>tie VARIABLE,CLASSNAME,LIST
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This function binds a variable to a package class that will provide the
+implementation for the variable.  VARIABLE is the name of the variable
+to be enchanted.  CLASSNAME is the name of a class implementing objects
+of correct type.  Any additional arguments are passed to the <code>new</code>
+method of the class (meaning <code>TIESCALAR</code>, <code>TIEHANDLE</code>, <code>TIEARRAY</code>,
+or <code>TIEHASH</code>).  Typically these are arguments such as might be passed
+to the <code>dbm_open()</code> function of C.  The object returned by the <code>new</code>
+method is also returned by the <code>tie</code> function, which would be useful
+if you want to access other methods in CLASSNAME.</p>
+<p>Note that functions such as <code>keys</code> and <code>values</code> may return huge lists
+when used on large objects, like DBM files.  You may prefer to use the
+<code>each</code> function to iterate over such.  Example:</p>
+<pre>
+    # print out history file offsets
+    use NDBM_File;
+    tie(%HIST, 'NDBM_File', '/usr/lib/news/history', 1, 0);
+    while (($key,$val) = each %HIST) {
+        print $key, ' = ', unpack('L',$val), &quot;\n&quot;;
+    }
+    untie(%HIST);</pre>
+<p>A class implementing a hash should have the following methods:</p>
+<pre>
+    TIEHASH classname, LIST
+    FETCH this, key
+    STORE this, key, value
+    DELETE this, key
+    CLEAR this
+    EXISTS this, key
+    FIRSTKEY this
+    NEXTKEY this, lastkey
+    SCALAR this
+    DESTROY this
+    UNTIE this</pre>
+<p>A class implementing an ordinary array should have the following methods:</p>
+<pre>
+    TIEARRAY classname, LIST
+    FETCH this, key
+    STORE this, key, value
+    FETCHSIZE this
+    STORESIZE this, count
+    CLEAR this
+    PUSH this, LIST
+    POP this
+    SHIFT this
+    UNSHIFT this, LIST
+    SPLICE this, offset, length, LIST
+    EXTEND this, count
+    DESTROY this
+    UNTIE this</pre>
+<p>A class implementing a file handle should have the following methods:</p>
+<pre>
+    TIEHANDLE classname, LIST
+    READ this, scalar, length, offset
+    READLINE this
+    GETC this
+    WRITE this, scalar, length, offset
+    PRINT this, LIST
+    PRINTF this, format, LIST
+    BINMODE this
+    EOF this
+    FILENO this
+    SEEK this, position, whence
+    TELL this
+    OPEN this, mode, LIST
+    CLOSE this
+    DESTROY this
+    UNTIE this</pre>
+<p>A class implementing a scalar should have the following methods:</p>
+<pre>
+    TIESCALAR classname, LIST
+    FETCH this,
+    STORE this, value
+    DESTROY this
+    UNTIE this</pre>
+<p>Not all methods indicated above need be implemented.  See <a href="/usr/lib/perl5/5.8/html/./pod/perltie.html">the perltie manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/Tie/Hash.html">the Tie::Hash manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Tie/Array.html">the Tie::Array manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Tie/Scalar.html">the Tie::Scalar manpage</a>, and <a href="/usr/lib/perl5/5.8/html/./lib/Tie/Handle.html">the Tie::Handle manpage</a>.</p>
+<p>Unlike <code>dbmopen</code>, the <code>tie</code> function will not use or require a module
+for you--you need to do that explicitly yourself.  See <a href="/usr/lib/perl5/5.8/html/./ext/DB_File/DB_File.html">the DB_File manpage</a>
+or the <em>Config</em> module for interesting <code>tie</code> implementations.</p>
+<p>For further details see <a href="/usr/lib/perl5/5.8/html/./pod/perltie.html">the perltie manpage</a>, <a href="#tied_variable">tied VARIABLE</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;tie - bind a variable to an object class</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

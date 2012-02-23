@@ -1,0 +1,580 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perlmod - Perl modules</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlmod - Perl modules</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#packages">Packages</a></li>
+		<li><a href="#symbol_tables">Symbol Tables</a></li>
+		<li><a href="#begin__check__init_and_end">BEGIN, CHECK, INIT and END</a></li>
+		<li><a href="#perl_classes">Perl Classes</a></li>
+		<li><a href="#perl_modules">Perl Modules</a></li>
+		<li><a href="#making_your_module_threadsafe">Making your module threadsafe</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perlmod - Perl modules (packages and symbol tables)</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="packages_x_package__x_namespace__x_variable__global__x_global_variable__x_global_">Packages
+    </a></h2>
+<p>Perl provides a mechanism for alternative namespaces to protect
+packages from stomping on each other's variables.  In fact, there's
+really no such thing as a global variable in Perl.  The package
+statement declares the compilation unit as being in the given
+namespace.  The scope of the package declaration is from the
+declaration itself through the end of the enclosing block, <code>eval</code>,
+or file, whichever comes first (the same scope as the <code>my()</code> and
+<code>local()</code> operators).  Unqualified dynamic identifiers will be in
+this namespace, except for those few identifiers that if unqualified,
+default to the main package instead of the current one as described
+below.  A package statement affects only dynamic variables--including
+those you've used <code>local()</code> on--but <em>not</em> lexical variables created
+with my().  Typically it would be the first declaration in a file
+included by the <code>do</code>, <code>require</code>, or <code>use</code> operators.  You can
+switch into a package in more than one place; it merely influences
+which symbol table is used by the compiler for the rest of that
+block.  You can refer to variables and filehandles in other packages
+by prefixing the identifier with the package name and a double
+colon: <code>$Package::Variable</code>.  If the package name is null, the
+<code>main</code> package is assumed.  That is, <code>$::sail</code> is equivalent to
+<code>$main::sail</code>.</p>
+<p>The old package delimiter was a single quote, but double colon is now the
+preferred delimiter, in part because it's more readable to humans, and
+in part because it's more readable to <strong>emacs</strong> macros.  It also makes C++
+programmers feel like they know what's going on--as opposed to using the
+single quote as separator, which was there to make Ada programmers feel
+like they knew what was going on.  Because the old-fashioned syntax is still
+supported for backwards compatibility, if you try to use a string like
+<code>&quot;This is $owner's house&quot;</code>, you'll be accessing <code>$owner::s</code>; that is,
+the $s variable in package <code>owner</code>, which is probably not what you meant.
+Use braces to disambiguate, as in <code>&quot;This is ${owner}'s house&quot;</code>.
+ </p>
+<p>Packages may themselves contain package separators, as in
+<code>$OUTER::INNER::var</code>.  This implies nothing about the order of
+name lookups, however.  There are no relative packages: all symbols
+are either local to the current package, or must be fully qualified
+from the outer package name down.  For instance, there is nowhere
+within package <code>OUTER</code> that <code>$INNER::var</code> refers to
+<code>$OUTER::INNER::var</code>.  <code>INNER</code> refers to a totally
+separate global package.</p>
+<p>Only identifiers starting with letters (or underscore) are stored
+in a package's symbol table.  All other symbols are kept in package
+<code>main</code>, including all punctuation variables, like $_.  In addition,
+when unqualified, the identifiers STDIN, STDOUT, STDERR, ARGV,
+ARGVOUT, ENV, INC, and SIG are forced to be in package <code>main</code>,
+even when used for other purposes than their built-in ones.  If you
+have a package called <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_m"><code>m</code></a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_s"><code>s</code></a>, or <code>y</code>, then you can't use the
+qualified form of an identifier because it would be instead interpreted
+as a pattern match, a substitution, or a transliteration.
+</p>
+<p>Variables beginning with underscore used to be forced into package
+main, but we decided it was more useful for package writers to be able
+to use leading underscore to indicate private variables and method names.
+However, variables and functions named with a single <code>_</code>, such as
+$_ and <code>sub _</code>, are still forced into the package <code>main</code>.  See also
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#technical_note_on_the_syntax_of_variable_names">Technical Note on the Syntax of Variable Names in the perlvar manpage</a>.</p>
+<p><code>eval</code>ed strings are compiled in the package in which the <code>eval()</code> was
+compiled.  (Assignments to <code>$SIG{}</code>, however, assume the signal
+handler specified is in the <code>main</code> package.  Qualify the signal handler
+name if you wish to have a signal handler in a package.)  For an
+example, examine <em>perldb.pl</em> in the Perl library.  It initially switches
+to the <code>DB</code> package so that the debugger doesn't interfere with variables
+in the program you are trying to debug.  At various points, however, it
+temporarily switches back to the <code>main</code> package to evaluate various
+expressions in the context of the <code>main</code> package (or wherever you came
+from).  See <a href="/usr/lib/perl5/5.8/html/./pod/perldebug.html">the perldebug manpage</a>.</p>
+<p>The special symbol <code>__PACKAGE__</code> contains the current package, but cannot
+(easily) be used to construct variable names.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a> for other scoping issues related to <code>my()</code> and local(),
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a> regarding closures.</p>
+<p>
+</p>
+<h2><a name="symbol_tables_x_symbol_table__x_stash__x______x__main____x_typeglob__x_glob__x_alias_">Symbol Tables
+      </a></h2>
+<p>The symbol table for a package happens to be stored in the hash of that
+name with two colons appended.  The main symbol table's name is thus
+<code>%main::</code>, or <code>%::</code> for short.  Likewise the symbol table for the nested
+package mentioned earlier is named <code>%OUTER::INNER::</code>.</p>
+<p>The value in each entry of the hash is what you are referring to when you
+use the <code>*name</code> typeglob notation.  In fact, the following have the same
+effect, though the first is more efficient because it does the symbol
+table lookups at compile time:</p>
+<pre>
+    local *main::foo    = *main::bar;
+    local $main::{foo}  = $main::{bar};</pre>
+<p>(Be sure to note the <strong>vast</strong> difference between the second line above
+and <code>local $main::foo = $main::bar</code>. The former is accessing the hash
+<code>%main::</code>, which is the symbol table of package <code>main</code>. The latter is
+simply assigning scalar <code>$bar</code> in package <code>main</code> to scalar <code>$foo</code> of
+the same package.)</p>
+<p>You can use this to print out all the variables in a package, for
+instance.  The standard but antiquated <em>dumpvar.pl</em> library and
+the CPAN module Devel::Symdump make use of this.</p>
+<p>Assignment to a typeglob performs an aliasing operation, i.e.,</p>
+<pre>
+    *dick = *richard;</pre>
+<p>causes variables, subroutines, formats, and file and directory handles
+accessible via the identifier <code>richard</code> also to be accessible via the
+identifier <code>dick</code>.  If you want to alias only a particular variable or
+subroutine, assign a reference instead:</p>
+<pre>
+    *dick = \$richard;</pre>
+<p>Which makes $richard and $dick the same variable, but leaves
+@richard and @dick as separate arrays.  Tricky, eh?</p>
+<p>There is one subtle difference between the following statements:</p>
+<pre>
+    *foo = *bar;
+    *foo = \$bar;</pre>
+<p><code>*foo = *bar</code> makes the typeglobs themselves synonymous while
+<code>*foo = \$bar</code> makes the SCALAR portions of two distinct typeglobs
+refer to the same scalar value. This means that the following code:</p>
+<pre>
+    $bar = 1;
+    *foo = \$bar;       # Make $foo an alias for $bar</pre>
+<pre>
+    {
+        local $bar = 2; # Restrict changes to block
+        print $foo;     # Prints '1'!
+    }</pre>
+<p>Would print '1', because <code>$foo</code> holds a reference to the <em>original</em>
+<code>$bar</code> -- the one that was stuffed away by <code>local()</code> and which will be
+restored when the block ends. Because variables are accessed through the
+typeglob, you can use <code>*foo = *bar</code> to create an alias which can be
+localized. (But be aware that this means you can't have a separate
+<code>@foo</code> and <code>@bar</code>, etc.)</p>
+<p>What makes all of this important is that the Exporter module uses glob
+aliasing as the import/export mechanism. Whether or not you can properly
+localize a variable that has been exported from a module depends on how
+it was exported:</p>
+<pre>
+    @EXPORT = qw($FOO); # Usual form, can't be localized
+    @EXPORT = qw(*FOO); # Can be localized</pre>
+<p>You can work around the first case by using the fully qualified name
+(<code>$Package::FOO</code>) where you need a local value, or by overriding it
+by saying <code>*FOO = *Package::FOO</code> in your script.</p>
+<p>The <code>*x = \$y</code> mechanism may be used to pass and return cheap references
+into or from subroutines if you don't want to copy the whole
+thing.  It only works when assigning to dynamic variables, not
+lexicals.</p>
+<pre>
+    %some_hash = ();                    # can't be my()
+    *some_hash = fn( \%another_hash );
+    sub fn {
+        local *hashsym = shift;
+        # now use %hashsym normally, and you
+        # will affect the caller's %another_hash
+        my %nhash = (); # do what you want
+        return \%nhash;
+    }</pre>
+<p>On return, the reference will overwrite the hash slot in the
+symbol table specified by the *some_hash typeglob.  This
+is a somewhat tricky way of passing around references cheaply
+when you don't want to have to remember to dereference variables
+explicitly.</p>
+<p>Another use of symbol tables is for making ``constant'' scalars.
+ </p>
+<pre>
+    *PI = \3.14159265358979;</pre>
+<p>Now you cannot alter <code>$PI</code>, which is probably a good thing all in all.
+This isn't the same as a constant subroutine, which is subject to
+optimization at compile-time.  A constant subroutine is one prototyped
+to take no arguments and to return a constant expression.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a> for details on these.  The <code>use constant</code> pragma is a
+convenient shorthand for these.</p>
+<p>You can say <code>*foo{PACKAGE}</code> and <code>*foo{NAME}</code> to find out what name and
+package the *foo symbol table entry comes from.  This may be useful
+in a subroutine that gets passed typeglobs as arguments:</p>
+<pre>
+    sub identify_typeglob {
+        my $glob = shift;
+        print 'You gave me ', *{$glob}{PACKAGE}, '::', *{$glob}{NAME}, &quot;\n&quot;;
+    }
+    identify_typeglob *foo;
+    identify_typeglob *bar::baz;</pre>
+<p>This prints</p>
+<pre>
+    You gave me main::foo
+    You gave me bar::baz</pre>
+<p>The <code>*foo{THING}</code> notation can also be used to obtain references to the
+individual elements of *foo.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a>.</p>
+<p>Subroutine definitions (and declarations, for that matter) need
+not necessarily be situated in the package whose symbol table they
+occupy.  You can define a subroutine outside its package by
+explicitly qualifying the name of the subroutine:</p>
+<pre>
+    package main;
+    sub Some_package::foo { ... }   # &amp;foo defined in Some_package</pre>
+<p>This is just a shorthand for a typeglob assignment at compile time:</p>
+<pre>
+    BEGIN { *Some_package::foo = sub { ... } }</pre>
+<p>and is <em>not</em> the same as writing:</p>
+<pre>
+    {
+        package Some_package;
+        sub foo { ... }
+    }</pre>
+<p>In the first two versions, the body of the subroutine is
+lexically in the main package, <em>not</em> in Some_package. So
+something like this:</p>
+<pre>
+    package main;</pre>
+<pre>
+    $Some_package::name = &quot;fred&quot;;
+    $main::name = &quot;barney&quot;;</pre>
+<pre>
+    sub Some_package::foo {
+        print &quot;in &quot;, __PACKAGE__, &quot;: \$name is '$name'\n&quot;;
+    }</pre>
+<pre>
+    Some_package::foo();</pre>
+<p>prints:</p>
+<pre>
+    in main: $name is 'barney'</pre>
+<p>rather than:</p>
+<pre>
+    in Some_package: $name is 'fred'</pre>
+<p>This also has implications for the use of the SUPER:: qualifier
+(see <a href="/usr/lib/perl5/5.8/html/./pod/perlobj.html">the perlobj manpage</a>).</p>
+<p>
+</p>
+<h2><a name="begin__check__init_and_end_x_begin__x_check__x_init__x_end_">BEGIN, CHECK, INIT and END
+   </a></h2>
+<p>Four specially named code blocks are executed at the beginning and at the end
+of a running Perl program.  These are the <code>BEGIN</code>, <code>CHECK</code>, <code>INIT</code>, and
+<code>END</code> blocks.</p>
+<p>These code blocks can be prefixed with <code>sub</code> to give the appearance of a
+subroutine (although this is not considered good style).  One should note
+that these code blocks don't really exist as named subroutines (despite
+their appearance). The thing that gives this away is the fact that you can
+have <strong>more than one</strong> of these code blocks in a program, and they will get
+<strong>all</strong> executed at the appropriate moment.  So you can't execute any of
+these code blocks by name.</p>
+<p>A <code>BEGIN</code> code block is executed as soon as possible, that is, the moment
+it is completely defined, even before the rest of the containing file (or
+string) is parsed.  You may have multiple <code>BEGIN</code> blocks within a file (or
+eval'ed string) -- they will execute in order of definition.  Because a <code>BEGIN</code>
+code block executes immediately, it can pull in definitions of subroutines
+and such from other files in time to be visible to the rest of the compile
+and run time.  Once a <code>BEGIN</code> has run, it is immediately undefined and any
+code it used is returned to Perl's memory pool.</p>
+<p>It should be noted that <code>BEGIN</code> code blocks <strong>are</strong> executed inside string
+<code>eval()</code>'s.  The <code>CHECK</code> and <code>INIT</code> code blocks are <strong>not</strong> executed inside
+a string eval, which e.g. can be a problem in a mod_perl environment.</p>
+<p>An <code>END</code> code block is executed as late as possible, that is, after
+perl has finished running the program and just before the interpreter
+is being exited, even if it is exiting as a result of a <code>die()</code> function.
+(But not if it's morphing into another program via <code>exec</code>, or
+being blown out of the water by a signal--you have to trap that yourself
+(if you can).)  You may have multiple <code>END</code> blocks within a file--they
+will execute in reverse order of definition; that is: last in, first
+out (LIFO).  <code>END</code> blocks are not executed when you run perl with the
+<code>-c</code> switch, or if compilation fails.</p>
+<p>Note that <code>END</code> code blocks are <strong>not</strong> executed at the end of a string
+<code>eval()</code>: if any <code>END</code> code blocks are created in a string <code>eval()</code>,
+they will be executed just as any other <code>END</code> code block of that package
+in LIFO order just before the interpreter is being exited.</p>
+<p>Inside an <code>END</code> code block, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> contains the value that the program is
+going to pass to <code>exit()</code>.  You can modify <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> to change the exit
+value of the program.  Beware of changing <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> by accident (e.g. by
+running something via <code>system</code>).
+</p>
+<p><code>CHECK</code> and <code>INIT</code> code blocks are useful to catch the transition between
+the compilation phase and the execution phase of the main program.</p>
+<p><code>CHECK</code> code blocks are run just after the <strong>initial</strong> Perl compile phase ends
+and before the run time begins, in LIFO order.  <code>CHECK</code> code blocks are used
+in the Perl compiler suite to save the compiled state of the program.</p>
+<p><code>INIT</code> blocks are run just before the Perl runtime begins execution, in
+``first in, first out'' (FIFO) order. For example, the code generators
+documented in <a href="/usr/lib/perl5/5.8/html/./utils/perlcc.html">the perlcc manpage</a> make use of <code>INIT</code> blocks to initialize and
+resolve pointers to XSUBs.</p>
+<p>When you use the <strong>-n</strong> and <strong>-p</strong> switches to Perl, <code>BEGIN</code> and
+<code>END</code> work just as they do in <strong>awk</strong>, as a degenerate case.
+Both <code>BEGIN</code> and <code>CHECK</code> blocks are run when you use the <strong>-c</strong>
+switch for a compile-only syntax check, although your main code
+is not.</p>
+<p>The <strong>begincheck</strong> program makes it all clear, eventually:</p>
+<pre>
+  #!/usr/bin/perl</pre>
+<pre>
+  # begincheck</pre>
+<pre>
+  print         &quot; 8. Ordinary code runs at runtime.\n&quot;;</pre>
+<pre>
+  END { print   &quot;14.   So this is the end of the tale.\n&quot; }
+  INIT { print  &quot; 5. INIT blocks run FIFO just before runtime.\n&quot; }
+  CHECK { print &quot; 4.   So this is the fourth line.\n&quot; }</pre>
+<pre>
+  print         &quot; 9.   It runs in order, of course.\n&quot;;</pre>
+<pre>
+  BEGIN { print &quot; 1. BEGIN blocks run FIFO during compilation.\n&quot; }
+  END { print   &quot;13.   Read <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">perlmod</a> for the rest of the story.\n&quot; }
+  CHECK { print &quot; 3. CHECK blocks run LIFO at compilation's end.\n&quot; }
+  INIT { print  &quot; 6.   Run this again, using Perl's -c switch.\n&quot; }</pre>
+<pre>
+  print         &quot;10.   This is anti-obfuscated code.\n&quot;;</pre>
+<pre>
+  END { print   &quot;12. END blocks run LIFO at quitting time.\n&quot; }
+  BEGIN { print &quot; 2.   So this line comes out second.\n&quot; }
+  INIT { print  &quot; 7.   You'll see the difference right away.\n&quot; }</pre>
+<pre>
+  print         &quot;11.   It merely _looks_ like it should be confusing.\n&quot;;</pre>
+<pre>
+  __END__</pre>
+<p>
+</p>
+<h2><a name="perl_classes_x_class__x__isa_">Perl Classes
+ </a></h2>
+<p>There is no special class syntax in Perl, but a package may act
+as a class if it provides subroutines to act as methods.  Such a
+package may also derive some of its methods from another class (package)
+by listing the other package <code>name(s)</code> in its global @ISA array (which
+must be a package global, not a lexical).</p>
+<p>For more on this, see <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlobj.html">the perlobj manpage</a>.</p>
+<p>
+</p>
+<h2><a name="perl_modules_x_module_">Perl Modules
+</a></h2>
+<p>A module is just a set of related functions in a library file, i.e.,
+a Perl package with the same name as the file.  It is specifically
+designed to be reusable by other modules or programs.  It may do this
+by providing a mechanism for exporting some of its symbols into the
+symbol table of any package using it, or it may function as a class
+definition and make its semantics available implicitly through
+method calls on the class and its objects, without explicitly
+exporting anything.  Or it can do a little of both.</p>
+<p>For example, to start a traditional, non-OO module called Some::Module,
+create a file called <em>Some/Module.pm</em> and start with this template:</p>
+<pre>
+    package Some::Module;  # assumes Some/Module.pm</pre>
+<pre>
+    use strict;
+    use warnings;</pre>
+<pre>
+    BEGIN {
+        use Exporter   ();
+        our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);</pre>
+<pre>
+        # set the version for version checking
+        $VERSION     = 1.00;
+        # if using RCS/CVS, this may be preferred
+        $VERSION = sprintf &quot;%d.%03d&quot;, q$Revision: 1.1 $ =~ /(\d+)/g;</pre>
+<pre>
+        @ISA         = qw(Exporter);
+        @EXPORT      = qw(&amp;func1 &amp;func2 &amp;func4);
+        %EXPORT_TAGS = ( );     # eg: TAG =&gt; [ qw!name1 name2! ],</pre>
+<pre>
+        # your exported package globals go here,
+        # as well as any optionally exported functions
+        @EXPORT_OK   = qw($Var1 %Hashit &amp;func3);
+    }
+    our @EXPORT_OK;</pre>
+<pre>
+    # exported package globals go here
+    our $Var1;
+    our %Hashit;</pre>
+<pre>
+    # non-exported package globals go here
+    our @more;
+    our $stuff;</pre>
+<pre>
+    # initialize package globals, first exported ones
+    $Var1   = '';
+    %Hashit = ();</pre>
+<pre>
+    # then the others (which are still accessible as $Some::Module::stuff)
+    $stuff  = '';
+    @more   = ();</pre>
+<pre>
+    # all file-scoped lexicals must be created before
+    # the functions below that use them.</pre>
+<pre>
+    # file-private lexicals go here
+    my $priv_var    = '';
+    my %secret_hash = ();</pre>
+<pre>
+    # here's a file-private function as a closure,
+    # callable as &amp;$priv_func;  it cannot be prototyped.
+    my $priv_func = sub {
+        # stuff goes here.
+    };</pre>
+<pre>
+    # make all your functions, whether exported or not;
+    # remember to put something interesting in the {} stubs
+    sub func1      {}    # no prototype
+    sub func2()    {}    # proto'd void
+    sub func3($$)  {}    # proto'd to 2 scalars</pre>
+<pre>
+    # this one isn't exported, but could be called!
+    sub func4(\%)  {}    # proto'd to 1 hash ref</pre>
+<pre>
+    END { }       # module clean-up code here (global destructor)</pre>
+<pre>
+    ## YOUR CODE GOES HERE</pre>
+<pre>
+    1;  # don't forget to return a true value from the file</pre>
+<p>Then go on to declare and use your variables in functions without
+any qualifications.  See <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">the Exporter manpage</a> and the <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> for
+details on mechanics and style issues in module creation.</p>
+<p>Perl modules are included into your program by saying</p>
+<pre>
+    use Module;</pre>
+<p>or</p>
+<pre>
+    use Module LIST;</pre>
+<p>This is exactly equivalent to</p>
+<pre>
+    BEGIN { require Module; import Module; }</pre>
+<p>or</p>
+<pre>
+    BEGIN { require Module; import Module LIST; }</pre>
+<p>As a special case</p>
+<pre>
+    use Module ();</pre>
+<p>is exactly equivalent to</p>
+<pre>
+    BEGIN { require Module; }</pre>
+<p>All Perl module files have the extension <em>.pm</em>.  The <code>use</code> operator
+assumes this so you don't have to spell out ``<em>Module.pm</em>'' in quotes.
+This also helps to differentiate new modules from old <em>.pl</em> and
+<em>.ph</em> files.  Module names are also capitalized unless they're
+functioning as pragmas; pragmas are in effect compiler directives,
+and are sometimes called ``pragmatic modules'' (or even ``pragmata''
+if you're a classicist).</p>
+<p>The two statements:</p>
+<pre>
+    require SomeModule;
+    require &quot;SomeModule.pm&quot;;</pre>
+<p>differ from each other in two ways.  In the first case, any double
+colons in the module name, such as <code>Some::Module</code>, are translated
+into your system's directory separator, usually ``/''.   The second
+case does not, and would have to be specified literally.  The other
+difference is that seeing the first <code>require</code> clues in the compiler
+that uses of indirect object notation involving ``SomeModule'', as
+in <code>$ob = purge SomeModule</code>, are method calls, not function calls.
+(Yes, this really can make a difference.)</p>
+<p>Because the <code>use</code> statement implies a <code>BEGIN</code> block, the importing
+of semantics happens as soon as the <code>use</code> statement is compiled,
+before the rest of the file is compiled.  This is how it is able
+to function as a pragma mechanism, and also how modules are able to
+declare subroutines that are then visible as list or unary operators for
+the rest of the current file.  This will not work if you use <code>require</code>
+instead of <code>use</code>.  With <code>require</code> you can get into this problem:</p>
+<pre>
+    require Cwd;                # make Cwd:: accessible
+    $here = Cwd::getcwd();</pre>
+<pre>
+    use Cwd;                    # import names from Cwd::
+    $here = getcwd();</pre>
+<pre>
+    require Cwd;                # make Cwd:: accessible
+    $here = getcwd();           # oops! no main::getcwd()</pre>
+<p>In general, <code>use Module ()</code> is recommended over <code>require Module</code>,
+because it determines module availability at compile time, not in the
+middle of your program's execution.  An exception would be if two modules
+each tried to <code>use</code> each other, and each also called a function from
+that other module.  In that case, it's easy to use <code>require</code> instead.</p>
+<p>Perl packages may be nested inside other package names, so we can have
+package names containing <code>::</code>.  But if we used that package name
+directly as a filename it would make for unwieldy or impossible
+filenames on some systems.  Therefore, if a module's name is, say,
+<code>Text::Soundex</code>, then its definition is actually found in the library
+file <em>Text/Soundex.pm</em>.</p>
+<p>Perl modules always have a <em>.pm</em> file, but there may also be
+dynamically linked executables (often ending in <em>.so</em>) or autoloaded
+subroutine definitions (often ending in <em>.al</em>) associated with the
+module.  If so, these will be entirely transparent to the user of
+the module.  It is the responsibility of the <em>.pm</em> file to load
+(or arrange to autoload) any additional functionality.  For example,
+although the POSIX module happens to do both dynamic loading and
+autoloading, the user can say just <code>use POSIX</code> to get it all.</p>
+<p>
+</p>
+<h2><a name="making_your_module_threadsafe_x_threadsafe__x_thread_safe__x_module__threadsafe__x_module__thread_safe__x_clone__x_clone_skip__x_thread__x_threads__x_ithread_">Making your module threadsafe
+ 
+ 
+    </a></h2>
+<p>Since 5.6.0, Perl has had support for a new type of threads called
+interpreter threads (ithreads). These threads can be used explicitly
+and implicitly.</p>
+<p>Ithreads work by cloning the data tree so that no data is shared
+between different threads. These threads can be used by using the <code>threads</code>
+module or by doing <code>fork()</code> on win32 (fake <code>fork()</code> support). When a
+thread is cloned all Perl data is cloned, however non-Perl data cannot
+be cloned automatically.  Perl after 5.7.2 has support for the <code>CLONE</code>
+special subroutine.  In <code>CLONE</code> you can do whatever
+you need to do,
+like for example handle the cloning of non-Perl data, if necessary.
+<code>CLONE</code> will be called once as a class method for every package that has it
+defined (or inherits it).  It will be called in the context of the new thread,
+so all modifications are made in the new area.  Currently CLONE is called with
+no parameters other than the invocant package name, but code should not assume
+that this will remain unchanged, as it is likely that in future extra parameters
+will be passed in to give more information about the state of cloning.</p>
+<p>If you want to CLONE all objects you will need to keep track of them per
+package. This is simply done using a hash and Scalar::Util::weaken().</p>
+<p>Perl after 5.8.7 has support for the <code>CLONE_SKIP</code> special subroutine.
+Like <code>CLONE</code>, <code>CLONE_SKIP</code> is called once per package; however, it is
+called just before cloning starts, and in the context of the parent
+thread. If it returns a true value, then no objects of that class will
+be cloned; or rather, they will be copied as unblessed, undef values.
+This provides a simple mechanism for making a module threadsafe; just add
+<code>sub CLONE_SKIP { 1 }</code> at the top of the class, and <code>DESTROY()</code> will be
+now only be called once per object. Of course, if the child thread needs
+to make use of the objects, then a more sophisticated approach is
+needed.</p>
+<p>Like <code>CLONE</code>, <code>CLONE_SKIP</code> is currently called with no parameters other
+than the invocant package name, although that may change. Similarly, to
+allow for future expansion, the return value should be a single <code>0</code> or
+<code>1</code> value.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html">the perlmodlib manpage</a> for general style issues related to building Perl
+modules and classes, as well as descriptions of the standard library
+and CPAN, <a href="/usr/lib/perl5/5.8/html/./lib/Exporter.html">the Exporter manpage</a> for how Perl's standard import/export mechanism
+works, <a href="/usr/lib/perl5/5.8/html/./pod/perltoot.html">the perltoot manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perltooc.html">the perltooc manpage</a> for an in-depth tutorial on
+creating classes, <a href="/usr/lib/perl5/5.8/html/./pod/perlobj.html">the perlobj manpage</a> for a hard-core reference document on
+objects, <a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a> for an explanation of functions and scoping,
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlxstut.html">the perlxstut manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html">the perlguts manpage</a> for more information on writing
+extension modules.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;perlmod - Perl modules</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

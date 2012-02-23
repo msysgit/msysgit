@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>sort - perl pragma to control sort behaviour</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sort - perl pragma to control sort behaviour</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>sort - perl pragma to control <code>sort()</code> behaviour</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use sort 'stable';          # guarantee stability
+    use sort '_quicksort';      # use a quicksort algorithm
+    use sort '_mergesort';      # use a mergesort algorithm
+    use sort 'defaults';        # revert to default behavior
+    no  sort 'stable';          # stability not important</pre>
+<pre>
+    use sort '_qsort';          # alias for quicksort</pre>
+<pre>
+    my $current = sort::current();      # identify prevailing algorithm</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>With the <code>sort</code> pragma you can control the behaviour of the builtin
+<code>sort()</code> function.</p>
+<p>In Perl versions 5.6 and earlier the quicksort algorithm was used to
+implement <code>sort()</code>, but in Perl 5.8 a mergesort algorithm was also made
+available, mainly to guarantee worst case O(N log N) behaviour:
+the worst case of quicksort is O(N**2).  In Perl 5.8 and later,
+quicksort defends against quadratic behaviour by shuffling large
+arrays before sorting.</p>
+<p>A stable sort means that for records that compare equal, the original
+input ordering is preserved.  Mergesort is stable, quicksort is not.
+Stability will matter only if elements that compare equal can be
+distinguished in some other way.  That means that simple numerical
+and lexical sorts do not profit from stability, since equal elements
+are indistinguishable.  However, with a comparison such as</p>
+<pre>
+   { substr($a, 0, 3) cmp substr($b, 0, 3) }</pre>
+<p>stability might matter because elements that compare equal on the
+first 3 characters may be distinguished based on subsequent characters.
+In Perl 5.8 and later, quicksort can be stabilized, but doing so will
+add overhead, so it should only be done if it matters.</p>
+<p>The best algorithm depends on many things.  On average, mergesort
+does fewer comparisons than quicksort, so it may be better when
+complicated comparison routines are used.  Mergesort also takes
+advantage of pre-existing order, so it would be favored for using
+<code>sort()</code> to merge several sorted arrays.  On the other hand, quicksort
+is often faster for small arrays, and on arrays of a few distinct
+values, repeated many times.  You can force the
+choice of algorithm with this pragma, but this feels heavy-handed,
+so the subpragmas beginning with a <code>_</code> may not persist beyond Perl 5.8.
+The default algorithm is mergesort, which will be stable even if
+you do not explicitly demand it.
+But the stability of the default sort is a side-effect that could
+change in later versions.  If stability is important, be sure to
+say so with a</p>
+<pre>
+  use sort 'stable';</pre>
+<p>The <code>no sort</code> pragma doesn't
+<em>forbid</em> what follows, it just leaves the choice open.  Thus, after</p>
+<pre>
+  no sort qw(_mergesort stable);</pre>
+<p>a mergesort, which happens to be stable, will be employed anyway.
+Note that</p>
+<pre>
+  no sort &quot;_quicksort&quot;;
+  no sort &quot;_mergesort&quot;;</pre>
+<p>have exactly the same effect, leaving the choice of sort algorithm open.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>This pragma is not lexically scoped: its effect is global to the program
+it appears in.  That means the following will probably not do what you
+expect, because <em>both</em> pragmas take effect at compile time, before
+<em>either</em> <code>sort()</code> happens.</p>
+<pre>
+  { use sort &quot;_quicksort&quot;;
+    print sort::current . &quot;\n&quot;;
+    @a = sort @b;
+  }
+  { use sort &quot;stable&quot;;
+    print sort::current . &quot;\n&quot;;
+    @c = sort @d;
+  }
+  # prints:
+  # quicksort stable
+  # quicksort stable</pre>
+<p>You can achieve the effect you probably wanted by using <code>eval()</code>
+to defer the pragmas until run time.  Use the quoted argument
+form of <code>eval()</code>, <em>not</em> the BLOCK form, as in</p>
+<pre>
+  eval { use sort &quot;_quicksort&quot; }; # WRONG</pre>
+<p>or the effect will still be at compile time.
+Reset to default options before selecting other subpragmas
+(in case somebody carelessly left them on) and after sorting,
+as a courtesy to others.</p>
+<pre>
+  { eval 'use sort qw(defaults _quicksort)'; # force quicksort
+    eval 'no sort &quot;stable&quot;';      # stability not wanted
+    print sort::current . &quot;\n&quot;;
+    @a = sort @b;
+    eval 'use sort &quot;defaults&quot;';   # clean up, for others
+  }
+  { eval 'use sort qw(defaults stable)';     # force stability
+    print sort::current . &quot;\n&quot;;
+    @c = sort @d;
+    eval 'use sort &quot;defaults&quot;';   # clean up, for others
+  }
+  # prints:
+  # quicksort
+  # stable</pre>
+<p>Scoping for this pragma may change in future versions.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sort - perl pragma to control sort behaviour</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

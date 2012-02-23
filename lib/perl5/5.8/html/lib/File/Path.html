@@ -1,0 +1,141 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File::Path - create or remove directory trees</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Path - create or remove directory trees</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>File::Path - create or remove directory trees</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use File::Path;</pre>
+<pre>
+    mkpath(['/foo/bar/baz', 'blurfl/quux'], 1, 0711);
+    rmtree(['foo/bar/baz', 'blurfl/quux'], 1, 1);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>mkpath</code> function provides a convenient way to create directories, even
+if your <code>mkdir</code> kernel call won't create more than one level of directory at
+a time.  <code>mkpath</code> takes three arguments:</p>
+<ul>
+<li>
+<p>the name of the path to create, or a reference
+to a list of paths to create,</p>
+</li>
+<li>
+<p>a boolean value, which if TRUE will cause <code>mkpath</code>
+to print the name of each directory as it is created
+(defaults to FALSE), and</p>
+</li>
+<li>
+<p>the numeric mode to use when creating the directories
+(defaults to 0777), to be modified by the current umask.</p>
+</li>
+</ul>
+<p>It returns a list of all directories (including intermediates, determined
+using the Unix '/' separator) created.</p>
+<p>If a system error prevents a directory from being created, then the
+<code>mkpath</code> function throws a fatal error with <code>Carp::croak</code>. This error
+can be trapped with an <code>eval</code> block:</p>
+<pre>
+  eval { mkpath($dir) };
+  if ($@) {
+    print &quot;Couldn't create $dir: $@&quot;;
+  }</pre>
+<p>Similarly, the <code>rmtree</code> function provides a convenient way to delete a
+subtree from the directory structure, much like the Unix command <code>rm -r</code>.
+<code>rmtree</code> takes three arguments:</p>
+<ul>
+<li>
+<p>the root of the subtree to delete, or a reference to
+a list of roots.  All of the files and directories
+below each root, as well as the roots themselves,
+will be deleted.</p>
+</li>
+<li>
+<p>a boolean value, which if TRUE will cause <code>rmtree</code> to
+print a message each time it examines a file, giving the
+name of the file, and indicating whether it's using <code>rmdir</code>
+or <code>unlink</code> to remove it, or that it's skipping it.
+(defaults to FALSE)</p>
+</li>
+<li>
+<p>a boolean value, which if TRUE will cause <code>rmtree</code> to
+skip any files to which you do not have delete access
+(if running under VMS) or write access (if running
+under another OS).  This will change in the future when
+a criterion for 'delete permission' under OSs other
+than VMS is settled.  (defaults to FALSE)</p>
+</li>
+</ul>
+<p>It returns the number of files successfully deleted.  Symlinks are
+simply deleted and not followed.</p>
+<p><strong>NOTE:</strong> There are race conditions internal to the implementation of
+<code>rmtree</code> making it unsafe to use on directory trees which may be
+altered or moved while <code>rmtree</code> is running, and in particular on any
+directory trees with any path components or subdirectories potentially
+writable by untrusted users.</p>
+<p>Additionally, if the third parameter is not TRUE and <code>rmtree</code> is
+interrupted, it may leave files and directories with permissions altered
+to allow deletion (and older versions of this module would even set
+files and directories to world-read/writable!)</p>
+<p>Note also that the occurrence of errors in <code>rmtree</code> can be determined <em>only</em>
+by trapping diagnostic messages using <code>$SIG{__WARN__}</code>; it is not apparent
+from the return value.</p>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<ul>
+<li>
+<p>On Windows, if <code>mkpath</code> gives you the warning: <strong>No such file or
+directory</strong>, this may mean that you've exceeded your filesystem's
+maximum path length.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Tim Bunce &lt;<em><a href="mailto:Tim.Bunce@ig.co.uk">Tim.Bunce@ig.co.uk</a></em>&gt; and
+Charles Bailey &lt;<em><a href="mailto:bailey@newman.upenn.edu">bailey@newman.upenn.edu</a></em>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;File::Path - create or remove directory trees</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

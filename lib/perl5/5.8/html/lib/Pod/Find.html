@@ -1,0 +1,195 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Pod::Find - find POD documents in directory trees</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::Find - find POD documents in directory trees</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#pod_find_____opts______directories__"><code>pod_find( { %opts } , @directories )</code></a></li>
+		<li><a href="#simplify_name___str__"><code>simplify_name( $str )</code></a></li>
+		<li><a href="#pod_where_____opts_____pod__"><code>pod_where( { %opts }, $pod )</code></a></li>
+		<li><a href="#contains_pod___file____verbose__"><code>contains_pod( $file , $verbose )</code></a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Pod::Find - find POD documents in directory trees</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Pod::Find qw(pod_find simplify_name);
+  my %pods = pod_find({ -verbose =&gt; 1, -inc =&gt; 1 });
+  foreach(keys %pods) {
+     print &quot;found library POD `$pods{$_}' in $_\n&quot;;
+  }</pre>
+<pre>
+  print &quot;podname=&quot;,simplify_name('a/b/c/mymodule.pod'),&quot;\n&quot;;</pre>
+<pre>
+  $location = pod_where( { -inc =&gt; 1 }, &quot;Pod::Find&quot; );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>Pod::Find</strong> provides a set of functions to locate POD files.  Note that
+no function is exported by default to avoid pollution of your namespace,
+so be sure to specify them in the <strong>use</strong> statement if you need them:</p>
+<pre>
+  use Pod::Find qw(pod_find);</pre>
+<p>From this version on the typical SCM (software configuration management)
+files/directories like RCS, CVS, SCCS, .svn are ignored.</p>
+<p>
+</p>
+<h2><a name="pod_find_____opts______directories__"><code>pod_find( { %opts } , @directories )</code></a></h2>
+<p>The function <strong>pod_find</strong> searches for POD documents in a given set of
+files and/or directories. It returns a hash with the file names as keys
+and the POD name as value. The POD name is derived from the file name
+and its position in the directory tree.</p>
+<p>E.g. when searching in <em>$HOME/perl5lib</em>, the file
+<em>$HOME/perl5lib/MyModule.pm</em> would get the POD name <em>MyModule</em>,
+whereas <em>$HOME/perl5lib/Myclass/Subclass.pm</em> would be
+<em>Myclass::Subclass</em>. The name information can be used for POD
+translators.</p>
+<p>Only text files containing at least one valid POD command are found.</p>
+<p>A warning is printed if more than one POD file with the same POD name
+is found, e.g. <em>CPAN.pm</em> in different directories. This usually
+indicates duplicate occurrences of modules in the <em>@INC</em> search path.</p>
+<p><strong>OPTIONS</strong> The first argument for <strong>pod_find</strong> may be a hash reference
+with options. The rest are either directories that are searched
+recursively or files.  The POD names of files are the plain basenames
+with any Perl-like extension (.pm, .pl, .pod) stripped.</p>
+<dl>
+<dt><strong><a name="item__2dverbose__3d_3e_1"><code>-verbose =&gt; 1</code></a></strong>
+
+<dd>
+<p>Print progress information while scanning.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dperl__3d_3e_1"><code>-perl =&gt; 1</code></a></strong>
+
+<dd>
+<p>Apply Perl-specific heuristics to find the correct PODs. This includes
+stripping Perl-like extensions, omitting subdirectories that are numeric
+but do <em>not</em> match the current Perl interpreter's version id, suppressing
+<em>site_perl</em> as a module hierarchy name etc.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dscript__3d_3e_1"><code>-script =&gt; 1</code></a></strong>
+
+<dd>
+<p>Search for PODs in the current Perl interpreter's installation 
+<strong>scriptdir</strong>. This is taken from the local <a href="/usr/lib/perl5/5.8/html/./lib/Config.html">Config</a> module.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dinc__3d_3e_1"><code>-inc =&gt; 1</code></a></strong>
+
+<dd>
+<p>Search for PODs in the current Perl interpreter's <em>@INC</em> paths. This
+automatically considers paths specified in the <code>PERL5LIB</code> environment
+as this is prepended to <em>@INC</em> by the Perl interpreter itself.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="simplify_name___str__"><code>simplify_name( $str )</code></a></h2>
+<p>The function <strong>simplify_name</strong> is equivalent to <strong>basename</strong>, but also
+strips Perl-like extensions (.pm, .pl, .pod) and extensions like
+<em>.bat</em>, <em>.cmd</em> on Win32 and OS/2, or <em>.com</em> on VMS, respectively.</p>
+<p>
+</p>
+<h2><a name="pod_where_____opts_____pod__"><code>pod_where( { %opts }, $pod )</code></a></h2>
+<p>Returns the location of a pod document given a search directory
+and a module (e.g. <code>File::Find</code>) or script (e.g. <code>perldoc</code>) name.</p>
+<p>Options:</p>
+<dl>
+<dt><strong><code>-inc =&gt; 1</code></strong>
+
+<dd>
+<p>Search @INC for the pod and also the <code>scriptdir</code> defined in the
+<a href="/usr/lib/perl5/5.8/html/./lib/Config.html">Config</a> module.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddirs__3d_3e__5b__24dir1_2c__24dir2_2c__2e_2e_2e"><code>-dirs =&gt; [ $dir1, $dir2, ... ]</code></a></strong>
+
+<dd>
+<p>Reference to an array of search directories. These are searched in order
+before looking in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> (if <strong>-inc</strong>). Current directory is used if
+none are specified.</p>
+</dd>
+</li>
+<dt><strong><code>-verbose =&gt; 1</code></strong>
+
+<dd>
+<p>List directories as they are searched</p>
+</dd>
+</li>
+</dl>
+<p>Returns the full path of the first occurrence to the file.
+Package names (eg 'A::B') are automatically converted to directory
+names in the selected directory. (eg on unix 'A::B' is converted to
+'A/B'). Additionally, '.pm', '.pl' and '.pod' are appended to the
+search automatically if required.</p>
+<p>A subdirectory <em>pod/</em> is also checked if it exists in any of the given
+search directories. This ensures that e.g. <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">perlfunc</a> is
+found.</p>
+<p>It is assumed that if a module name is supplied, that that name
+matches the file name. Pods are not opened to check for the 'NAME'
+entry.</p>
+<p>A check is made to make sure that the file that is found does 
+contain some pod documentation.</p>
+<p>
+</p>
+<h2><a name="contains_pod___file____verbose__"><code>contains_pod( $file , $verbose )</code></a></h2>
+<p>Returns true if the supplied filename (not POD module) contains some pod
+information.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Please report bugs using <a href="http://rt.cpan.org">http://rt.cpan.org</a>.</p>
+<p>Marek Rouchal &lt;<a href="mailto:marekr@cpan.org">marekr@cpan.org</a>&gt;,
+heavily borrowing code from Nick Ing-Simmons' PodToHtml.</p>
+<p>Tim Jenness &lt;<a href="mailto:t.jenness@jach.hawaii.edu">t.jenness@jach.hawaii.edu</a>&gt; provided
+<code>pod_where</code> and <code>contains_pod</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Pod/Parser.html">the Pod::Parser manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Pod/Checker.html">the Pod::Checker manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perldoc.html">the perldoc manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::Find - find POD documents in directory trees</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

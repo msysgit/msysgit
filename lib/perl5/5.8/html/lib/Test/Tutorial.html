@@ -1,0 +1,587 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Tutorial - A tutorial about writing really basic tests</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Tutorial - A tutorial about writing really basic tests</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#nuts_and_bolts_of_testing_">Nuts and bolts of testing.</a></li>
+		<li><a href="#where_to_start">Where to start?</a></li>
+		<li><a href="#names">Names</a></li>
+		<li><a href="#test_the_manual">Test the manual</a></li>
+		<li><a href="#sometimes_the_tests_are_wrong">Sometimes the tests are wrong</a></li>
+		<li><a href="#testing_lots_of_values">Testing lots of values</a></li>
+		<li><a href="#informative_names">Informative names</a></li>
+		<li><a href="#skipping_tests">Skipping tests</a></li>
+		<li><a href="#todo_tests">Todo tests</a></li>
+		<li><a href="#testing_with_taint_mode_">Testing with taint mode.</a></li>
+	</ul>
+
+	<li><a href="#footnotes">FOOTNOTES</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Tutorial - A tutorial about writing really basic tests</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><em>AHHHHHHH!!!!  NOT TESTING!  Anything but testing!  
+Beat me, whip me, send me to Detroit, but don't make 
+me write tests!</em></p>
+<p><em>*sob*</em></p>
+<p><em>Besides, I don't know how to write the damned things.</em></p>
+<p>Is this you?  Is writing tests right up there with writing
+documentation and having your fingernails pulled out?  Did you open up
+a test and read</p>
+<pre>
+    ######## We start with some black magic</pre>
+<p>and decide that's quite enough for you?</p>
+<p>It's ok.  That's all gone now.  We've done all the black magic for
+you.  And here are the tricks...</p>
+<p>
+</p>
+<h2><a name="nuts_and_bolts_of_testing_">Nuts and bolts of testing.</a></h2>
+<p>Here's the most basic test program.</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    print &quot;1..1\n&quot;;</pre>
+<pre>
+    print 1 + 1 == 2 ? &quot;ok 1\n&quot; : &quot;not ok 1\n&quot;;</pre>
+<p>since 1 + 1 is 2, it prints:</p>
+<pre>
+    1..1
+    ok 1</pre>
+<p>What this says is: <code>1..1</code> ``I'm going to run one test.'' [1] <code>ok 1</code>
+``The first test passed''.  And that's about all magic there is to
+testing.  Your basic unit of testing is the <em>ok</em>.  For each thing you
+test, an <code>ok</code> is printed.  Simple.  <strong>Test::Harness</strong> interprets your test
+results to determine if you succeeded or failed (more on that later).</p>
+<p>Writing all these print statements rapidly gets tedious.  Fortunately,
+there's <strong>Test::Simple</strong>.  It has one function, <code>ok()</code>.</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::Simple tests =&gt; 1;</pre>
+<pre>
+    ok( 1 + 1 == 2 );</pre>
+<p>and that does the same thing as the code above.  <code>ok()</code> is the backbone
+of Perl testing, and we'll be using it instead of roll-your-own from
+here on.  If <code>ok()</code> gets a true value, the test passes.  False, it
+fails.</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::Simple tests =&gt; 2;
+    ok( 1 + 1 == 2 );
+    ok( 2 + 2 == 5 );</pre>
+<p>from that comes</p>
+<pre>
+    1..2
+    ok 1
+    not ok 2
+    #     Failed test (test.pl at line 5)
+    # Looks like you failed 1 tests of 2.</pre>
+<p><code>1..2</code> ``I'm going to run two tests.''  This number is used to ensure
+your test program ran all the way through and didn't die or skip some
+tests.  <code>ok 1</code> ``The first test passed.''  <code>not ok 2</code> ``The second test
+failed''.  Test::Simple helpfully prints out some extra commentary about
+your tests.</p>
+<p>It's not scary.  Come, hold my hand.  We're going to give an example
+of testing a module.  For our example, we'll be testing a date
+library, <strong>Date::ICal</strong>.  It's on CPAN, so download a copy and follow
+along. [2]</p>
+<p>
+</p>
+<h2><a name="where_to_start">Where to start?</a></h2>
+<p>This is the hardest part of testing, where do you start?  People often
+get overwhelmed at the apparent enormity of the task of testing a
+whole module.  Best place to start is at the beginning.  Date::ICal is
+an object-oriented module, and that means you start by making an
+object.  So we test <code>new()</code>.</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::Simple tests =&gt; 2;</pre>
+<pre>
+    use Date::ICal;</pre>
+<pre>
+    my $ical = Date::ICal-&gt;new;         # create an object
+    ok( defined $ical );                # check that we got something
+    ok( $ical-&gt;isa('Date::ICal') );     # and it's the right class</pre>
+<p>run that and you should get:</p>
+<pre>
+    1..2
+    ok 1
+    ok 2</pre>
+<p>congratulations, you've written your first useful test.</p>
+<p>
+</p>
+<h2><a name="names">Names</a></h2>
+<p>That output isn't terribly descriptive, is it?  When you have two
+tests you can figure out which one is #2, but what if you have 102?</p>
+<p>Each test can be given a little descriptive name as the second
+argument to <code>ok()</code>.</p>
+<pre>
+    use Test::Simple tests =&gt; 2;</pre>
+<pre>
+    ok( defined $ical,              'new() returned something' );
+    ok( $ical-&gt;isa('Date::ICal'),   &quot;  and it's the right class&quot; );</pre>
+<p>So now you'd see...</p>
+<pre>
+    1..2
+    ok 1 - new() returned something
+    ok 2 -   and it's the right class</pre>
+<p>
+</p>
+<h2><a name="test_the_manual">Test the manual</a></h2>
+<p>Simplest way to build up a decent testing suite is to just test what
+the manual says it does. [3] Let's pull something out of the 
+<a href="/usr/lib/perl5/5.8/html/Date/ICal.html#synopsis">SYNOPSIS in the Date::ICal manpage</a> and test that all its bits work.</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::Simple tests =&gt; 8;</pre>
+<pre>
+    use Date::ICal;</pre>
+<pre>
+    $ical = Date::ICal-&gt;new( year =&gt; 1964, month =&gt; 10, day =&gt; 16, 
+                             hour =&gt; 16, min =&gt; 12, sec =&gt; 47, 
+                             tz =&gt; '0530' );</pre>
+<pre>
+    ok( defined $ical,            'new() returned something' );
+    ok( $ical-&gt;isa('Date::ICal'), &quot;  and it's the right class&quot; );
+    ok( $ical-&gt;sec   == 47,       '  sec()'   );
+    ok( $ical-&gt;min   == 12,       '  min()'   );    
+    ok( $ical-&gt;hour  == 16,       '  hour()'  );
+    ok( $ical-&gt;day   == 17,       '  day()'   );
+    ok( $ical-&gt;month == 10,       '  month()' );
+    ok( $ical-&gt;year  == 1964,     '  year()'  );</pre>
+<p>run that and you get:</p>
+<pre>
+    1..8
+    ok 1 - new() returned something
+    ok 2 -   and it's the right class
+    ok 3 -   sec()
+    ok 4 -   min()
+    ok 5 -   hour()
+    not ok 6 -   day()
+    #     Failed test (- at line 16)
+    ok 7 -   month()
+    ok 8 -   year()
+    # Looks like you failed 1 tests of 8.</pre>
+<p>Whoops, a failure! [4] Test::Simple helpfully lets us know on what line
+the failure occurred, but not much else.  We were supposed to get 17,
+but we didn't.  What did we get??  Dunno.  We'll have to re-run the
+test in the debugger or throw in some print statements to find out.</p>
+<p>Instead, we'll switch from <strong>Test::Simple</strong> to <strong>Test::More</strong>.  <strong>Test::More</strong>
+does everything <strong>Test::Simple</strong> does, and more!  In fact, Test::More does
+things <em>exactly</em> the way Test::Simple does.  You can literally swap
+Test::Simple out and put Test::More in its place.  That's just what
+we're going to do.</p>
+<p>Test::More does more than Test::Simple.  The most important difference
+at this point is it provides more informative ways to say ``ok''.
+Although you can write almost any test with a generic <code>ok()</code>, it
+can't tell you what went wrong.  Instead, we'll use the <code>is()</code>
+function, which lets us declare that something is supposed to be the
+same as something else:</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::More tests =&gt; 8;</pre>
+<pre>
+    use Date::ICal;</pre>
+<pre>
+    $ical = Date::ICal-&gt;new( year =&gt; 1964, month =&gt; 10, day =&gt; 16, 
+                             hour =&gt; 16, min =&gt; 12, sec =&gt; 47, 
+                             tz =&gt; '0530' );</pre>
+<pre>
+    ok( defined $ical,            'new() returned something' );
+    ok( $ical-&gt;isa('Date::ICal'), &quot;  and it's the right class&quot; );
+    is( $ical-&gt;sec,     47,       '  sec()'   );
+    is( $ical-&gt;min,     12,       '  min()'   );    
+    is( $ical-&gt;hour,    16,       '  hour()'  );
+    is( $ical-&gt;day,     17,       '  day()'   );
+    is( $ical-&gt;month,   10,       '  month()' );
+    is( $ical-&gt;year,    1964,     '  year()'  );</pre>
+<p>``Is <code>$ical-&gt;sec</code> 47?''  ``Is <code>$ical-&gt;min</code> 12?''  With <code>is()</code> in place,
+you get some more information</p>
+<pre>
+    1..8
+    ok 1 - new() returned something
+    ok 2 -   and it's the right class
+    ok 3 -   sec()
+    ok 4 -   min()
+    ok 5 -   hour()
+    not ok 6 -   day()
+    #     Failed test (- at line 16)
+    #          got: '16'
+    #     expected: '17'
+    ok 7 -   month()
+    ok 8 -   year()
+    # Looks like you failed 1 tests of 8.</pre>
+<p>letting us know that <code>$ical-&gt;day</code> returned 16, but we expected 17.  A
+quick check shows that the code is working fine, we made a mistake
+when writing up the tests.  Just change it to:</p>
+<pre>
+    is( $ical-&gt;day,     16,       '  day()'   );</pre>
+<p>and everything works.</p>
+<p>So any time you're doing a ``this equals that'' sort of test, use <code>is()</code>.
+It even works on arrays.  The test is always in scalar context, so you
+can test how many elements are in a list this way. [5]</p>
+<pre>
+    is( @foo, 5, 'foo has 5 elements' );</pre>
+<p>
+</p>
+<h2><a name="sometimes_the_tests_are_wrong">Sometimes the tests are wrong</a></h2>
+<p>Which brings us to a very important lesson.  Code has bugs.  Tests are
+code.  Ergo, tests have bugs.  A failing test could mean a bug in the
+code, but don't discount the possibility that the test is wrong.</p>
+<p>On the flip side, don't be tempted to prematurely declare a test
+incorrect just because you're having trouble finding the bug.
+Invalidating a test isn't something to be taken lightly, and don't use
+it as a cop out to avoid work.</p>
+<p>
+</p>
+<h2><a name="testing_lots_of_values">Testing lots of values</a></h2>
+<p>We're going to be wanting to test a lot of dates here, trying to trick
+the code with lots of different edge cases.  Does it work before 1970?
+After 2038?  Before 1904?  Do years after 10,000 give it trouble?
+Does it get leap years right?  We could keep repeating the code above,
+or we could set up a little try/expect loop.</p>
+<pre>
+    use Test::More tests =&gt; 32;
+    use Date::ICal;</pre>
+<pre>
+    my %ICal_Dates = (
+            # An ICal string     And the year, month, date
+            #                    hour, minute and second we expect.
+            '19971024T120000' =&gt;    # from the docs.
+                                [ 1997, 10, 24, 12,  0,  0 ],
+            '20390123T232832' =&gt;    # after the Unix epoch
+                                [ 2039,  1, 23, 23, 28, 32 ],
+            '19671225T000000' =&gt;    # before the Unix epoch
+                                [ 1967, 12, 25,  0,  0,  0 ],
+            '18990505T232323' =&gt;    # before the MacOS epoch
+                                [ 1899,  5,  5, 23, 23, 23 ],
+    );</pre>
+<pre>
+    while( my($ical_str, $expect) = each %ICal_Dates ) {
+        my $ical = Date::ICal-&gt;new( ical =&gt; $ical_str );</pre>
+<pre>
+        ok( defined $ical,            &quot;new(ical =&gt; '$ical_str')&quot; );
+        ok( $ical-&gt;isa('Date::ICal'), &quot;  and it's the right class&quot; );</pre>
+<pre>
+        is( $ical-&gt;year,    $expect-&gt;[0],     '  year()'  );
+        is( $ical-&gt;month,   $expect-&gt;[1],     '  month()' );
+        is( $ical-&gt;day,     $expect-&gt;[2],     '  day()'   );
+        is( $ical-&gt;hour,    $expect-&gt;[3],     '  hour()'  );
+        is( $ical-&gt;min,     $expect-&gt;[4],     '  min()'   );    
+        is( $ical-&gt;sec,     $expect-&gt;[5],     '  sec()'   );
+    }</pre>
+<p>So now we can test bunches of dates by just adding them to
+<code>%ICal_Dates</code>.  Now that it's less work to test with more dates, you'll
+be inclined to just throw more in as you think of them.
+Only problem is, every time we add to that we have to keep adjusting
+the <code>use Test::More tests =&gt; ##</code> line.  That can rapidly get
+annoying.  There's two ways to make this work better.</p>
+<p>First, we can calculate the plan dynamically using the <code>plan()</code>
+function.</p>
+<pre>
+    use Test::More;
+    use Date::ICal;</pre>
+<pre>
+    my %ICal_Dates = (
+        ...same as before...
+    );</pre>
+<pre>
+    # For each key in the hash we're running 8 tests.
+    plan tests =&gt; keys %ICal_Dates * 8;</pre>
+<p>Or to be even more flexible, we use <code>no_plan</code>.  This means we're just
+running some tests, don't know how many. [6]</p>
+<pre>
+    use Test::More 'no_plan';   # instead of tests =&gt; 32</pre>
+<p>now we can just add tests and not have to do all sorts of math to
+figure out how many we're running.</p>
+<p>
+</p>
+<h2><a name="informative_names">Informative names</a></h2>
+<p>Take a look at this line here</p>
+<pre>
+    ok( defined $ical,            &quot;new(ical =&gt; '$ical_str')&quot; );</pre>
+<p>we've added more detail about what we're testing and the ICal string
+itself we're trying out to the name.  So you get results like:</p>
+<pre>
+    ok 25 - new(ical =&gt; '19971024T120000')
+    ok 26 -   and it's the right class
+    ok 27 -   year()
+    ok 28 -   month()
+    ok 29 -   day()
+    ok 30 -   hour()
+    ok 31 -   min()
+    ok 32 -   sec()</pre>
+<p>if something in there fails, you'll know which one it was and that
+will make tracking down the problem easier.  So try to put a bit of
+debugging information into the test names.</p>
+<p>Describe what the tests test, to make debugging a failed test easier
+for you or for the next person who runs your test.</p>
+<p>
+</p>
+<h2><a name="skipping_tests">Skipping tests</a></h2>
+<p>Poking around in the existing Date::ICal tests, I found this in
+<em>t/01sanity.t</em> [7]</p>
+<pre>
+    #!/usr/bin/perl -w</pre>
+<pre>
+    use Test::More tests =&gt; 7;
+    use Date::ICal;</pre>
+<pre>
+    # Make sure epoch time is being handled sanely.
+    my $t1 = Date::ICal-&gt;new( epoch =&gt; 0 );
+    is( $t1-&gt;epoch, 0,          &quot;Epoch time of 0&quot; );</pre>
+<pre>
+    # XXX This will only work on unix systems.
+    is( $t1-&gt;ical, '19700101Z', &quot;  epoch to ical&quot; );</pre>
+<pre>
+    is( $t1-&gt;year,  1970,       &quot;  year()&quot;  );
+    is( $t1-&gt;month, 1,          &quot;  month()&quot; );
+    is( $t1-&gt;day,   1,          &quot;  day()&quot;   );</pre>
+<pre>
+    # like the tests above, but starting with ical instead of epoch
+    my $t2 = Date::ICal-&gt;new( ical =&gt; '19700101Z' );
+    is( $t2-&gt;ical, '19700101Z', &quot;Start of epoch in ICal notation&quot; );</pre>
+<pre>
+    is( $t2-&gt;epoch, 0,          &quot;  and back to ICal&quot; );</pre>
+<p>The beginning of the epoch is different on most non-Unix operating
+systems [8].  Even though Perl smooths out the differences for the most
+part, certain ports do it differently.  MacPerl is one off the top of
+my head. [9] We <em>know</em> this will never work on MacOS.  So rather than
+just putting a comment in the test, we can explicitly say it's never
+going to work and skip the test.</p>
+<pre>
+    use Test::More tests =&gt; 7;
+    use Date::ICal;</pre>
+<pre>
+    # Make sure epoch time is being handled sanely.
+    my $t1 = Date::ICal-&gt;new( epoch =&gt; 0 );
+    is( $t1-&gt;epoch, 0,          &quot;Epoch time of 0&quot; );</pre>
+<pre>
+    SKIP: {
+        skip('epoch to ICal not working on MacOS', 6) 
+            if $^O eq 'MacOS';</pre>
+<pre>
+        is( $t1-&gt;ical, '19700101Z', &quot;  epoch to ical&quot; );</pre>
+<pre>
+        is( $t1-&gt;year,  1970,       &quot;  year()&quot;  );
+        is( $t1-&gt;month, 1,          &quot;  month()&quot; );
+        is( $t1-&gt;day,   1,          &quot;  day()&quot;   );</pre>
+<pre>
+        # like the tests above, but starting with ical instead of epoch
+        my $t2 = Date::ICal-&gt;new( ical =&gt; '19700101Z' );
+        is( $t2-&gt;ical, '19700101Z', &quot;Start of epoch in ICal notation&quot; );</pre>
+<pre>
+        is( $t2-&gt;epoch, 0,          &quot;  and back to ICal&quot; );
+    }</pre>
+<p>A little bit of magic happens here.  When running on anything but
+MacOS, all the tests run normally.  But when on MacOS, <code>skip()</code> causes
+the entire contents of the SKIP block to be jumped over.  It's never
+run.  Instead, it prints special output that tells Test::Harness that
+the tests have been skipped.</p>
+<pre>
+    1..7
+    ok 1 - Epoch time of 0
+    ok 2 # skip epoch to ICal not working on MacOS
+    ok 3 # skip epoch to ICal not working on MacOS
+    ok 4 # skip epoch to ICal not working on MacOS
+    ok 5 # skip epoch to ICal not working on MacOS
+    ok 6 # skip epoch to ICal not working on MacOS
+    ok 7 # skip epoch to ICal not working on MacOS</pre>
+<p>This means your tests won't fail on MacOS.  This means less emails
+from MacPerl users telling you about failing tests that you know will
+never work.  You've got to be careful with skip tests.  These are for
+tests which don't work and <em>never will</em>.  It is not for skipping
+genuine bugs (we'll get to that in a moment).</p>
+<p>The tests are wholly and completely skipped. [10]  This will work.</p>
+<pre>
+    SKIP: {
+        skip(&quot;I don't wanna die!&quot;);</pre>
+<pre>
+        die, die, die, die, die;
+    }</pre>
+<p>
+</p>
+<h2><a name="todo_tests">Todo tests</a></h2>
+<p>Thumbing through the Date::ICal man page, I came across this:</p>
+<pre>
+   ical</pre>
+<pre>
+       $ical_string = $ical-&gt;ical;</pre>
+<pre>
+   Retrieves, or sets, the date on the object, using any
+   valid ICal date/time string.</pre>
+<p>``Retrieves or sets''.  Hmmm, didn't see a test for using <code>ical()</code> to set
+the date in the Date::ICal test suite.  So I'll write one.</p>
+<pre>
+    use Test::More tests =&gt; 1;
+    use Date::ICal;</pre>
+<pre>
+    my $ical = Date::ICal-&gt;new;
+    $ical-&gt;ical('20201231Z');
+    is( $ical-&gt;ical, '20201231Z',   'Setting via ical()' );</pre>
+<p>run that and I get</p>
+<pre>
+    1..1
+    not ok 1 - Setting via ical()
+    #     Failed test (- at line 6)
+    #          got: '20010814T233649Z'
+    #     expected: '20201231Z'
+    # Looks like you failed 1 tests of 1.</pre>
+<p>Whoops!  Looks like it's unimplemented.  Let's assume we don't have
+the time to fix this. [11] Normally, you'd just comment out the test
+and put a note in a todo list somewhere.  Instead, we're going to
+explicitly state ``this test will fail'' by wrapping it in a <code>TODO</code> block.</p>
+<pre>
+    use Test::More tests =&gt; 1;</pre>
+<pre>
+    TODO: {
+        local $TODO = 'ical($ical) not yet implemented';</pre>
+<pre>
+        my $ical = Date::ICal-&gt;new;
+        $ical-&gt;ical('20201231Z');</pre>
+<pre>
+        is( $ical-&gt;ical, '20201231Z',   'Setting via ical()' );
+    }</pre>
+<p>Now when you run, it's a little different:</p>
+<pre>
+    1..1
+    not ok 1 - Setting via ical() # TODO ical($ical) not yet implemented
+    #          got: '20010822T201551Z'
+    #     expected: '20201231Z'</pre>
+<p>Test::More doesn't say ``Looks like you failed 1 tests of 1''.  That '#
+TODO' tells Test::Harness ``this is supposed to fail'' and it treats a
+failure as a successful test.  So you can write tests even before
+you've fixed the underlying code.</p>
+<p>If a TODO test passes, Test::Harness will report it ``UNEXPECTEDLY
+SUCCEEDED''.  When that happens, you simply remove the TODO block with
+<code>local $TODO</code> and turn it into a real test.</p>
+<p>
+</p>
+<h2><a name="testing_with_taint_mode_">Testing with taint mode.</a></h2>
+<p>Taint mode is a funny thing.  It's the globalest of all global
+features.  Once you turn it on, it affects <em>all</em> code in your program
+and <em>all</em> modules used (and all the modules they use).  If a single
+piece of code isn't taint clean, the whole thing explodes.  With that
+in mind, it's very important to ensure your module works under taint
+mode.</p>
+<p>It's very simple to have your tests run under taint mode.  Just throw
+a <code>-T</code> into the <code>#!</code> line.  Test::Harness will read the switches
+in <code>#!</code> and use them to run your tests.</p>
+<pre>
+    #!/usr/bin/perl -Tw</pre>
+<pre>
+    ...test normally here...</pre>
+<p>So when you say <code>make test</code> it will be run with taint mode and
+warnings on.</p>
+<p>
+</p>
+<hr />
+<h1><a name="footnotes">FOOTNOTES</a></h1>
+<ol>
+<li>
+<p>The first number doesn't really mean anything, but it has to be 1.
+It's the second number that's important.</p>
+</li>
+<li>
+<p>For those following along at home, I'm using version 1.31.  It has
+some bugs, which is good -- we'll uncover them with our tests.</p>
+</li>
+<li>
+<p>You can actually take this one step further and test the manual
+itself.  Have a look at <strong>Test::Inline</strong> (formerly <strong>Pod::Tests</strong>).</p>
+</li>
+<li>
+<p>Yes, there's a mistake in the test suite.  What!  Me, contrived?</p>
+</li>
+<li>
+<p>We'll get to testing the contents of lists later.</p>
+</li>
+<li>
+<p>But what happens if your test program dies halfway through?!  Since we
+didn't say how many tests we're going to run, how can we know it
+failed?  No problem, Test::More employs some magic to catch that death
+and turn the test into a failure, even if every test passed up to that
+point.</p>
+</li>
+<li>
+<p>I cleaned it up a little.</p>
+</li>
+<li>
+<p>Most Operating Systems record time as the number of seconds since a
+certain date.  This date is the beginning of the epoch.  Unix's starts
+at midnight January 1st, 1970 GMT.</p>
+</li>
+<li>
+<p>MacOS's epoch is midnight January 1st, 1904.  VMS's is midnight,
+November 17th, 1858, but vmsperl emulates the Unix epoch so it's not a
+problem.</p>
+</li>
+<li>
+<p>As long as the code inside the SKIP block at least compiles.  Please
+don't ask how.  No, it's not a filter.</p>
+</li>
+<li>
+<p>Do NOT be tempted to use TODO tests as a way to avoid fixing simple
+bugs!</p>
+</li>
+</ol>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt; and the perl-qa dancers!</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2001 by Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;.</p>
+<p>This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.</p>
+<p>Irrespective of its distribution, all code examples in these files
+are hereby placed into the public domain.  You are permitted and
+encouraged to use this code in your own programs for fun
+or for profit as you see fit.  A simple comment in the code giving
+credit would be courteous but is not required.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Tutorial - A tutorial about writing really basic tests</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

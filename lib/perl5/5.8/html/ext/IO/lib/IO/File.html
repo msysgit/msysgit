@@ -1,0 +1,181 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IO::File - supply object methods for filehandles</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::File - supply object methods for filehandles</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>IO::File - supply object methods for filehandles</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use IO::File;</pre>
+<pre>
+    $fh = new IO::File;
+    if ($fh-&gt;open(&quot;&lt; file&quot;)) {
+        print &lt;$fh&gt;;
+        $fh-&gt;close;
+    }</pre>
+<pre>
+    $fh = new IO::File &quot;&gt; file&quot;;
+    if (defined $fh) {
+        print $fh &quot;bar\n&quot;;
+        $fh-&gt;close;
+    }</pre>
+<pre>
+    $fh = new IO::File &quot;file&quot;, &quot;r&quot;;
+    if (defined $fh) {
+        print &lt;$fh&gt;;
+        undef $fh;       # automatically closes the file
+    }</pre>
+<pre>
+    $fh = new IO::File &quot;file&quot;, O_WRONLY|O_APPEND;
+    if (defined $fh) {
+        print $fh &quot;corge\n&quot;;</pre>
+<pre>
+        $pos = $fh-&gt;getpos;
+        $fh-&gt;setpos($pos);</pre>
+<pre>
+        undef $fh;       # automatically closes the file
+    }</pre>
+<pre>
+    autoflush STDOUT 1;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>IO::File</code> inherits from <code>IO::Handle</code> and <code>IO::Seekable</code>. It extends
+these classes with methods that are specific to file handles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_new">new ( FILENAME [,MODE [,PERMS]] )</a></strong>
+
+<dd>
+<p>Creates an <code>IO::File</code>.  If it receives any parameters, they are passed to
+the method <a href="#item_open"><code>open</code></a>; if the open fails, the object is destroyed.  Otherwise,
+it is returned to the caller.</p>
+</dd>
+</li>
+<dt><strong><a name="item_new_tmpfile">new_tmpfile</a></strong>
+
+<dd>
+<p>Creates an <code>IO::File</code> opened for read/write on a newly created temporary
+file.  On systems where this is possible, the temporary file is anonymous
+(i.e. it is unlinked after creation, but held open).  If the temporary
+file cannot be created or opened, the <code>IO::File</code> object is destroyed.
+Otherwise, it is returned to the caller.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<dl>
+<dt><strong><a name="item_open">open( FILENAME [,MODE [,PERMS]] )</a></strong>
+
+<dt><strong>open( FILENAME, IOLAYERS )</strong>
+
+<dd>
+<p><a href="#item_open"><code>open</code></a> accepts one, two or three parameters.  With one parameter,
+it is just a front end for the built-in <a href="#item_open"><code>open</code></a> function.  With two or three
+parameters, the first parameter is a filename that may include
+whitespace or other special characters, and the second parameter is
+the open mode, optionally followed by a file permission value.</p>
+</dd>
+<dd>
+<p>If <code>IO::File::open</code> receives a Perl mode string (``&gt;'', ``+&lt;'', etc.)
+or an ANSI C <code>fopen()</code> mode string (``w'', ``r+'', etc.), it uses the basic
+Perl <a href="#item_open"><code>open</code></a> operator (but protects any special characters).</p>
+</dd>
+<dd>
+<p>If <code>IO::File::open</code> is given a numeric mode, it passes that mode
+and the optional permissions value to the Perl <code>sysopen</code> operator.
+The permissions default to 0666.</p>
+</dd>
+<dd>
+<p>If <code>IO::File::open</code> is given a mode that includes the <code>:</code> character,
+it passes all the three arguments to the three-argument <a href="#item_open"><code>open</code></a> operator.</p>
+</dd>
+<dd>
+<p>For convenience, <code>IO::File</code> exports the O_XXX constants from the
+Fcntl module, if this module is available.</p>
+</dd>
+</li>
+<dt><strong><a name="item_binmode">binmode( [LAYER] )</a></strong>
+
+<dd>
+<p><a href="#item_binmode"><code>binmode</code></a> sets <a href="#item_binmode"><code>binmode</code></a> on the underlying <code>IO</code> object, as documented
+in <code>perldoc -f binmode</code>.</p>
+</dd>
+<dd>
+<p><a href="#item_binmode"><code>binmode</code></a> accepts one optional parameter, which is the layer to be
+passed on to the <a href="#item_binmode"><code>binmode</code></a> call.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>Some operating systems may perform  <a href="#item_new"><code>IO::File::new()</code></a> or <a href="#item_open"><code>IO::File::open()</code></a>
+on a directory without errors.  This behavior is not portable and not
+suggested for use.  Using <code>opendir()</code> and <code>readdir()</code> or <code>IO::Dir</code> are
+suggested instead.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#i_o_operators">I/O Operators in the perlop manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Handle.html">the IO::Handle manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Seekable.html">the IO::Seekable manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Dir.html">the IO::Dir manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Derived from FileHandle.pm by Graham Barr &lt;<em><a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a></em>&gt;.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::File - supply object methods for filehandles</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

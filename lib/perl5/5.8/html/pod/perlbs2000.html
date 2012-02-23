@@ -1,0 +1,266 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>README.BS2000 - building and installing Perl for BS2000.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.BS2000 - building and installing Perl for BS2000.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#gzip_on_bs2000">gzip on BS2000</a></li>
+		<li><a href="#bison_on_bs2000">bison on BS2000</a></li>
+		<li><a href="#unpacking_perl_distribution_on_bs2000">Unpacking Perl Distribution on BS2000</a></li>
+		<li><a href="#compiling_perl_on_bs2000">Compiling Perl on BS2000</a></li>
+		<li><a href="#testing_perl_on_bs2000">Testing Perl on BS2000</a></li>
+		<li><a href="#installing_perl_on_bs2000">Installing Perl on BS2000</a></li>
+		<li><a href="#using_perl_in_the_posixshell_of_bs2000">Using Perl in the Posix-Shell of BS2000</a></li>
+		<li><a href="#using_perl_in_native_bs2000">Using Perl in ``native'' BS2000</a></li>
+		<li><a href="#floating_point_anomalies_on_bs2000">Floating point anomalies on BS2000</a></li>
+		<li><a href="#using_perlio_and_different_encodings_on_ascii_and_ebcdic_partitions">Using PerlIO and different encodings on ASCII and EBCDIC partitions</a></li>
+	</ul>
+
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<ul>
+
+		<li><a href="#mailing_list">Mailing list</a></li>
+	</ul>
+
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>README.BS2000 - building and installing Perl for BS2000.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>This document will help you Configure, build, test and install Perl
+on BS2000 in the POSIX subsystem.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a ported perl for the POSIX subsystem in BS2000 VERSION OSD
+V3.1A or later.  It may work on other versions, but we started porting
+and testing it with 3.1A and are currently using Version V4.0A.</p>
+<p>You may need the following GNU programs in order to install perl:</p>
+<p>
+</p>
+<h2><a name="gzip_on_bs2000">gzip on BS2000</a></h2>
+<p>We used version 1.2.4, which could be installed out of the box with
+one failure during 'make check'.</p>
+<p>
+</p>
+<h2><a name="bison_on_bs2000">bison on BS2000</a></h2>
+<p>The yacc coming with BS2000 POSIX didn't work for us.  So we had to
+use bison.  We had to make a few changes to perl in order to use the
+pure (reentrant) parser of bison.  We used version 1.25, but we had to
+add a few changes due to EBCDIC.  See below for more details
+concerning yacc.</p>
+<p>
+</p>
+<h2><a name="unpacking_perl_distribution_on_bs2000">Unpacking Perl Distribution on BS2000</a></h2>
+<p>To extract an ASCII tar archive on BS2000 POSIX you need an ASCII
+filesystem (we used the mountpoint /usr/local/ascii for this).  Now
+you extract the archive in the ASCII filesystem without
+I/O-conversion:</p>
+<p>cd /usr/local/ascii
+export IO_CONVERSION=NO
+gunzip &lt; /usr/local/src/perl.tar.gz | pax -r</p>
+<p>You may ignore the error message for the first element of the archive
+(this doesn't look like a tar archive / skipping to next file...),
+it's only the directory which will be created automatically anyway.</p>
+<p>After extracting the archive you copy the whole directory tree to your
+EBCDIC filesystem.  <strong>This time you use I/O-conversion</strong>:</p>
+<p>cd /usr/local/src
+IO_CONVERSION=YES
+cp -r /usr/local/ascii/perl5.005_02 ./</p>
+<p>
+</p>
+<h2><a name="compiling_perl_on_bs2000">Compiling Perl on BS2000</a></h2>
+<p>There is a ``hints'' file for BS2000 called hints.posix-bc (because
+posix-bc is the OS name given by `uname`) that specifies the correct
+values for most things.  The major problem is (of course) the EBCDIC
+character set.  We have german EBCDIC version.</p>
+<p>Because of our problems with the native yacc we used GNU bison to
+generate a pure (=reentrant) parser for perly.y.  So our yacc is
+really the following script:</p>
+<p>-----8&lt;-----/usr/local/bin/yacc-----8&lt;-----
+#! /usr/bin/sh</p>
+<p># Bison as a reentrant yacc:</p>
+<p># save parameters:
+params=``''
+while [[ $# -gt 1 ]]; do
+    params=``$params $1''
+    shift
+done</p>
+<p># add flag %pure_parser:</p>
+<p>tmpfile=/tmp/bison.$$.y
+echo %pure_parser &gt; $tmpfile
+cat $1 &gt;&gt; $tmpfile</p>
+<p># call bison:</p>
+<p>echo ``/usr/local/bin/bison --yacc $params $1\t\t\t(Pure Parser)''
+/usr/local/bin/bison --yacc $params $tmpfile</p>
+<p># cleanup:</p>
+<p>rm -f $tmpfile
+-----8&lt;----------8&lt;-----</p>
+<p>We still use the normal yacc for a2p.y though!!!  We made a softlink
+called byacc to distinguish between the two versions:</p>
+<p>ln -s /usr/bin/yacc /usr/local/bin/byacc</p>
+<p>We build perl using GNU make.  We tried the native make once and it
+worked too.</p>
+<p>
+</p>
+<h2><a name="testing_perl_on_bs2000">Testing Perl on BS2000</a></h2>
+<p>We still got a few errors during <code>make test</code>.  Some of them are the
+result of using bison.  Bison prints <em>parser error</em> instead of <em>syntax
+error</em>, so we may ignore them.  The following list shows
+our errors, your results may differ:</p>
+<p>op/numconvert.......FAILED tests 1409-1440
+op/regexp...........FAILED tests 483, 496
+op/regexp_noamp.....FAILED tests 483, 496
+pragma/overload.....FAILED tests 152-153, 170-171
+pragma/warnings.....FAILED tests 14, 82, 129, 155, 192, 205, 207
+lib/bigfloat........FAILED tests 351-352, 355
+lib/bigfltpm........FAILED tests 354-355, 358
+lib/complex.........FAILED tests 267, 487
+lib/dumper..........FAILED tests 43, 45
+Failed 11/231 test scripts, 95.24% okay. 57/10595 subtests failed, 99.46% okay.</p>
+<p>
+</p>
+<h2><a name="installing_perl_on_bs2000">Installing Perl on BS2000</a></h2>
+<p>We have no nroff on BS2000 POSIX (yet), so we ignored any errors while
+installing the documentation.</p>
+<p>
+</p>
+<h2><a name="using_perl_in_the_posixshell_of_bs2000">Using Perl in the Posix-Shell of BS2000</a></h2>
+<p>BS2000 POSIX doesn't support the shebang notation
+(<code>#!/usr/local/bin/perl</code>), so you have to use the following lines
+instead:</p>
+<p>: # use perl
+    eval 'exec /usr/local/bin/perl -S $0 ${1+``$@''}'
+        if $running_under_some_shell;</p>
+<p>
+</p>
+<h2><a name="using_perl_in_native_bs2000">Using Perl in ``native'' BS2000</a></h2>
+<p>We don't have much experience with this yet, but try the following:</p>
+<p>Copy your Perl executable to a BS2000 LLM using bs2cp:</p>
+<p><code>bs2cp /usr/local/bin/perl 'bs2:perl(perl,l)'</code></p>
+<p>Now you can start it with the following (SDF) command:</p>
+<p><code>/START-PROG FROM-FILE=*MODULE(PERL,PERL),PROG-MODE=*ANY,RUN-MODE=*ADV</code></p>
+<p>First you get the BS2000 commandline prompt ('*').  Here you may enter
+your parameters, e.g. <code>-e 'print &quot;Hello World!\\n&quot;;'</code> (note the
+double backslash!) or <code>-w</code> and the name of your Perl script.
+Filenames starting with <code>/</code> are searched in the Posix filesystem,
+others are searched in the BS2000 filesystem.  You may even use
+wildcards if you put a <code>%</code> in front of your filename (e.g. <code>-w
+checkfiles.pl %*.c</code>).  Read your C/C++ manual for additional
+possibilities of the commandline prompt (look for
+PARAMETER-PROMPTING).</p>
+<p>
+</p>
+<h2><a name="floating_point_anomalies_on_bs2000">Floating point anomalies on BS2000</a></h2>
+<p>There appears to be a bug in the floating point implementation on BS2000 POSIX
+systems such that calling <code>int()</code> on the product of a number and a small
+magnitude number is not the same as calling <code>int()</code> on the quotient of
+that number and a large magnitude number.  For example, in the following
+Perl code:</p>
+<pre>
+    my $x = 100000.0;
+    my $y = int($x * 1e-5) * 1e5; # '0'
+    my $z = int($x / 1e+5) * 1e5;  # '100000'
+    print &quot;\$y is $y and \$z is $z\n&quot;; # $y is 0 and $z is 100000</pre>
+<p>Although one would expect the quantities $y and $z to be the same and equal
+to 100000 they will differ and instead will be 0 and 100000 respectively.</p>
+<p>
+</p>
+<h2><a name="using_perlio_and_different_encodings_on_ascii_and_ebcdic_partitions">Using PerlIO and different encodings on ASCII and EBCDIC partitions</a></h2>
+<p>Since version 5.8 Perl uses the new PerlIO on BS2000.  This enables
+you using different encodings per IO channel.  For example you may use</p>
+<pre>
+    use Encode;
+    open($f, &quot;&gt;:encoding(ascii)&quot;, &quot;test.ascii&quot;);
+    print $f &quot;Hello World!\n&quot;;
+    open($f, &quot;&gt;:encoding(posix-bc)&quot;, &quot;test.ebcdic&quot;);
+    print $f &quot;Hello World!\n&quot;;
+    open($f, &quot;&gt;:encoding(latin1)&quot;, &quot;test.latin1&quot;);
+    print $f &quot;Hello World!\n&quot;;
+    open($f, &quot;&gt;:encoding(utf8)&quot;, &quot;test.utf8&quot;);
+    print $f &quot;Hello World!\n&quot;;</pre>
+<p>to get two files containing ``Hello World!\n'' in ASCII, EBCDIC, ISO
+Latin-1 (in this example identical to ASCII) respective UTF-EBCDIC (in
+this example identical to normal EBCDIC).  See the documentation of
+Encode::PerlIO for details.</p>
+<p>As the PerlIO layer uses raw IO internally, all this totally ignores
+the type of your filesystem (ASCII or EBCDIC) and the IO_CONVERSION
+environment variable.  If you want to get the old behavior, that the
+BS2000 IO functions determine conversion depending on the filesystem
+PerlIO still is your friend.  You use IO_CONVERSION as usual and tell
+Perl, that it should use the native IO layer:</p>
+<pre>
+    export IO_CONVERSION=YES
+    export PERLIO=stdio</pre>
+<p>Now your IO would be ASCII on ASCII partitions and EBCDIC on EBCDIC
+partitions.  See the documentation of PerlIO (without <code>Encode::</code>!)
+for further posibilities.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Thomas Dorner</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./INSTALL.html">the INSTALL manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a>.</p>
+<p>
+</p>
+<h2><a name="mailing_list">Mailing list</a></h2>
+<p>If you are interested in the VM/ESA, z/OS (formerly known as OS/390)
+and POSIX-BC (BS2000) ports of Perl then see the perl-mvs mailing list.
+To subscribe, send an empty message to <a href="mailto:perl-mvs-subscribe@perl.org.">perl-mvs-subscribe@perl.org.</a></p>
+<p>See also:</p>
+<pre>
+    <a href="http://lists.perl.org/showlist.cgi?name=perl-mvs">http://lists.perl.org/showlist.cgi?name=perl-mvs</a></pre>
+<p>There are web archives of the mailing list at:</p>
+<pre>
+    <a href="http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/">http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/</a>
+    <a href="http://archive.develooper.com/perl-mvs@perl.org/">http://archive.develooper.com/perl-mvs@perl.org/</a></pre>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>This document was originally written by Thomas Dorner for the 5.005
+release of Perl.</p>
+<p>This document was podified for the 5.6 release of perl 11 July 2000.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;README.BS2000 - building and installing Perl for BS2000.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

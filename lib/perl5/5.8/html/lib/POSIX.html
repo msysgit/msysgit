@@ -1,0 +1,3019 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>POSIX - Perl interface to IEEE Std 1003.1</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;POSIX - Perl interface to IEEE Std 1003.1</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<li><a href="#classes">CLASSES</a></li>
+	<ul>
+
+		<li><a href="#posix__sigaction">POSIX::SigAction</a></li>
+		<li><a href="#posix__sigset">POSIX::SigSet</a></li>
+		<li><a href="#posix__termios">POSIX::Termios</a></li>
+	</ul>
+
+	<li><a href="#pathname_constants">PATHNAME CONSTANTS</a></li>
+	<li><a href="#posix_constants">POSIX CONSTANTS</a></li>
+	<li><a href="#system_configuration">SYSTEM CONFIGURATION</a></li>
+	<li><a href="#errno">ERRNO</a></li>
+	<li><a href="#fcntl">FCNTL</a></li>
+	<li><a href="#float">FLOAT</a></li>
+	<li><a href="#limits">LIMITS</a></li>
+	<li><a href="#locale">LOCALE</a></li>
+	<li><a href="#math">MATH</a></li>
+	<li><a href="#signal">SIGNAL</a></li>
+	<li><a href="#stat">STAT</a></li>
+	<li><a href="#stdlib">STDLIB</a></li>
+	<li><a href="#stdio">STDIO</a></li>
+	<li><a href="#time">TIME</a></li>
+	<li><a href="#unistd">UNISTD</a></li>
+	<li><a href="#wait">WAIT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>POSIX - Perl interface to IEEE Std 1003.1</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use POSIX;
+    use POSIX qw(setsid);
+    use POSIX qw(:errno_h :fcntl_h);</pre>
+<pre>
+    printf &quot;EINTR is %d\n&quot;, EINTR;</pre>
+<pre>
+    $sess_id = POSIX::setsid();</pre>
+<pre>
+    $fd = POSIX::open($path, O_CREAT|O_EXCL|O_WRONLY, 0644);
+        # note: that's a filedescriptor, *NOT* a filehandle</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The POSIX module permits you to access all (or nearly all) the standard
+POSIX 1003.1 identifiers.  Many of these identifiers have been given Perl-ish
+interfaces.</p>
+<p><em>Everything is exported by default</em> with the exception of any POSIX
+functions with the same name as a built-in Perl function, such as
+<a href="#item_abs"><code>abs</code></a>, <a href="#item_alarm"><code>alarm</code></a>, <a href="#item_rmdir"><code>rmdir</code></a>, <a href="#item_write"><code>write</code></a>, etc.., which will be exported
+only if you ask for them explicitly.  This is an unfortunate backwards
+compatibility feature.  You can stop the exporting by saying <code>use
+POSIX ()</code> and then use the fully qualified names (ie. <code>POSIX::SEEK_END</code>).</p>
+<p>This document gives a condensed list of the features available in the POSIX
+module.  Consult your operating system's manpages for general information on
+most features.  Consult <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for functions which are noted as being
+identical to Perl's builtin functions.</p>
+<p>The first section describes POSIX functions from the 1003.1 specification.
+The second section describes some classes for signal objects, TTY objects,
+and other miscellaneous objects.  The remaining sections list various
+constants and macros in an organization which roughly follows IEEE Std
+1003.1b-1993.</p>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>The POSIX module is probably the most complex Perl module supplied with
+the standard distribution.  It incorporates autoloading, namespace games,
+and dynamic loading of code that's in Perl, C, or both.  It's a great
+source of wisdom.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>A few functions are not implemented because they are C specific.  If you
+attempt to call these, they will print a message telling you that they
+aren't implemented, and suggest using the Perl equivalent should one
+exist.  For example, trying to access the <a href="#item_setjmp"><code>setjmp()</code></a> call will elicit the
+message ``setjmp() is C-specific: use eval {} instead''.</p>
+<p>Furthermore, some evil vendors will claim 1003.1 compliance, but in fact
+are not so: they will not pass the PCTS (POSIX Compliance Test Suites).
+For example, one vendor may not define EDEADLK, or the semantics of the
+errno values set by <a href="#item_open"><code>open(2)</code></a> might not be quite right.  Perl does not
+attempt to verify POSIX compliance.  That means you can currently
+successfully say ``use POSIX'',  and then later in your program you find
+that your vendor has been lax and there's no usable ICANON macro after
+all.  This could be construed to be a bug.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<dl>
+<dt><strong><a name="item__exit">_exit</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item__exit"><code>_exit()</code></a>.  It exits the program
+immediately which means among other things buffered I/O is <strong>not</strong> flushed.</p>
+</dd>
+<dd>
+<p>Note that when using threads and in Linux this is <strong>not</strong> a good way to
+exit a thread because in Linux processes and threads are kind of the
+same thing (Note: while this is the situation in early 2003 there are
+projects under way to have threads with more POSIXly semantics in Linux).
+If you want not to return from a thread, detach the thread.</p>
+</dd>
+</li>
+<dt><strong><a name="item_abort">abort</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_abort"><code>abort()</code></a>.  It terminates the
+process with a <code>SIGABRT</code> signal unless caught by a signal handler or
+if the handler does not return normally (it e.g.  does a <a href="#item_longjmp"><code>longjmp</code></a>).</p>
+</dd>
+</li>
+<dt><strong><a name="item_abs">abs</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_abs"><code>abs()</code></a> function, returning
+the absolute value of its numerical argument.</p>
+</dd>
+</li>
+<dt><strong><a name="item_access">access</a></strong>
+
+<dd>
+<p>Determines the accessibility of a file.</p>
+</dd>
+<dd>
+<pre>
+        if( POSIX::access( &quot;/&quot;, &amp;POSIX::R_OK ) ){
+                print &quot;have read permission\n&quot;;
+        }</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.  Note: do not use <a href="#item_access"><code>access()</code></a> for
+security purposes.  Between the <a href="#item_access"><code>access()</code></a> call and the operation
+you are preparing for the permissions might change: a classic
+<em>race condition</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_acos">acos</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_acos"><code>acos()</code></a>, returning
+the arcus cosine of its numerical argument.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_alarm">alarm</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_alarm"><code>alarm()</code></a> function,
+either for arming or disarming the <code>SIGARLM</code> timer.</p>
+</dd>
+</li>
+<dt><strong><a name="item_asctime">asctime</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_asctime"><code>asctime()</code></a>.  It returns
+a string of the form</p>
+</dd>
+<dd>
+<pre>
+        &quot;Fri Jun  2 18:22:13 2000\n\0&quot;</pre>
+</dd>
+<dd>
+<p>and it is called thusly</p>
+</dd>
+<dd>
+<pre>
+        $asctime = asctime($sec, $min, $hour, $mday, $mon, $year,
+                           $wday, $yday, $isdst);</pre>
+</dd>
+<dd>
+<p>The <code>$mon</code> is zero-based: January equals <code>0</code>.  The <code>$year</code> is
+1900-based: 2001 equals <code>101</code>.  The <code>$wday</code>, <code>$yday</code>, and <code>$isdst</code>
+default to zero (and the first two are usually ignored anyway).</p>
+</dd>
+</li>
+<dt><strong><a name="item_asin">asin</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_asin"><code>asin()</code></a>, returning
+the arcus sine of its numerical argument.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_assert">assert</a></strong>
+
+<dd>
+<p>Unimplemented, but you can use <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/die.html">die in the perlfunc manpage</a> and the <a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">the Carp manpage</a> module
+to achieve similar things.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atan">atan</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_atan"><code>atan()</code></a>, returning the
+arcus tangent of its numerical argument.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atan2">atan2</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_atan2"><code>atan2()</code></a> function, returning
+the arcus tangent defined by its two numerical arguments, the <em>y</em>
+coordinate and the <em>x</em> coordinate.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atexit">atexit</a></strong>
+
+<dd>
+<p><a href="#item_atexit"><code>atexit()</code></a> is C-specific: use <code>END {}</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atof">atof</a></strong>
+
+<dd>
+<p><a href="#item_atof"><code>atof()</code></a> is C-specific.  Perl converts strings to numbers transparently.
+If you need to force a scalar to a number, add a zero to it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atoi">atoi</a></strong>
+
+<dd>
+<p><a href="#item_atoi"><code>atoi()</code></a> is C-specific.  Perl converts strings to numbers transparently.
+If you need to force a scalar to a number, add a zero to it.
+If you need to have just the integer part, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/int.html">int in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_atol">atol</a></strong>
+
+<dd>
+<p><a href="#item_atol"><code>atol()</code></a> is C-specific.  Perl converts strings to numbers transparently.
+If you need to force a scalar to a number, add a zero to it.
+If you need to have just the integer part, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/int.html">int in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_bsearch">bsearch</a></strong>
+
+<dd>
+<p><a href="#item_bsearch"><code>bsearch()</code></a> not supplied.  For doing binary search on wordlists,
+see <a href="/usr/lib/perl5/5.8/html/./lib/Search/Dict.html">the Search::Dict manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_calloc">calloc</a></strong>
+
+<dd>
+<p><a href="#item_calloc"><code>calloc()</code></a> is C-specific.  Perl does memory management transparently.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ceil">ceil</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_ceil"><code>ceil()</code></a>, returning the smallest
+integer value greater than or equal to the given numerical argument.</p>
+</dd>
+</li>
+<dt><strong><a name="item_chdir">chdir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_chdir"><code>chdir()</code></a> function, allowing
+one to change the working (default) directory, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/chdir.html">chdir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_chmod">chmod</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_chmod"><code>chmod()</code></a> function, allowing
+one to change file and directory permissions, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/chmod.html">chmod in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_chown">chown</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_chown"><code>chown()</code></a> function, allowing one
+to change file and directory owners and groups, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/chown.html">chown in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clearerr">clearerr</a></strong>
+
+<dd>
+<p>Use the method <a href="#item_clearerr"><code>IO::Handle::clearerr()</code></a> instead, to reset the error
+state (if any) and EOF state (if any) of the given stream.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clock">clock</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_clock"><code>clock()</code></a>, returning the
+amount of spent processor time in microseconds.</p>
+</dd>
+</li>
+<dt><strong><a name="item_close">close</a></strong>
+
+<dd>
+<p>Close the file.  This uses file descriptors such as those obtained by calling
+<code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_RDONLY );
+        POSIX::close( $fd );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/close.html">close in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_closedir">closedir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_closedir"><code>closedir()</code></a> function for closing
+a directory handle, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/closedir.html">closedir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cos">cos</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_cos"><code>cos()</code></a> function, for returning
+the cosine of its numerical argument, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/cos.html">cos in the perlfunc manpage</a>.
+See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cosh">cosh</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_cosh"><code>cosh()</code></a>, for returning
+the hyperbolic cosine of its numeric argument.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_creat">creat</a></strong>
+
+<dd>
+<p>Create a new file.  This returns a file descriptor like the ones returned by
+<code>POSIX::open</code>.  Use <code>POSIX::close</code> to close the file.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::creat( &quot;foo&quot;, 0611 );
+        POSIX::close( $fd );</pre>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sysopen.html">sysopen in the perlfunc manpage</a> and its <code>O_CREAT</code> flag.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ctermid">ctermid</a></strong>
+
+<dd>
+<p>Generates the path name for the controlling terminal.</p>
+</dd>
+<dd>
+<pre>
+        $path = POSIX::ctermid();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_ctime">ctime</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_ctime"><code>ctime()</code></a> and equivalent
+to <a href="#item_asctime"><code>asctime(localtime(...))</code></a>, see <a href="#item_asctime">asctime</a> and <a href="#item_localtime">localtime</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_cuserid">cuserid</a></strong>
+
+<dd>
+<p>Get the login name of the owner of the current process.</p>
+</dd>
+<dd>
+<pre>
+        $name = POSIX::cuserid();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_difftime">difftime</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_difftime"><code>difftime()</code></a>, for returning
+the time difference (in seconds) between two times (as returned
+by <a href="#item_time"><code>time()</code></a>), see <a href="#item_time">time</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_div">div</a></strong>
+
+<dd>
+<p><a href="#item_div"><code>div()</code></a> is C-specific, use <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/int.html">int in the perlfunc manpage</a> on the usual <code>/</code> division and
+the modulus <code>%</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dup">dup</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_dup"><code>dup()</code></a>, for duplicating a file
+descriptor.</p>
+</dd>
+<dd>
+<p>This uses file descriptors such as those obtained by calling
+<code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_dup2">dup2</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_dup2"><code>dup2()</code></a>, for duplicating a file
+descriptor to an another known file descriptor.</p>
+</dd>
+<dd>
+<p>This uses file descriptors such as those obtained by calling
+<code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_errno">errno</a></strong>
+
+<dd>
+<p>Returns the value of errno.</p>
+</dd>
+<dd>
+<pre>
+        $errno = POSIX::errno();</pre>
+</dd>
+<dd>
+<p>This identical to the numerical values of the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_errno">$ERRNO in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execl">execl</a></strong>
+
+<dd>
+<p><a href="#item_execl"><code>execl()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execle">execle</a></strong>
+
+<dd>
+<p><a href="#item_execle"><code>execle()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execlp">execlp</a></strong>
+
+<dd>
+<p><a href="#item_execlp"><code>execlp()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execv">execv</a></strong>
+
+<dd>
+<p><a href="#item_execv"><code>execv()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execve">execve</a></strong>
+
+<dd>
+<p><a href="#item_execve"><code>execve()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_execvp">execvp</a></strong>
+
+<dd>
+<p><a href="#item_execvp"><code>execvp()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exec.html">exec in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_exit">exit</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_exit"><code>exit()</code></a> function for exiting the
+program, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exit.html">exit in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_exp">exp</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_exp"><code>exp()</code></a> function for
+returning the exponent (<em>e</em>-based) of the numerical argument,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/exp.html">exp in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fabs">fabs</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_abs"><code>abs()</code></a> function for returning
+the absolute value of the numerical argument, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/abs.html">abs in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fclose">fclose</a></strong>
+
+<dd>
+<p>Use method <a href="#item_close"><code>IO::Handle::close()</code></a> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/close.html">close in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fcntl">fcntl</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_fcntl"><code>fcntl()</code></a> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/fcntl.html">fcntl in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fdopen">fdopen</a></strong>
+
+<dd>
+<p>Use method <code>IO::Handle::new_from_fd()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">open in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_feof">feof</a></strong>
+
+<dd>
+<p>Use method <code>IO::Handle::eof()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/eof.html">eof in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ferror">ferror</a></strong>
+
+<dd>
+<p>Use method <code>IO::Handle::error()</code> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fflush">fflush</a></strong>
+
+<dd>
+<p>Use method <code>IO::Handle::flush()</code> instead.
+See also <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_output_autoflush">$OUTPUT_AUTOFLUSH in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fgetc">fgetc</a></strong>
+
+<dd>
+<p>Use method <a href="#item_getc"><code>IO::Handle::getc()</code></a> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/read.html">read in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fgetpos">fgetpos</a></strong>
+
+<dd>
+<p>Use method <code>IO::Seekable::getpos()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./lib/Net/FTP/L.html#seek">seek in the L manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fgets">fgets</a></strong>
+
+<dd>
+<p>Use method <a href="#item_gets"><code>IO::Handle::gets()</code></a> instead.  Similar to &lt;&gt;, also known
+as <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/readline.html">readline in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fileno">fileno</a></strong>
+
+<dd>
+<p>Use method <a href="#item_fileno"><code>IO::Handle::fileno()</code></a> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/fileno.html">fileno in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_floor">floor</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_floor"><code>floor()</code></a>, returning the largest
+integer value less than or equal to the numerical argument.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fmod">fmod</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_fmod"><code>fmod()</code></a>.</p>
+</dd>
+<dd>
+<pre>
+        $r = fmod($x, $y);</pre>
+</dd>
+<dd>
+<p>It returns the remainder <code>$r = $x - $n*$y</code>, where <code>$n = trunc($x/$y)</code>.
+The <code>$r</code> has the same sign as <code>$x</code> and magnitude (absolute value)
+less than the magnitude of <code>$y</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fopen">fopen</a></strong>
+
+<dd>
+<p>Use method <a href="#item_open"><code>IO::File::open()</code></a> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">open in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fork">fork</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_fork"><code>fork()</code></a> function
+for duplicating the current process, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/fork.html">fork in the perlfunc manpage</a>
+and <a href="/usr/lib/perl5/5.8/html/./pod/perlfork.html">the perlfork manpage</a> if you are in Windows.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fpathconf">fpathconf</a></strong>
+
+<dd>
+<p>Retrieves the value of a configurable limit on a file or directory.  This
+uses file descriptors such as those obtained by calling <code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<p>The following will determine the maximum length of the longest allowable
+pathname on the filesystem which holds <code>/var/foo</code>.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;/var/foo&quot;, &amp;POSIX::O_RDONLY );
+        $path_max = POSIX::fpathconf( $fd, &amp;POSIX::_PC_PATH_MAX );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fprintf">fprintf</a></strong>
+
+<dd>
+<p><a href="#item_fprintf"><code>fprintf()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/printf.html">printf in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fputc">fputc</a></strong>
+
+<dd>
+<p><a href="#item_fputc"><code>fputc()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fputs">fputs</a></strong>
+
+<dd>
+<p><a href="#item_fputs"><code>fputs()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fread">fread</a></strong>
+
+<dd>
+<p><a href="#item_fread"><code>fread()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/read.html">read in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_free">free</a></strong>
+
+<dd>
+<p><a href="#item_free"><code>free()</code></a> is C-specific.  Perl does memory management transparently.</p>
+</dd>
+</li>
+<dt><strong><a name="item_freopen">freopen</a></strong>
+
+<dd>
+<p><a href="#item_freopen"><code>freopen()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">open in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_frexp">frexp</a></strong>
+
+<dd>
+<p>Return the mantissa and exponent of a floating-point number.</p>
+</dd>
+<dd>
+<pre>
+        ($mantissa, $exponent) = POSIX::frexp( 1.234e56 );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_fscanf">fscanf</a></strong>
+
+<dd>
+<p><a href="#item_fscanf"><code>fscanf()</code></a> is C-specific, use &lt;&gt; and regular expressions instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fseek">fseek</a></strong>
+
+<dd>
+<p>Use method <code>IO::Seekable::seek()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/seek.html">seek in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fsetpos">fsetpos</a></strong>
+
+<dd>
+<p>Use method <code>IO::Seekable::setpos()</code> instead, or seek <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/seek.html">seek in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fstat">fstat</a></strong>
+
+<dd>
+<p>Get file status.  This uses file descriptors such as those obtained by
+calling <code>POSIX::open</code>.  The data returned is identical to the data from
+Perl's builtin <a href="#item_stat"><code>stat</code></a> function.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_RDONLY );
+        @stats = POSIX::fstat( $fd );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_fsync">fsync</a></strong>
+
+<dd>
+<p>Use method <code>IO::Handle::sync()</code> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ftell">ftell</a></strong>
+
+<dd>
+<p>Use method <code>IO::Seekable::tell()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/tell.html">tell in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fwrite">fwrite</a></strong>
+
+<dd>
+<p><a href="#item_fwrite"><code>fwrite()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getc">getc</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getc"><code>getc()</code></a> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getc.html">getc in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getchar">getchar</a></strong>
+
+<dd>
+<p>Returns one character from STDIN.  Identical to Perl's <a href="#item_getc"><code>getc()</code></a>,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getc.html">getc in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getcwd">getcwd</a></strong>
+
+<dd>
+<p>Returns the name of the current working directory.
+See also <a href="/usr/lib/perl5/5.8/html/./lib/Cwd.html">the Cwd manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getegid">getegid</a></strong>
+
+<dd>
+<p>Returns the effective group identifier.  Similar to Perl' s builtin
+variable <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$(</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_egid">$EGID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getenv">getenv</a></strong>
+
+<dd>
+<p>Returns the value of the specified environment variable.
+The same information is available through the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__env"><code>%ENV</code></a> array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_geteuid">geteuid</a></strong>
+
+<dd>
+<p>Returns the effective user identifier.  Identical to Perl's builtin <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&gt;</code></a>
+variable, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_euid">$EUID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getgid">getgid</a></strong>
+
+<dd>
+<p>Returns the user's real group identifier.  Similar to Perl's builtin
+variable <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$)</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_gid">$GID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getgrgid">getgrgid</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getgrgid"><code>getgrgid()</code></a> function for
+returning group entries by group identifiers, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getgrgid.html">getgrgid in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getgrnam">getgrnam</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getgrnam"><code>getgrnam()</code></a> function for
+returning group entries by group names, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getgrnam.html">getgrnam in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getgroups">getgroups</a></strong>
+
+<dd>
+<p>Returns the ids of the user's supplementary groups.  Similar to Perl's
+builtin variable <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$)</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_gid">$GID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getlogin">getlogin</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getlogin"><code>getlogin()</code></a> function for
+returning the user name associated with the current session, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getlogin.html">getlogin in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getpgrp">getpgrp</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getpgrp"><code>getpgrp()</code></a> function for
+returning the process group identifier of the current process, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getpgrp.html">getpgrp in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getpid">getpid</a></strong>
+
+<dd>
+<p>Returns the process identifier.  Identical to Perl's builtin
+variable <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$$</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_pid">$PID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getppid">getppid</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getppid"><code>getppid()</code></a> function for
+returning the process identifier of the parent process of the current
+process , see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getppid.html">getppid in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getpwnam">getpwnam</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getpwnam"><code>getpwnam()</code></a> function for
+returning user entries by user names, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getpwnam.html">getpwnam in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getpwuid">getpwuid</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_getpwuid"><code>getpwuid()</code></a> function for
+returning user entries by user identifiers, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/getpwuid.html">getpwuid in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_gets">gets</a></strong>
+
+<dd>
+<p>Returns one line from <code>STDIN</code>, similar to &lt;&gt;, also known
+as the <code>readline()</code> function, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/readline.html">readline in the perlfunc manpage</a>.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong>: if you have C programs that still use <a href="#item_gets"><code>gets()</code></a>, be very
+afraid.  The <a href="#item_gets"><code>gets()</code></a> function is a source of endless grief because
+it has no buffer overrun checks.  It should <strong>never</strong> be used.  The
+<a href="#item_fgets"><code>fgets()</code></a> function should be preferred instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getuid">getuid</a></strong>
+
+<dd>
+<p>Returns the user's identifier.  Identical to Perl's builtin <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&lt;</code></a> variable,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_uid">$UID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_gmtime">gmtime</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_gmtime"><code>gmtime()</code></a> function for
+converting seconds since the epoch to a date in Greenwich Mean Time,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/gmtime.html">gmtime in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isalnum">isalnum</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to a
+single character or to a whole string.  Note that locale settings may
+affect what characters are considered <a href="#item_isalnum"><code>isalnum</code></a>.  Does not work on
+Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:alnum:]]/</code> construct instead, or possibly
+the <code>/\w/</code> construct.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isalpha">isalpha</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isalpha"><code>isalpha</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:alpha:]]/</code> construct instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isatty">isatty</a></strong>
+
+<dd>
+<p>Returns a boolean indicating whether the specified filehandle is connected
+to a tty.  Similar to the <code>-t</code> operator, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/x.html">-X in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_iscntrl">iscntrl</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_iscntrl"><code>iscntrl</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:cntrl:]]/</code> construct instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isdigit">isdigit</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isdigit"><code>isdigit</code></a> (unlikely, but
+still possible). Does not work on Unicode characters code point 256
+or higher.  Consider using regular expressions and the <code>/[[:digit:]]/</code>
+construct instead, or the <code>/\d/</code> construct.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isgraph">isgraph</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isgraph"><code>isgraph</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:graph:]]/</code> construct instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_islower">islower</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_islower"><code>islower</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:lower:]]/</code> construct instead.  Do <strong>not</strong> use
+<code>/[a-z]/</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isprint">isprint</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isprint"><code>isprint</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:print:]]/</code> construct instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ispunct">ispunct</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_ispunct"><code>ispunct</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:punct:]]/</code> construct instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isspace">isspace</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isspace"><code>isspace</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:space:]]/</code> construct instead, or the <code>/\s/</code>
+construct.  (Note that <code>/\s/</code> and <code>/[[:space:]]/</code> are slightly
+different in that <code>/[[:space:]]/</code> can normally match a vertical tab,
+while <code>/\s/</code> does not.)</p>
+</dd>
+</li>
+<dt><strong><a name="item_isupper">isupper</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered <a href="#item_isupper"><code>isupper</code></a>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the <code>/[[:upper:]]/</code> construct instead.  Do <strong>not</strong> use
+<code>/[A-Z]/</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_isxdigit">isxdigit</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to a single
+character or to a whole string.  Note that locale settings may affect what
+characters are considered <a href="#item_isxdigit"><code>isxdigit</code></a> (unlikely, but still possible).
+Does not work on Unicode characters code point 256 or higher.
+Consider using regular expressions and the <code>/[[:xdigit:]]/</code>
+construct instead, or simply <code>/[0-9a-f]/i</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_kill">kill</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_kill"><code>kill()</code></a> function for sending
+signals to processes (often to terminate them), see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/kill.html">kill in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_labs">labs</a></strong>
+
+<dd>
+<p>(For returning absolute values of long integers.)
+<a href="#item_labs"><code>labs()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/abs.html">abs in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ldexp">ldexp</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_ldexp"><code>ldexp()</code></a>
+for multiplying floating point numbers with powers of two.</p>
+</dd>
+<dd>
+<pre>
+        $x_quadrupled = POSIX::ldexp($x, 2);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_ldiv">ldiv</a></strong>
+
+<dd>
+<p>(For computing dividends of long integers.)
+<a href="#item_ldiv"><code>ldiv()</code></a> is C-specific, use <code>/</code> and <code>int()</code> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_link">link</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_link"><code>link()</code></a> function
+for creating hard links into files, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/link.html">link in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_localeconv">localeconv</a></strong>
+
+<dd>
+<p>Get numeric formatting information.  Returns a reference to a hash
+containing the current locale formatting values.</p>
+</dd>
+<dd>
+<p>Here is how to query the database for the <strong>de</strong> (Deutsch or German) locale.</p>
+</dd>
+<dd>
+<pre>
+        $loc = POSIX::setlocale( &amp;POSIX::LC_ALL, &quot;de&quot; );
+        print &quot;Locale = $loc\n&quot;;
+        $lconv = POSIX::localeconv();
+        print &quot;decimal_point    = &quot;, $lconv-&gt;{decimal_point},   &quot;\n&quot;;
+        print &quot;thousands_sep    = &quot;, $lconv-&gt;{thousands_sep},   &quot;\n&quot;;
+        print &quot;grouping = &quot;, $lconv-&gt;{grouping},        &quot;\n&quot;;
+        print &quot;int_curr_symbol  = &quot;, $lconv-&gt;{int_curr_symbol}, &quot;\n&quot;;
+        print &quot;currency_symbol  = &quot;, $lconv-&gt;{currency_symbol}, &quot;\n&quot;;
+        print &quot;mon_decimal_point = &quot;, $lconv-&gt;{mon_decimal_point}, &quot;\n&quot;;
+        print &quot;mon_thousands_sep = &quot;, $lconv-&gt;{mon_thousands_sep}, &quot;\n&quot;;
+        print &quot;mon_grouping     = &quot;, $lconv-&gt;{mon_grouping},    &quot;\n&quot;;
+        print &quot;positive_sign    = &quot;, $lconv-&gt;{positive_sign},   &quot;\n&quot;;
+        print &quot;negative_sign    = &quot;, $lconv-&gt;{negative_sign},   &quot;\n&quot;;
+        print &quot;int_frac_digits  = &quot;, $lconv-&gt;{int_frac_digits}, &quot;\n&quot;;
+        print &quot;frac_digits      = &quot;, $lconv-&gt;{frac_digits},     &quot;\n&quot;;
+        print &quot;p_cs_precedes    = &quot;, $lconv-&gt;{p_cs_precedes},   &quot;\n&quot;;
+        print &quot;p_sep_by_space   = &quot;, $lconv-&gt;{p_sep_by_space},  &quot;\n&quot;;
+        print &quot;n_cs_precedes    = &quot;, $lconv-&gt;{n_cs_precedes},   &quot;\n&quot;;
+        print &quot;n_sep_by_space   = &quot;, $lconv-&gt;{n_sep_by_space},  &quot;\n&quot;;
+        print &quot;p_sign_posn      = &quot;, $lconv-&gt;{p_sign_posn},     &quot;\n&quot;;
+        print &quot;n_sign_posn      = &quot;, $lconv-&gt;{n_sign_posn},     &quot;\n&quot;;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_localtime">localtime</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_localtime"><code>localtime()</code></a> function for
+converting seconds since the epoch to a date see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/localtime.html">localtime in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_log">log</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_log"><code>log()</code></a> function,
+returning the natural (<em>e</em>-based) logarithm of the numerical argument,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/log.html">log in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_log10">log10</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_log10"><code>log10()</code></a>,
+returning the 10-base logarithm of the numerical argument.
+You can also use</p>
+</dd>
+<dd>
+<pre>
+    sub log10 { log($_[0]) / log(10) }</pre>
+</dd>
+<dd>
+<p>or</p>
+</dd>
+<dd>
+<pre>
+    sub log10 { log($_[0]) / 2.30258509299405 }</pre>
+</dd>
+<dd>
+<p>or</p>
+</dd>
+<dd>
+<pre>
+    sub log10 { log($_[0]) * 0.434294481903252 }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_longjmp">longjmp</a></strong>
+
+<dd>
+<p><a href="#item_longjmp"><code>longjmp()</code></a> is C-specific: use <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/die.html">die in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_lseek">lseek</a></strong>
+
+<dd>
+<p>Move the file's read/write position.  This uses file descriptors such as
+those obtained by calling <code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_RDONLY );
+        $off_t = POSIX::lseek( $fd, 0, &amp;POSIX::SEEK_SET );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_malloc">malloc</a></strong>
+
+<dd>
+<p><a href="#item_malloc"><code>malloc()</code></a> is C-specific.  Perl does memory management transparently.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mblen">mblen</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_mblen"><code>mblen()</code></a>.
+Perl does not have any support for the wide and multibyte
+characters of the C standards, so this might be a rather 
+useless function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mbstowcs">mbstowcs</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_mbstowcs"><code>mbstowcs()</code></a>.
+Perl does not have any support for the wide and multibyte
+characters of the C standards, so this might be a rather 
+useless function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mbtowc">mbtowc</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_mbtowc"><code>mbtowc()</code></a>.
+Perl does not have any support for the wide and multibyte
+characters of the C standards, so this might be a rather 
+useless function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memchr">memchr</a></strong>
+
+<dd>
+<p><a href="#item_memchr"><code>memchr()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/index.html">index in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memcmp">memcmp</a></strong>
+
+<dd>
+<p><a href="#item_memcmp"><code>memcmp()</code></a> is C-specific, use <code>eq</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memcpy">memcpy</a></strong>
+
+<dd>
+<p><a href="#item_memcpy"><code>memcpy()</code></a> is C-specific, use <code>=</code>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/substr.html">substr in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memmove">memmove</a></strong>
+
+<dd>
+<p><a href="#item_memmove"><code>memmove()</code></a> is C-specific, use <code>=</code>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>, or see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/substr.html">substr in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memset">memset</a></strong>
+
+<dd>
+<p><a href="#item_memset"><code>memset()</code></a> is C-specific, use <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_x"><code>x</code></a> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mkdir">mkdir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_mkdir"><code>mkdir()</code></a> function
+for creating directories, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/mkdir.html">mkdir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mkfifo">mkfifo</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_mkfifo"><code>mkfifo()</code></a> for creating
+FIFO special files.</p>
+</dd>
+<dd>
+<pre>
+        if (mkfifo($path, $mode)) { ....</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.  The <code>$mode</code> is similar to the
+mode of <a href="#item_mkdir"><code>mkdir()</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/mkdir.html">mkdir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_mktime">mktime</a></strong>
+
+<dd>
+<p>Convert date/time info to a calendar time.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)</pre>
+</dd>
+<dd>
+<p>The month (<code>mon</code>), weekday (<code>wday</code>), and yearday (<code>yday</code>) begin at zero.
+I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
+year (<code>year</code>) is given in years since 1900.  I.e. The year 1995 is 95; the
+year 2001 is 101.  Consult your system's <a href="#item_mktime"><code>mktime()</code></a> manpage for details
+about these and the other arguments.</p>
+</dd>
+<dd>
+<p>Calendar time for December 12, 1995, at 10:30 am.</p>
+</dd>
+<dd>
+<pre>
+        $time_t = POSIX::mktime( 0, 30, 10, 12, 11, 95 );
+        print &quot;Date = &quot;, POSIX::ctime($time_t);</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_modf">modf</a></strong>
+
+<dd>
+<p>Return the integral and fractional parts of a floating-point number.</p>
+</dd>
+<dd>
+<pre>
+        ($fractional, $integral) = POSIX::modf( 3.14 );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_nice">nice</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_nice"><code>nice()</code></a>, for changing
+the scheduling preference of the current process.  Positive
+arguments mean more polite process, negative values more
+needy process.  Normal user processes can only be more polite.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_offsetof">offsetof</a></strong>
+
+<dd>
+<p><a href="#item_offsetof"><code>offsetof()</code></a> is C-specific, you probably want to see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/pack.html">pack in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_open">open</a></strong>
+
+<dd>
+<p>Open a file for reading for writing.  This returns file descriptors, not
+Perl filehandles.  Use <code>POSIX::close</code> to close the file.</p>
+</dd>
+<dd>
+<p>Open a file read-only with mode 0666.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot; );</pre>
+</dd>
+<dd>
+<p>Open a file for read and write.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_RDWR );</pre>
+</dd>
+<dd>
+<p>Open a file for write, with truncation.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_WRONLY | &amp;POSIX::O_TRUNC );</pre>
+</dd>
+<dd>
+<p>Create a new file with mode 0640.  Set up the file for writing.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_CREAT | &amp;POSIX::O_WRONLY, 0640 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sysopen.html">sysopen in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_opendir">opendir</a></strong>
+
+<dd>
+<p>Open a directory for reading.</p>
+</dd>
+<dd>
+<pre>
+        $dir = POSIX::opendir( &quot;/var&quot; );
+        @files = POSIX::readdir( $dir );
+        POSIX::closedir( $dir );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pathconf">pathconf</a></strong>
+
+<dd>
+<p>Retrieves the value of a configurable limit on a file or directory.</p>
+</dd>
+<dd>
+<p>The following will determine the maximum length of the longest allowable
+pathname on the filesystem which holds <code>/var</code>.</p>
+</dd>
+<dd>
+<pre>
+        $path_max = POSIX::pathconf( &quot;/var&quot;, &amp;POSIX::_PC_PATH_MAX );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pause">pause</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_pause"><code>pause()</code></a>, which suspends
+the execution of the current process until a signal is received.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_perror">perror</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_perror"><code>perror()</code></a>, which outputs to the
+standard error stream the specified message followed by ``: '' and the
+current error string.  Use the <code>warn()</code> function and the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a>
+variable instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/warn.html">warn in the perlfunc manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_errno">$ERRNO in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pipe">pipe</a></strong>
+
+<dd>
+<p>Create an interprocess channel.  This returns file descriptors like those
+returned by <code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<pre>
+        my ($read, $write) = POSIX::pipe();
+        POSIX::write( $write, &quot;hello&quot;, 5 );
+        POSIX::read( $read, $buf, 5 );</pre>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/pipe.html">pipe in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_pow">pow</a></strong>
+
+<dd>
+<p>Computes <code>$x</code> raised to the power <code>$exponent</code>.</p>
+</dd>
+<dd>
+<pre>
+        $ret = POSIX::pow( $x, $exponent );</pre>
+</dd>
+<dd>
+<p>You can also use the <code>**</code> operator, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_printf">printf</a></strong>
+
+<dd>
+<p>Formats and prints the specified arguments to STDOUT.
+See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/printf.html">printf in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_putc">putc</a></strong>
+
+<dd>
+<p><a href="#item_putc"><code>putc()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_putchar">putchar</a></strong>
+
+<dd>
+<p><a href="#item_putchar"><code>putchar()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_puts">puts</a></strong>
+
+<dd>
+<p><a href="#item_puts"><code>puts()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/print.html">print in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_qsort">qsort</a></strong>
+
+<dd>
+<p><a href="#item_qsort"><code>qsort()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sort.html">sort in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_raise">raise</a></strong>
+
+<dd>
+<p>Sends the specified signal to the current process.
+See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/kill.html">kill in the perlfunc manpage</a> and the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$$</code></a> in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_pid">$PID in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rand">rand</a></strong>
+
+<dd>
+<p><a href="#item_rand"><code>rand()</code></a> is non-portable, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/rand.html">rand in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_read">read</a></strong>
+
+<dd>
+<p>Read from a file.  This uses file descriptors such as those obtained by
+calling <code>POSIX::open</code>.  If the buffer <code>$buf</code> is not large enough for the
+read then Perl will extend it to make room for the request.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_RDONLY );
+        $bytes = POSIX::read( $fd, $buf, 3 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sysread.html">sysread in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_readdir">readdir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_readdir"><code>readdir()</code></a> function
+for reading directory entries, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/readdir.html">readdir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_realloc">realloc</a></strong>
+
+<dd>
+<p><a href="#item_realloc"><code>realloc()</code></a> is C-specific.  Perl does memory management transparently.</p>
+</dd>
+</li>
+<dt><strong><a name="item_remove">remove</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_unlink"><code>unlink()</code></a> function
+for removing files, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/unlink.html">unlink in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rename">rename</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_rename"><code>rename()</code></a> function
+for renaming files, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/rename.html">rename in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rewind">rewind</a></strong>
+
+<dd>
+<p>Seeks to the beginning of the file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rewinddir">rewinddir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_rewinddir"><code>rewinddir()</code></a> function for
+rewinding directory entry streams, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/rewinddir.html">rewinddir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_rmdir">rmdir</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_rmdir"><code>rmdir()</code></a> function
+for removing (empty) directories, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/rmdir.html">rmdir in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_scanf">scanf</a></strong>
+
+<dd>
+<p><a href="#item_scanf"><code>scanf()</code></a> is C-specific, use &lt;&gt; and regular expressions instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setgid">setgid</a></strong>
+
+<dd>
+<p>Sets the real group identifier and the effective group identifier for
+this process.  Similar to assigning a value to the Perl's builtin
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$)</code></a> variable, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_gid">$GID in the perlvar manpage</a>, except that the latter
+will change only the real user identifier, and that the <a href="#item_setgid"><code>setgid()</code></a>
+uses only a single numeric argument, as opposed to a space-separated
+list of numbers.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setjmp">setjmp</a></strong>
+
+<dd>
+<p><a href="#item_setjmp"><code>setjmp()</code></a> is C-specific: use <code>eval {}</code> instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/eval.html">eval in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setlocale">setlocale</a></strong>
+
+<dd>
+<p>Modifies and queries program's locale.  The following examples assume</p>
+</dd>
+<dd>
+<pre>
+        use POSIX qw(setlocale LC_ALL LC_CTYPE);</pre>
+</dd>
+<dd>
+<p>has been issued.</p>
+</dd>
+<dd>
+<p>The following will set the traditional UNIX system locale behavior
+(the second argument <code>&quot;C&quot;</code>).</p>
+</dd>
+<dd>
+<pre>
+        $loc = setlocale( LC_ALL, &quot;C&quot; );</pre>
+</dd>
+<dd>
+<p>The following will query the current LC_CTYPE category.  (No second
+argument means 'query'.)</p>
+</dd>
+<dd>
+<pre>
+        $loc = setlocale( LC_CTYPE );</pre>
+</dd>
+<dd>
+<p>The following will set the LC_CTYPE behaviour according to the locale
+environment variables (the second argument <code>&quot;&quot;</code>).
+Please see your systems <a href="#item_setlocale"><code>setlocale(3)</code></a> documentation for the locale
+environment variables' meaning or consult <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>.</p>
+</dd>
+<dd>
+<pre>
+        $loc = setlocale( LC_CTYPE, &quot;&quot; );</pre>
+</dd>
+<dd>
+<p>The following will set the LC_COLLATE behaviour to Argentinian
+Spanish. <strong>NOTE</strong>: The naming and availability of locales depends on
+your operating system. Please consult <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a> for how to find
+out which locales are available in your system.</p>
+</dd>
+<dd>
+<pre>
+        $loc = setlocale( LC_ALL, &quot;es_AR.ISO8859-1&quot; );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setpgid">setpgid</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_setpgid"><code>setpgid()</code></a> for
+setting the process group identifier of the current process.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setsid">setsid</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_setsid"><code>setsid()</code></a> for
+setting the session identifier of the current process.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setuid">setuid</a></strong>
+
+<dd>
+<p>Sets the real user identifier and the effective user identifier for
+this process.  Similar to assigning a value to the Perl's builtin
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$&lt;</code></a> variable, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_uid">$UID in the perlvar manpage</a>, except that the latter
+will change only the real user identifier.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sigaction">sigaction</a></strong>
+
+<dd>
+<p>Detailed signal management.  This uses <code>POSIX::SigAction</code> objects for the
+<code>action</code> and <code>oldaction</code> arguments.  Consult your system's <a href="#item_sigaction"><code>sigaction</code></a>
+manpage for details.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        sigaction(signal, action, oldaction = 0)</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.  The <code>signal</code> must be a number (like
+SIGHUP), not a string (like ``SIGHUP''), though Perl does try hard
+to understand you.</p>
+</dd>
+</li>
+<dt><strong><a name="item_siglongjmp">siglongjmp</a></strong>
+
+<dd>
+<p><a href="#item_siglongjmp"><code>siglongjmp()</code></a> is C-specific: use <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/die.html">die in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sigpending">sigpending</a></strong>
+
+<dd>
+<p>Examine signals that are blocked and pending.  This uses <code>POSIX::SigSet</code>
+objects for the <code>sigset</code> argument.  Consult your system's <a href="#item_sigpending"><code>sigpending</code></a>
+manpage for details.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        sigpending(sigset)</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sigprocmask">sigprocmask</a></strong>
+
+<dd>
+<p>Change and/or examine calling process's signal mask.  This uses
+<code>POSIX::SigSet</code> objects for the <code>sigset</code> and <code>oldsigset</code> arguments.
+Consult your system's <a href="#item_sigprocmask"><code>sigprocmask</code></a> manpage for details.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        sigprocmask(how, sigset, oldsigset = 0)</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sigsetjmp">sigsetjmp</a></strong>
+
+<dd>
+<p><a href="#item_sigsetjmp"><code>sigsetjmp()</code></a> is C-specific: use <code>eval {}</code> instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/eval.html">eval in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sigsuspend">sigsuspend</a></strong>
+
+<dd>
+<p>Install a signal mask and suspend process until signal arrives.  This uses
+<code>POSIX::SigSet</code> objects for the <code>signal_mask</code> argument.  Consult your
+system's <a href="#item_sigsuspend"><code>sigsuspend</code></a> manpage for details.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        sigsuspend(signal_mask)</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sin">sin</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_sin"><code>sin()</code></a> function
+for returning the sine of the numerical argument,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sin.html">sin in the perlfunc manpage</a>.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sinh">sinh</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_sinh"><code>sinh()</code></a>
+for returning the hyperbolic sine of the numerical argument.
+See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sleep">sleep</a></strong>
+
+<dd>
+<p>This is functionally identical to Perl's builtin <a href="#item_sleep"><code>sleep()</code></a> function
+for suspending the execution of the current for process for certain
+number of seconds, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sleep.html">sleep in the perlfunc manpage</a>.  There is one significant 
+difference, however: <a href="#item_sleep"><code>POSIX::sleep()</code></a> returns the number of
+<strong>unslept</strong> seconds, while the <a href="#item_sleep"><code>CORE::sleep()</code></a> returns the
+number of slept seconds.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sprintf">sprintf</a></strong>
+
+<dd>
+<p>This is similar to Perl's builtin <a href="#item_sprintf"><code>sprintf()</code></a> function
+for returning a string that has the arguments formatted as requested,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sprintf.html">sprintf in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sqrt">sqrt</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_sqrt"><code>sqrt()</code></a> function.
+for returning the square root of the numerical argument,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sqrt.html">sqrt in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_srand">srand</a></strong>
+
+<dd>
+<p>Give a seed the pseudorandom number generator, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/srand.html">srand in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sscanf">sscanf</a></strong>
+
+<dd>
+<p><a href="#item_sscanf"><code>sscanf()</code></a> is C-specific, use regular expressions instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_stat">stat</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_stat"><code>stat()</code></a> function
+for returning information about files and directories.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strcat">strcat</a></strong>
+
+<dd>
+<p><a href="#item_strcat"><code>strcat()</code></a> is C-specific, use <code>.=</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strchr">strchr</a></strong>
+
+<dd>
+<p><a href="#item_strchr"><code>strchr()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/index.html">index in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strcmp">strcmp</a></strong>
+
+<dd>
+<p><a href="#item_strcmp"><code>strcmp()</code></a> is C-specific, use <code>eq</code> or <code>cmp</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strcoll">strcoll</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_strcoll"><code>strcoll()</code></a>
+for collating (comparing) strings transformed using
+the <a href="#item_strxfrm"><code>strxfrm()</code></a> function.  Not really needed since
+Perl can do this transparently, see <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strcpy">strcpy</a></strong>
+
+<dd>
+<p><a href="#item_strcpy"><code>strcpy()</code></a> is C-specific, use <code>=</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strcspn">strcspn</a></strong>
+
+<dd>
+<p><a href="#item_strcspn"><code>strcspn()</code></a> is C-specific, use regular expressions instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strerror">strerror</a></strong>
+
+<dd>
+<p>Returns the error string for the specified errno.
+Identical to the string form of the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a>, see <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_errno">$ERRNO in the perlvar manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strftime">strftime</a></strong>
+
+<dd>
+<p>Convert date and time information to string.  Returns the string.</p>
+</dd>
+<dd>
+<p>Synopsis:</p>
+</dd>
+<dd>
+<pre>
+        strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)</pre>
+</dd>
+<dd>
+<p>The month (<code>mon</code>), weekday (<code>wday</code>), and yearday (<code>yday</code>) begin at zero.
+I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
+year (<code>year</code>) is given in years since 1900.  I.e., the year 1995 is 95; the
+year 2001 is 101.  Consult your system's <a href="#item_strftime"><code>strftime()</code></a> manpage for details
+about these and the other arguments.</p>
+</dd>
+<dd>
+<p>If you want your code to be portable, your format (<code>fmt</code>) argument
+should use only the conversion specifiers defined by the ANSI C
+standard (C89, to play safe).  These are <code>aAbBcdHIjmMpSUwWxXyYZ%</code>.
+But even then, the <strong>results</strong> of some of the conversion specifiers are
+non-portable.  For example, the specifiers <code>aAbBcpZ</code> change according
+to the locale settings of the user, and both how to set locales (the
+locale names) and what output to expect are non-standard.
+The specifier <code>c</code> changes according to the timezone settings of the
+user and the timezone computation rules of the operating system.
+The <code>Z</code> specifier is notoriously unportable since the names of
+timezones are non-standard. Sticking to the numeric specifiers is the
+safest route.</p>
+</dd>
+<dd>
+<p>The given arguments are made consistent as though by calling
+<a href="#item_mktime"><code>mktime()</code></a> before calling your system's <a href="#item_strftime"><code>strftime()</code></a> function,
+except that the <code>isdst</code> value is not affected.</p>
+</dd>
+<dd>
+<p>The string for Tuesday, December 12, 1995.</p>
+</dd>
+<dd>
+<pre>
+        $str = POSIX::strftime( &quot;%A, %B %d, %Y&quot;, 0, 0, 0, 12, 11, 95, 2 );
+        print &quot;$str\n&quot;;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_strlen">strlen</a></strong>
+
+<dd>
+<p><a href="#item_strlen"><code>strlen()</code></a> is C-specific, use <code>length()</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/length.html">length in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strncat">strncat</a></strong>
+
+<dd>
+<p><a href="#item_strncat"><code>strncat()</code></a> is C-specific, use <code>.=</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strncmp">strncmp</a></strong>
+
+<dd>
+<p><a href="#item_strncmp"><code>strncmp()</code></a> is C-specific, use <code>eq</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strncpy">strncpy</a></strong>
+
+<dd>
+<p><a href="#item_strncpy"><code>strncpy()</code></a> is C-specific, use <code>=</code> instead, see <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html">the perlop manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strpbrk">strpbrk</a></strong>
+
+<dd>
+<p><a href="#item_strpbrk"><code>strpbrk()</code></a> is C-specific, use regular expressions instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strrchr">strrchr</a></strong>
+
+<dd>
+<p><a href="#item_strrchr"><code>strrchr()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/rindex.html">rindex in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strspn">strspn</a></strong>
+
+<dd>
+<p><a href="#item_strspn"><code>strspn()</code></a> is C-specific, use regular expressions instead,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strstr">strstr</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <code>index()</code> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/index.html">index in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strtod">strtod</a></strong>
+
+<dd>
+<p>String to double translation. Returns the parsed number and the number
+of characters in the unparsed portion of the string.  Truly
+POSIX-compliant systems set $! ($ERRNO) to indicate a translation
+error, so clear $! before calling strtod.  However, non-POSIX systems
+may not check for overflow, and therefore will never set $!.</p>
+</dd>
+<dd>
+<p>strtod should respect any POSIX <em>setlocale()</em> settings.</p>
+</dd>
+<dd>
+<p>To parse a string $str as a floating point number use</p>
+</dd>
+<dd>
+<pre>
+    $! = 0;
+    ($num, $n_unparsed) = POSIX::strtod($str);</pre>
+</dd>
+<dd>
+<p>The second returned item and $! can be used to check for valid input:</p>
+</dd>
+<dd>
+<pre>
+    if (($str eq '') || ($n_unparsed != 0) || $!) {
+        die &quot;Non-numeric input $str&quot; . ($! ? &quot;: $!\n&quot; : &quot;\n&quot;);
+    }</pre>
+</dd>
+<dd>
+<p>When called in a scalar context strtod returns the parsed number.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strtok">strtok</a></strong>
+
+<dd>
+<p><a href="#item_strtok"><code>strtok()</code></a> is C-specific, use regular expressions instead, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlre.html">the perlre manpage</a>, or <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/split.html">split in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strtol">strtol</a></strong>
+
+<dd>
+<p>String to (long) integer translation.  Returns the parsed number and
+the number of characters in the unparsed portion of the string.  Truly
+POSIX-compliant systems set $! ($ERRNO) to indicate a translation
+error, so clear $! before calling strtol.  However, non-POSIX systems
+may not check for overflow, and therefore will never set $!.</p>
+</dd>
+<dd>
+<p>strtol should respect any POSIX <em>setlocale()</em> settings.</p>
+</dd>
+<dd>
+<p>To parse a string $str as a number in some base $base use</p>
+</dd>
+<dd>
+<pre>
+    $! = 0;
+    ($num, $n_unparsed) = POSIX::strtol($str, $base);</pre>
+</dd>
+<dd>
+<p>The base should be zero or between 2 and 36, inclusive.  When the base
+is zero or omitted strtol will use the string itself to determine the
+base: a leading ``0x'' or ``0X'' means hexadecimal; a leading ``0'' means
+octal; any other leading characters mean decimal.  Thus, ``1234'' is
+parsed as a decimal number, ``01234'' as an octal number, and ``0x1234''
+as a hexadecimal number.</p>
+</dd>
+<dd>
+<p>The second returned item and $! can be used to check for valid input:</p>
+</dd>
+<dd>
+<pre>
+    if (($str eq '') || ($n_unparsed != 0) || !$!) {
+        die &quot;Non-numeric input $str&quot; . $! ? &quot;: $!\n&quot; : &quot;\n&quot;;
+    }</pre>
+</dd>
+<dd>
+<p>When called in a scalar context strtol returns the parsed number.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strtoul">strtoul</a></strong>
+
+<dd>
+<p>String to unsigned (long) integer translation.  <a href="#item_strtoul"><code>strtoul()</code></a> is identical
+to <a href="#item_strtol"><code>strtol()</code></a> except that <a href="#item_strtoul"><code>strtoul()</code></a> only parses unsigned integers.  See
+<a href="#item_strtol">strtol</a> for details.</p>
+</dd>
+<dd>
+<p>Note: Some vendors supply <a href="#item_strtod"><code>strtod()</code></a> and <a href="#item_strtol"><code>strtol()</code></a> but not strtoul().
+Other vendors that do supply <a href="#item_strtoul"><code>strtoul()</code></a> parse ``-1'' as a valid value.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strxfrm">strxfrm</a></strong>
+
+<dd>
+<p>String transformation.  Returns the transformed string.</p>
+</dd>
+<dd>
+<pre>
+        $dst = POSIX::strxfrm( $src );</pre>
+</dd>
+<dd>
+<p>Used in conjunction with the <a href="#item_strcoll"><code>strcoll()</code></a> function, see <a href="#item_strcoll">strcoll</a>.</p>
+</dd>
+<dd>
+<p>Not really needed since Perl can do this transparently, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sysconf">sysconf</a></strong>
+
+<dd>
+<p>Retrieves values of system configurable variables.</p>
+</dd>
+<dd>
+<p>The following will get the machine's clock speed.</p>
+</dd>
+<dd>
+<pre>
+        $clock_ticks = POSIX::sysconf( &amp;POSIX::_SC_CLK_TCK );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_system">system</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_system"><code>system()</code></a> function, see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/system.html">system in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tan">tan</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_tan"><code>tan()</code></a>, returning the
+tangent of the numerical argument.  See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tanh">tanh</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_tanh"><code>tanh()</code></a>, returning the
+hyperbolic tangent of the numerical argument.   See also <a href="/usr/lib/perl5/5.8/html/./lib/Math/Trig.html">the Math::Trig manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcdrain">tcdrain</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_tcdrain"><code>tcdrain()</code></a> for draining
+the output queue of its argument stream.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcflow">tcflow</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_tcflow"><code>tcflow()</code></a> for controlling
+the flow of its argument stream.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcflush">tcflush</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_tcflush"><code>tcflush()</code></a> for flushing
+the I/O buffers of its argument stream.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcgetpgrp">tcgetpgrp</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_tcgetpgrp"><code>tcgetpgrp()</code></a> for returning the
+process group identifier of the foreground process group of the controlling
+terminal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcsendbreak">tcsendbreak</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_tcsendbreak"><code>tcsendbreak()</code></a> for sending
+a break on its argument stream.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tcsetpgrp">tcsetpgrp</a></strong>
+
+<dd>
+<p>This is similar to the C function <a href="#item_tcsetpgrp"><code>tcsetpgrp()</code></a> for setting the
+process group identifier of the foreground process group of the controlling
+terminal.</p>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_time">time</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_time"><code>time()</code></a> function
+for returning the number of seconds since the epoch
+(whatever it is for the system), see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/time.html">time in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_times">times</a></strong>
+
+<dd>
+<p>The <a href="#item_times"><code>times()</code></a> function returns elapsed realtime since some point in the past
+(such as system startup), user and system times for this process, and user
+and system times used by child processes.  All times are returned in clock
+ticks.</p>
+</dd>
+<dd>
+<pre>
+    ($realtime, $user, $system, $cuser, $csystem) = POSIX::times();</pre>
+</dd>
+<dd>
+<p>Note: Perl's builtin <a href="#item_times"><code>times()</code></a> function returns four values, measured in
+seconds.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmpfile">tmpfile</a></strong>
+
+<dd>
+<p>Use method <code>IO::File::new_tmpfile()</code> instead, or see <a href="/usr/lib/perl5/5.8/html/./lib/File/Temp.html">the File::Temp manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tmpnam">tmpnam</a></strong>
+
+<dd>
+<p>Returns a name for a temporary file.</p>
+</dd>
+<dd>
+<pre>
+        $tmpfile = POSIX::tmpnam();</pre>
+</dd>
+<dd>
+<p>For security reasons, which are probably detailed in your system's
+documentation for the C library <a href="#item_tmpnam"><code>tmpnam()</code></a> function, this interface
+should not be used; instead see <a href="/usr/lib/perl5/5.8/html/./lib/File/Temp.html">the File::Temp manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tolower">tolower</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to a single
+character or to a whole string.  Consider using the <code>lc()</code> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/lc.html">lc in the perlfunc manpage</a>, or the equivalent <code>\L</code> operator inside doublequotish
+strings.</p>
+</dd>
+</li>
+<dt><strong><a name="item_toupper">toupper</a></strong>
+
+<dd>
+<p>This is identical to the C function, except that it can apply to a single
+character or to a whole string.  Consider using the <code>uc()</code> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/uc.html">uc in the perlfunc manpage</a>, or the equivalent <code>\U</code> operator inside doublequotish
+strings.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ttyname">ttyname</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_ttyname"><code>ttyname()</code></a> for returning the
+name of the current terminal.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tzname">tzname</a></strong>
+
+<dd>
+<p>Retrieves the time conversion information from the <a href="#item_tzname"><code>tzname</code></a> variable.</p>
+</dd>
+<dd>
+<pre>
+        POSIX::tzset();
+        ($std, $dst) = POSIX::tzname();</pre>
+</dd>
+</li>
+<dt><strong><a name="item_tzset">tzset</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_tzset"><code>tzset()</code></a> for setting
+the current timezone based on the environment variable <code>TZ</code>,
+to be used by <a href="#item_ctime"><code>ctime()</code></a>, <a href="#item_localtime"><code>localtime()</code></a>, <a href="#item_mktime"><code>mktime()</code></a>, and <a href="#item_strftime"><code>strftime()</code></a>
+functions.</p>
+</dd>
+</li>
+<dt><strong><a name="item_umask">umask</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_umask"><code>umask()</code></a> function
+for setting (and querying) the file creation permission mask,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/umask.html">umask in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_uname">uname</a></strong>
+
+<dd>
+<p>Get name of current operating system.</p>
+</dd>
+<dd>
+<pre>
+        ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();</pre>
+</dd>
+<dd>
+<p>Note that the actual meanings of the various fields are not
+that well standardized, do not expect any great portability.
+The <code>$sysname</code> might be the name of the operating system,
+the <code>$nodename</code> might be the name of the host, the <code>$release</code>
+might be the (major) release number of the operating system,
+the <code>$version</code> might be the (minor) release number of the
+operating system, and the <code>$machine</code> might be a hardware identifier.
+Maybe.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ungetc">ungetc</a></strong>
+
+<dd>
+<p>Use method <a href="#item_ungetc"><code>IO::Handle::ungetc()</code></a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_unlink">unlink</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_unlink"><code>unlink()</code></a> function
+for removing files, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/unlink.html">unlink in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_utime">utime</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_utime"><code>utime()</code></a> function
+for changing the time stamps of files and directories,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/utime.html">utime in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_vfprintf">vfprintf</a></strong>
+
+<dd>
+<p><a href="#item_vfprintf"><code>vfprintf()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/printf.html">printf in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_vprintf">vprintf</a></strong>
+
+<dd>
+<p><a href="#item_vprintf"><code>vprintf()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/printf.html">printf in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_vsprintf">vsprintf</a></strong>
+
+<dd>
+<p><a href="#item_vsprintf"><code>vsprintf()</code></a> is C-specific, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sprintf.html">sprintf in the perlfunc manpage</a> instead.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wait">wait</a></strong>
+
+<dd>
+<p>This is identical to Perl's builtin <a href="#item_wait"><code>wait()</code></a> function,
+see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/wait.html">wait in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_waitpid">waitpid</a></strong>
+
+<dd>
+<p>Wait for a child process to change state.  This is identical to Perl's
+builtin <a href="#item_waitpid"><code>waitpid()</code></a> function, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/waitpid.html">waitpid in the perlfunc manpage</a>.</p>
+</dd>
+<dd>
+<pre>
+        $pid = POSIX::waitpid( -1, POSIX::WNOHANG );
+        print &quot;status = &quot;, ($? / 256), &quot;\n&quot;;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_wcstombs">wcstombs</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_wcstombs"><code>wcstombs()</code></a>.
+Perl does not have any support for the wide and multibyte
+characters of the C standards, so this might be a rather 
+useless function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wctomb">wctomb</a></strong>
+
+<dd>
+<p>This is identical to the C function <a href="#item_wctomb"><code>wctomb()</code></a>.
+Perl does not have any support for the wide and multibyte
+characters of the C standards, so this might be a rather 
+useless function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_write">write</a></strong>
+
+<dd>
+<p>Write to a file.  This uses file descriptors such as those obtained by
+calling <code>POSIX::open</code>.</p>
+</dd>
+<dd>
+<pre>
+        $fd = POSIX::open( &quot;foo&quot;, &amp;POSIX::O_WRONLY );
+        $buf = &quot;hello&quot;;
+        $bytes = POSIX::write( $b, $buf, 5 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+<dd>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/syswrite.html">syswrite in the perlfunc manpage</a>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="classes">CLASSES</a></h1>
+<p>
+</p>
+<h2><a name="posix__sigaction">POSIX::SigAction</a></h2>
+<dl>
+<dt><strong><a name="item_new">new</a></strong>
+
+<dd>
+<p>Creates a new <code>POSIX::SigAction</code> object which corresponds to the C
+<code>struct sigaction</code>.  This object will be destroyed automatically when it is
+no longer needed.  The first parameter is the fully-qualified name of a sub
+which is a signal-handler.  The second parameter is a <code>POSIX::SigSet</code>
+object, it defaults to the empty set.  The third parameter contains the
+<code>sa_flags</code>, it defaults to 0.</p>
+</dd>
+<dd>
+<pre>
+        $sigset = POSIX::SigSet-&gt;new(SIGINT, SIGQUIT);
+        $sigaction = POSIX::SigAction-&gt;new( \&amp;main::handler, $sigset, &amp;POSIX::SA_NOCLDSTOP );</pre>
+</dd>
+<dd>
+<p>This <code>POSIX::SigAction</code> object is intended for use with the <a href="#item_sigaction"><code>POSIX::sigaction()</code></a>
+function.</p>
+</dd>
+</li>
+</dl>
+<dl>
+<dt><strong><a name="item_handler">handler</a></strong>
+
+<dt><strong><a name="item_mask">mask</a></strong>
+
+<dt><strong><a name="item_flags">flags</a></strong>
+
+<dd>
+<p>accessor functions to get/set the values of a SigAction object.</p>
+</dd>
+<dd>
+<pre>
+        $sigset = $sigaction-&gt;mask;
+        $sigaction-&gt;flags(&amp;POSIX::SA_RESTART);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_safe">safe</a></strong>
+
+<dd>
+<p>accessor function for the ``safe signals'' flag of a SigAction object; see
+<a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a> for general information on safe (a.k.a. ``deferred'') signals.  If
+you wish to handle a signal safely, use this accessor to set the ``safe'' flag
+in the <code>POSIX::SigAction</code> object:</p>
+</dd>
+<dd>
+<pre>
+        $sigaction-&gt;safe(1);</pre>
+</dd>
+<dd>
+<p>You may also examine the ``safe'' flag on the output action object which is
+filled in when given as the third parameter to <a href="#item_sigaction"><code>POSIX::sigaction()</code></a>:</p>
+</dd>
+<dd>
+<pre>
+        sigaction(SIGINT, $new_action, $old_action);
+        if ($old_action-&gt;safe) {
+            # previous SIGINT handler used safe signals
+        }</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="posix__sigset">POSIX::SigSet</a></h2>
+<dl>
+<dt><strong>new</strong>
+
+<dd>
+<p>Create a new SigSet object.  This object will be destroyed automatically
+when it is no longer needed.  Arguments may be supplied to initialize the
+set.</p>
+</dd>
+<dd>
+<p>Create an empty set.</p>
+</dd>
+<dd>
+<pre>
+        $sigset = POSIX::SigSet-&gt;new;</pre>
+</dd>
+<dd>
+<p>Create a set with SIGUSR1.</p>
+</dd>
+<dd>
+<pre>
+        $sigset = POSIX::SigSet-&gt;new( &amp;POSIX::SIGUSR1 );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_addset">addset</a></strong>
+
+<dd>
+<p>Add a signal to a SigSet object.</p>
+</dd>
+<dd>
+<pre>
+        $sigset-&gt;addset( &amp;POSIX::SIGUSR2 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_delset">delset</a></strong>
+
+<dd>
+<p>Remove a signal from the SigSet object.</p>
+</dd>
+<dd>
+<pre>
+        $sigset-&gt;delset( &amp;POSIX::SIGUSR2 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_emptyset">emptyset</a></strong>
+
+<dd>
+<p>Initialize the SigSet object to be empty.</p>
+</dd>
+<dd>
+<pre>
+        $sigset-&gt;emptyset();</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_fillset">fillset</a></strong>
+
+<dd>
+<p>Initialize the SigSet object to include all signals.</p>
+</dd>
+<dd>
+<pre>
+        $sigset-&gt;fillset();</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ismember">ismember</a></strong>
+
+<dd>
+<p>Tests the SigSet object to see if it contains a specific signal.</p>
+</dd>
+<dd>
+<pre>
+        if( $sigset-&gt;ismember( &amp;POSIX::SIGUSR1 ) ){
+                print &quot;contains SIGUSR1\n&quot;;
+        }</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="posix__termios">POSIX::Termios</a></h2>
+<dl>
+<dt><strong>new</strong>
+
+<dd>
+<p>Create a new Termios object.  This object will be destroyed automatically
+when it is no longer needed.  A Termios object corresponds to the termios
+C struct.  <a href="#item_new"><code>new()</code></a> mallocs a new one, <a href="#item_getattr"><code>getattr()</code></a> fills it from a file descriptor,
+and <a href="#item_setattr"><code>setattr()</code></a> sets a file descriptor's parameters to match Termios' contents.</p>
+</dd>
+<dd>
+<pre>
+        $termios = POSIX::Termios-&gt;new;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getattr">getattr</a></strong>
+
+<dd>
+<p>Get terminal control attributes.</p>
+</dd>
+<dd>
+<p>Obtain the attributes for stdin.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;getattr()</pre>
+</dd>
+<dd>
+<p>Obtain the attributes for stdout.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;getattr( 1 )</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getcc">getcc</a></strong>
+
+<dd>
+<p>Retrieve a value from the c_cc field of a termios object.  The c_cc field is
+an array so an index must be specified.</p>
+</dd>
+<dd>
+<pre>
+        $c_cc[1] = $termios-&gt;getcc(1);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getcflag">getcflag</a></strong>
+
+<dd>
+<p>Retrieve the c_cflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $c_cflag = $termios-&gt;getcflag;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getiflag">getiflag</a></strong>
+
+<dd>
+<p>Retrieve the c_iflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $c_iflag = $termios-&gt;getiflag;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getispeed">getispeed</a></strong>
+
+<dd>
+<p>Retrieve the input baud rate.</p>
+</dd>
+<dd>
+<pre>
+        $ispeed = $termios-&gt;getispeed;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getlflag">getlflag</a></strong>
+
+<dd>
+<p>Retrieve the c_lflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $c_lflag = $termios-&gt;getlflag;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getoflag">getoflag</a></strong>
+
+<dd>
+<p>Retrieve the c_oflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $c_oflag = $termios-&gt;getoflag;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_getospeed">getospeed</a></strong>
+
+<dd>
+<p>Retrieve the output baud rate.</p>
+</dd>
+<dd>
+<pre>
+        $ospeed = $termios-&gt;getospeed;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setattr">setattr</a></strong>
+
+<dd>
+<p>Set terminal control attributes.</p>
+</dd>
+<dd>
+<p>Set attributes immediately for stdout.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setattr( 1, &amp;POSIX::TCSANOW );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setcc">setcc</a></strong>
+
+<dd>
+<p>Set a value in the c_cc field of a termios object.  The c_cc field is an
+array so an index must be specified.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setcc( &amp;POSIX::VEOF, 1 );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setcflag">setcflag</a></strong>
+
+<dd>
+<p>Set the c_cflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setcflag( $c_cflag | &amp;POSIX::CLOCAL );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setiflag">setiflag</a></strong>
+
+<dd>
+<p>Set the c_iflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setiflag( $c_iflag | &amp;POSIX::BRKINT );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setispeed">setispeed</a></strong>
+
+<dd>
+<p>Set the input baud rate.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setispeed( &amp;POSIX::B9600 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setlflag">setlflag</a></strong>
+
+<dd>
+<p>Set the c_lflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setlflag( $c_lflag | &amp;POSIX::ECHO );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setoflag">setoflag</a></strong>
+
+<dd>
+<p>Set the c_oflag field of a termios object.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setoflag( $c_oflag | &amp;POSIX::OPOST );</pre>
+</dd>
+</li>
+<dt><strong><a name="item_setospeed">setospeed</a></strong>
+
+<dd>
+<p>Set the output baud rate.</p>
+</dd>
+<dd>
+<pre>
+        $termios-&gt;setospeed( &amp;POSIX::B9600 );</pre>
+</dd>
+<dd>
+<p>Returns <code>undef</code> on failure.</p>
+</dd>
+</li>
+<dt><strong><a name="item_baud_rate_values">Baud rate values</a></strong>
+
+<dd>
+<p>B38400 B75 B200 B134 B300 B1800 B150 B0 B19200 B1200 B9600 B600 B4800 B50 B2400 B110</p>
+</dd>
+</li>
+<dt><strong><a name="item_terminal_interface_values">Terminal interface values</a></strong>
+
+<dd>
+<p>TCSADRAIN TCSANOW TCOON TCIOFLUSH TCOFLUSH TCION TCIFLUSH TCSAFLUSH TCIOFF TCOOFF</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_cc_field_values">c_cc field values</a></strong>
+
+<dd>
+<p>VEOF VEOL VERASE VINTR VKILL VQUIT VSUSP VSTART VSTOP VMIN VTIME NCCS</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_cflag_field_values">c_cflag field values</a></strong>
+
+<dd>
+<p>CLOCAL CREAD CSIZE CS5 CS6 CS7 CS8 CSTOPB HUPCL PARENB PARODD</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_iflag_field_values">c_iflag field values</a></strong>
+
+<dd>
+<p>BRKINT ICRNL IGNBRK IGNCR IGNPAR INLCR INPCK ISTRIP IXOFF IXON PARMRK</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_lflag_field_values">c_lflag field values</a></strong>
+
+<dd>
+<p>ECHO ECHOE ECHOK ECHONL ICANON IEXTEN ISIG NOFLSH TOSTOP</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_oflag_field_values">c_oflag field values</a></strong>
+
+<dd>
+<p>OPOST</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="pathname_constants">PATHNAME CONSTANTS</a></h1>
+<dl>
+<dt><strong><a name="item_constants">Constants</a></strong>
+
+<dd>
+<p>_PC_CHOWN_RESTRICTED _PC_LINK_MAX _PC_MAX_CANON _PC_MAX_INPUT _PC_NAME_MAX _PC_NO_TRUNC _PC_PATH_MAX _PC_PIPE_BUF _PC_VDISABLE</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="posix_constants">POSIX CONSTANTS</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>_POSIX_ARG_MAX _POSIX_CHILD_MAX _POSIX_CHOWN_RESTRICTED _POSIX_JOB_CONTROL _POSIX_LINK_MAX _POSIX_MAX_CANON _POSIX_MAX_INPUT _POSIX_NAME_MAX _POSIX_NGROUPS_MAX _POSIX_NO_TRUNC _POSIX_OPEN_MAX _POSIX_PATH_MAX _POSIX_PIPE_BUF _POSIX_SAVED_IDS _POSIX_SSIZE_MAX _POSIX_STREAM_MAX _POSIX_TZNAME_MAX _POSIX_VDISABLE _POSIX_VERSION</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="system_configuration">SYSTEM CONFIGURATION</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>_SC_ARG_MAX _SC_CHILD_MAX _SC_CLK_TCK _SC_JOB_CONTROL _SC_NGROUPS_MAX _SC_OPEN_MAX _SC_PAGESIZE _SC_SAVED_IDS _SC_STREAM_MAX _SC_TZNAME_MAX _SC_VERSION</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="errno">ERRNO</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>E2BIG EACCES EADDRINUSE EADDRNOTAVAIL EAFNOSUPPORT EAGAIN EALREADY EBADF
+EBUSY ECHILD ECONNABORTED ECONNREFUSED ECONNRESET EDEADLK EDESTADDRREQ
+EDOM EDQUOT EEXIST EFAULT EFBIG EHOSTDOWN EHOSTUNREACH EINPROGRESS EINTR
+EINVAL EIO EISCONN EISDIR ELOOP EMFILE EMLINK EMSGSIZE ENAMETOOLONG
+ENETDOWN ENETRESET ENETUNREACH ENFILE ENOBUFS ENODEV ENOENT ENOEXEC
+ENOLCK ENOMEM ENOPROTOOPT ENOSPC ENOSYS ENOTBLK ENOTCONN ENOTDIR
+ENOTEMPTY ENOTSOCK ENOTTY ENXIO EOPNOTSUPP EPERM EPFNOSUPPORT EPIPE
+EPROCLIM EPROTONOSUPPORT EPROTOTYPE ERANGE EREMOTE ERESTART EROFS
+ESHUTDOWN ESOCKTNOSUPPORT ESPIPE ESRCH ESTALE ETIMEDOUT ETOOMANYREFS
+ETXTBSY EUSERS EWOULDBLOCK EXDEV</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="fcntl">FCNTL</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>FD_CLOEXEC F_DUPFD F_GETFD F_GETFL F_GETLK F_OK F_RDLCK F_SETFD F_SETFL F_SETLK F_SETLKW F_UNLCK F_WRLCK O_ACCMODE O_APPEND O_CREAT O_EXCL O_NOCTTY O_NONBLOCK O_RDONLY O_RDWR O_TRUNC O_WRONLY</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="float">FLOAT</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>DBL_DIG DBL_EPSILON DBL_MANT_DIG DBL_MAX DBL_MAX_10_EXP DBL_MAX_EXP DBL_MIN DBL_MIN_10_EXP DBL_MIN_EXP FLT_DIG FLT_EPSILON FLT_MANT_DIG FLT_MAX FLT_MAX_10_EXP FLT_MAX_EXP FLT_MIN FLT_MIN_10_EXP FLT_MIN_EXP FLT_RADIX FLT_ROUNDS LDBL_DIG LDBL_EPSILON LDBL_MANT_DIG LDBL_MAX LDBL_MAX_10_EXP LDBL_MAX_EXP LDBL_MIN LDBL_MIN_10_EXP LDBL_MIN_EXP</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="limits">LIMITS</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>ARG_MAX CHAR_BIT CHAR_MAX CHAR_MIN CHILD_MAX INT_MAX INT_MIN LINK_MAX LONG_MAX LONG_MIN MAX_CANON MAX_INPUT MB_LEN_MAX NAME_MAX NGROUPS_MAX OPEN_MAX PATH_MAX PIPE_BUF SCHAR_MAX SCHAR_MIN SHRT_MAX SHRT_MIN SSIZE_MAX STREAM_MAX TZNAME_MAX UCHAR_MAX UINT_MAX ULONG_MAX USHRT_MAX</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="locale">LOCALE</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>LC_ALL LC_COLLATE LC_CTYPE LC_MONETARY LC_NUMERIC LC_TIME</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="math">MATH</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>HUGE_VAL</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="signal">SIGNAL</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>SA_NOCLDSTOP SA_NOCLDWAIT SA_NODEFER SA_ONSTACK SA_RESETHAND SA_RESTART
+SA_SIGINFO SIGABRT SIGALRM SIGCHLD SIGCONT SIGFPE SIGHUP SIGILL SIGINT
+SIGKILL SIGPIPE SIGQUIT SIGSEGV SIGSTOP SIGTERM SIGTSTP SIGTTIN SIGTTOU
+SIGUSR1 SIGUSR2 SIG_BLOCK SIG_DFL SIG_ERR SIG_IGN SIG_SETMASK
+SIG_UNBLOCK</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="stat">STAT</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>S_IRGRP S_IROTH S_IRUSR S_IRWXG S_IRWXO S_IRWXU S_ISGID S_ISUID S_IWGRP S_IWOTH S_IWUSR S_IXGRP S_IXOTH S_IXUSR</p>
+</dd>
+</li>
+<dt><strong><a name="item_macros">Macros</a></strong>
+
+<dd>
+<p>S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="stdlib">STDLIB</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>EXIT_FAILURE EXIT_SUCCESS MB_CUR_MAX RAND_MAX</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="stdio">STDIO</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>BUFSIZ EOF FILENAME_MAX L_ctermid L_cuserid L_tmpname TMP_MAX</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="time">TIME</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>CLK_TCK CLOCKS_PER_SEC</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="unistd">UNISTD</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>R_OK SEEK_CUR SEEK_END SEEK_SET STDIN_FILENO STDOUT_FILENO STDERR_FILENO W_OK X_OK</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="wait">WAIT</a></h1>
+<dl>
+<dt><strong>Constants</strong>
+
+<dd>
+<p>WNOHANG WUNTRACED</p>
+</dd>
+<dl>
+<dt><strong><a name="item_wnohang">WNOHANG</a></strong>
+
+<dd>
+<p>Do not suspend the calling process until a child process
+changes state but instead return immediately.</p>
+</dd>
+</li>
+<dt><strong><a name="item_wuntraced">WUNTRACED</a></strong>
+
+<dd>
+<p>Catch stopped child processes.</p>
+</dd>
+</li>
+</dl>
+<dt><strong>Macros</strong>
+
+<dd>
+<p>WIFEXITED WEXITSTATUS WIFSIGNALED WTERMSIG WIFSTOPPED WSTOPSIG</p>
+</dd>
+<dl>
+<dt><strong><a name="item_wifexited">WIFEXITED</a></strong>
+
+<dd>
+<p><a href="#item_wifexited"><code>WIFEXITED($?)</code></a> returns true if the child process exited normally
+(<a href="#item_exit"><code>exit()</code></a> or by falling off the end of <code>main()</code>)</p>
+</dd>
+</li>
+<dt><strong><a name="item_wexitstatus">WEXITSTATUS</a></strong>
+
+<dd>
+<p><a href="#item_wexitstatus"><code>WEXITSTATUS($?)</code></a> returns the normal exit status of the child process
+(only meaningful if <a href="#item_wifexited"><code>WIFEXITED($?)</code></a> is true)</p>
+</dd>
+</li>
+<dt><strong><a name="item_wifsignaled">WIFSIGNALED</a></strong>
+
+<dd>
+<p><a href="#item_wifsignaled"><code>WIFSIGNALED($?)</code></a> returns true if the child process terminated because
+of a signal</p>
+</dd>
+</li>
+<dt><strong><a name="item_wtermsig">WTERMSIG</a></strong>
+
+<dd>
+<p><a href="#item_wtermsig"><code>WTERMSIG($?)</code></a> returns the signal the child process terminated for
+(only meaningful if <a href="#item_wifsignaled"><code>WIFSIGNALED($?)</code></a> is true)</p>
+</dd>
+</li>
+<dt><strong><a name="item_wifstopped">WIFSTOPPED</a></strong>
+
+<dd>
+<p><a href="#item_wifstopped"><code>WIFSTOPPED($?)</code></a> returns true if the child process is currently stopped
+(can happen only if you specified the WUNTRACED flag to <a href="#item_waitpid"><code>waitpid())</code></a></p>
+</dd>
+</li>
+<dt><strong><a name="item_wstopsig">WSTOPSIG</a></strong>
+
+<dd>
+<p><a href="#item_wstopsig"><code>WSTOPSIG($?)</code></a> returns the signal the child process was stopped for
+(only meaningful if <a href="#item_wifstopped"><code>WIFSTOPPED($?)</code></a> is true)</p>
+</dd>
+</li>
+</dl>
+</dl>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;POSIX - Perl interface to IEEE Std 1003.1</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

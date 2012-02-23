@@ -1,0 +1,252 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test::Simple - Basic utilities for writing tests.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Simple - Basic utilities for writing tests.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Test::Simple - Basic utilities for writing tests.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Test::Simple tests =&gt; 1;</pre>
+<pre>
+  ok( $foo eq $bar, 'foo is bar' );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>** If you are unfamiliar with testing <strong>read Test::Tutorial</strong> first! **</p>
+<p>This is an extremely simple, extremely basic module for writing tests
+suitable for CPAN modules and other pursuits.  If you wish to do more
+complicated testing, use the Test::More module (a drop-in replacement
+for this one).</p>
+<p>The basic unit of Perl testing is the ok.  For each thing you want to
+test your program will print out an ``ok'' or ``not ok'' to indicate pass
+or fail.  You do this with the <a href="#item_ok"><code>ok()</code></a> function (see below).</p>
+<p>The only other constraint is you must pre-declare how many tests you
+plan to run.  This is in case something goes horribly wrong during the
+test and your test program aborts, or skips a test or whatever.  You
+do this like so:</p>
+<pre>
+    use Test::Simple tests =&gt; 23;</pre>
+<p>You must have a plan.</p>
+<dl>
+<dt><strong><a name="item_ok"><strong>ok</strong></a></strong>
+
+<dd>
+<pre>
+  ok( $foo eq $bar, $name );
+  ok( $foo eq $bar );</pre>
+</dd>
+<dd>
+<p><a href="#item_ok"><code>ok()</code></a> is given an expression (in this case <code>$foo eq $bar</code>).  If it's
+true, the test passed.  If it's false, it didn't.  That's about it.</p>
+</dd>
+<dd>
+<p><a href="#item_ok"><code>ok()</code></a> prints out either ``ok'' or ``not ok'' along with a test number (it
+keeps track of that for you).</p>
+</dd>
+<dd>
+<pre>
+  # This produces &quot;ok 1 - Hell not yet frozen over&quot; (or not ok)
+  ok( get_temperature($hell) &gt; 0, 'Hell not yet frozen over' );</pre>
+</dd>
+<dd>
+<p>If you provide a $name, that will be printed along with the ``ok/not
+ok'' to make it easier to find your test when if fails (just search for
+the name).  It also makes it easier for the next guy to understand
+what your test is for.  It's highly recommended you use test names.</p>
+</dd>
+<dd>
+<p>All tests are run in scalar context.  So this:</p>
+</dd>
+<dd>
+<pre>
+    ok( @stuff, 'I have some stuff' );</pre>
+</dd>
+<dd>
+<p>will do what you mean (fail if stuff is empty)</p>
+</dd>
+</dl>
+<p>Test::Simple will start by printing number of tests run in the form
+``1..M'' (so ``1..5'' means you're going to run 5 tests).  This strange
+format lets Test::Harness know how many tests you plan on running in
+case something goes horribly wrong.</p>
+<p>If all your tests passed, Test::Simple will exit with zero (which is
+normal).  If anything failed it will exit with how many failed.  If
+you run less (or more) tests than you planned, the missing (or extras)
+will be considered failures.  If no tests were ever run Test::Simple
+will throw a warning and exit with 255.  If the test died, even after
+having successfully completed all its tests, it will still be
+considered a failure and will exit with 255.</p>
+<p>So the exit codes are...</p>
+<pre>
+    0                   all tests successful
+    255                 test died or all passed but wrong # of tests run
+    any other number    how many failed (including missing or extras)</pre>
+<p>If you fail more than 254 tests, it will be reported as 254.</p>
+<p>This module is by no means trying to be a complete testing system.
+It's just to get you started.  Once you're off the ground its
+recommended you look at <a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<p>Here's an example of a simple .t file for the fictional Film module.</p>
+<pre>
+    use Test::Simple tests =&gt; 5;</pre>
+<pre>
+    use Film;  # What you're testing.</pre>
+<pre>
+    my $btaste = Film-&gt;new({ Title    =&gt; 'Bad Taste',
+                             Director =&gt; 'Peter Jackson',
+                             Rating   =&gt; 'R',
+                             NumExplodingSheep =&gt; 1
+                           });
+    ok( defined($btaste) &amp;&amp; ref $btaste eq 'Film,     'new() works' );</pre>
+<pre>
+    ok( $btaste-&gt;Title      eq 'Bad Taste',     'Title() get'    );
+    ok( $btaste-&gt;Director   eq 'Peter Jackson', 'Director() get' );
+    ok( $btaste-&gt;Rating     eq 'R',             'Rating() get'   );
+    ok( $btaste-&gt;NumExplodingSheep == 1,        'NumExplodingSheep() get' );</pre>
+<p>It will produce output like this:</p>
+<pre>
+    1..5
+    ok 1 - new() works
+    ok 2 - Title() get
+    ok 3 - Director() get
+    not ok 4 - Rating() get
+    #   Failed test 'Rating() get'
+    #   in t/film.t at line 14.
+    ok 5 - NumExplodingSheep() get
+    # Looks like you failed 1 tests of 5</pre>
+<p>Indicating the Film::Rating() method is broken.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>Test::Simple will only report a maximum of 254 failures in its exit
+code.  If this is a problem, you probably have a huge test script.
+Split it into multiple files.  (Otherwise blame the Unix folks for
+using an unsigned short integer as the exit status).</p>
+<p>Because VMS's exit codes are much, much different than the rest of the
+universe, and perl does horrible mangling to them that gets in my way,
+it works like this on VMS.</p>
+<pre>
+    0     SS$_NORMAL        all tests successful
+    4     SS$_ABORT         something went wrong</pre>
+<p>Unfortunately, I can't differentiate any further.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>Test::Simple is <strong>explicitly</strong> tested all the way back to perl 5.004.</p>
+<p>Test::Simple is thread-safe in perl 5.8.0 and up.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>This module was conceived while talking with Tony Bowden in his
+kitchen one night about the problems I was having writing some really
+complicated feature into the new Testing module.  He observed that the
+main problem is not dealing with these edge cases but that people hate
+to write tests <strong>at all</strong>.  What was needed was a dead simple module
+that took all the hard work out of testing and was really, really easy
+to learn.  Paul Johnson simultaneously had this idea (unfortunately,
+he wasn't in Tony's kitchen).  This is it.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<dl>
+<dt><strong><a name="item_test_3a_3amore"><a href="/usr/lib/perl5/5.8/html/./lib/Test/More.html">the Test::More manpage</a></a></strong>
+
+<dd>
+<p>More testing functions!  Once you outgrow Test::Simple, look at
+Test::More.  Test::Simple is 100% forward compatible with Test::More
+(i.e. you can just use Test::More instead of Test::Simple in your
+programs and things will still work).</p>
+</dd>
+</li>
+<dt><strong><a name="item_test"><a href="/usr/lib/perl5/5.8/html/./lib/Test.html">the Test manpage</a></a></strong>
+
+<dd>
+<p>The original Perl testing module.</p>
+</dd>
+</li>
+<dt><strong><a name="item_test_3a_3aunit"><a href="/usr/lib/perl5/5.8/html/Test/Unit.html">the Test::Unit manpage</a></a></strong>
+
+<dd>
+<p>Elaborate unit testing.</p>
+</dd>
+</li>
+<dt><strong><a name="item_test_3a_3ainline_2c_selftest"><a href="/usr/lib/perl5/5.8/html/Test/Inline.html">the Test::Inline manpage</a>, <em>SelfTest</em></a></strong>
+
+<dd>
+<p>Embed tests in your code!</p>
+</dd>
+</li>
+<dt><strong><a name="item_test_3a_3aharness"><a href="/usr/lib/perl5/5.8/html/./lib/Test/Harness.html">the Test::Harness manpage</a></a></strong>
+
+<dd>
+<p>Interprets the output of your test program.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Idea by Tony Bowden and Paul Johnson, code by Michael G Schwern
+&lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;, wardrobe by Calvin Klein.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2001, 2002, 2004 by Michael G Schwern &lt;<a href="mailto:schwern@pobox.com">schwern@pobox.com</a>&gt;.</p>
+<p>This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.</p>
+<p>See <em><a href="http://www.perl.com/perl/misc/Artistic.html">http://www.perl.com/perl/misc/Artistic.html</a></em></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Test::Simple - Basic utilities for writing tests.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>MIME::QuotedPrint - Encoding and decoding of quoted-printable strings</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;MIME::QuotedPrint - Encoding and decoding of quoted-printable strings</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>MIME::QuotedPrint - Encoding and decoding of quoted-printable strings</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use MIME::QuotedPrint;</pre>
+<pre>
+ $encoded = encode_qp($decoded);
+ $decoded = decode_qp($encoded);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides functions to encode and decode strings into and from the
+quoted-printable encoding specified in RFC 2045 - <em>MIME (Multipurpose
+Internet Mail Extensions)</em>.  The quoted-printable encoding is intended
+to represent data that largely consists of bytes that correspond to
+printable characters in the ASCII character set.  Each non-printable
+character (as defined by English Americans) is represented by a
+triplet consisting of the character ``='' followed by two hexadecimal
+digits.</p>
+<p>The following functions are provided:</p>
+<dl>
+<dt><strong><a name="item_encode_qp"><code>encode_qp($str)</code></a></strong>
+
+<dt><strong>encode_qp($str, $eol)</strong>
+
+<dt><strong>encode_qp($str, $eol, $binmode)</strong>
+
+<dd>
+<p>This function returns an encoded version of the string ($str) given as
+argument.</p>
+</dd>
+<dd>
+<p>The second argument ($eol) is the line-ending sequence to use.  It is
+optional and defaults to ``\n''.  Every occurrence of ``\n'' is replaced
+with this string, and it is also used for additional ``soft line
+breaks'' to ensure that no line end up longer than 76 characters.  Pass
+it as ``\015\012'' to produce data suitable for external consumption.
+The string ``\r\n'' produces the same result on many platforms, but not
+all.</p>
+</dd>
+<dd>
+<p>The third argument ($binmode) will select binary mode if passed as a
+TRUE value.  In binary mode ``\n'' will be encoded in the same way as
+any other non-printable character.  This ensures that a decoder will
+end up with exactly the same string whatever line ending sequence it
+uses.  In general it is preferable to use the base64 encoding for
+binary data; see <a href="/usr/lib/perl5/5.8/html/./lib/MIME/Base64.html">the MIME::Base64 manpage</a>.</p>
+</dd>
+<dd>
+<p>An $eol of ``'' (the empty string) is special.  In this case, no ``soft
+line breaks'' are introduced and binary mode is effectively enabled so
+that any ``\n'' in the original data is encoded as well.</p>
+</dd>
+</li>
+<dt><strong><a name="item_decode_qp">decode_qp($str);</a></strong>
+
+<dd>
+<p>This function returns the plain text version of the string given
+as argument.  The lines of the result are ``\n'' terminated, even if
+the $str argument contains ``\r\n'' terminated lines.</p>
+</dd>
+</li>
+</dl>
+<p>If you prefer not to import these routines into your namespace, you can
+call them as:</p>
+<pre>
+  use MIME::QuotedPrint ();
+  $encoded = MIME::QuotedPrint::encode($decoded);
+  $decoded = MIME::QuotedPrint::decode($encoded);</pre>
+<p>Perl v5.8 and better allow extended Unicode characters in strings.
+Such strings cannot be encoded directly, as the quoted-printable
+encoding is only defined for single-byte characters.  The solution is
+to use the Encode module to select the byte encoding you want.  For
+example:</p>
+<pre>
+    use MIME::QuotedPrint qw(encode_qp);
+    use Encode qw(encode);</pre>
+<pre>
+    $encoded = encode_qp(encode(&quot;UTF-8&quot;, &quot;\x{FFFF}\n&quot;));
+    print $encoded;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 1995-1997,2002-2004 Gisle Aas.</p>
+<p>This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/MIME/Base64.html">the MIME::Base64 manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;MIME::QuotedPrint - Encoding and decoding of quoted-printable strings</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

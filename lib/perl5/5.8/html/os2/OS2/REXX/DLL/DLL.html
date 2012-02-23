@@ -1,0 +1,262 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OS2::DLL - access to DLLs with REXX calling convention.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::DLL - access to DLLs with REXX calling convention.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<ul>
+
+		<li><a href="#note">NOTE</a></li>
+	</ul>
+
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#create_a_dll_handle">Create a DLL handle</a></li>
+		<li><a href="#create_a_dll_handle__looking_in_some_strange_locations_">Create a DLL handle (looking in some strange locations)</a></li>
+		<li><a href="#loads_dll_by_name">Loads DLL by name</a></li>
+		<li><a href="#check_for_functions__optional__">Check for functions (optional):</a></li>
+		<li><a href="#create_a_perl_wrapper__optional__">Create a Perl wrapper (optional):</a></li>
+		<li><a href="#call_external_function_with_rexx_calling_convention_">Call external function with REXX calling convention:</a></li>
+	</ul>
+
+	<li><a href="#inspecting_the_module">Inspecting the module</a></li>
+	<li><a href="#lowlevel_api">Low-level API</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>OS2::DLL - access to DLLs with REXX calling convention.</p>
+<p>
+</p>
+<h2><a name="note">NOTE</a></h2>
+<p>When you use this module, the REXX variable pool is not available.</p>
+<p>See documentation of <a href="/usr/lib/perl5/5.8/html/OS2/REXX.html">the OS2::REXX manpage</a> module if you need the variable pool.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use OS2::DLL;
+        $emx_dll = OS2::DLL-&gt;module('emx');
+        $emx_version = $emx_dll-&gt;emx_revision();
+        $func_emx_version = $emx_dll-&gt;wrapper_REXX('#128'); # emx_revision
+        $emx_version = $func_emx_version-&gt;();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="create_a_dll_handle">Create a DLL handle</a></h2>
+<pre>
+        $dll = OS2::DLL-&gt;module( NAME [, WHERE] );</pre>
+<p>Loads an OS/2 module NAME, looking in directories WHERE (adding the
+extension <em>.dll</em>), if the DLL is not found there, loads in the usual OS/2 way
+(via LIBPATH and other settings).  Croaks with a verbose report on failure.</p>
+<p>The DLL is not unloaded when the return value is destroyed.</p>
+<p>
+</p>
+<h2><a name="create_a_dll_handle__looking_in_some_strange_locations_">Create a DLL handle (looking in some strange locations)</a></h2>
+<pre>
+        $dll = OS2::DLL-&gt;new( NAME [, WHERE] );</pre>
+<p>Same as <a href="#create_a_dll_handle"><code>module</code></a>, but in addition to WHERE, looks
+in environment paths PERL5REXX, PERLREXX, PATH (provided for backward
+compatibility).</p>
+<p>
+</p>
+<h2><a name="loads_dll_by_name">Loads DLL by name</a></h2>
+<pre>
+        $dll = load OS2::DLL NAME [, WHERE];</pre>
+<p>Same as <a href="#create_a_dll_handle__looking_in_some_strange_locations_"><code>new</code></a>,
+but returns DLL object reference, or undef on failure (in this case one can
+get the reason via <code>DynaLoader::dl_error()</code>) (provided for backward
+compatibility).</p>
+<p>
+</p>
+<h2><a name="check_for_functions__optional__">Check for functions (optional):</a></h2>
+<pre>
+        BOOL = $dll-&gt;find(NAME [, NAME [, ...]]);</pre>
+<p>Returns true if all functions are available.  As a side effect, creates
+a REXX wrapper with the specified name in the package constructed by the name
+of the DLL so that the next call to <code>$dll-</code>NAME()&gt; will pick up the cached
+method.</p>
+<p>
+</p>
+<h2><a name="create_a_perl_wrapper__optional__">Create a Perl wrapper (optional):</a></h2>
+<pre>
+        $func = $dll-&gt;wrapper_REXX(NAME);</pre>
+<p>Returns a reference to a Perl function wrapper for the entry point NAME
+in the DLL.  Similar to the OS/2 API, the NAME may be <code>&quot;#123&quot;</code> - in this case
+the ordinal is loaded.   Croaks with a meaningful error message if NAME does
+not exists (although the message for the case when the name is an ordinal may
+be confusing).</p>
+<p>
+</p>
+<h2><a name="call_external_function_with_rexx_calling_convention_">Call external function with REXX calling convention:</a></h2>
+<pre>
+        $ret_string = $dll-&gt;function_name(arguments);</pre>
+<p>Returns the return string if the REXX return code is 0, else undef.
+Dies with error message if the function is not available.  On the first call
+resolves the name in the DLL and caches the Perl wrapper; future calls go
+through the wrapper.</p>
+<p>Unless used inside REXX environment (see <a href="/usr/lib/perl5/5.8/html/OS2/REXX.html">the OS2::REXX manpage</a>), the REXX runtime
+environment (variable pool, queue etc.) is not available to the called
+function.</p>
+<p>
+</p>
+<hr />
+<h1><a name="inspecting_the_module">Inspecting the module</a></h1>
+<dl>
+<dt><strong><a name="item_handle">$module-&gt;handle</a></strong>
+
+<dt><strong><a name="item_fullname">$module-&gt;fullname</a></strong>
+
+<dd>
+<p>Return the (integer) handle and full path name of a loaded DLL.</p>
+</dd>
+<dd>
+<p>TODO: the module name (whatever is specified in the <code>LIBRARY</code> statement
+of <em>.def</em> file when linking) via OS2::Proc.</p>
+</dd>
+</li>
+<dt><strong><a name="item_has_f32">$module-&gt;<code>has_f32($name)</code></a></strong>
+
+<dd>
+<p>Returns the address of a 32-bit entry point with name $name, or 0 if none
+found.  (Keep in mind that some entry points may be 16-bit, and some may have
+capitalized names comparing to callable-from-C counterparts.)  Name of the
+form <code>#197</code> will find entry point with ordinal 197.</p>
+</dd>
+</li>
+<dt><strong><a name="item_libpath_find">libPath_find($name [, $flags])</a></strong>
+
+<dd>
+<p>Looks for the DLL $name on <code>BEGINLIBPATH</code>, <code>LIBPATH</code>, <code>ENDLIBPATH</code> if
+bits 0x1, 0x2, 0x4 of $flags are set correspondingly.  If called with no
+arguments, looks on all 3 locations.  Returns the full name of the found
+file.  <strong>DLL is not loaded.</strong></p>
+</dd>
+<dd>
+<p>$name has <em>.dll</em> appended unless it already has an extension.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="lowlevel_api">Low-level API</a></h1>
+<dl>
+<dt><strong><a name="item_call_a__system_linkage_function_via_a_pointer">Call a _System linkage function via a pointer</a></strong>
+
+<dd>
+<p>If a function takes up to 20 ULONGs and returns ULONG:</p>
+</dd>
+<dd>
+<pre>
+ $res = call20( $pointer, $arg0, $arg1, ...);</pre>
+</dd>
+</li>
+<dt><strong><a name="item_same_for_packed_arguments_3a">Same for packed arguments:</a></strong>
+
+<dd>
+<pre>
+ $res = call20_p( $pointer, pack 'L20', $arg0, $arg1, ...);</pre>
+</dd>
+<dt><strong><a name="item_regparm">Same for <code>regparm(3)</code> function:</a></strong>
+
+<dd>
+<pre>
+ $res = call20_rp3( $pointer, $arg0, $arg1, ...);</pre>
+</dd>
+<dt><strong>Same for packed arguments and <code>regparm(3)</code> function</strong>
+
+<dd>
+<pre>
+ $res = call20_rp3_p( $pointer, pack 'L20', $arg0, $arg1, ...);</pre>
+</dd>
+<dt><strong><a name="item_same_for_a_function_which_returns_non_2d0_and_sets">Same for a function which returns non-0 and sets system-error on error</a></strong>
+
+<dd>
+<pre>
+ call20_Dos( $msg, $pointer, $arg0, $arg1, ...); # die(&quot;$msg: $^E&quot;) if error</pre>
+</dd>
+<dd>
+<p>[Good for <code>Dos*</code> API - and rare <code>Win*</code> calls.]</p>
+</dd>
+<dt><strong><a name="item_winlasterror">Same for a function which returns 0 and sets <code>WinLastError()</code> on error</a></strong>
+
+<dd>
+<pre>
+ $res = call20_Win( $msg, $pointer, $arg0, $arg1, ...);
+ # would die(&quot;$msg: $^E&quot;) if error</pre>
+</dd>
+<dd>
+<p>[Good for most of <code>Win*</code> API.]</p>
+</dd>
+<dt><strong>Same for a function which returns 0 and sets <code>WinLastError()</code> on error but
+0 is also a valid return</strong>
+
+<dd>
+<pre>
+ $res = call20_Win_0OK( $msg, $pointer, $arg0, $arg1, ...);
+ # would die(&quot;$msg: $^E&quot;) if error</pre>
+</dd>
+<dd>
+<p>[Good for some of <code>Win*</code> API.]</p>
+</dd>
+<dt><strong><a name="item_die">As previous, but without <code>die()</code></a></strong>
+
+<dd>
+<pre>
+ $res = call20_Win_0OK_survive( $pointer, $arg0, $arg1, ...);
+ if ($res == 0 and $^E) {       # Do error processing here
+ }</pre>
+</dd>
+<dd>
+<p>[Good for some of <code>Win*</code> API.]</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<p>If <code>PERL_REXX_DEBUG</code> is set, emits debugging output.  Looks for DLLs
+in <code>PERL5REXX</code>, <code>PERLREXX</code>, <code>PATH</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Extracted by Ilya Zakharevich <a href="mailto:perl-module-OS2-DLL@ilyaz.org">perl-module-OS2-DLL@ilyaz.org</a> from <a href="/usr/lib/perl5/5.8/html/OS2/REXX.html">the OS2::REXX manpage</a>
+written by Andreas Kaiser <a href="mailto:ak@ananke.s.bawue.de.">ak@ananke.s.bawue.de.</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::DLL - access to DLLs with REXX calling convention.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

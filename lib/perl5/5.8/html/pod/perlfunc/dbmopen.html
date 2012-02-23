@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>dbmopen - create binding on a tied dbm file</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;dbmopen - create binding on a tied dbm file</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>dbmopen - create binding on a tied dbm file</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>dbmopen HASH,DBNAME,MASK
+    </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>[This function has been largely superseded by the <code>tie</code> function.]</p>
+<p>This binds a dbm(3), ndbm(3), sdbm(3), gdbm(3), or Berkeley DB file to a
+hash.  HASH is the name of the hash.  (Unlike normal <code>open</code>, the first
+argument is <em>not</em> a filehandle, even though it looks like one).  DBNAME
+is the name of the database (without the <em>.dir</em> or <em>.pag</em> extension if
+any).  If the database does not exist, it is created with protection
+specified by MASK (as modified by the <code>umask</code>).  If your system supports
+only the older DBM functions, you may perform only one <code>dbmopen</code> in your
+program.  In older versions of Perl, if your system had neither DBM nor
+ndbm, calling <code>dbmopen</code> produced a fatal error; it now falls back to
+sdbm(3).</p>
+<p>If you don't have write access to the DBM file, you can only read hash
+variables, not set them.  If you want to test whether you can write,
+either use file tests or try setting a dummy hash entry inside an <code>eval</code>,
+which will trap the error.</p>
+<p>Note that functions such as <code>keys</code> and <code>values</code> may return huge lists
+when used on large DBM files.  You may prefer to use the <code>each</code>
+function to iterate over large DBM files.  Example:</p>
+<pre>
+    # print out history file offsets
+    dbmopen(%HIST,'/usr/lib/news/history',0666);
+    while (($key,$val) = each %HIST) {
+        print $key, ' = ', unpack('L',$val), &quot;\n&quot;;
+    }
+    dbmclose(%HIST);</pre>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./lib/AnyDBM_File.html">the AnyDBM_File manpage</a> for a more general description of the pros and
+cons of the various dbm approaches, as well as <a href="/usr/lib/perl5/5.8/html/./ext/DB_File/DB_File.html">the DB_File manpage</a> for a particularly
+rich implementation.</p>
+<p>You can control which DBM library you use by loading that library
+before you call dbmopen():</p>
+<pre>
+    use DB_File;
+    dbmopen(%NS_Hist, &quot;$ENV{HOME}/.netscape/history.db&quot;)
+        or die &quot;Can't open netscape history file: $!&quot;;</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;dbmopen - create binding on a tied dbm file</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

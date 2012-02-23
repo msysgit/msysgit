@@ -1,0 +1,240 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IO::Socket::INET - Object interface for AF_INET domain sockets</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Socket::INET - Object interface for AF_INET domain sockets</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<ul>
+
+		<li><a href="#methods">METHODS</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>IO::Socket::INET - Object interface for AF_INET domain sockets</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use IO::Socket::INET;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>IO::Socket::INET</code> provides an object interface to creating and using sockets
+in the AF_INET domain. It is built upon the <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket.html">the IO::Socket manpage</a> interface and
+inherits all the methods defined by <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket.html">the IO::Socket manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_new">new ( [ARGS] )</a></strong>
+
+<dd>
+<p>Creates an <code>IO::Socket::INET</code> object, which is a reference to a
+newly created symbol (see the <code>Symbol</code> package). <a href="#item_new"><code>new</code></a>
+optionally takes arguments, these arguments are in key-value pairs.</p>
+</dd>
+<dd>
+<p>In addition to the key-value pairs accepted by <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket.html">the IO::Socket manpage</a>,
+<code>IO::Socket::INET</code> provides.</p>
+</dd>
+<dd>
+<pre>
+    PeerAddr    Remote host address          &lt;hostname&gt;[:&lt;port&gt;]
+    PeerHost    Synonym for PeerAddr
+    PeerPort    Remote port or service       &lt;service&gt;[(&lt;no&gt;)] | &lt;no&gt;
+    LocalAddr   Local host bind address      hostname[:port]
+    LocalHost   Synonym for LocalAddr
+    LocalPort   Local host bind port         &lt;service&gt;[(&lt;no&gt;)] | &lt;no&gt;
+    Proto       Protocol name (or number)    &quot;tcp&quot; | &quot;udp&quot; | ...
+    Type        Socket type                  SOCK_STREAM | SOCK_DGRAM | ...
+    Listen      Queue size for listen
+    ReuseAddr   Set SO_REUSEADDR before binding
+    Reuse       Set SO_REUSEADDR before binding (deprecated, prefer ReuseAddr)
+    ReusePort   Set SO_REUSEPORT before binding
+    Broadcast   Set SO_BROADCAST before binding
+    Timeout     Timeout value for various operations
+    MultiHomed  Try all addresses for multi-homed hosts
+    Blocking    Determine if connection will be blocking mode</pre>
+</dd>
+<dd>
+<p>If <code>Listen</code> is defined then a listen socket is created, else if the
+socket type, which is derived from the protocol, is SOCK_STREAM then
+<code>connect()</code> is called.</p>
+</dd>
+<dd>
+<p>Although it is not illegal, the use of <code>MultiHomed</code> on a socket
+which is in non-blocking mode is of little use. This is because the
+first connect will never fail with a timeout as the connect call
+will not block.</p>
+</dd>
+<dd>
+<p>The <code>PeerAddr</code> can be a hostname or the IP-address on the
+``xx.xx.xx.xx'' form.  The <code>PeerPort</code> can be a number or a symbolic
+service name.  The service name might be followed by a number in
+parenthesis which is used if the service is not known by the system.
+The <code>PeerPort</code> specification can also be embedded in the <code>PeerAddr</code>
+by preceding it with a ``:''.</p>
+</dd>
+<dd>
+<p>If <code>Proto</code> is not given and you specify a symbolic <code>PeerPort</code> port,
+then the constructor will try to derive <code>Proto</code> from the service
+name.  As a last resort <code>Proto</code> ``tcp'' is assumed.  The <code>Type</code>
+parameter will be deduced from <code>Proto</code> if not specified.</p>
+</dd>
+<dd>
+<p>If the constructor is only passed a single argument, it is assumed to
+be a <code>PeerAddr</code> specification.</p>
+</dd>
+<dd>
+<p>If <code>Blocking</code> is set to 0, the connection will be in nonblocking mode.
+If not specified it defaults to 1 (blocking mode).</p>
+</dd>
+<dd>
+<p>Examples:</p>
+</dd>
+<dd>
+<pre>
+   $sock = IO::Socket::INET-&gt;new(PeerAddr =&gt; 'www.perl.org',
+                                 PeerPort =&gt; 'http(80)',
+                                 Proto    =&gt; 'tcp');</pre>
+</dd>
+<dd>
+<pre>
+   $sock = IO::Socket::INET-&gt;new(PeerAddr =&gt; 'localhost:smtp(25)');</pre>
+</dd>
+<dd>
+<pre>
+   $sock = IO::Socket::INET-&gt;new(Listen    =&gt; 5,
+                                 LocalAddr =&gt; 'localhost',
+                                 LocalPort =&gt; 9000,
+                                 Proto     =&gt; 'tcp');</pre>
+</dd>
+<dd>
+<pre>
+   $sock = IO::Socket::INET-&gt;new('127.0.0.1:25');</pre>
+</dd>
+<dd>
+<pre>
+   $sock = IO::Socket::INET-&gt;new(PeerPort  =&gt; 9999,
+                                 PeerAddr  =&gt; inet_ntoa(INADDR_BROADCAST),
+                                 Proto     =&gt; udp,    
+                                 LocalAddr =&gt; 'localhost',
+                                 Broadcast =&gt; 1 ) 
+                             or die &quot;Can't bind : $@\n&quot;;</pre>
+</dd>
+<dd>
+<pre>
+ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE</pre>
+</dd>
+<dd>
+<p>As of VERSION 1.18 all IO::Socket objects have autoflush turned on
+by default. This was not the case with earlier releases.</p>
+</dd>
+<dd>
+<pre>
+ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="methods">METHODS</a></h2>
+<dl>
+<dt><strong><a name="item_sockaddr">sockaddr ()</a></strong>
+
+<dd>
+<p>Return the address part of the sockaddr structure for the socket</p>
+</dd>
+</li>
+<dt><strong><a name="item_sockport">sockport ()</a></strong>
+
+<dd>
+<p>Return the port number that the socket is using on the local host</p>
+</dd>
+</li>
+<dt><strong><a name="item_sockhost">sockhost ()</a></strong>
+
+<dd>
+<p>Return the address part of the sockaddr structure for the socket in a
+text form xx.xx.xx.xx</p>
+</dd>
+</li>
+<dt><strong><a name="item_peeraddr">peeraddr ()</a></strong>
+
+<dd>
+<p>Return the address part of the sockaddr structure for the socket on
+the peer host</p>
+</dd>
+</li>
+<dt><strong><a name="item_peerport">peerport ()</a></strong>
+
+<dd>
+<p>Return the port number for the socket on the peer host.</p>
+</dd>
+</li>
+<dt><strong><a name="item_peerhost">peerhost ()</a></strong>
+
+<dd>
+<p>Return the address part of the sockaddr structure for the socket on the
+peer host in a text form xx.xx.xx.xx</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket.html">the Socket manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket.html">the IO::Socket manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Graham Barr. Currently maintained by the Perl Porters.  Please report all
+bugs to &lt;<a href="mailto:perl5-porters@perl.org">perl5-porters@perl.org</a>&gt;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1996-8 Graham Barr &lt;<a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a>&gt;. All rights reserved.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Socket::INET - Object interface for AF_INET domain sockets</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

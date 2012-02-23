@@ -1,0 +1,113 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>exec - abandon this program to run another</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;exec - abandon this program to run another</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>exec - abandon this program to run another</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>exec LIST
+ </p>
+<p>exec PROGRAM LIST</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>exec</code> function executes a system command <em>and never returns</em>--
+use <code>system</code> instead of <code>exec</code> if you want it to return.  It fails and
+returns false only if the command does not exist <em>and</em> it is executed
+directly instead of via your system's command shell (see below).</p>
+<p>Since it's a common mistake to use <code>exec</code> instead of <code>system</code>, Perl
+warns you if there is a following statement which isn't <code>die</code>, <code>warn</code>,
+or <code>exit</code> (if <code>-w</code> is set  -  but you always do that).   If you
+<em>really</em> want to follow an <code>exec</code> with some other statement, you
+can use one of these styles to avoid the warning:</p>
+<pre>
+    exec ('foo')   or print STDERR &quot;couldn't exec foo: $!&quot;;
+    { exec ('foo') }; print STDERR &quot;couldn't exec foo: $!&quot;;</pre>
+<p>If there is more than one argument in LIST, or if LIST is an array
+with more than one value, calls <code>execvp(3)</code> with the arguments in LIST.
+If there is only one scalar argument or an array with one element in it,
+the argument is checked for shell metacharacters, and if there are any,
+the entire argument is passed to the system's command shell for parsing
+(this is <code>/bin/sh -c</code> on Unix platforms, but varies on other platforms).
+If there are no shell metacharacters in the argument, it is split into
+words and passed directly to <code>execvp</code>, which is more efficient.
+Examples:</p>
+<pre>
+    exec '/bin/echo', 'Your arguments are: ', @ARGV;
+    exec &quot;sort $outfile | uniq&quot;;</pre>
+<p>If you don't really want to execute the first argument, but want to lie
+to the program you are executing about its own name, you can specify
+the program you actually want to run as an ``indirect object'' (without a
+comma) in front of the LIST.  (This always forces interpretation of the
+LIST as a multivalued list, even if there is only a single scalar in
+the list.)  Example:</p>
+<pre>
+    $shell = '/bin/csh';
+    exec $shell '-sh';          # pretend it's a login shell</pre>
+<p>or, more directly,</p>
+<pre>
+    exec {'/bin/csh'} '-sh';    # pretend it's a login shell</pre>
+<p>When the arguments get executed via the system shell, results will
+be subject to its quirks and capabilities.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#_string_">`STRING` in the perlop manpage</a>
+for details.</p>
+<p>Using an indirect object with <code>exec</code> or <code>system</code> is also more
+secure.  This usage (which also works fine with <code>system())</code> forces
+interpretation of the arguments as a multivalued list, even if the
+list had just one argument.  That way you're safe from the shell
+expanding wildcards or splitting up words with whitespace in them.</p>
+<pre>
+    @args = ( &quot;echo surprise&quot; );</pre>
+<pre>
+    exec @args;               # subject to shell escapes
+                                # if @args == 1
+    exec { $args[0] } @args;  # safe even with one-arg list</pre>
+<p>The first version, the one without the indirect object, ran the <em>echo</em>
+program, passing it <code>&quot;surprise&quot;</code> an argument.  The second version
+didn't--it tried to run a program literally called <em>``echo surprise''</em>,
+didn't find it, and set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__"><code>$?</code></a> to a non-zero value indicating failure.</p>
+<p>Beginning with v5.6.0, Perl will attempt to flush all files opened for
+output before the exec, but this may not be supported on some platforms
+(see <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html">the perlport manpage</a>).  To be safe, you may need to set <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$|</code></a> ($AUTOFLUSH
+in English) or call the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item_autoflush"><code>autoflush()</code></a> method of <code>IO::Handle</code> on any
+open handles in order to avoid lost output.</p>
+<p>Note that <code>exec</code> will not call your <code>END</code> blocks, nor will it call
+any <code>DESTROY</code> methods in your objects.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;exec - abandon this program to run another</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

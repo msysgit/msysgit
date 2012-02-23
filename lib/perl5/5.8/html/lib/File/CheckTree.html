@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>validate - run many filetest checks on a tree</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;validate - run many filetest checks on a tree</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>validate - run many filetest checks on a tree</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use File::CheckTree;</pre>
+<pre>
+    $num_warnings = validate( q{
+        /vmunix                 -e || die
+        /boot                   -e || die
+        /bin                    cd
+            csh                 -ex
+            csh                 !-ug
+            sh                  -ex
+            sh                  !-ug
+        /usr                    -d || warn &quot;What happened to $file?\n&quot;
+    });</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>validate()</code> routine takes a single multiline string consisting of
+directives, each containing a filename plus a file test to try on it.
+(The file test may also be a ``cd'', causing subsequent relative filenames
+to be interpreted relative to that directory.)  After the file test
+you may put <code>|| die</code> to make it a fatal error if the file test fails.
+The default is <code>|| warn</code>.  The file test may optionally have a ``!' prepended
+to test for the opposite condition.  If you do a cd and then list some
+relative filenames, you may want to indent them slightly for readability.
+If you supply your own <code>die()</code> or <code>warn()</code> message, you can use $file to
+interpolate the filename.</p>
+<p>Filetests may be bunched:  ``-rwx'' tests for all of <code>-r</code>, <code>-w</code>, and <code>-x</code>.
+Only the first failed test of the bunch will produce a warning.</p>
+<p>The routine returns the number of warnings issued.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>File::CheckTree was derived from lib/validate.pl which was
+written by Larry Wall.
+Revised by Paul Grassie &lt;<em><a href="mailto:grassie@perl.com">grassie@perl.com</a></em>&gt; in 2002.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>File::CheckTree used to not display fatal error messages.
+It used to count only those warnings produced by a generic <code>|| warn</code>
+(and not those in which the user supplied the message).  In addition,
+the <code>validate()</code> routine would leave the user program in whatever
+directory was last entered through the use of ``cd'' directives.
+These bugs were fixed during the development of perl 5.8.
+The first fixed version of File::CheckTree was 4.2.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;validate - run many filetest checks on a tree</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

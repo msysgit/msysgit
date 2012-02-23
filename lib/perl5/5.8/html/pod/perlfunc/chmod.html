@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>chmod - changes the permissions on a list of files</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;chmod - changes the permissions on a list of files</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>chmod - changes the permissions on a list of files</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>chmod LIST
+  </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Changes the permissions of a list of files.  The first element of the
+list must be the numerical mode, which should probably be an octal
+number, and which definitely should <em>not</em> be a string of octal digits:
+<code>0644</code> is okay, <code>'0644'</code> is not.  Returns the number of files
+successfully changed.  See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/oct.html">oct in the perlfunc manpage</a>, if all you have is a string.</p>
+<pre>
+    $cnt = chmod 0755, 'foo', 'bar';
+    chmod 0755, @executables;
+    $mode = '0644'; chmod $mode, 'foo';      # !!! sets mode to
+                                             # --w----r-T
+    $mode = '0644'; chmod oct($mode), 'foo'; # this is better
+    $mode = 0644;   chmod $mode, 'foo';      # this is best</pre>
+<p>On systems that support fchmod, you might pass file handles among the
+files.  On systems that don't support fchmod, passing file handles
+produces a fatal error at run time.</p>
+<pre>
+    open(my $fh, &quot;&lt;&quot;, &quot;foo&quot;);
+    my $perm = (stat $fh)[2] &amp; 07777;
+    chmod($perm | 0600, $fh);</pre>
+<p>You can also import the symbolic <code>S_I*</code> constants from the Fcntl
+module:</p>
+<pre>
+    use Fcntl ':mode';</pre>
+<pre>
+    chmod S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH, @executables;
+    # This is identical to the chmod 0755 of the above example.</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;chmod - changes the permissions on a list of files</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

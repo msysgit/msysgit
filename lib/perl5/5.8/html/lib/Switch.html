@@ -1,0 +1,410 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Switch - A switch statement for Perl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Switch - A switch statement for Perl</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#version">VERSION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#background">BACKGROUND</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#allowing_fallthrough">Allowing fall-through</a></li>
+		<li><a href="#automating_fallthrough">Automating fall-through</a></li>
+		<li><a href="#alternative_syntax">Alternative syntax</a></li>
+		<li><a href="#higherorder_operations">Higher-order Operations</a></li>
+	</ul>
+
+	<li><a href="#dependencies">DEPENDENCIES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#limitations">LIMITATIONS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Switch - A switch statement for Perl</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">VERSION</a></h1>
+<p>This document describes version 2.10 of Switch,
+released Dec 29, 2003.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use Switch;</pre>
+<pre>
+        switch ($val) {</pre>
+<pre>
+                case 1          { print &quot;number 1&quot; }
+                case &quot;a&quot;        { print &quot;string a&quot; }
+                case [1..10,42] { print &quot;number in list&quot; }
+                case (@array)   { print &quot;number in list&quot; }
+                case /\w+/      { print &quot;pattern&quot; }
+                case qr/\w+/    { print &quot;pattern&quot; }
+                case (%hash)    { print &quot;entry in hash&quot; }
+                case (\%hash)   { print &quot;entry in hash&quot; }
+                case (\&amp;sub)    { print &quot;arg to subroutine&quot; }
+                else            { print &quot;previous case not true&quot; }
+        }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="background">BACKGROUND</a></h1>
+<p>[Skip ahead to <a href="#description">DESCRIPTION</a> if you don't care about the whys
+and wherefores of this control structure]</p>
+<p>In seeking to devise a ``Swiss Army'' case mechanism suitable for Perl,
+it is useful to generalize this notion of distributed conditional
+testing as far as possible. Specifically, the concept of ``matching''
+between the switch value and the various case values need not be
+restricted to numeric (or string or referential) equality, as it is in other 
+languages. Indeed, as Table 1 illustrates, Perl
+offers at least eighteen different ways in which two values could
+generate a match.</p>
+<pre>
+        Table 1: Matching a switch value ($s) with a case value ($c)</pre>
+<pre>
+        Switch  Case    Type of Match Implied   Matching Code
+        Value   Value   
+        ======  =====   =====================   =============</pre>
+<pre>
+        number  same    numeric or referential  match if $s == $c;
+        or ref          equality</pre>
+<pre>
+        object  method  result of method call   match if $s-&gt;$c();
+        ref     name                            match if defined $s-&gt;$c();
+                or ref</pre>
+<pre>
+        other   other   string equality         match if $s eq $c;
+        non-ref non-ref
+        scalar  scalar</pre>
+<pre>
+        string  regexp  pattern match           match if $s =~ /$c/;</pre>
+<pre>
+        array   scalar  array entry existence   match if 0&lt;=$c &amp;&amp; $c&lt;@$s;
+        ref             array entry definition  match if defined $s-&gt;[$c];
+                        array entry truth       match if $s-&gt;[$c];</pre>
+<pre>
+        array   array   array intersection      match if intersects(@$s, @$c);
+        ref     ref     (apply this table to
+                         all pairs of elements
+                         $s-&gt;[$i] and
+                         $c-&gt;[$j])</pre>
+<pre>
+        array   regexp  array grep              match if grep /$c/, @$s;
+        ref</pre>
+<pre>
+        hash    scalar  hash entry existence    match if exists $s-&gt;{$c};
+        ref             hash entry definition   match if defined $s-&gt;{$c};
+                        hash entry truth        match if $s-&gt;{$c};</pre>
+<pre>
+        hash    regexp  hash grep               match if grep /$c/, keys %$s;
+        ref</pre>
+<pre>
+        sub     scalar  return value defn       match if defined $s-&gt;($c);
+        ref             return value truth      match if $s-&gt;($c);</pre>
+<pre>
+        sub     array   return value defn       match if defined $s-&gt;(@$c);
+        ref     ref     return value truth      match if $s-&gt;(@$c);</pre>
+<p>In reality, Table 1 covers 31 alternatives, because only the equality and
+intersection tests are commutative; in all other cases, the roles of
+the <code>$s</code> and <code>$c</code> variables could be reversed to produce a
+different test. For example, instead of testing a single hash for
+the existence of a series of keys (<code>match if exists $s-&gt;{$c}</code>),
+one could test for the existence of a single key in a series of hashes
+(<code>match if exists $c-&gt;{$s}</code>).</p>
+<p>As <a href="/usr/lib/perl5/5.8/html/./pod/perltodo.html">the perltodo manpage</a> observes, a Perl case mechanism must support all these
+``ways to do it''.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Switch.pm module implements a generalized case mechanism that covers
+the numerous possible combinations of switch and case values described above.</p>
+<p>The module augments the standard Perl syntax with two new control
+statements: <code>switch</code> and <code>case</code>. The <code>switch</code> statement takes a
+single scalar argument of any type, specified in parentheses.
+<code>switch</code> stores this value as the
+current switch value in a (localized) control variable.
+The value is followed by a block which may contain one or more
+Perl statements (including the <code>case</code> statement described below).
+The block is unconditionally executed once the switch value has
+been cached.</p>
+<p>A <code>case</code> statement takes a single scalar argument (in mandatory
+parentheses if it's a variable; otherwise the parens are optional) and
+selects the appropriate type of matching between that argument and the
+current switch value. The type of matching used is determined by the
+respective types of the switch value and the <code>case</code> argument, as
+specified in Table 1. If the match is successful, the mandatory
+block associated with the <code>case</code> statement is executed.</p>
+<p>In most other respects, the <code>case</code> statement is semantically identical
+to an <code>if</code> statement. For example, it can be followed by an <code>else</code>
+clause, and can be used as a postfix statement qualifier.</p>
+<p>However, when a <code>case</code> block has been executed control is automatically
+transferred to the statement after the immediately enclosing <code>switch</code>
+block, rather than to the next statement within the block. In other
+words, the success of any <code>case</code> statement prevents other cases in the
+same scope from executing. But see <a href="#allowing_fallthrough">Allowing fall-through</a> below.</p>
+<p>Together these two new statements provide a fully generalized case
+mechanism:</p>
+<pre>
+        use Switch;</pre>
+<pre>
+        # AND LATER...</pre>
+<pre>
+        %special = ( woohoo =&gt; 1,  d'oh =&gt; 1 );</pre>
+<pre>
+        while (&lt;&gt;) {
+            switch ($_) {</pre>
+<pre>
+                case (%special) { print &quot;homer\n&quot;; }      # if $special{$_}
+                case /a-z/i     { print &quot;alpha\n&quot;; }      # if $_ =~ /a-z/i
+                case [1..9]     { print &quot;small num\n&quot;; }  # if $_ in [1..9]</pre>
+<pre>
+                case { $_[0] &gt;= 10 } {                    # if $_ &gt;= 10
+                    my $age = &lt;&gt;;
+                    switch (sub{ $_[0] &lt; $age } ) {</pre>
+<pre>
+                        case 20  { print &quot;teens\n&quot;; }     # if 20 &lt; $age
+                        case 30  { print &quot;twenties\n&quot;; }  # if 30 &lt; $age
+                        else     { print &quot;history\n&quot;; }
+                    }
+                }</pre>
+<pre>
+                print &quot;must be punctuation\n&quot; case /\W/;  # if $_ ~= /\W/
+        }</pre>
+<p>Note that <code>switch</code>es can be nested within <code>case</code> (or any other) blocks,
+and a series of <code>case</code> statements can try different types of matches
+-- hash membership, pattern match, array intersection, simple equality,
+etc. -- against the same switch value.</p>
+<p>The use of intersection tests against an array reference is particularly
+useful for aggregating integral cases:</p>
+<pre>
+        sub classify_digit
+        {
+                switch ($_[0]) { case 0            { return 'zero' }
+                                 case [2,4,6,8]    { return 'even' }
+                                 case [1,3,4,7,9]  { return 'odd' }
+                                 case /[A-F]/i     { return 'hex' }
+                               }
+        }</pre>
+<p>
+</p>
+<h2><a name="allowing_fallthrough">Allowing fall-through</a></h2>
+<p>Fall-though (trying another case after one has already succeeded)
+is usually a Bad Idea in a switch statement. However, this
+is Perl, not a police state, so there <em>is</em> a way to do it, if you must.</p>
+<p>If a <code>case</code> block executes an untargeted <code>next</code>, control is
+immediately transferred to the statement <em>after</em> the <code>case</code> statement
+(i.e. usually another case), rather than out of the surrounding
+<code>switch</code> block.</p>
+<p>For example:</p>
+<pre>
+        switch ($val) {
+                case 1      { handle_num_1(); next }    # and try next case...
+                case &quot;1&quot;    { handle_str_1(); next }    # and try next case...
+                case [0..9] { handle_num_any(); }       # and we're done
+                case /\d/   { handle_dig_any(); next }  # and try next case...
+                case /.*/   { handle_str_any(); next }  # and try next case...
+        }</pre>
+<p>If $val held the number <code>1</code>, the above <code>switch</code> block would call the
+first three <code>handle_...</code> subroutines, jumping to the next case test
+each time it encountered a <code>next</code>. After the thrid <code>case</code> block
+was executed, control would jump to the end of the enclosing
+<code>switch</code> block.</p>
+<p>On the other hand, if $val held <code>10</code>, then only the last two <code>handle_...</code>
+subroutines would be called.</p>
+<p>Note that this mechanism allows the notion of <em>conditional fall-through</em>.
+For example:</p>
+<pre>
+        switch ($val) {
+                case [0..9] { handle_num_any(); next if $val &lt; 7; }
+                case /\d/   { handle_dig_any(); }
+        }</pre>
+<p>If an untargeted <code>last</code> statement is executed in a case block, this
+immediately transfers control out of the enclosing <code>switch</code> block
+(in other words, there is an implicit <code>last</code> at the end of each
+normal <code>case</code> block). Thus the previous example could also have been
+written:</p>
+<pre>
+        switch ($val) {
+                case [0..9] { handle_num_any(); last if $val &gt;= 7; next; }
+                case /\d/   { handle_dig_any(); }
+        }</pre>
+<p>
+</p>
+<h2><a name="automating_fallthrough">Automating fall-through</a></h2>
+<p>In situations where case fall-through should be the norm, rather than an
+exception, an endless succession of terminal <code>next</code>s is tedious and ugly.
+Hence, it is possible to reverse the default behaviour by specifying
+the string ``fallthrough'' when importing the module. For example, the 
+following code is equivalent to the first example in <a href="#allowing_fallthrough">Allowing fall-through</a>:</p>
+<pre>
+        use Switch 'fallthrough';</pre>
+<pre>
+        switch ($val) {
+                case 1      { handle_num_1(); }
+                case &quot;1&quot;    { handle_str_1(); }
+                case [0..9] { handle_num_any(); last }
+                case /\d/   { handle_dig_any(); }
+                case /.*/   { handle_str_any(); }
+        }</pre>
+<p>Note the explicit use of a <code>last</code> to preserve the non-fall-through
+behaviour of the third case.</p>
+<p>
+</p>
+<h2><a name="alternative_syntax">Alternative syntax</a></h2>
+<p>Perl 6 will provide a built-in switch statement with essentially the
+same semantics as those offered by Switch.pm, but with a different
+pair of keywords. In Perl 6 <code>switch</code> will be spelled <code>given</code>, and
+<code>case</code> will be pronounced <code>when</code>. In addition, the <code>when</code> statement
+will not require switch or case values to be parenthesized.</p>
+<p>This future syntax is also (largely) available via the Switch.pm module, by
+importing it with the argument <code>&quot;Perl6&quot;</code>.  For example:</p>
+<pre>
+        use Switch 'Perl6';</pre>
+<pre>
+        given ($val) {
+                when 1       { handle_num_1(); }
+                when ($str1) { handle_str_1(); }
+                when [0..9]  { handle_num_any(); last }
+                when /\d/    { handle_dig_any(); }
+                when /.*/    { handle_str_any(); }
+                default      { handle anything else; }
+        }</pre>
+<p>Note that scalars still need to be parenthesized, since they would be
+ambiguous in Perl 5.</p>
+<p>Note too that you can mix and match both syntaxes by importing the module
+with:</p>
+<pre>
+        use Switch 'Perl5', 'Perl6';</pre>
+<p>
+</p>
+<h2><a name="higherorder_operations">Higher-order Operations</a></h2>
+<p>One situation in which <code>switch</code> and <code>case</code> do not provide a good
+substitute for a cascaded <code>if</code>, is where a switch value needs to
+be tested against a series of conditions. For example:</p>
+<pre>
+        sub beverage {
+            switch (shift) {</pre>
+<pre>
+                case sub { $_[0] &lt; 10 }  { return 'milk' }
+                case sub { $_[0] &lt; 20 }  { return 'coke' }
+                case sub { $_[0] &lt; 30 }  { return 'beer' }
+                case sub { $_[0] &lt; 40 }  { return 'wine' }
+                case sub { $_[0] &lt; 50 }  { return 'malt' }
+                case sub { $_[0] &lt; 60 }  { return 'Moet' }
+                else                     { return 'milk' }
+            }
+        }</pre>
+<p>The need to specify each condition as a subroutine block is tiresome. To
+overcome this, when importing Switch.pm, a special ``placeholder''
+subroutine named <code>__</code> [sic] may also be imported. This subroutine
+converts (almost) any expression in which it appears to a reference to a
+higher-order function. That is, the expression:</p>
+<pre>
+        use Switch '__';</pre>
+<pre>
+        __ &lt; 2 + __</pre>
+<p>is equivalent to:</p>
+<pre>
+        sub { $_[0] &lt; 2 + $_[1] }</pre>
+<p>With <code>__</code>, the previous ugly case statements can be rewritten:</p>
+<pre>
+        case  __ &lt; 10  { return 'milk' }
+        case  __ &lt; 20  { return 'coke' }
+        case  __ &lt; 30  { return 'beer' }
+        case  __ &lt; 40  { return 'wine' }
+        case  __ &lt; 50  { return 'malt' }
+        case  __ &lt; 60  { return 'Moet' }
+        else           { return 'milk' }</pre>
+<p>The <code>__</code> subroutine makes extensive use of operator overloading to
+perform its magic. All operations involving __ are overloaded to
+produce an anonymous subroutine that implements a lazy version
+of the original operation.</p>
+<p>The only problem is that operator overloading does not allow the
+boolean operators <code>&amp;&amp;</code> and <code>||</code> to be overloaded. So a case statement
+like this:</p>
+<pre>
+        case  0 &lt;= __ &amp;&amp; __ &lt; 10  { return 'digit' }</pre>
+<p>doesn't act as expected, because when it is
+executed, it constructs two higher order subroutines
+and then treats the two resulting references as arguments to <code>&amp;&amp;</code>:</p>
+<pre>
+        sub { 0 &lt;= $_[0] } &amp;&amp; sub { $_[0] &lt; 10 }</pre>
+<p>This boolean expression is inevitably true, since both references are
+non-false. Fortunately, the overloaded <code>'bool'</code> operator catches this
+situation and flags it as a error.</p>
+<p>
+</p>
+<hr />
+<h1><a name="dependencies">DEPENDENCIES</a></h1>
+<p>The module is implemented using Filter::Util::Call and Text::Balanced
+and requires both these modules to be installed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Damian Conway (<a href="mailto:damian@conway.org">damian@conway.org</a>) The maintainer of this module is now Rafael
+Garcia-Suarez (<a href="mailto:rgarciasuarez@free.fr">rgarciasuarez@free.fr</a>)</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>There are undoubtedly serious bugs lurking somewhere in code this funky :-)
+Bug reports and other feedback are most welcome.</p>
+<p>
+</p>
+<hr />
+<h1><a name="limitations">LIMITATIONS</a></h1>
+<p>Due to the heuristic nature of Switch.pm's source parsing, the presence
+of regexes specified with raw <code>?...?</code> delimiters may cause mysterious
+errors. The workaround is to use <code>m?...?</code> instead.</p>
+<p>Due to the way source filters work in Perl, you can't use Switch inside
+an string <code>eval</code>.</p>
+<p>If your source file is longer then 1 million characters and you have a
+switch statement that crosses the 1 million (or 2 million, etc.)
+character boundary you will get mysterious errors. The workaround is to
+use smaller source files.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<pre>
+    Copyright (c) 1997-2003, Damian Conway. All Rights Reserved.
+    This module is free software. It may be used, redistributed
+        and/or modified under the same terms as Perl itself.
+</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Switch - A switch statement for Perl</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

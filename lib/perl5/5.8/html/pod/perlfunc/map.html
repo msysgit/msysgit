@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>map - apply a change to a list to get back a new list with the changes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;map - apply a change to a list to get back a new list with the changes</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>map - apply a change to a list to get back a new list with the changes</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>map BLOCK LIST
+</p>
+<p>map EXPR,LIST</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Evaluates the BLOCK or EXPR for each element of LIST (locally setting
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> to each element) and returns the list value composed of the
+results of each such evaluation.  In scalar context, returns the
+total number of elements so generated.  Evaluates BLOCK or EXPR in
+list context, so each element of LIST may produce zero, one, or
+more elements in the returned value.</p>
+<pre>
+    @chars = map(chr, @nums);</pre>
+<p>translates a list of numbers to the corresponding characters.  And</p>
+<pre>
+    %hash = map { getkey($_) =&gt; $_ } @array;</pre>
+<p>is just a funny way to write</p>
+<pre>
+    %hash = ();
+    foreach $_ (@array) {
+        $hash{getkey($_)} = $_;
+    }</pre>
+<p>Note that <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> is an alias to the list value, so it can be used to
+modify the elements of the LIST.  While this is useful and supported,
+it can cause bizarre results if the elements of LIST are not variables.
+Using a regular <code>foreach</code> loop for this purpose would be clearer in
+most cases.  See also <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/grep.html">grep in the perlfunc manpage</a> for an array composed of those items of
+the original list for which the BLOCK or EXPR evaluates to true.</p>
+<p><code>{</code> starts both hash references and blocks, so <code>map { ...</code> could be either
+the start of map BLOCK LIST or map EXPR, LIST. Because perl doesn't look
+ahead for the closing <code>}</code> it has to take a guess at which its dealing with
+based what it finds just after the <code>{</code>. Usually it gets it right, but if it
+doesn't it won't realize something is wrong until it gets to the <code>}</code> and
+encounters the missing (or unexpected) comma. The syntax error will be
+reported close to the <code>}</code> but you'll need to change something near the <code>{</code>
+such as using a unary <code>+</code> to give perl some help:</p>
+<pre>
+    %hash = map {  &quot;\L$_&quot;, 1  } @array  # perl guesses EXPR.  wrong
+    %hash = map { +&quot;\L$_&quot;, 1  } @array  # perl guesses BLOCK. right
+    %hash = map { (&quot;\L$_&quot;, 1) } @array  # this also works
+    %hash = map {  lc($_), 1  } @array  # as does this.
+    %hash = map +( lc($_), 1 ), @array  # this is EXPR and works!</pre>
+<pre>
+    %hash = map  ( lc($_), 1 ), @array  # evaluates to (1, @array)</pre>
+<p>or to force an anon hash constructor use <code>+{</code></p>
+<pre>
+   @hashes = map +{ lc($_), 1 }, @array # EXPR, so needs , at end</pre>
+<p>and you get list of anonymous hashes each with only 1 entry.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;map - apply a change to a list to get back a new list with the changes</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

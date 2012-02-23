@@ -1,0 +1,100 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>sysopen - open a file, pipe, or descriptor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sysopen - open a file, pipe, or descriptor</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>sysopen - open a file, pipe, or descriptor</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>sysopen FILEHANDLE,FILENAME,MODE
+</p>
+<p>sysopen FILEHANDLE,FILENAME,MODE,PERMS</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Opens the file whose filename is given by FILENAME, and associates it
+with FILEHANDLE.  If FILEHANDLE is an expression, its value is used as
+the name of the real filehandle wanted.  This function calls the
+underlying operating system's <code>open</code> function with the parameters
+FILENAME, MODE, PERMS.</p>
+<p>The possible values and flag bits of the MODE parameter are
+system-dependent; they are available via the standard module <code>Fcntl</code>.
+See the documentation of your operating system's <code>open</code> to see which
+values and flag bits are available.  You may combine several flags
+using the <code>|</code>-operator.</p>
+<p>Some of the most common values are <code>O_RDONLY</code> for opening the file in
+read-only mode, <code>O_WRONLY</code> for opening the file in write-only mode,
+and <code>O_RDWR</code> for opening the file in read-write mode.
+  </p>
+<p>For historical reasons, some values work on almost every system
+supported by perl: zero means read-only, one means write-only, and two
+means read/write.  We know that these values do <em>not</em> work under
+OS/390 &amp; VM/ESA Unix and on the Macintosh; you probably don't want to
+use them in new code.</p>
+<p>If the file named by FILENAME does not exist and the <code>open</code> call creates
+it (typically because MODE includes the <code>O_CREAT</code> flag), then the value of
+PERMS specifies the permissions of the newly created file.  If you omit
+the PERMS argument to <code>sysopen</code>, Perl uses the octal value <code>0666</code>.
+These permission values need to be in octal, and are modified by your
+process's current <code>umask</code>.
+</p>
+<p>In many systems the <code>O_EXCL</code> flag is available for opening files in
+exclusive mode.  This is <strong>not</strong> locking: exclusiveness means here that
+if the file already exists, <code>sysopen()</code> fails.  <code>O_EXCL</code> may not work
+on network filesystems, and has no effect unless the <code>O_CREAT</code> flag
+is set as well.  Setting <code>O_CREAT|O_EXCL</code> prevents the file from
+being opened if it is a symbolic link.  It does not protect against
+symbolic links in the file's path.
+</p>
+<p>Sometimes you may want to truncate an already-existing file.  This
+can be done using the <code>O_TRUNC</code> flag.  The behavior of
+<code>O_TRUNC</code> with <code>O_RDONLY</code> is undefined.
+</p>
+<p>You should seldom if ever use <code>0644</code> as argument to <code>sysopen</code>, because
+that takes away the user's option to have a more permissive umask.
+Better to omit it.  See the <code>perlfunc(1)</code> entry on <code>umask</code> for more
+on this.</p>
+<p>Note that <code>sysopen</code> depends on the <code>fdopen()</code> C library function.
+On many UNIX systems, <code>fdopen()</code> is known to fail when file descriptors
+exceed a certain value, typically 255. If you need more file
+descriptors than that, consider rebuilding Perl to use the <code>sfio</code>
+library, or perhaps using the POSIX::open() function.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlopentut.html">the perlopentut manpage</a> for a kinder, gentler explanation of opening files.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sysopen - open a file, pipe, or descriptor</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,363 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OS2::REXX - access to DLLs with REXX calling convention and REXX runtime.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::REXX - access to DLLs with REXX calling convention and REXX runtime.</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<ul>
+
+		<li><a href="#note">NOTE</a></li>
+	</ul>
+
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#load_rexx_dll">Load REXX DLL</a></li>
+		<li><a href="#define_function_prefix_">Define function prefix:</a></li>
+		<li><a href="#example">Example</a></li>
+		<li><a href="#define_queue_">Define queue:</a></li>
+		<li><a href="#call_external_rexx_function_">Call external REXX function:</a></li>
+	</ul>
+
+	<li><a href="#accessing_rexxruntime">Accessing REXX-runtime</a></li>
+	<ul>
+
+		<li><a href="#bind_scalar_variable_to_rexx_variable_">Bind scalar variable to REXX variable:</a></li>
+		<li><a href="#bind_array_variable_to_rexx_stem_variable_">Bind array variable to REXX stem variable:</a></li>
+		<li><a href="#bind_hash_array_variable_to_rexx_stem_variable_">Bind hash array variable to REXX stem variable:</a></li>
+		<li><a href="#erase_individual_rexx_variables__bound_or_not__">Erase individual REXX variables (bound or not):</a></li>
+		<li><a href="#erase_rexx_variables_with_given_stem__bound_or_not__">Erase REXX variables with given stem (bound or not):</a></li>
+		<li><a href="#make_perl_functions_available_in_rexx_">Make Perl functions available in REXX:</a></li>
+	</ul>
+
+	<li><a href="#subcommand_handlers">Subcommand handlers</a></li>
+	<li><a href="#interfacing_from_rexx_to_perl">Interfacing from REXX to Perl</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#environment">ENVIRONMENT</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>OS2::REXX - access to DLLs with REXX calling convention and REXX runtime.</p>
+<p>
+</p>
+<h2><a name="note">NOTE</a></h2>
+<p>By default, the REXX variable pool is not available, neither
+to Perl, nor to external REXX functions. To enable it, you need to put
+your code inside <code>REXX_call</code> function.  REXX functions which do not use
+variables may be usable even without <code>REXX_call</code> though.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use OS2::REXX;
+        $ydb = load OS2::REXX &quot;ydbautil&quot; or die &quot;Cannot load: $!&quot;;
+        @pid = $ydb-&gt;RxProcId();
+        REXX_call {
+          tie $s, OS2::REXX, &quot;TEST&quot;;
+          $s = 1;
+        };</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="load_rexx_dll">Load REXX DLL</a></h2>
+<pre>
+        $dll = load OS2::REXX NAME [, WHERE];</pre>
+<p>NAME is DLL name, without path and extension.</p>
+<p>Directories are searched WHERE first (list of dirs), then environment
+paths PERL5REXX, PERLREXX, PATH or, as last resort, OS/2-ish search 
+is performed in default DLL path (without adding paths and extensions).</p>
+<p>The DLL is not unloaded when the variable dies.</p>
+<p>Returns DLL object reference, or undef on failure.</p>
+<p>
+</p>
+<h2><a name="define_function_prefix_">Define function prefix:</a></h2>
+<pre>
+        $dll-&gt;prefix(NAME);</pre>
+<p>Define the prefix of external functions, prepended to the function
+names used within your program, when looking for the entries in the
+DLL.</p>
+<p>
+</p>
+<h2><a name="example">Example</a></h2>
+<pre>
+                $dll = load OS2::REXX &quot;RexxBase&quot;;
+                $dll-&gt;prefix(&quot;RexxBase_&quot;);
+                $dll-&gt;Init();</pre>
+<p>is the same as</p>
+<pre>
+                $dll = load OS2::REXX &quot;RexxBase&quot;;
+                $dll-&gt;RexxBase_Init();</pre>
+<p>
+</p>
+<h2><a name="define_queue_">Define queue:</a></h2>
+<pre>
+        $dll-&gt;queue(NAME);</pre>
+<p>Define the name of the REXX queue passed to all external
+functions of this module. Defaults to ``SESSION''.</p>
+<p>Check for functions (optional):</p>
+<pre>
+        BOOL = $dll-&gt;find(NAME [, NAME [, ...]]);</pre>
+<p>Returns true if all functions are available.</p>
+<p>
+</p>
+<h2><a name="call_external_rexx_function_">Call external REXX function:</a></h2>
+<pre>
+        $dll-&gt;function(arguments);</pre>
+<p>Returns the return string if the return code is 0, else undef.
+Dies with error message if the function is not available.</p>
+<p>
+</p>
+<hr />
+<h1><a name="accessing_rexxruntime">Accessing REXX-runtime</a></h1>
+<p>While calling functions with REXX signature does not require the presence
+of the system REXX DLL, there are some actions which require REXX-runtime 
+present. Among them is the access to REXX variables by name.</p>
+<p>One enables REXX runtime by bracketing your code by</p>
+<pre>
+        REXX_call BLOCK;</pre>
+<p>(trailing semicolon required!) or</p>
+<pre>
+        REXX_call \&amp;subroutine_name;</pre>
+<p>Inside such a call one has access to REXX variables (see below).</p>
+<p>An alternative way to execute code inside a REXX compartment is</p>
+<pre>
+        REXX_eval EXPR;
+        REXX_eval_with EXPR, 
+                subroutine_name_in_REXX =&gt; \&amp;Perl_subroutine</pre>
+<p>Here <code>EXPR</code> is a REXX code to run; to execute Perl code one needs to put
+it inside Perl_subroutine(), and call this subroutine from REXX, as in</p>
+<pre>
+        REXX_eval_with &lt;&lt;EOE, foo =&gt; sub { 123 * shift };
+          say foo(2)
+        EOE</pre>
+<p>If one needs more Perl subroutines available, one can ``import'' them into
+REXX from inside Perl_subroutine(); since REXX is not case-sensitive,
+the names should be uppercased.</p>
+<pre>
+        use OS2::REXX 'register';</pre>
+<pre>
+        sub BAR { 123 + shift}
+        sub BAZ { 789 }
+        sub importer { register qw(BAR BAZ) }</pre>
+<pre>
+        REXX_eval_with &lt;&lt;'EOE', importer =&gt; \&amp;importer;
+          call importer
+          say bar(34)
+          say baz()
+        EOE</pre>
+<p>
+</p>
+<h2><a name="bind_scalar_variable_to_rexx_variable_">Bind scalar variable to REXX variable:</a></h2>
+<pre>
+        tie $var, OS2::REXX, &quot;NAME&quot;;</pre>
+<p>
+</p>
+<h2><a name="bind_array_variable_to_rexx_stem_variable_">Bind array variable to REXX stem variable:</a></h2>
+<pre>
+        tie @var, OS2::REXX, &quot;NAME.&quot;;</pre>
+<p>Only scalar operations work so far. No array assignments, no array
+operations, ... FORGET IT.</p>
+<p>
+</p>
+<h2><a name="bind_hash_array_variable_to_rexx_stem_variable_">Bind hash array variable to REXX stem variable:</a></h2>
+<pre>
+        tie %var, OS2::REXX, &quot;NAME.&quot;;</pre>
+<p>To access all visible REXX variables via hash array, bind to ``'';</p>
+<p>No array assignments. No array operations, other than hash array
+operations. Just like the *dbm based implementations.</p>
+<p>For the usual REXX stem variables, append a ``.'' to the name,
+as shown above. If the hash key is part of the stem name, for
+example if you bind to ``'', you cannot use lower case in the stem
+part of the key and it is subject to character set restrictions.</p>
+<p>
+</p>
+<h2><a name="erase_individual_rexx_variables__bound_or_not__">Erase individual REXX variables (bound or not):</a></h2>
+<pre>
+        OS2::REXX::drop(&quot;NAME&quot; [, &quot;NAME&quot; [, ...]]);</pre>
+<p>
+</p>
+<h2><a name="erase_rexx_variables_with_given_stem__bound_or_not__">Erase REXX variables with given stem (bound or not):</a></h2>
+<pre>
+        OS2::REXX::dropall(&quot;STEM&quot; [, &quot;STEM&quot; [, ...]]);</pre>
+<p>
+</p>
+<h2><a name="make_perl_functions_available_in_rexx_">Make Perl functions available in REXX:</a></h2>
+<pre>
+        OS2::REXX::register(&quot;NAME&quot; [, &quot;NAME&quot; [, ...]]);</pre>
+<p>Since REXX is not case-sensitive, the names should be uppercase.</p>
+<p>
+</p>
+<hr />
+<h1><a name="subcommand_handlers">Subcommand handlers</a></h1>
+<p>By default, the executed REXX code runs without any default subcommand
+handler present.  A subcommand handler named <code>PERLEVAL</code> is defined, but
+not made a default.  Use <code>ADDRESS PERLEVAL</code> REXX command to make it a default
+handler; alternatively, use <code>ADDRESS Handler WhatToDo</code> to direct a command
+to the handler you like.</p>
+<p>Experiments show that the handler <code>CMD</code> is also available; probably it is
+provided by the REXX runtime.</p>
+<p>
+</p>
+<hr />
+<h1><a name="interfacing_from_rexx_to_perl">Interfacing from REXX to Perl</a></h1>
+<p>This module provides an interface from Perl to REXX, and from REXX-inside-Perl
+back to Perl.  There is an alternative scenario which allows usage of Perl
+from inside REXX.</p>
+<p>A DLL <em>PerlRexx</em> provides an API to Perl as REXX functions</p>
+<pre>
+  PERL
+  PERLTERM
+  PERLINIT
+  PERLEXIT
+  PERLEVAL
+  PERLLASTERROR
+  PERLEXPORTALL
+  PERLDROPALL
+  PERLDROPALLEXIT</pre>
+<p>A subcommand handler <code>PERLEVALSUBCOMMAND</code> can also be registered.  Calling
+the function <code>PERLEXPORTALL()</code> exports all these functions, as well as
+exports this subcommand handler under the name <code>EVALPERL</code>.  <code>PERLDROPALL()</code>
+inverts this action (and unloads <code>PERLEXPORTALL()</code> as well).  In particular</p>
+<pre>
+  rc = RxFuncAdd(&quot;PerlExportAll&quot;, 'PerlRexx', &quot;PERLEXPORTALL&quot;)
+  rc = PerlExportAll()
+  res = PERLEVAL(perlarg)
+  ADDRESS EVALPERL perlarg1
+  rc = PerlDropAllExit()</pre>
+<p>loads all the functions above, evals the Perl code in the REXX variable
+<code>perlarg</code>, putting the result into the REXX variable <code>res</code>,
+then evals the Perl code in the REXX variable <code>perlarg1</code>, and, finally,
+drops the loaded functions and the subcommand handler, deinitializes
+the Perl interpreter, and exits the Perl's C runtime library.</p>
+<p><code>PERLEXIT()</code> or <code>PERLDROPALLEXIT()</code> should be called as the last command of
+the REXX program.  (This is considered as a bug.)  Their purpose is to flush
+all the output buffers of the Perl's C runtime library.</p>
+<p><code>PERLLASTERROR</code> gives the reason for the failure of the last PERLEVAL().
+It is useful inside <code>signal on syntax</code> handler.  <code>PERLINIT()</code> and <code>PERLTERM()</code>
+initialize and deinitialize the Perl interpreter.</p>
+<p><code>PERLEVAL(string)</code> initializes the Perl interpreter (if needed), and
+evaluates <code>string</code> as Perl code.  The result is returned to REXX stringified,
+undefined result is considered as failure.</p>
+<p><code>PERL(string)</code> does the same as <code>PERLEVAL(string)</code> wrapped by calls to
+<code>PERLINIT()</code> and PERLEXIT().</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>Note that while function and variable names are case insensitive in the
+REXX language, function names exported by a DLL and the REXX variables
+(as seen by Perl through the chosen API) are all case sensitive!</p>
+<p>Most REXX DLLs export function names all upper case, but there are a
+few which export mixed case names (such as RxExtras). When trying to
+find the entry point, both exact case and all upper case are searched.
+If the DLL exports ``RxNap'', you have to specify the exact case, if it
+exports ``RXOPEN'', you can use any case.</p>
+<p>To avoid interfering with subroutine names defined by Perl (DESTROY)
+or used within the REXX module (prefix, find), it is best to use mixed
+case and to avoid lowercase only or uppercase only names when calling
+REXX functions. Be consistent. The same function written in different
+ways results in different Perl stubs.</p>
+<p>There is no REXX interpolation on variable names, so the REXX variable
+name TEST.ONE is not affected by some other REXX variable ONE. And it
+is not the same variable as TEST.one!</p>
+<p>You cannot call REXX functions which are not exported by the DLL.
+While most DLLs export all their functions, some, like RxFTP, export
+only ``...LoadFuncs'', which registers the functions within REXX only.</p>
+<p>You cannot call 16-bit DLLs. The few interesting ones I found
+(FTP,NETB,APPC) do not export their functions.</p>
+<p>I do not know whether the REXX API is reentrant with respect to
+exceptions (signals) when the REXX top-level exception handler is
+overridden. So unless you know better than I do, do not access REXX
+variables (probably tied to Perl variables) or call REXX functions
+which access REXX queues or REXX variables in signal handlers.</p>
+<p>See <code>t/rx*.t</code> and the next section for examples.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<pre>
+  use OS2::REXX;</pre>
+<pre>
+  sub Ender::DESTROY { $vrexx-&gt;VExit; print &quot;Exiting...\n&quot; }</pre>
+<pre>
+  $vrexx = OS2::REXX-&gt;load('VREXX');
+  REXX_call {                   # VOpenWindow takes a stem
+    local $SIG{TERM} = sub {die}; # enable Ender::DESTROY
+    local $SIG{INT} = sub {die};        # enable Ender::DESTROY</pre>
+<pre>
+    $code = $vrexx-&gt;VInit;
+    print &quot;Init code = `$code'\n&quot;;
+    die &quot;error initializing VREXX&quot; if $code eq 'ERROR';</pre>
+<pre>
+    my $ender = bless [], 'Ender'; # Call Ender::DESTROY on exit</pre>
+<pre>
+    print &quot;VREXX Version &quot;, $vrexx-&gt;VGetVersion, &quot;\n&quot;;</pre>
+<pre>
+    tie %pos, 'OS2::REXX', 'POS.' or die;
+    %pos = ( LEFT   =&gt; 0, RIGHT  =&gt; 7, TOP    =&gt; 5, BOTTOM =&gt; 0 );</pre>
+<pre>
+    $id = $vrexx-&gt;VOpenWindow('To disconnect:', 'WHITE', 'POS');
+    $vrexx-&gt;VForeColor($id, 'BLACK');
+    $vrexx-&gt;VSetFont($id, 'TIME', '30');
+    $tlim = time + 60;
+    while ( ($r = $tlim - time) &gt;= 0 ) {
+      $vrexx-&gt;VClearWindow($id);
+      $vrexx-&gt;VSay($id, 100, 50, (sprintf &quot;%02i:%02i&quot;, int($r/60), $r % 60));
+      sleep 1;
+    }
+    print &quot;Close code = `$res'\n&quot; if $res = $vrexx-&gt;VCloseWindow($id);
+  };</pre>
+<p>
+</p>
+<hr />
+<h1><a name="environment">ENVIRONMENT</a></h1>
+<p>If <code>PERL_REXX_DEBUG</code> is set, prints trace info on calls to REXX runtime
+environment.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Andreas Kaiser <a href="mailto:ak@ananke.s.bawue.de,">ak@ananke.s.bawue.de,</a> with additions by Ilya Zakharevich
+<a href="mailto:ilya@math.ohio-state.edu.">ilya@math.ohio-state.edu.</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/OS2/DLL.html">the OS2::DLL manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;OS2::REXX - access to DLLs with REXX calling convention and REXX runtime.</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

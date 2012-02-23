@@ -1,0 +1,431 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DBM_Filter -- Filter DBM keys/values</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DBM_Filter -- Filter DBM keys/values</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#what_is_a_dbm_filter">What is a DBM Filter?</a></li>
+	<ul>
+
+		<li><a href="#so_what_s_new">So what's new?</a></li>
+	</ul>
+
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#_db_filter_push__">$db-&gt;<code>Filter_Push()</code></a></li>
+		<li><a href="#_db_filter_key_push__">$db-&gt;<code>Filter_Key_Push()</code></a></li>
+		<li><a href="#_db_filter_value_push__">$db-&gt;<code>Filter_Value_Push()</code></a></li>
+		<li><a href="#_db_filter_pop__">$db-&gt;<code>Filter_Pop()</code></a></li>
+		<li><a href="#_db_filtered__">$db-&gt;<code>Filtered()</code></a></li>
+	</ul>
+
+	<li><a href="#writing_a_filter">Writing a Filter</a></li>
+	<ul>
+
+		<li><a href="#immediate_filters">Immediate Filters</a></li>
+		<li><a href="#canned_filters">Canned Filters</a></li>
+	</ul>
+
+	<li><a href="#filters_included">Filters Included</a></li>
+	<li><a href="#notes">NOTES</a></li>
+	<ul>
+
+		<li><a href="#maintain_round_trip_integrity">Maintain Round Trip Integrity</a></li>
+		<li><a href="#don_t_mix_filtered___nonfiltered_data_in_the_same_database_file_">Don't mix filtered &amp; non-filtered data in the same database file.</a></li>
+	</ul>
+
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DBM_Filter -- Filter DBM keys/values</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use DBM_Filter ;
+    use SDBM_File; # or DB_File, or GDBM_File, or NDBM_File, or ODBM_File</pre>
+<pre>
+    $db = tie %hash, ...</pre>
+<pre>
+    $db-&gt;Filter_Push(Fetch =&gt; sub {...},
+                     Store =&gt; sub {...});</pre>
+<pre>
+    $db-&gt;Filter_Push('my_filter1');
+    $db-&gt;Filter_Push('my_filter2', params...);</pre>
+<pre>
+    $db-&gt;Filter_Key_Push(...) ;
+    $db-&gt;Filter_Value_Push(...) ;</pre>
+<pre>
+    $db-&gt;Filter_Pop();
+    $db-&gt;Filtered();</pre>
+<pre>
+    package DBM_Filter::my_filter1;
+    
+    sub Store { ... }
+    sub Fetch { ... }</pre>
+<pre>
+    1;</pre>
+<pre>
+    package DBM_Filter::my_filter2;</pre>
+<pre>
+    sub Filter
+    {
+        my @opts = @_;
+        ...
+        return (
+            sub Store { ... },
+            sub Fetch { ... } );
+    }</pre>
+<pre>
+    1;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides an interface that allows filters to be applied
+to tied Hashes associated with DBM files. It builds on the DBM Filter
+hooks that are present in all the *DB*_File modules included with the
+standard Perl source distribution from version 5.6.1 onwards. In addition
+to the *DB*_File modules distributed with Perl, the BerkeleyDB module,
+available on CPAN, supports the DBM Filter hooks. See <a href="/usr/lib/perl5/5.8/html/./pod/perldbmfilter.html">the perldbmfilter manpage</a>
+for more details on the DBM Filter hooks.</p>
+<p>
+</p>
+<hr />
+<h1><a name="what_is_a_dbm_filter">What is a DBM Filter?</a></h1>
+<p>A DBM Filter allows the keys and/or values in a tied hash to be modified
+by some user-defined code just before it is written to the DBM file and
+just after it is read back from the DBM file. For example, this snippet
+of code</p>
+<pre>
+    $some_hash{&quot;abc&quot;} = 42;</pre>
+<p>could potentially trigger two filters, one for the writing of the key
+``abc'' and another for writing the value 42.  Similarly, this snippet</p>
+<pre>
+    my ($key, $value) = each %some_hash</pre>
+<p>will trigger two filters, one for the reading of the key and one for
+the reading of the value.</p>
+<p>Like the existing DBM Filter functionality, this module arranges for the
+<a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> variable to be populated with the key or value that a filter will
+check. This usually means that most DBM filters tend to be very short.</p>
+<p>
+</p>
+<h2><a name="so_what_s_new">So what's new?</a></h2>
+<p>The main enhancements over the standard DBM Filter hooks are:</p>
+<ul>
+<li>
+<p>A cleaner interface.</p>
+</li>
+<li>
+<p>The ability to easily apply multiple filters to a single DBM file.</p>
+</li>
+<li>
+<p>The ability to create ``canned'' filters. These allow commonly used filters
+to be packaged into a stand-alone module.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>This module will arrange for the following methods to be available via
+the object returned from the <code>tie</code> call.</p>
+<p>
+</p>
+<h2><a name="_db_filter_push__">$db-&gt;<a href="#item_filter_push"><code>Filter_Push()</code></a></a></h2>
+<p>
+</p>
+<h2><a name="_db_filter_key_push__">$db-&gt;<a href="#item_filter_key_push"><code>Filter_Key_Push()</code></a></a></h2>
+<p>
+</p>
+<h2><a name="_db_filter_value_push__">$db-&gt;<a href="#item_filter_value_push"><code>Filter_Value_Push()</code></a></a></h2>
+<p>Add a filter to filter stack for the database, <code>$db</code>. The three formats
+vary only in whether they apply to the DBM key, the DBM value or both.</p>
+<dl>
+<dt><strong><a name="item_filter_push">Filter_Push</a></strong>
+
+<dd>
+<p>The filter is applied to <em>both</em> keys and values.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filter_key_push">Filter_Key_Push</a></strong>
+
+<dd>
+<p>The filter is applied to the key <em>only</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_filter_value_push">Filter_Value_Push</a></strong>
+
+<dd>
+<p>The filter is applied to the value <em>only</em>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="_db_filter_pop__">$db-&gt;<code>Filter_Pop()</code></a></h2>
+<p>Removes the last filter that was applied to the DBM file associated with
+<code>$db</code>, if present.</p>
+<p>
+</p>
+<h2><a name="_db_filtered__">$db-&gt;<code>Filtered()</code></a></h2>
+<p>Returns TRUE if there are any filters applied to the DBM associated
+with <code>$db</code>.  Otherwise returns FALSE.</p>
+<p>
+</p>
+<hr />
+<h1><a name="writing_a_filter">Writing a Filter</a></h1>
+<p>Filters can be created in two main ways</p>
+<p>
+</p>
+<h2><a name="immediate_filters">Immediate Filters</a></h2>
+<p>An immediate filter allows you to specify the filter code to be used
+at the point where the filter is applied to a dbm. In this mode the
+Filter_*_Push methods expects to receive exactly two parameters.</p>
+<pre>
+    my $db = tie %hash, 'SDBM_File', ...
+    $db-&gt;Filter_Push( Store =&gt; sub { },
+                      Fetch =&gt; sub { });</pre>
+<p>The code reference associated with <code>Store</code> will be called before any
+key/value is written to the database and the code reference associated
+with <code>Fetch</code> will be called after any key/value is read from the
+database.</p>
+<p>For example, here is a sample filter that adds a trailing NULL character
+to all strings before they are written to the DBM file, and removes the
+trailing NULL when they are read from the DBM file</p>
+<pre>
+    my $db = tie %hash, 'SDBM_File', ...
+    $db-&gt;Filter_Push( Store =&gt; sub { $_ .= &quot;\x00&quot; ; },
+                      Fetch =&gt; sub { s/\x00$// ;    });</pre>
+<p>Points to note:</p>
+<ol>
+<li>
+<p>Both the Store and Fetch filters manipulate <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a>.</p>
+</li>
+</ol>
+<p>
+</p>
+<h2><a name="canned_filters">Canned Filters</a></h2>
+<p>Immediate filters are useful for one-off situations. For more generic
+problems it can be useful to package the filter up in its own module.</p>
+<p>The usage is for a canned filter is:</p>
+<pre>
+    $db-&gt;Filter_Push(&quot;name&quot;, params)</pre>
+<p>where</p>
+<dl>
+<dt><strong><a name="item__22name_22">``name''</a></strong>
+
+<dd>
+<p>is the name of the module to load. If the string specified does not
+contain the package separator characters ``::'', it is assumed to refer to
+the full module name ``DBM_Filter::name''. This means that the full names
+for canned filters, ``null'' and ``utf8'', included with this module are:</p>
+</dd>
+<dd>
+<pre>
+    DBM_Filter::null
+    DBM_Filter::utf8</pre>
+</dd>
+</li>
+<dt><strong><a name="item_params">params</a></strong>
+
+<dd>
+<p>any optional parameters that need to be sent to the filter. See the
+encode filter for an example of a module that uses parameters.</p>
+</dd>
+</li>
+</dl>
+<p>The module that implements the canned filter can take one of two
+forms. Here is a template for the first</p>
+<pre>
+    package DBM_Filter::null ;</pre>
+<pre>
+    use strict;
+    use warnings;</pre>
+<pre>
+    sub Store 
+    {
+        # store code here    
+    }</pre>
+<pre>
+    sub Fetch
+    {
+        # fetch code here
+    }</pre>
+<pre>
+    1;</pre>
+<p>Notes:</p>
+<ol>
+<li>
+<p>The package name uses the <code>DBM_Filter::</code> prefix.</p>
+</li>
+<li>
+<p>The module <em>must</em> have both a Store and a Fetch method. If only one is
+present, or neither are present, a fatal error will be thrown.</p>
+</li>
+</ol>
+<p>The second form allows the filter to hold state information using a
+closure, thus:</p>
+<pre>
+    package DBM_Filter::encoding ;</pre>
+<pre>
+    use strict;
+    use warnings;</pre>
+<pre>
+    sub Filter
+    {
+        my @params = @_ ;</pre>
+<pre>
+        ...
+        return {
+            Store   =&gt; sub { $_ = $encoding-&gt;encode($_) },
+            Fetch   =&gt; sub { $_ = $encoding-&gt;decode($_) }
+            } ;
+    }</pre>
+<pre>
+    1;</pre>
+<p>In this instance the ``Store'' and ``Fetch'' methods are encapsulated inside a
+``Filter'' method.</p>
+<p>
+</p>
+<hr />
+<h1><a name="filters_included">Filters Included</a></h1>
+<p>A number of canned filers are provided with this module. They cover a
+number of the main areas that filters are needed when interfacing with
+DBM files. They also act as templates for your own filters.</p>
+<p>The filter included are:</p>
+<ul>
+<li><strong><a name="item_utf8">utf8</a></strong>
+
+<p>This module will ensure that all data written to the DBM will be encoded
+in UTF-8.</p>
+<p>This module needs the Encode module.</p>
+</li>
+<li><strong><a name="item_encode">encode</a></strong>
+
+<p>Allows you to choose the character encoding will be store in the DBM file.</p>
+</li>
+<li><strong><a name="item_compress">compress</a></strong>
+
+<p>This filter will compress all data before it is written to the database
+and uncompressed it on reading.</p>
+<p>This module needs Compress::Zlib.</p>
+</li>
+<li><strong><a name="item_int32">int32</a></strong>
+
+<p>This module is used when interoperating with a C/C++ application that
+uses a C int as either the key and/or value in the DBM file.</p>
+</li>
+<li><strong><a name="item_null">null</a></strong>
+
+<p>This module ensures that all data written to the DBM file is null
+terminated. This is useful when you have a perl script that needs
+to interoperate with a DBM file that a C program also uses. A fairly
+common issue is for the C application to include the terminating null
+in a string when it writes to the DBM file. This filter will ensure that
+all data written to the DBM file can be read by the C application.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>
+</p>
+<h2><a name="maintain_round_trip_integrity">Maintain Round Trip Integrity</a></h2>
+<p>When writing a DBM filter it is <em>very</em> important to ensure that it is
+possible to retrieve all data that you have written when the DBM filter
+is in place. In practice, this means that whatever transformation is
+applied to the data in the Store method, the <em>exact</em> inverse operation
+should be applied in the Fetch method.</p>
+<p>If you don't provide an exact inverse transformation, you will find that
+code like this will not behave as you expect.</p>
+<pre>
+     while (my ($k, $v) = each %hash)
+     {
+         ...
+     }</pre>
+<p>Depending on the transformation, you will find that one or more of the
+following will happen</p>
+<ol>
+<li>
+<p>The loop will never terminate.</p>
+</li>
+<li>
+<p>Too few records will be retrieved.</p>
+</li>
+<li>
+<p>Too many will be retrieved.</p>
+</li>
+<li>
+<p>The loop will do the right thing for a while, but it will unexpectedly fail.</p>
+</li>
+</ol>
+<p>
+</p>
+<h2><a name="don_t_mix_filtered___nonfiltered_data_in_the_same_database_file_">Don't mix filtered &amp; non-filtered data in the same database file.</a></h2>
+<p>This is just a restatement of the previous section. Unless you are
+completely certain you know what you are doing, avoid mixing filtered &amp;
+non-filtered data.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<p>Say you need to interoperate with a legacy C application that stores
+keys as C ints and the values and null terminated UTF-8 strings. Here
+is how you would set that up</p>
+<pre>
+    my $db = tie %hash, 'SDBM_File', ...</pre>
+<pre>
+    $db-&gt;Filter_Key_Push('int32') ;</pre>
+<pre>
+    $db-&gt;Filter_Value_Push('utf8');
+    $db-&gt;Filter_Value_Push('null');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>&lt;DB_File&gt;,  <a href="/usr/lib/perl5/5.8/html/./ext/GDBM_File/GDBM_File.html">the GDBM_File manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/NDBM_File/NDBM_File.html">the NDBM_File manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/ODBM_File/ODBM_File.html">the ODBM_File manpage</a>, <a href="/usr/lib/perl5/5.8/html/./ext/SDBM_File/SDBM_File.html">the SDBM_File manpage</a>, <a href="/usr/lib/perl5/5.8/html/./pod/perldbmfilter.html">the perldbmfilter manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Paul Marquess &lt;<a href="mailto:pmqs@cpan.org">pmqs@cpan.org</a>&gt;
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;DBM_Filter -- Filter DBM keys/values</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

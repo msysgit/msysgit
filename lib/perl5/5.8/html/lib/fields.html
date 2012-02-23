@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>fields - compile-time class fields</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;fields - compile-time class fields</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>fields - compile-time class fields</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    {
+        package Foo;
+        use fields qw(foo bar _Foo_private);
+        sub new {
+            my Foo $self = shift;
+            unless (ref $self) {
+                $self = fields::new($self);
+                $self-&gt;{_Foo_private} = &quot;this is Foo's secret&quot;;
+            }
+            $self-&gt;{foo} = 10;
+            $self-&gt;{bar} = 20;
+            return $self;
+        }
+    }</pre>
+<pre>
+    my $var = Foo-&gt;new;
+    $var-&gt;{foo} = 42;</pre>
+<pre>
+    # this will generate an error
+    $var-&gt;{zap} = 42;</pre>
+<pre>
+    # subclassing
+    {
+        package Bar;
+        use base 'Foo';
+        use fields qw(baz _Bar_private);        # not shared with Foo
+        sub new {
+            my $class = shift;
+            my $self = fields::new($class);
+            $self-&gt;SUPER::new();                # init base fields
+            $self-&gt;{baz} = 10;                  # init own fields
+            $self-&gt;{_Bar_private} = &quot;this is Bar's secret&quot;;
+            return $self;
+        }
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>fields</code> pragma enables compile-time verified class fields.</p>
+<p>NOTE: The current implementation keeps the declared fields in the %FIELDS
+hash of the calling package, but this may change in future versions.
+Do <strong>not</strong> update the %FIELDS hash directly, because it must be created
+at compile-time for it to be fully useful, as is done by this pragma.</p>
+<p><strong>Only valid for perl before 5.9.0:</strong></p>
+<p>If a typed lexical variable holding a reference is used to access a
+hash element and a package with the same name as the type has
+declared class fields using this pragma, then the operation is
+turned into an array access at compile time.</p>
+<p>The related <code>base</code> pragma will combine fields from base classes and any
+fields declared using the <code>fields</code> pragma.  This enables field
+inheritance to work properly.</p>
+<p>Field names that start with an underscore character are made private to
+the class and are not visible to subclasses.  Inherited fields can be
+overridden but will generate a warning if used together with the <code>-w</code>
+switch.</p>
+<p><strong>Only valid for perls before 5.9.0:</strong></p>
+<p>The effect of all this is that you can have objects with named
+fields which are as compact and as fast arrays to access. This only
+works as long as the objects are accessed through properly typed
+variables. If the objects are not typed, access is only checked at
+run time.</p>
+<p>The following functions are supported:</p>
+<dl>
+<dt><strong><a name="item_new">new</a></strong>
+
+<dd>
+<p><strong> perl before 5.9.0: </strong> fields::new() creates and blesses a
+pseudo-hash comprised of the fields declared using the <code>fields</code>
+pragma into the specified class.</p>
+</dd>
+<dd>
+<p><strong> perl 5.9.0 and higher: </strong> fields::new() creates and blesses a
+restricted-hash comprised of the fields declared using the <code>fields</code>
+pragma into the specified class.</p>
+</dd>
+<dd>
+<p>This function is usable with or without pseudo-hashes.  It is the
+recommended way to construct a fields-based object.</p>
+</dd>
+<dd>
+<p>This makes it possible to write a constructor like this:</p>
+</dd>
+<dd>
+<pre>
+    package Critter::Sounds;
+    use fields qw(cat dog bird);</pre>
+</dd>
+<dd>
+<pre>
+    sub new {
+        my $self = shift;
+        $self = fields::new($self) unless ref $self;
+        $self-&gt;{cat} = 'meow';                          # scalar element
+        @$self{'dog','bird'} = ('bark','tweet');        # slice
+        return $self;
+    }</pre>
+</dd>
+</li>
+<dt><strong><a name="item_phash">phash</a></strong>
+
+<dd>
+<p><strong> before perl 5.9.0: </strong></p>
+</dd>
+<dd>
+<p>fields::phash() can be used to create and initialize a plain (unblessed)
+pseudo-hash.  This function should always be used instead of creating
+pseudo-hashes directly.</p>
+</dd>
+<dd>
+<p>If the first argument is a reference to an array, the pseudo-hash will
+be created with keys from that array.  If a second argument is supplied,
+it must also be a reference to an array whose elements will be used as
+the values.  If the second array contains less elements than the first,
+the trailing elements of the pseudo-hash will not be initialized.
+This makes it particularly useful for creating a pseudo-hash from
+subroutine arguments:</p>
+</dd>
+<dd>
+<pre>
+    sub dogtag {
+       my $tag = fields::phash([qw(name rank ser_num)], [@_]);
+    }</pre>
+</dd>
+<dd>
+<p>fields::phash() also accepts a list of key-value pairs that will
+be used to construct the pseudo hash.  Examples:</p>
+</dd>
+<dd>
+<pre>
+    my $tag = fields::phash(name =&gt; &quot;Joe&quot;,
+                            rank =&gt; &quot;captain&quot;,
+                            ser_num =&gt; 42);</pre>
+</dd>
+<dd>
+<pre>
+    my $pseudohash = fields::phash(%args);</pre>
+</dd>
+<dd>
+<p><strong> perl 5.9.0 and higher: </strong></p>
+</dd>
+<dd>
+<p>Pseudo-hashes have been removed from Perl as of 5.10.  Consider using
+restricted hashes or fields::new() instead.  Using fields::phash()
+will cause an error.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/base.html">the base manpage</a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;fields - compile-time class fields</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

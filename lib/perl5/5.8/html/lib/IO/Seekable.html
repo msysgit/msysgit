@@ -1,0 +1,141 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IO::Seekable - supply seek based methods for I/O objects</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Seekable - supply seek based methods for I/O objects</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>IO::Seekable - supply seek based methods for I/O objects</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use IO::Seekable;
+    package IO::Something;
+    @ISA = qw(IO::Seekable);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>IO::Seekable</code> does not have a constructor of its own as it is intended to
+be inherited by other <code>IO::Handle</code> based objects. It provides methods
+which allow seeking of the file descriptors.</p>
+<dl>
+<dt><strong><a name="item_getpos">$io-&gt;getpos</a></strong>
+
+<dd>
+<p>Returns an opaque value that represents the current position of the
+IO::File, or <code>undef</code> if this is not possible (eg an unseekable stream such
+as a terminal, pipe or socket). If the <code>fgetpos()</code> function is available in
+your C library it is used to implements getpos, else perl emulates getpos
+using C's <code>ftell()</code> function.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setpos">$io-&gt;setpos</a></strong>
+
+<dd>
+<p>Uses the value of a previous getpos call to return to a previously visited
+position. Returns ``0 but true'' on success, <code>undef</code> on failure.</p>
+</dd>
+</li>
+</dl>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for complete descriptions of each of the following
+supported <code>IO::Seekable</code> methods, which are just front ends for the
+corresponding built-in functions:</p>
+<dl>
+<dt><strong><a name="item_seek">$io-&gt;seek ( POS, WHENCE )</a></strong>
+
+<dd>
+<p>Seek the IO::File to position POS, relative to WHENCE:</p>
+</dd>
+<dl>
+<dt><strong><a name="item_0">WHENCE=0 (SEEK_SET)</a></strong>
+
+<dd>
+<p>POS is absolute position. (Seek relative to the start of the file)</p>
+</dd>
+</li>
+<dt><strong><a name="item_1">WHENCE=1 (SEEK_CUR)</a></strong>
+
+<dd>
+<p>POS is an offset from the current position. (Seek relative to current)</p>
+</dd>
+</li>
+<dt><strong><a name="item_2">WHENCE=2 (SEEK_END)</a></strong>
+
+<dd>
+<p>POS is an offset from the end of the file. (Seek relative to end)</p>
+</dd>
+</li>
+</dl>
+<p>The SEEK_* constants can be imported from the <code>Fcntl</code> module if you
+don't wish to use the numbers <code>0</code> <a href="#item_1"><code>1</code></a> or <a href="#item_2"><code>2</code></a> in your code.</p>
+<p>Returns <a href="#item_1"><code>1</code></a> upon success, <code>0</code> otherwise.</p>
+<dt><strong><a name="item_sysseek">$io-&gt;sysseek( POS, WHENCE )</a></strong>
+
+<dd>
+<p>Similar to $io-&gt;seek, but sets the IO::File's position using the system
+call <code>lseek(2)</code> directly, so will confuse most perl IO operators except
+sysread and syswrite (see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for full details)</p>
+</dd>
+<dd>
+<p>Returns the new position, or <code>undef</code> on failure.  A position
+of zero is returned as the string <code>&quot;0 but true&quot;</code></p>
+</dd>
+</li>
+<dt><strong><a name="item_tell">$io-&gt;tell</a></strong>
+
+<dd>
+<p>Returns the IO::File's current position, or -1 on error.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#i_o_operators">I/O Operators in the perlop manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Handle.html">the IO::Handle manpage</a>
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/File.html">the IO::File manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Derived from FileHandle.pm by Graham Barr &lt;<a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Seekable - supply seek based methods for I/O objects</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

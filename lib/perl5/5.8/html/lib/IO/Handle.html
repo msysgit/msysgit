@@ -1,0 +1,321 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IO::Handle - supply object methods for I/O handles</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Handle - supply object methods for I/O handles</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#note">NOTE</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>IO::Handle - supply object methods for I/O handles</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use IO::Handle;</pre>
+<pre>
+    $io = new IO::Handle;
+    if ($io-&gt;fdopen(fileno(STDIN),&quot;r&quot;)) {
+        print $io-&gt;getline;
+        $io-&gt;close;
+    }</pre>
+<pre>
+    $io = new IO::Handle;
+    if ($io-&gt;fdopen(fileno(STDOUT),&quot;w&quot;)) {
+        $io-&gt;print(&quot;Some text\n&quot;);
+    }</pre>
+<pre>
+    # setvbuf is not available by default on Perls 5.8.0 and later.
+    use IO::Handle '_IOLBF';
+    $io-&gt;setvbuf($buffer_var, _IOLBF, 1024);</pre>
+<pre>
+    undef $io;       # automatically closes the file if it's open</pre>
+<pre>
+    autoflush STDOUT 1;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>IO::Handle</code> is the base class for all other IO handle classes. It is
+not intended that objects of <code>IO::Handle</code> would be created directly,
+but instead <code>IO::Handle</code> is inherited from by several other classes
+in the IO hierarchy.</p>
+<p>If you are reading this documentation, looking for a replacement for
+the <code>FileHandle</code> package, then I suggest you read the documentation
+for <code>IO::File</code> too.</p>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_new">new ()</a></strong>
+
+<dd>
+<p>Creates a new <code>IO::Handle</code> object.</p>
+</dd>
+</li>
+<dt><strong><a name="item_new_from_fd">new_from_fd ( FD, MODE )</a></strong>
+
+<dd>
+<p>Creates an <code>IO::Handle</code> like <a href="#item_new"><code>new</code></a> does.
+It requires two parameters, which are passed to the method <a href="#item_fdopen"><code>fdopen</code></a>;
+if the fdopen fails, the object is destroyed. Otherwise, it is returned
+to the caller.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a> for complete descriptions of each of the following
+supported <code>IO::Handle</code> methods, which are just front ends for the
+corresponding built-in functions:</p>
+<pre>
+    $io-&gt;close
+    $io-&gt;eof
+    $io-&gt;fileno
+    $io-&gt;format_write( [FORMAT_NAME] )
+    $io-&gt;getc
+    $io-&gt;read ( BUF, LEN, [OFFSET] )
+    $io-&gt;print ( ARGS )
+    $io-&gt;printf ( FMT, [ARGS] )
+    $io-&gt;stat
+    $io-&gt;sysread ( BUF, LEN, [OFFSET] )
+    $io-&gt;syswrite ( BUF, [LEN, [OFFSET]] )
+    $io-&gt;truncate ( LEN )</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a> for complete descriptions of each of the following
+supported <code>IO::Handle</code> methods.  All of them return the previous
+value of the attribute and takes an optional single argument that when
+given will set the value.  If no argument is given the previous value
+is unchanged (except for $io-&gt;autoflush will actually turn ON
+autoflush by default).</p>
+<pre>
+    $io-&gt;autoflush ( [BOOL] )                         $|
+    $io-&gt;format_page_number( [NUM] )                  $%
+    $io-&gt;format_lines_per_page( [NUM] )               $=
+    $io-&gt;format_lines_left( [NUM] )                   $-
+    $io-&gt;format_name( [STR] )                         $~
+    $io-&gt;format_top_name( [STR] )                     $^
+    $io-&gt;input_line_number( [NUM])                    $.</pre>
+<p>The following methods are not supported on a per-filehandle basis.</p>
+<pre>
+    IO::Handle-&gt;format_line_break_characters( [STR] ) $:
+    IO::Handle-&gt;format_formfeed( [STR])               $^L
+    IO::Handle-&gt;output_field_separator( [STR] )       $,
+    IO::Handle-&gt;output_record_separator( [STR] )      $\</pre>
+<pre>
+    IO::Handle-&gt;input_record_separator( [STR] )       $/</pre>
+<p>Furthermore, for doing normal I/O you might need these:</p>
+<dl>
+<dt><strong><a name="item_fdopen">$io-&gt;fdopen ( FD, MODE )</a></strong>
+
+<dd>
+<p><a href="#item_fdopen"><code>fdopen</code></a> is like an ordinary <code>open</code> except that its first parameter
+is not a filename but rather a file handle name, an IO::Handle object,
+or a file descriptor number.</p>
+</dd>
+</li>
+<dt><strong><a name="item_opened">$io-&gt;opened</a></strong>
+
+<dd>
+<p>Returns true if the object is currently a valid file descriptor, false
+otherwise.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getline">$io-&gt;getline</a></strong>
+
+<dd>
+<p>This works like &lt;$io&gt; described in <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#i_o_operators">I/O Operators in the perlop manpage</a>
+except that it's more readable and can be safely called in a
+list context but still returns just one line.  If used as the conditional
++within a <code>while</code> or C-style <code>for</code> loop, however, you will need to
++emulate the functionality of &lt;$io&gt; with <code>defined($_ = $io-&gt;getline)</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getlines">$io-&gt;getlines</a></strong>
+
+<dd>
+<p>This works like &lt;$io&gt; when called in a list context to read all
+the remaining lines in a file, except that it's more readable.
+It will also <code>croak()</code> if accidentally called in a scalar context.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ungetc">$io-&gt;ungetc ( ORD )</a></strong>
+
+<dd>
+<p>Pushes a character with the given ordinal value back onto the given
+handle's input stream.  Only one character of pushback per handle is
+guaranteed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_write">$io-&gt;write ( BUF, LEN [, OFFSET ] )</a></strong>
+
+<dd>
+<p>This <a href="#item_write"><code>write</code></a> is like <a href="#item_write"><code>write</code></a> found in C, that is it is the
+opposite of read. The wrapper for the perl <a href="#item_write"><code>write</code></a> function is
+called <code>format_write</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_error">$io-&gt;error</a></strong>
+
+<dd>
+<p>Returns a true value if the given handle has experienced any errors
+since it was opened or since the last call to <a href="#item_clearerr"><code>clearerr</code></a>, or if the
+handle is invalid. It only returns false for a valid handle with no
+outstanding errors.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clearerr">$io-&gt;clearerr</a></strong>
+
+<dd>
+<p>Clear the given handle's error indicator. Returns -1 if the handle is
+invalid, 0 otherwise.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sync">$io-&gt;sync</a></strong>
+
+<dd>
+<p><a href="#item_sync"><code>sync</code></a> synchronizes a file's in-memory state  with  that  on the
+physical medium. <a href="#item_sync"><code>sync</code></a> does not operate at the perlio api level, but
+operates on the file descriptor (similar to sysread, sysseek and
+systell). This means that any data held at the perlio api level will not
+be synchronized. To synchronize data that is buffered at the perlio api
+level you must use the flush method. <a href="#item_sync"><code>sync</code></a> is not implemented on all
+platforms. Returns ``0 but true'' on success, <code>undef</code> on error, <code>undef</code>
+for an invalid handle. See <em>fsync(3c)</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_flush">$io-&gt;flush</a></strong>
+
+<dd>
+<p><a href="#item_flush"><code>flush</code></a> causes perl to flush any buffered data at the perlio api level.
+Any unread data in the buffer will be discarded, and any unwritten data
+will be written to the underlying file descriptor. Returns ``0 but true''
+on success, <code>undef</code> on error.</p>
+</dd>
+</li>
+<dt><strong><a name="item_printflush">$io-&gt;printflush ( ARGS )</a></strong>
+
+<dd>
+<p>Turns on autoflush, print ARGS and then restores the autoflush status of the
+<code>IO::Handle</code> object. Returns the return value from print.</p>
+</dd>
+</li>
+<dt><strong><a name="item_blocking">$io-&gt;blocking ( [ BOOL ] )</a></strong>
+
+<dd>
+<p>If called with an argument <a href="#item_blocking"><code>blocking</code></a> will turn on non-blocking IO if
+<code>BOOL</code> is false, and turn it off if <code>BOOL</code> is true.</p>
+</dd>
+<dd>
+<p><a href="#item_blocking"><code>blocking</code></a> will return the value of the previous setting, or the
+current setting if <code>BOOL</code> is not given.</p>
+</dd>
+<dd>
+<p>If an error occurs <a href="#item_blocking"><code>blocking</code></a> will return undef and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$!</code></a> will be set.</p>
+</dd>
+</li>
+</dl>
+<p>If the C functions <code>setbuf()</code> and/or <code>setvbuf()</code> are available, then
+<code>IO::Handle::setbuf</code> and <code>IO::Handle::setvbuf</code> set the buffering
+policy for an IO::Handle.  The calling sequences for the Perl functions
+are the same as their C counterparts--including the constants <code>_IOFBF</code>,
+<code>_IOLBF</code>, and <code>_IONBF</code> for setvbuf()--except that the buffer parameter
+specifies a scalar variable to use as a buffer. You should only
+change the buffer before any I/O, or immediately after calling flush.</p>
+<p>WARNING: The IO::Handle::setvbuf() is not available by default on
+Perls 5.8.0 and later because <code>setvbuf()</code> is rather specific to using
+the stdio library, while Perl prefers the new perlio subsystem instead.</p>
+<p>WARNING: A variable used as a buffer by <code>setbuf</code> or <code>setvbuf</code> <strong>must not
+be modified</strong> in any way until the IO::Handle is closed or <code>setbuf</code> or
+<code>setvbuf</code> is called again, or memory corruption may result! Remember that
+the order of global destruction is undefined, so even if your buffer
+variable remains in scope until program termination, it may be undefined
+before the file IO::Handle is closed. Note that you need to import the
+constants <code>_IOFBF</code>, <code>_IOLBF</code>, and <code>_IONBF</code> explicitly. Like C, setbuf
+returns nothing. setvbuf returns ``0 but true'', on success, <code>undef</code> on
+failure.</p>
+<p>Lastly, there is a special method for working under <strong>-T</strong> and setuid/gid
+scripts:</p>
+<dl>
+<dt><strong><a name="item_untaint">$io-&gt;untaint</a></strong>
+
+<dd>
+<p>Marks the object as taint-clean, and as such data read from it will also
+be considered taint-clean. Note that this is a very trusting action to
+take, and appropriate consideration for the data source and potential
+vulnerability should be kept in mind. Returns 0 on success, -1 if setting
+the taint-clean flag failed. (eg invalid handle)</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="note">NOTE</a></h1>
+<p>An <code>IO::Handle</code> object is a reference to a symbol/GLOB reference (see
+the <code>Symbol</code> package).  Some modules that
+inherit from <code>IO::Handle</code> may want to keep object related variables
+in the hash table part of the GLOB. In an attempt to prevent modules
+trampling on each other I propose the that any such module should prefix
+its variables with its own name separated by _'s. For example the IO::Socket
+module keeps a <code>timeout</code> variable in 'io_socket_timeout'.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlfunc.html">the perlfunc manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#i_o_operators">I/O Operators in the perlop manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/File.html">the IO::File manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Due to backwards compatibility, all filehandles resemble objects
+of class <code>IO::Handle</code>, or actually classes derived from that class.
+They actually aren't.  Which means you can't derive your own 
+class from <code>IO::Handle</code> and inherit those methods.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Derived from FileHandle.pm by Graham Barr &lt;<em><a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a></em>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;IO::Handle - supply object methods for I/O handles</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

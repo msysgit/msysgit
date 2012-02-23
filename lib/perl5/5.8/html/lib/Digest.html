@@ -1,0 +1,290 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Digest - Modules that calculate message digests</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Digest - Modules that calculate message digests</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#oo_interface">OO INTERFACE</a></li>
+	<li><a href="#digest_speed">Digest speed</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Digest - Modules that calculate message digests</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  $md5  = Digest-&gt;new(&quot;MD5&quot;);
+  $sha1 = Digest-&gt;new(&quot;SHA-1&quot;);
+  $sha256 = Digest-&gt;new(&quot;SHA-256&quot;);
+  $sha384 = Digest-&gt;new(&quot;SHA-384&quot;);
+  $sha512 = Digest-&gt;new(&quot;SHA-512&quot;);</pre>
+<pre>
+  $hmac = Digest-&gt;HMAC_MD5($key);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Digest::</code> modules calculate digests, also called ``fingerprints''
+or ``hashes'', of some data, called a message.  The digest is (usually)
+some small/fixed size string.  The actual size of the digest depend of
+the algorithm used.  The message is simply a sequence of arbitrary
+bytes or bits.</p>
+<p>An important property of the digest algorithms is that the digest is
+<em>likely</em> to change if the message change in some way.  Another
+property is that digest functions are one-way functions, that is it
+should be <em>hard</em> to find a message that correspond to some given
+digest.  Algorithms differ in how ``likely'' and how ``hard'', as well as
+how efficient they are to compute.</p>
+<p>Note that the properties of the algorithms change over time, as the
+algorithms are analyzed and machines grow faster.  If your application
+for instance depends on it being ``impossible'' to generate the same
+digest for a different message it is wise to make it easy to plug in
+stronger algorithms as the one used grow weaker.  Using the interface
+documented here should make it easy to change algorithms later.</p>
+<p>All <code>Digest::</code> modules provide the same programming interface.  A
+functional interface for simple use, as well as an object oriented
+interface that can handle messages of arbitrary length and which can
+read files directly.</p>
+<p>The digest can be delivered in three formats:</p>
+<dl>
+<dt><strong><a name="item_binary"><em>binary</em></a></strong>
+
+<dd>
+<p>This is the most compact form, but it is not well suited for printing
+or embedding in places that can't handle arbitrary data.</p>
+</dd>
+</li>
+<dt><strong><a name="item_hex"><em>hex</em></a></strong>
+
+<dd>
+<p>A twice as long string of lowercase hexadecimal digits.</p>
+</dd>
+</li>
+<dt><strong><a name="item_base64"><em>base64</em></a></strong>
+
+<dd>
+<p>A string of portable printable characters.  This is the base64 encoded
+representation of the digest with any trailing padding removed.  The
+string will be about 30% longer than the binary version.
+<a href="/usr/lib/perl5/5.8/html/./lib/MIME/Base64.html">the MIME::Base64 manpage</a> tells you more about this encoding.</p>
+</dd>
+</li>
+</dl>
+<p>The functional interface is simply importable functions with the same
+name as the algorithm.  The functions take the message as argument and
+return the digest.  Example:</p>
+<pre>
+  use Digest::MD5 qw(md5);
+  $digest = md5($message);</pre>
+<p>There are also versions of the functions with ``_hex'' or ``_base64''
+appended to the name, which returns the digest in the indicated form.</p>
+<p>
+</p>
+<hr />
+<h1><a name="oo_interface">OO INTERFACE</a></h1>
+<p>The following methods are available for all <code>Digest::</code> modules:</p>
+<dl>
+<dt><strong><a name="item_xxx">$ctx = Digest-&gt;<code>XXX($arg,...)</code></a></strong>
+
+<dt><strong><a name="item_new">$ctx = Digest-&gt;new(XXX =&gt; $arg,...)</a></strong>
+
+<dt><strong>$ctx = Digest::XXX-&gt;<code>new($arg,...)</code></strong>
+
+<dd>
+<p>The constructor returns some object that encapsulate the state of the
+message-digest algorithm.  You can add data to the object and finally
+ask for the digest.  The ``XXX'' should of course be replaced by the proper
+name of the digest algorithm you want to use.</p>
+</dd>
+<dd>
+<p>The two first forms are simply syntactic sugar which automatically
+load the right module on first use.  The second form allow you to use
+algorithm names which contains letters which are not legal perl
+identifiers, e.g. ``SHA-1''.  If no implementation for the given algorithm
+can be found, then an exception is raised.</p>
+</dd>
+<dd>
+<p>If <a href="#item_new"><code>new()</code></a> is called as an instance method (i.e. $ctx-&gt;new) it will just
+reset the state the object to the state of a newly created object.  No
+new object is created in this case, and the return value is the
+reference to the object (i.e. $ctx).</p>
+</dd>
+</li>
+<dt><strong><a name="item_clone">$other_ctx = $ctx-&gt;clone</a></strong>
+
+<dd>
+<p>The clone method creates a copy of the digest state object and returns
+a reference to the copy.</p>
+</dd>
+</li>
+<dt><strong><a name="item_reset">$ctx-&gt;reset</a></strong>
+
+<dd>
+<p>This is just an alias for $ctx-&gt;new.</p>
+</dd>
+</li>
+<dt><strong><a name="item_add">$ctx-&gt;add( $data, ... )</a></strong>
+
+<dd>
+<p>The $data provided as argument are appended to the message we
+calculate the digest for.  The return value is the $ctx object itself.</p>
+</dd>
+</li>
+<dt><strong><a name="item_addfile">$ctx-&gt;addfile( $io_handle )</a></strong>
+
+<dd>
+<p>The $io_handle is read until EOF and the content is appended to the
+message we calculate the digest for.  The return value is the $ctx
+object itself.</p>
+</dd>
+</li>
+<dt><strong><a name="item_add_bits">$ctx-&gt;add_bits( $data, $nbits )</a></strong>
+
+<dt><strong>$ctx-&gt;add_bits( $bitstring )</strong>
+
+<dd>
+<p>The bits provided are appended to the message we calculate the digest
+for.  The return value is the $ctx object itself.</p>
+</dd>
+<dd>
+<p>The two argument form of <a href="#item_add_bits"><code>add_bits()</code></a> will add the first $nbits bits
+from data.  For the last potentially partial byte only the high order
+<code>$nbits % 8</code> bits are used.  If $nbits is greater than <code>&lt;
+length($data) * 8 </code>&gt;, then this method would do the same as <code>&lt;
+$ctx-</code><a href="#item_add"><code>add($data)</code></a> &gt;&gt;, that is $nbits is silently ignored.</p>
+</dd>
+<dd>
+<p>The one argument form of <a href="#item_add_bits"><code>add_bits()</code></a> takes a $bitstring of ``1'' and ``0''
+chars as argument.  It's a shorthand for <a href="#item_add_bits"><code>$ctx-&gt;add_bits(pack(&quot;B*&quot;,
+$bitstring), length($bitstring))</code></a>.</p>
+</dd>
+<dd>
+<p>This example shows two calls that should have the same effect:</p>
+</dd>
+<dd>
+<pre>
+   $ctx-&gt;add_bits(&quot;111100001010&quot;);
+   $ctx-&gt;add_bits(&quot;\xF0\xA0&quot;, 12);</pre>
+</dd>
+<dd>
+<p>Most digest algorithms are byte based.  For those it is not possible
+to add bits that are not a multiple of 8, and the <a href="#item_add_bits"><code>add_bits()</code></a> method
+will croak if you try.</p>
+</dd>
+</li>
+<dt><strong><a name="item_digest">$ctx-&gt;digest</a></strong>
+
+<dd>
+<p>Return the binary digest for the message.</p>
+</dd>
+<dd>
+<p>Note that the <a href="#item_digest"><code>digest</code></a> operation is effectively a destructive,
+read-once operation. Once it has been performed, the $ctx object is
+automatically <a href="#item_reset"><code>reset</code></a> and can be used to calculate another digest
+value.  Call $ctx-&gt;clone-&gt;digest if you want to calculate the digest
+without reseting the digest state.</p>
+</dd>
+</li>
+<dt><strong><a name="item_hexdigest">$ctx-&gt;hexdigest</a></strong>
+
+<dd>
+<p>Same as $ctx-&gt;digest, but will return the digest in hexadecimal form.</p>
+</dd>
+</li>
+<dt><strong><a name="item_b64digest">$ctx-&gt;b64digest</a></strong>
+
+<dd>
+<p>Same as $ctx-&gt;digest, but will return the digest as a base64 encoded
+string.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="digest_speed">Digest speed</a></h1>
+<p>This table should give some indication on the relative speed of
+different algorithms.  It is sorted by throughput based on a benchmark
+done with of some implementations of this API:</p>
+<pre>
+ Algorithm      Size    Implementation                  MB/s</pre>
+<pre>
+ MD4            128     Digest::MD4 v1.3               165.0
+ MD5            128     Digest::MD5 v2.33               98.8
+ SHA-256        256     Digest::SHA2 v1.1.0             66.7
+ SHA-1          160     Digest::SHA v4.3.1              58.9
+ SHA-1          160     Digest::SHA1 v2.10              48.8
+ SHA-256        256     Digest::SHA v4.3.1              41.3
+ Haval-256      256     Digest::Haval256 v1.0.4         39.8
+ SHA-384        384     Digest::SHA2 v1.1.0             19.6
+ SHA-512        512     Digest::SHA2 v1.1.0             19.3
+ SHA-384        384     Digest::SHA v4.3.1              19.2
+ SHA-512        512     Digest::SHA v4.3.1              19.2
+ Whirlpool      512     Digest::Whirlpool v1.0.2        13.0
+ MD2            128     Digest::MD2 v2.03                9.5</pre>
+<pre>
+ Adler-32        32     Digest::Adler32 v0.03            1.3
+ CRC-16          16     Digest::CRC v0.05                1.1
+ CRC-32          32     Digest::CRC v0.05                1.1
+ MD5            128     Digest::Perl::MD5 v1.5           1.0
+ CRC-CCITT       16     Digest::CRC v0.05                0.8</pre>
+<p>These numbers was achieved Apr 2004 with ActivePerl-5.8.3 running
+under Linux on a P4 2.8 GHz CPU.  The last 5 entries differ by being
+pure perl implementations of the algorithms, which explains why they
+are so slow.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/Digest/Adler32.html">the Digest::Adler32 manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/CRC.html">the Digest::CRC manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/Haval256.html">the Digest::Haval256 manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/Digest/HMAC.html">the Digest::HMAC manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/MD2.html">the Digest::MD2 manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/MD4.html">the Digest::MD4 manpage</a>, <a href="/usr/lib/perl5/5.8/html/./lib/Digest/MD5.html">the Digest::MD5 manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/Digest/SHA.html">the Digest::SHA manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/SHA1.html">the Digest::SHA1 manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/SHA2.html">the Digest::SHA2 manpage</a>, <a href="/usr/lib/perl5/5.8/html/Digest/Whirlpool.html">the Digest::Whirlpool manpage</a></p>
+<p>New digest implementations should consider subclassing from <a href="/usr/lib/perl5/5.8/html/./lib/Digest/base.html">the Digest::base manpage</a>.</p>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/MIME/Base64.html">the MIME::Base64 manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Gisle Aas &lt;<a href="mailto:gisle@aas.no">gisle@aas.no</a>&gt;</p>
+<p>The <code>Digest::</code> interface is based on the interface originally
+developed by Neil Winton for his <code>MD5</code> module.</p>
+<p>This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.</p>
+<pre>
+    Copyright 1998-2001,2003-2004 Gisle Aas.
+    Copyright 1995-1996 Neil Winton.</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Digest - Modules that calculate message digests</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

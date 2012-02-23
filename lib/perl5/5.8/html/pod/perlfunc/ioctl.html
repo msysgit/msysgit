@@ -1,0 +1,80 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ioctl - system-dependent device control system call</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ioctl - system-dependent device control system call</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ioctl - system-dependent device control system call</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>ioctl FILEHANDLE,FUNCTION,SCALAR
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Implements the <code>ioctl(2)</code> function.  You'll probably first have to say</p>
+<pre>
+    require &quot;sys/ioctl.ph&quot;;     # probably in $Config{archlib}/sys/ioctl.ph</pre>
+<p>to get the correct function definitions.  If <em>sys/ioctl.ph</em> doesn't
+exist or doesn't have the correct definitions you'll have to roll your
+own, based on your C header files such as <em>&lt;sys/ioctl.h</em> &gt;&gt;.
+(There is a Perl script called <strong>h2ph</strong> that comes with the Perl kit that
+may help you in this, but it's nontrivial.)  SCALAR will be read and/or
+written depending on the FUNCTION--a pointer to the string value of SCALAR
+will be passed as the third argument of the actual <code>ioctl</code> call.  (If SCALAR
+has no string value but does have a numeric value, that value will be
+passed rather than a pointer to the string value.  To guarantee this to be
+true, add a <code>0</code> to the scalar before using it.)  The <code>pack</code> and <code>unpack</code>
+functions may be needed to manipulate the values of structures used by
+<code>ioctl</code>.</p>
+<p>The return value of <code>ioctl</code> (and <code>fcntl</code>) is as follows:</p>
+<pre>
+        if OS returns:          then Perl returns:
+            -1                    undefined value
+             0                  string &quot;0 but true&quot;
+        anything else               that number</pre>
+<p>Thus Perl returns true on success and false on failure, yet you can
+still easily determine the actual value returned by the operating
+system:</p>
+<pre>
+    $retval = ioctl(...) || -1;
+    printf &quot;System returned %d\n&quot;, $retval;</pre>
+<p>The special string <code>&quot;0 but true&quot;</code> is exempt from <strong>-w</strong> complaints
+about improper numeric conversions.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ioctl - system-dependent device control system call</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

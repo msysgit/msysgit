@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Handling the SIGHUP Signal in Daemons</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Handling the SIGHUP Signal in Daemons</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<ul>
+
+		<li><a href="#handling_the_sighup_signal_in_daemons">Handling the SIGHUP Signal in Daemons</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h2><a name="handling_the_sighup_signal_in_daemons">Handling the SIGHUP Signal in Daemons</a></h2>
+<p>A process that usually starts when the system boots and shuts down
+when the system is shut down is called a daemon (Disk And Execution
+MONitor). If a daemon process has a configuration file which is
+modified after the process has been started, there should be a way to
+tell that process to re-read its configuration file, without stopping
+the process. Many daemons provide this mechanism using the <code>SIGHUP</code>
+signal handler. When you want to tell the daemon to re-read the file
+you simply send it the <code>SIGHUP</code> signal.</p>
+<p>Not all platforms automatically reinstall their (native) signal
+handlers after a signal delivery.  This means that the handler works
+only the first time the signal is sent. The solution to this problem
+is to use <code>POSIX</code> signal handlers if available, their behaviour
+is well-defined.</p>
+<p>The following example implements a simple daemon, which restarts
+itself every time the <code>SIGHUP</code> signal is received. The actual code is
+located in the subroutine <code>code()</code>, which simply prints some debug
+info to show that it works and should be replaced with the real code.</p>
+<pre>
+  #!/usr/bin/perl -w</pre>
+<pre>
+  use POSIX ();
+  use FindBin ();
+  use File::Basename ();
+  use File::Spec::Functions;</pre>
+<pre>
+  $|=1;</pre>
+<pre>
+  # make the daemon cross-platform, so exec always calls the script
+  # itself with the right path, no matter how the script was invoked.
+  my $script = File::Basename::basename($0);
+  my $SELF = catfile $FindBin::Bin, $script;</pre>
+<pre>
+  # POSIX unmasks the sigprocmask properly
+  my $sigset = POSIX::SigSet-&gt;new();
+  my $action = POSIX::SigAction-&gt;new('sigHUP_handler',
+                                     $sigset,
+                                     &amp;POSIX::SA_NODEFER);
+  POSIX::sigaction(&amp;POSIX::SIGHUP, $action);</pre>
+<pre>
+  sub sigHUP_handler {
+      print &quot;got SIGHUP\n&quot;;
+      exec($SELF, @ARGV) or die &quot;Couldn't restart: $!\n&quot;;
+  }</pre>
+<pre>
+  code();</pre>
+<pre>
+  sub code {
+      print &quot;PID: $$\n&quot;;
+      print &quot;ARGV: @ARGV\n&quot;;
+      my $c = 0;
+      while (++$c) {
+          sleep 2;
+          print &quot;$c\n&quot;;
+      }
+  }
+  __END__</pre>
+<ul>
+<li>
+<p>Back to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/signals.html">Signals in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Forward to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc/named_pipes.html">Named Pipes in the perlipc manpage</a></p>
+</li>
+<li>
+<p>Up to <a href="/usr/lib/perl5/5.8/html/./pod/perlipc.html">the perlipc manpage</a></p>
+</li>
+</ul>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Handling the SIGHUP Signal in Daemons</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

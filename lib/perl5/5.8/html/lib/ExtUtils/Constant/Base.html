@@ -1,0 +1,295 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ExtUtils::Constant::Base - base class for ExtUtils::Constant objects</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Constant::Base - base class for ExtUtils::Constant objects</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#usage">USAGE</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>ExtUtils::Constant::Base - base class for ExtUtils::Constant objects</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    require ExtUtils::Constant::Base;
+    @ISA = 'ExtUtils::Constant::Base';</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>ExtUtils::Constant::Base provides a base implementation of methods to
+generate C code to give fast constant value lookup by named string. Currently
+it's mostly used ExtUtils::Constant::XS, which generates the lookup code
+for the <code>constant()</code> subroutine found in many XS modules.</p>
+<p>
+</p>
+<hr />
+<h1><a name="usage">USAGE</a></h1>
+<p>ExtUtils::Constant::Base exports no subroutines. The following methods are
+available</p>
+<dl>
+<dt><strong><a name="item_header">header</a></strong>
+
+<dd>
+<p>A method returning a scalar containing definitions needed, typically for a
+C header file.</p>
+</dd>
+</li>
+<dt><strong><a name="item_memeq_clause_args_hashref">memEQ_clause args_hashref</a></strong>
+
+<dd>
+<p>A method to return a suitable C <code>if</code> statement to check whether <em>name</em>
+is equal to the C variable <a href="#item_name"><code>name</code></a>. If <em>checked_at</em> is defined, then it
+is used to avoid <code>memEQ</code> for short names, or to generate a comment to
+highlight the position of the character in the <code>switch</code> statement.</p>
+</dd>
+<dd>
+<p>If i&lt;checked_at&gt; is a reference to a scalar, then instead it gives
+the characters pre-checked at the beginning, (and the number of chars by
+which the C variable name has been advanced. These need to be chopped from
+the front of <em>name</em>).</p>
+</dd>
+</li>
+<dt><strong><a name="item_dump_names_arg_hashref_2c_item_2e_2e_2e">dump_names arg_hashref, ITEM...</a></strong>
+
+<dd>
+<p>An internal function to generate the embedded perl code that will regenerate
+the constant subroutines.  <em>default_type</em>, <em>types</em> and <em>ITEM</em>s are the
+same as for C_constant.  <em>indent</em> is treated as number of spaces to indent
+by.  If <code>declare_types</code> is true a <code>$types</code> is always declared in the perl
+code generated, if defined and false never declared, and if undefined <code>$types</code>
+is only declared if the values in <em>types</em> as passed in cannot be inferred from
+<em>default_types</em> and the <em>ITEM</em>s.</p>
+</dd>
+</li>
+<dt><strong><a name="item_assign_arg_hashref_2c_value_2e_2e_2e">assign arg_hashref, VALUE...</a></strong>
+
+<dd>
+<p>A method to return a suitable assignment clause. If <em>type</em> is aggregate
+(eg <em>PVN</em> expects both pointer and length) then there should be multiple
+<em>VALUE</em>s for the components. <em>pre</em> and <em>post</em> if defined give snippets
+of C code to proceed and follow the assignment. <em>pre</em> will be at the start
+of a block, so variables may be defined in it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_return_clause_arg_hashref_2c_item">return_clause arg_hashref, ITEM</a></strong>
+
+<dd>
+<p>A method to return a suitable <code>#ifdef</code> clause. <em>ITEM</em> is a hashref
+(as passed to <code>C_constant</code> and <code>match_clause</code>. <em>indent</em> is the number
+of spaces to indent, defaulting to 6.</p>
+</dd>
+</li>
+<dt><strong><a name="item_switch_clause_arg_hashref_2c_namelen_2c_itemhash_2">switch_clause arg_hashref, NAMELEN, ITEMHASH, ITEM...</a></strong>
+
+<dd>
+<p>An internal method to generate a suitable <code>switch</code> clause, called by
+<code>C_constant</code> <em>ITEM</em>s are in the hash ref format as given in the description
+of <code>C_constant</code>, and must all have the names of the same length, given by
+<em>NAMELEN</em>.  <em>ITEMHASH</em> is a reference to a hash, keyed by name, values being
+the hashrefs in the <em>ITEM</em> list.  (No parameters are modified, and there can
+be keys in the <em>ITEMHASH</em> that are not in the list of <em>ITEM</em>s without
+causing problems - the hash is passed in to save generating it afresh for
+each call).</p>
+</dd>
+</li>
+<dt><strong><a name="item_params">params WHAT</a></strong>
+
+<dd>
+<p>An ``internal'' method, subject to change, currently called to allow an
+overriding class to cache information that will then be passed into all
+the <code>*param*</code> calls. (Yes, having to read the source to make sense of this is
+considered a known bug). <em>WHAT</em> is be a hashref of types the constant
+function will return. In ExtUtils::Constant::XS this method is used to
+returns a hashref keyed IV NV PV SV to show which combination of pointers will
+be needed in the C argument list generated by
+C_constant_other_params_definition and C_constant_other_params</p>
+</dd>
+</li>
+<dt><strong><a name="item_dogfood_arg_hashref_2c_item_2e_2e_2e">dogfood arg_hashref, ITEM...</a></strong>
+
+<dd>
+<p>An internal function to generate the embedded perl code that will regenerate
+the constant subroutines.  Parameters are the same as for C_constant.</p>
+</dd>
+<dd>
+<p>Currently the base class does nothing and returns an empty string.</p>
+</dd>
+</li>
+<dt><strong><a name="item_c_constant_arg_hashref_2c_item_2e_2e_2e">C_constant arg_hashref, ITEM...</a></strong>
+
+<dd>
+<p>A function that returns a <strong>list</strong> of C subroutine definitions that return
+the value and type of constants when passed the name by the XS wrapper.
+<em>ITEM...</em> gives a list of constant names. Each can either be a string,
+which is taken as a C macro name, or a reference to a hash with the following
+keys</p>
+</dd>
+<dl>
+<dt><strong><a name="item_name">name</a></strong>
+
+<dd>
+<p>The name of the constant, as seen by the perl code.</p>
+</dd>
+</li>
+<dt><strong><a name="item_type">type</a></strong>
+
+<dd>
+<p>The type of the constant (<em>IV</em>, <em>NV</em> etc)</p>
+</dd>
+</li>
+<dt><strong><a name="item_value">value</a></strong>
+
+<dd>
+<p>A C expression for the value of the constant, or a list of C expressions if
+the type is aggregate. This defaults to the <em>name</em> if not given.</p>
+</dd>
+</li>
+<dt><strong><a name="item_macro">macro</a></strong>
+
+<dd>
+<p>The C pre-processor macro to use in the <code>#ifdef</code>. This defaults to the
+<em>name</em>, and is mainly used if <em>value</em> is an <code>enum</code>. If a reference an
+array is passed then the first element is used in place of the <code>#ifdef</code>
+line, and the second element in place of the <code>#endif</code>. This allows
+pre-processor constructions such as</p>
+</dd>
+<dd>
+<pre>
+    #if defined (foo)
+    #if !defined (bar)
+    ...
+    #endif
+    #endif</pre>
+</dd>
+<dd>
+<p>to be used to determine if a constant is to be defined.</p>
+</dd>
+<dd>
+<p>A ``macro'' 1 signals that the constant is always defined, so the <code>#if</code>/<code>#endif</code>
+test is omitted.</p>
+</dd>
+</li>
+<dt><strong><a name="item_default">default</a></strong>
+
+<dd>
+<p>Default value to use (instead of <code>croak</code>ing with ``your vendor has not
+defined...'') to return if the macro isn't defined. Specify a reference to
+an array with type followed by value(s).</p>
+</dd>
+</li>
+<dt><strong><a name="item_pre">pre</a></strong>
+
+<dd>
+<p>C code to use before the assignment of the value of the constant. This allows
+you to use temporary variables to extract a value from part of a <code>struct</code>
+and return this as <em>value</em>. This C code is places at the start of a block,
+so you can declare variables in it.</p>
+</dd>
+</li>
+<dt><strong><a name="item_post">post</a></strong>
+
+<dd>
+<p>C code to place between the assignment of value (to a temporary) and the
+return from the function. This allows you to clear up anything in <em>pre</em>.
+Rarely needed.</p>
+</dd>
+</li>
+<dt><strong><a name="item_def_pre">def_pre</a></strong>
+
+<dt><strong><a name="item_def_post">def_post</a></strong>
+
+<dd>
+<p>Equivalents of <em>pre</em> and <em>post</em> for the default value.</p>
+</dd>
+</li>
+<dt><strong><a name="item_utf8">utf8</a></strong>
+
+<dd>
+<p>Generated internally. Is zero or undefined if name is 7 bit ASCII,
+``no'' if the name is 8 bit (and so should only match if <code>SvUTF8()</code> is false),
+``yes'' if the name is utf8 encoded.</p>
+</dd>
+<dd>
+<p>The internals automatically clone any name with characters 128-255 but none
+256+ (ie one that could be either in bytes or utf8) into a second entry
+which is utf8 encoded.</p>
+</dd>
+</li>
+<dt><strong><a name="item_weight">weight</a></strong>
+
+<dd>
+<p>Optional sorting weight for names, to determine the order of
+linear testing when multiple names fall in the same case of a switch clause.
+Higher comes earlier, undefined defaults to zero.</p>
+</dd>
+</li>
+</dl>
+<p>In the argument hashref, <em>package</em> is the name of the package, and is only
+used in comments inside the generated C code. <em>subname</em> defaults to
+<code>constant</code> if undefined.</p>
+<p><em>default_type</em> is the type returned by <code>ITEM</code>s that don't specify their
+type. It defaults to the value of <code>default_type()</code>. <em>types</em> should be given
+either as a comma separated list of types that the C subroutine <em>subname</em>
+will generate or as a reference to a hash. <em>default_type</em> will be added to
+the list if not present, as will any types given in the list of <em>ITEM</em>s. The
+resultant list should be the same list of types that <code>XS_constant</code> is
+given. [Otherwise <code>XS_constant</code> and <code>C_constant</code> may differ in the number of
+parameters to the constant function. <em>indent</em> is currently unused and
+ignored. In future it may be used to pass in information used to change the C
+indentation style used.]  The best way to maintain consistency is to pass in a
+hash reference and let this function update it.</p>
+<p><em>breakout</em> governs when child functions of <em>subname</em> are generated.  If there
+are <em>breakout</em> or more <em>ITEM</em>s with the same length of name, then the code
+to switch between them is placed into a function named <em>subname</em>_<em>len</em>, for
+example <code>constant_5</code> for names 5 characters long.  The default <em>breakout</em> is
+3.  A single <code>ITEM</code> is always inlined.</p>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Not everything is documented yet.</p>
+<p>Probably others.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Nicholas Clark &lt;<a href="mailto:nick@ccl4.org">nick@ccl4.org</a>&gt; based on the code in <code>h2xs</code> by Larry Wall and
+others</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;ExtUtils::Constant::Base - base class for ExtUtils::Constant objects</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

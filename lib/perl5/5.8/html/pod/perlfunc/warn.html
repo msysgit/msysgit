@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>warn - print debugging info</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;warn - print debugging info</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>warn - print debugging info</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>warn LIST
+  </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Produces a message on STDERR just like <code>die</code>, but doesn't exit or throw
+an exception.</p>
+<p>If LIST is empty and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> already contains a value (typically from a
+previous eval) that value is used after appending <code>&quot;\t...caught&quot;</code>
+to <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a>.  This is useful for staying almost, but not entirely similar to
+<code>die</code>.</p>
+<p>If <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$@</code></a> is empty then the string <code>&quot;Warning: Something's wrong&quot;</code> is used.</p>
+<p>No message is printed if there is a <code>$SIG{__WARN__}</code> handler
+installed.  It is the handler's responsibility to deal with the message
+as it sees fit (like, for instance, converting it into a <code>die</code>).  Most
+handlers must therefore make arrangements to actually display the
+warnings that they are not prepared to deal with, by calling <code>warn</code>
+again in the handler.  Note that this is quite safe and will not
+produce an endless loop, since <code>__WARN__</code> hooks are not called from
+inside one.</p>
+<p>You will find this behavior is slightly different from that of
+<code>$SIG{__DIE__}</code> handlers (which don't suppress the error text, but can
+instead call <code>die</code> again to change it).</p>
+<p>Using a <code>__WARN__</code> handler provides a powerful way to silence all
+warnings (even the so-called mandatory ones).  An example:</p>
+<pre>
+    # wipe out *all* compile-time warnings
+    BEGIN { $SIG{'__WARN__'} = sub { warn $_[0] if $DOWARN } }
+    my $foo = 10;
+    my $foo = 20;          # no warning about duplicate my $foo,
+                           # but hey, you asked for it!
+    # no compile-time or run-time warnings before here
+    $DOWARN = 1;</pre>
+<pre>
+    # run-time warnings enabled after here
+    warn &quot;\$foo is alive and $foo!&quot;;     # does show up</pre>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html">the perlvar manpage</a> for details on setting <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__sig"><code>%SIG</code></a> entries, and for more
+examples.  See the Carp module for other kinds of warnings using its
+<code>carp()</code> and <code>cluck()</code> functions.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;warn - print debugging info</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

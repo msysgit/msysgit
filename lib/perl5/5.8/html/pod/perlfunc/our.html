@@ -1,0 +1,129 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>our - declare and assign a package variable</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;our - declare and assign a package variable</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>our - declare and assign a package variable (lexical scoping)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>our EXPR
+ </p>
+<p>our EXPR TYPE</p>
+<p>our EXPR : ATTRS</p>
+<p>our TYPE EXPR : ATTRS</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>our</code> associates a simple name with a package variable in the current
+package for use within the current scope.  When <code>use strict 'vars'</code> is in
+effect, <code>our</code> lets you use declared global variables without qualifying
+them with package names, within the lexical scope of the <code>our</code> declaration.
+In this way <code>our</code> differs from <code>use vars</code>, which is package scoped.</p>
+<p>Unlike <code>my</code>, which both allocates storage for a variable and associates
+a simple name with that storage for use within the current scope, <code>our</code>
+associates a simple name with a package variable in the current package,
+for use within the current scope.  In other words, <code>our</code> has the same
+scoping rules as <code>my</code>, but does not necessarily create a
+variable.</p>
+<p>If more than one value is listed, the list must be placed
+in parentheses.</p>
+<pre>
+    our $foo;
+    our($bar, $baz);</pre>
+<p>An <code>our</code> declaration declares a global variable that will be visible
+across its entire lexical scope, even across package boundaries.  The
+package in which the variable is entered is determined at the point
+of the declaration, not at the point of use.  This means the following
+behavior holds:</p>
+<pre>
+    package Foo;
+    our $bar;           # declares $Foo::bar for rest of lexical scope
+    $bar = 20;</pre>
+<pre>
+    package Bar;
+    print $bar;         # prints 20, as it refers to $Foo::bar</pre>
+<p>Multiple <code>our</code> declarations with the same name in the same lexical
+scope are allowed if they are in different packages.  If they happen
+to be in the same package, Perl will emit warnings if you have asked
+for them, just like multiple <code>my</code> declarations.  Unlike a second
+<code>my</code> declaration, which will bind the name to a fresh variable, a
+second <code>our</code> declaration in the same package, in the same scope, is
+merely redundant.</p>
+<pre>
+    use warnings;
+    package Foo;
+    our $bar;           # declares $Foo::bar for rest of lexical scope
+    $bar = 20;</pre>
+<pre>
+    package Bar;
+    our $bar = 30;      # declares $Bar::bar for rest of lexical scope
+    print $bar;         # prints 30</pre>
+<pre>
+    our $bar;           # emits warning but has no other effect
+    print $bar;         # still prints 30</pre>
+<p>An <code>our</code> declaration may also have a list of attributes associated
+with it.</p>
+<p>The exact semantics and interface of TYPE and ATTRS are still
+evolving.  TYPE is currently bound to the use of <code>fields</code> pragma,
+and attributes are handled using the <code>attributes</code> pragma, or starting
+from Perl 5.8.0 also via the <code>Attribute::Handlers</code> module.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html#private_variables_via_my__">Private Variables via my() in the perlsub manpage</a> for details, and <a href="/usr/lib/perl5/5.8/html/./lib/fields.html">the fields manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./lib/attributes.html">the attributes manpage</a>, and <a href="/usr/lib/perl5/5.8/html/./lib/Attribute/Handlers.html">the Attribute::Handlers manpage</a>.</p>
+<p>The only currently recognized <code>our()</code> attribute is <code>unique</code> which
+indicates that a single copy of the global is to be used by all
+interpreters should the program happen to be running in a
+multi-interpreter environment. (The default behaviour would be for
+each interpreter to have its own copy of the global.)  Examples:</p>
+<pre>
+    our @EXPORT : unique = qw(foo);
+    our %EXPORT_TAGS : unique = (bar =&gt; [qw(aa bb cc)]);
+    our $VERSION : unique = &quot;1.00&quot;;</pre>
+<p>Note that this attribute also has the effect of making the global
+readonly when the first new interpreter is cloned (for example,
+when the first new thread is created).</p>
+<p>Multi-interpreter environments can come to being either through the
+<code>fork()</code> emulation on Windows platforms, or by embedding perl in a
+multi-threaded application.  The <code>unique</code> attribute does nothing in
+all other environments.</p>
+<p>Warning: the current implementation of this attribute operates on the
+typeglob associated with the variable; this means that <code>our $x : unique</code>
+also has the effect of <code>our @x : unique; our %x : unique</code>. This may be
+subject to change.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;our - declare and assign a package variable</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

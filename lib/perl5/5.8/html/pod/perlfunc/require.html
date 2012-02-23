@@ -1,0 +1,183 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>require - load in external functions from a library at runtime</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;require - load in external functions from a library at runtime</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>require - load in external functions from a library at runtime</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>require VERSION
+</p>
+<p>require EXPR</p>
+<p>require</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Demands a version of Perl specified by VERSION, or demands some semantics
+specified by EXPR or by <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$_</code></a> if EXPR is not supplied.</p>
+<p>VERSION may be either a numeric argument such as 5.006, which will be
+compared to <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>$]</code></a>, or a literal of the form v5.6.1, which will be compared
+to <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___v"><code>$^V</code></a> (aka $PERL_VERSION).  A fatal error is produced at run time if
+VERSION is greater than the version of the current Perl interpreter.
+Compare with <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/use.html">use in the perlfunc manpage</a>, which can do a similar check at compile time.</p>
+<p>Specifying VERSION as a literal of the form v5.6.1 should generally be
+avoided, because it leads to misleading error messages under earlier
+versions of Perl that do not support this syntax.  The equivalent numeric
+version should be used instead.</p>
+<pre>
+    require v5.6.1;     # run time version check
+    require 5.6.1;      # ditto
+    require 5.006_001;  # ditto; preferred for backwards compatibility</pre>
+<p>Otherwise, <code>require</code> demands that a library file be included if it
+hasn't already been included.  The file is included via the do-FILE
+mechanism, which is essentially just a variety of <code>eval</code>.  Has
+semantics similar to the following subroutine:</p>
+<pre>
+    sub require {
+       my ($filename) = @_;
+       if (exists $INC{$filename}) {
+           return 1 if $INC{$filename};
+           die &quot;Compilation failed in require&quot;;
+       }
+       my ($realfilename,$result);
+       ITER: {
+           foreach $prefix (@INC) {
+               $realfilename = &quot;$prefix/$filename&quot;;
+               if (-f $realfilename) {
+                   $INC{$filename} = $realfilename;
+                   $result = do $realfilename;
+                   last ITER;
+               }
+           }
+           die &quot;Can't find $filename in \@INC&quot;;
+       }
+       if ($@) {
+           $INC{$filename} = undef;
+           die $@;
+       } elsif (!$result) {
+           delete $INC{$filename};
+           die &quot;$filename did not return true value&quot;;
+       } else {
+           return $result;
+       }
+    }</pre>
+<p>Note that the file will not be included twice under the same specified
+name.</p>
+<p>The file must return true as the last statement to indicate
+successful execution of any initialization code, so it's customary to
+end such a file with <code>1;</code> unless you're sure it'll return true
+otherwise.  But it's better just to put the <code>1;</code>, in case you add more
+statements.</p>
+<p>If EXPR is a bareword, the require assumes a ``<em>.pm</em>'' extension and
+replaces ``<em>::</em>'' with ``<em>/</em>'' in the filename for you,
+to make it easy to load standard modules.  This form of loading of
+modules does not risk altering your namespace.</p>
+<p>In other words, if you try this:</p>
+<pre>
+        require Foo::Bar;    # a splendid bareword</pre>
+<p>The require function will actually look for the ``<em>Foo/Bar.pm</em>'' file in the
+directories specified in the <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__inc"><code>@INC</code></a> array.</p>
+<p>But if you try this:</p>
+<pre>
+        $class = 'Foo::Bar';
+        require $class;      # $class is not a bareword
+    #or
+        require &quot;Foo::Bar&quot;;  # not a bareword because of the &quot;&quot;</pre>
+<p>The require function will look for the ``<em>Foo::Bar</em>'' file in the @INC array and
+will complain about not finding ``<em>Foo::Bar</em>'' there.  In this case you can do:</p>
+<pre>
+        eval &quot;require $class&quot;;</pre>
+<p>Now that you understand how <code>require</code> looks for files in the case of
+a bareword argument, there is a little extra functionality going on
+behind the scenes.  Before <code>require</code> looks for a ``<em>.pm</em>'' extension,
+it will first look for a filename with a ``<em>.pmc</em>'' extension.  A file
+with this extension is assumed to be Perl bytecode generated by
+<a href="/usr/lib/perl5/5.8/html/./ext/B/B/Bytecode.html">B::Bytecode</a>.  If this file is found, and its modification
+time is newer than a coinciding ``<em>.pm</em>'' non-compiled file, it will be
+loaded in place of that non-compiled file ending in a ``<em>.pm</em>'' extension.</p>
+<p>You can also insert hooks into the import facility, by putting directly
+Perl code into the @INC array.  There are three forms of hooks: subroutine
+references, array references and blessed objects.</p>
+<p>Subroutine references are the simplest case.  When the inclusion system
+walks through @INC and encounters a subroutine, this subroutine gets
+called with two parameters, the first being a reference to itself, and the
+second the name of the file to be included (e.g. ``<em>Foo/Bar.pm</em>'').  The
+subroutine should return <code>undef</code> or a filehandle, from which the file to
+include will be read.  If <code>undef</code> is returned, <code>require</code> will look at
+the remaining elements of @INC.</p>
+<p>If the hook is an array reference, its first element must be a subroutine
+reference.  This subroutine is called as above, but the first parameter is
+the array reference.  This enables to pass indirectly some arguments to
+the subroutine.</p>
+<p>In other words, you can write:</p>
+<pre>
+    push @INC, \&amp;my_sub;
+    sub my_sub {
+        my ($coderef, $filename) = @_;  # $coderef is \&amp;my_sub
+        ...
+    }</pre>
+<p>or:</p>
+<pre>
+    push @INC, [ \&amp;my_sub, $x, $y, ... ];
+    sub my_sub {
+        my ($arrayref, $filename) = @_;
+        # Retrieve $x, $y, ...
+        my @parameters = @$arrayref[1..$#$arrayref];
+        ...
+    }</pre>
+<p>If the hook is an object, it must provide an INC method that will be
+called as above, the first parameter being the object itself.  (Note that
+you must fully qualify the sub's name, as it is always forced into package
+<code>main</code>.)  Here is a typical code layout:</p>
+<pre>
+    # In Foo.pm
+    package Foo;
+    sub new { ... }
+    sub Foo::INC {
+        my ($self, $filename) = @_;
+        ...
+    }</pre>
+<pre>
+    # In the main program
+    push @INC, new Foo(...);</pre>
+<p>Note that these hooks are also permitted to set the %INC entry
+corresponding to the files they have loaded. See <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#_inc">%INC in the perlvar manpage</a>.</p>
+<p>For a yet-more-powerful import facility, see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/use.html">use in the perlfunc manpage</a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlmod.html">the perlmod manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;require - load in external functions from a library at runtime</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,603 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Net::NNTP - NNTP Client class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::NNTP - NNTP Client class</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#constructor">CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#extension_methods">Extension methods</a></li>
+	</ul>
+
+	<li><a href="#unsupported">UNSUPPORTED</a></li>
+	<li><a href="#definitions">DEFINITIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Net::NNTP - NNTP Client class</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Net::NNTP;</pre>
+<pre>
+    $nntp = Net::NNTP-&gt;new(&quot;some.host.name&quot;);
+    $nntp-&gt;quit;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Net::NNTP</code> is a class implementing a simple NNTP client in Perl as described
+in RFC977. <code>Net::NNTP</code> inherits its communication methods from <code>Net::Cmd</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="constructor">CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_new">new ( [ HOST ] [, OPTIONS ])</a></strong>
+
+<dd>
+<p>This is the constructor for a new Net::NNTP object. <code>HOST</code> is the
+name of the remote host to which a NNTP connection is required. If not
+given then it may be passed as the <code>Host</code> option described below. If no host is passed
+then two environment variables are checked, first <code>NNTPSERVER</code> then
+<code>NEWSHOST</code>, then <code>Net::Config</code> is checked, and if a host is not found
+then <code>news</code> is used.</p>
+</dd>
+<dd>
+<p><code>OPTIONS</code> are passed in a hash like fashion, using key and value pairs.
+Possible options are:</p>
+</dd>
+<dd>
+<p><strong>Host</strong> - NNTP host to connect to. It may be a single scalar, as defined for
+the <code>PeerAddr</code> option in <a href="/usr/lib/perl5/5.8/html/./ext/IO/lib/IO/Socket/INET.html">the IO::Socket::INET manpage</a>, or a reference to
+an array with hosts to try in turn. The <a href="#host">host</a> method will return the value
+which was used to connect to the host.</p>
+</dd>
+<dd>
+<p><strong>Timeout</strong> - Maximum time, in seconds, to wait for a response from the
+NNTP server, a value of zero will cause all IO operations to block.
+(default: 120)</p>
+</dd>
+<dd>
+<p><strong>Debug</strong> - Enable the printing of debugging information to STDERR</p>
+</dd>
+<dd>
+<p><strong>Reader</strong> - If the remote server is INN then initially the connection
+will be to nnrpd, by default <code>Net::NNTP</code> will issue a <code>MODE READER</code> command
+so that the remote server becomes innd. If the <code>Reader</code> option is given
+with a value of zero, then this command will not be sent and the
+connection will be left talking to nnrpd.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>Unless otherwise stated all methods return either a <em>true</em> or <em>false</em>
+value, with <em>true</em> meaning that the operation was a success. When a method
+states that it returns a value, failure will be returned as <em>undef</em> or an
+empty list.</p>
+<dl>
+<dt><strong><a name="item_article">article ( [ MSGID|MSGNUM ], [FH] )</a></strong>
+
+<dd>
+<p>Retrieve the header, a blank line, then the body (text) of the
+specified article.</p>
+</dd>
+<dd>
+<p>If <code>FH</code> is specified then it is expected to be a valid filehandle
+and the result will be printed to it, on success a true value will be
+returned. If <code>FH</code> is not specified then the return value, on success,
+will be a reference to an array containg the article requested, each
+entry in the array will contain one line of the article.</p>
+</dd>
+<dd>
+<p>If no arguments are passed then the current article in the currently
+selected newsgroup is fetched.</p>
+</dd>
+<dd>
+<p><code>MSGNUM</code> is a numeric id of an article in the current newsgroup, and
+will change the current article pointer.  <code>MSGID</code> is the message id of
+an article as shown in that article's header.  It is anticipated that the
+client will obtain the <code>MSGID</code> from a list provided by the <a href="#item_newnews"><code>newnews</code></a>
+command, from references contained within another article, or from the
+message-id provided in the response to some other commands.</p>
+</dd>
+<dd>
+<p>If there is an error then <code>undef</code> will be returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_body">body ( [ MSGID|MSGNUM ], [FH] )</a></strong>
+
+<dd>
+<p>Like <a href="#item_article"><code>article</code></a> but only fetches the body of the article.</p>
+</dd>
+</li>
+<dt><strong><a name="item_head">head ( [ MSGID|MSGNUM ], [FH] )</a></strong>
+
+<dd>
+<p>Like <a href="#item_article"><code>article</code></a> but only fetches the headers for the article.</p>
+</dd>
+</li>
+<dt><strong><a name="item_articlefh">articlefh ( [ MSGID|MSGNUM ] )</a></strong>
+
+<dt><strong><a name="item_bodyfh">bodyfh ( [ MSGID|MSGNUM ] )</a></strong>
+
+<dt><strong><a name="item_headfh">headfh ( [ MSGID|MSGNUM ] )</a></strong>
+
+<dd>
+<p>These are similar to article(), <a href="#item_body"><code>body()</code></a> and head(), but rather than
+returning the requested data directly, they return a tied filehandle
+from which to read the article.</p>
+</dd>
+</li>
+<dt><strong><a name="item_nntpstat">nntpstat ( [ MSGID|MSGNUM ] )</a></strong>
+
+<dd>
+<p>The <a href="#item_nntpstat"><code>nntpstat</code></a> command is similar to the <a href="#item_article"><code>article</code></a> command except that no
+text is returned.  When selecting by message number within a group,
+the <a href="#item_nntpstat"><code>nntpstat</code></a> command serves to set the ``current article pointer'' without
+sending text.</p>
+</dd>
+<dd>
+<p>Using the <a href="#item_nntpstat"><code>nntpstat</code></a> command to
+select by message-id is valid but of questionable value, since a
+selection by message-id does <strong>not</strong> alter the ``current article pointer''.</p>
+</dd>
+<dd>
+<p>Returns the message-id of the ``current article''.</p>
+</dd>
+</li>
+<dt><strong><a name="item_group">group ( [ GROUP ] )</a></strong>
+
+<dd>
+<p>Set and/or get the current group. If <code>GROUP</code> is not given then information
+is returned on the current group.</p>
+</dd>
+<dd>
+<p>In a scalar context it returns the group name.</p>
+</dd>
+<dd>
+<p>In an array context the return value is a list containing, the number
+of articles in the group, the number of the first article, the number
+of the last article and the group name.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ihave">ihave ( MSGID [, MESSAGE ])</a></strong>
+
+<dd>
+<p>The <a href="#item_ihave"><code>ihave</code></a> command informs the server that the client has an article
+whose id is <code>MSGID</code>.  If the server desires a copy of that
+article, and <code>MESSAGE</code> has been given the it will be sent.</p>
+</dd>
+<dd>
+<p>Returns <em>true</em> if the server desires the article and <code>MESSAGE</code> was
+successfully sent,if specified.</p>
+</dd>
+<dd>
+<p>If <code>MESSAGE</code> is not specified then the message must be sent using the
+<code>datasend</code> and <code>dataend</code> methods from <a href="/usr/lib/perl5/5.8/html/./lib/Net/Cmd.html">the Net::Cmd manpage</a></p>
+</dd>
+<dd>
+<p><code>MESSAGE</code> can be either an array of lines or a reference to an array.</p>
+</dd>
+</li>
+<dt><strong><a name="item_last">last ()</a></strong>
+
+<dd>
+<p>Set the ``current article pointer'' to the previous article in the current
+newsgroup.</p>
+</dd>
+<dd>
+<p>Returns the message-id of the article.</p>
+</dd>
+</li>
+<dt><strong><a name="item_date">date ()</a></strong>
+
+<dd>
+<p>Returns the date on the remote server. This date will be in a UNIX time
+format (seconds since 1970)</p>
+</dd>
+</li>
+<dt><strong><a name="item_postok">postok ()</a></strong>
+
+<dd>
+<p><a href="#item_postok"><code>postok</code></a> will return <em>true</em> if the servers initial response indicated
+that it will allow posting.</p>
+</dd>
+</li>
+<dt><strong><a name="item_authinfo">authinfo ( USER, PASS )</a></strong>
+
+<dd>
+<p>Authenticates to the server (using AUTHINFO USER / AUTHINFO PASS)
+using the supplied username and password.  Please note that the
+password is sent in clear text to the server.  This command should not
+be used with valuable passwords unless the connection to the server is
+somehow protected.</p>
+</dd>
+</li>
+<dt><strong><a name="item_list">list ()</a></strong>
+
+<dd>
+<p>Obtain information about all the active newsgroups. The results is a reference
+to a hash where the key is a group name and each value is a reference to an
+array. The elements in this array are:- the last article number in the group,
+the first article number in the group and any information flags about the group.</p>
+</dd>
+</li>
+<dt><strong><a name="item_newgroups">newgroups ( SINCE [, DISTRIBUTIONS ])</a></strong>
+
+<dd>
+<p><code>SINCE</code> is a time value and <code>DISTRIBUTIONS</code> is either a distribution
+pattern or a reference to a list of distribution patterns.
+The result is the same as <a href="#item_list"><code>list</code></a>, but the
+groups return will be limited to those created after <code>SINCE</code> and, if
+specified, in one of the distribution areas in <code>DISTRIBUTIONS</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_newnews">newnews ( SINCE [, GROUPS [, DISTRIBUTIONS ]])</a></strong>
+
+<dd>
+<p><code>SINCE</code> is a time value. <code>GROUPS</code> is either a group pattern or a reference
+to a list of group patterns. <code>DISTRIBUTIONS</code> is either a distribution
+pattern or a reference to a list of distribution patterns.</p>
+</dd>
+<dd>
+<p>Returns a reference to a list which contains the message-ids of all news posted
+after <code>SINCE</code>, that are in a groups which matched <code>GROUPS</code> and a
+distribution which matches <code>DISTRIBUTIONS</code>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_next">next ()</a></strong>
+
+<dd>
+<p>Set the ``current article pointer'' to the next article in the current
+newsgroup.</p>
+</dd>
+<dd>
+<p>Returns the message-id of the article.</p>
+</dd>
+</li>
+<dt><strong><a name="item_post">post ( [ MESSAGE ] )</a></strong>
+
+<dd>
+<p>Post a new article to the news server. If <code>MESSAGE</code> is specified and posting
+is allowed then the message will be sent.</p>
+</dd>
+<dd>
+<p>If <code>MESSAGE</code> is not specified then the message must be sent using the
+<code>datasend</code> and <code>dataend</code> methods from <a href="/usr/lib/perl5/5.8/html/./lib/Net/Cmd.html">the Net::Cmd manpage</a></p>
+</dd>
+<dd>
+<p><code>MESSAGE</code> can be either an array of lines or a reference to an array.</p>
+</dd>
+<dd>
+<p>The message, either sent via <code>datasend</code> or as the <code>MESSAGE</code>
+parameter, must be in the format as described by RFC822 and must
+contain From:, Newsgroups: and Subject: headers.</p>
+</dd>
+</li>
+<dt><strong><a name="item_postfh">postfh ()</a></strong>
+
+<dd>
+<p>Post a new article to the news server using a tied filehandle.  If
+posting is allowed, this method will return a tied filehandle that you
+can <code>print()</code> the contents of the article to be posted.  You must
+explicitly <code>close()</code> the filehandle when you are finished posting the
+article, and the return value from the <code>close()</code> call will indicate
+whether the message was successfully posted.</p>
+</dd>
+</li>
+<dt><strong><a name="item_slave">slave ()</a></strong>
+
+<dd>
+<p>Tell the remote server that I am not a user client, but probably another
+news server.</p>
+</dd>
+</li>
+<dt><strong><a name="item_quit">quit ()</a></strong>
+
+<dd>
+<p>Quit the remote server and close the socket connection.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="extension_methods">Extension methods</a></h2>
+<p>These methods use commands that are not part of the RFC977 documentation. Some
+servers may not support all of them.</p>
+<dl>
+<dt><strong><a name="item_newsgroups">newsgroups ( [ PATTERN ] )</a></strong>
+
+<dd>
+<p>Returns a reference to a hash where the keys are all the group names which
+match <a href="#item_pattern"><code>PATTERN</code></a>, or all of the groups if no pattern is specified, and
+each value contains the description text for the group.</p>
+</dd>
+</li>
+<dt><strong><a name="item_distributions">distributions ()</a></strong>
+
+<dd>
+<p>Returns a reference to a hash where the keys are all the possible
+distribution names and the values are the distribution descriptions.</p>
+</dd>
+</li>
+<dt><strong><a name="item_subscriptions">subscriptions ()</a></strong>
+
+<dd>
+<p>Returns a reference to a list which contains a list of groups which
+are recommended for a new user to subscribe to.</p>
+</dd>
+</li>
+<dt><strong><a name="item_overview_fmt">overview_fmt ()</a></strong>
+
+<dd>
+<p>Returns a reference to an array which contain the names of the fields returned
+by <a href="#item_xover"><code>xover</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_active_times">active_times ()</a></strong>
+
+<dd>
+<p>Returns a reference to a hash where the keys are the group names and each
+value is a reference to an array containing the time the groups was created
+and an identifier, possibly an Email address, of the creator.</p>
+</dd>
+</li>
+<dt><strong><a name="item_active">active ( [ PATTERN ] )</a></strong>
+
+<dd>
+<p>Similar to <a href="#item_list"><code>list</code></a> but only active groups that match the pattern are returned.
+<a href="#item_pattern"><code>PATTERN</code></a> can be a group pattern.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xgtitle">xgtitle ( PATTERN )</a></strong>
+
+<dd>
+<p>Returns a reference to a hash where the keys are all the group names which
+match <a href="#item_pattern"><code>PATTERN</code></a> and each value is the description text for the group.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xhdr">xhdr ( HEADER, MESSAGE-SPEC )</a></strong>
+
+<dd>
+<p>Obtain the header field <code>HEADER</code> for all the messages specified.</p>
+</dd>
+<dd>
+<p>The return value will be a reference
+to a hash where the keys are the message numbers and each value contains
+the text of the requested header for that message.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xover">xover ( MESSAGE-SPEC )</a></strong>
+
+<dd>
+<p>The return value will be a reference
+to a hash where the keys are the message numbers and each value contains
+a reference to an array which contains the overview fields for that
+message.</p>
+</dd>
+<dd>
+<p>The names of the fields can be obtained by calling <a href="#item_overview_fmt"><code>overview_fmt</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xpath">xpath ( MESSAGE-ID )</a></strong>
+
+<dd>
+<p>Returns the path name to the file on the server which contains the specified
+message.</p>
+</dd>
+</li>
+<dt><strong><a name="item_xpat">xpat ( HEADER, PATTERN, MESSAGE-SPEC)</a></strong>
+
+<dd>
+<p>The result is the same as <a href="#item_xhdr"><code>xhdr</code></a> except the is will be restricted to
+headers where the text of the header matches <a href="#item_pattern"><code>PATTERN</code></a></p>
+</dd>
+</li>
+<dt><strong><a name="item_xrover">xrover</a></strong>
+
+<dd>
+<p>The XROVER command returns reference information for the <a href="#item_article"><code>article(s)</code></a>
+specified.</p>
+</dd>
+<dd>
+<p>Returns a reference to a HASH where the keys are the message numbers and the
+values are the References: lines from the articles</p>
+</dd>
+</li>
+<dt><strong><a name="item_listgroup">listgroup ( [ GROUP ] )</a></strong>
+
+<dd>
+<p>Returns a reference to a list of all the active messages in <code>GROUP</code>, or
+the current group if <code>GROUP</code> is not specified.</p>
+</dd>
+</li>
+<dt><strong><a name="item_reader">reader</a></strong>
+
+<dd>
+<p>Tell the server that you are a reader and not another server.</p>
+</dd>
+<dd>
+<p>This is required by some servers. For example if you are connecting to
+an INN server and you have transfer permission your connection will
+be connected to the transfer daemon, not the NNTP daemon. Issuing
+this command will cause the transfer daemon to hand over control
+to the NNTP daemon.</p>
+</dd>
+<dd>
+<p>Some servers do not understand this command, but issuing it and ignoring
+the response is harmless.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="unsupported">UNSUPPORTED</a></h1>
+<p>The following NNTP command are unsupported by the package, and there are
+no plans to do so.</p>
+<pre>
+    AUTHINFO GENERIC
+    XTHREAD
+    XSEARCH
+    XINDEX</pre>
+<p>
+</p>
+<hr />
+<h1><a name="definitions">DEFINITIONS</a></h1>
+<dl>
+<dt><strong><a name="item_message_2dspec">MESSAGE-SPEC</a></strong>
+
+<dd>
+<p><a href="#item_message_2dspec"><code>MESSAGE-SPEC</code></a> is either a single message-id, a single message number, or
+a reference to a list of two message numbers.</p>
+</dd>
+<dd>
+<p>If <a href="#item_message_2dspec"><code>MESSAGE-SPEC</code></a> is a reference to a list of two message numbers and the
+second number in a range is less than or equal to the first then the range
+represents all messages in the group after the first message number.</p>
+</dd>
+<dd>
+<p><strong>NOTE</strong> For compatibility reasons only with earlier versions of Net::NNTP
+a message spec can be passed as a list of two numbers, this is deprecated
+and a reference to the list should now be passed</p>
+</dd>
+</li>
+<dt><strong><a name="item_pattern">PATTERN</a></strong>
+
+<dd>
+<p>The <code>NNTP</code> protocol uses the <code>WILDMAT</code> format for patterns.
+The WILDMAT format was first developed by Rich Salz based on
+the format used in the UNIX ``find'' command to articulate
+file names. It was developed to provide a uniform mechanism
+for matching patterns in the same manner that the UNIX shell
+matches filenames.</p>
+</dd>
+<dd>
+<p>Patterns are implicitly anchored at the
+beginning and end of each string when testing for a match.</p>
+</dd>
+<dd>
+<p>There are five pattern matching operations other than a strict
+one-to-one match between the pattern and the source to be
+checked for a match.</p>
+</dd>
+<dd>
+<p>The first is an asterisk <code>*</code> to match any sequence of zero or more
+characters.</p>
+</dd>
+<dd>
+<p>The second is a question mark <code>?</code> to match any single character. The
+third specifies a specific set of characters.</p>
+</dd>
+<dd>
+<p>The set is specified as a list of characters, or as a range of characters
+where the beginning and end of the range are separated by a minus (or dash)
+character, or as any combination of lists and ranges. The dash can
+also be included in the set as a character it if is the beginning
+or end of the set. This set is enclosed in square brackets. The
+close square bracket <code>]</code> may be used in a set if it is the first
+character in the set.</p>
+</dd>
+<dd>
+<p>The fourth operation is the same as the
+logical not of the third operation and is specified the same
+way as the third with the addition of a caret character <code>^</code> at
+the beginning of the test string just inside the open square
+bracket.</p>
+</dd>
+<dd>
+<p>The final operation uses the backslash character to
+invalidate the special meaning of an open square bracket <code>[</code>,
+the asterisk, backslash or the question mark. Two backslashes in
+sequence will result in the evaluation of the backslash as a
+character with no special meaning.</p>
+</dd>
+<dl>
+<dt><strong><a name="item_examples">Examples</a></strong>
+
+<dt><strong><a name="item__5b_5e_5d_2d_5d"><code>[^]-]</code></a></strong>
+
+<dd>
+<p>matches any single character other than a close square
+bracket or a minus sign/dash.</p>
+</dd>
+</li>
+<li>
+<p>matches any string that ends with the string ``bdc''
+including the string ``bdc'' (without quotes).</p>
+</li>
+<dt><strong><a name="item__5b0_2d9a_2dza_2dz_5d"><code>[0-9a-zA-Z]</code></a></strong>
+
+<dd>
+<p>matches any single printable alphanumeric ASCII character.</p>
+</dd>
+</li>
+<dt><strong><a name="item_a_3f_3fd"><code>a??d</code></a></strong>
+
+<dd>
+<p>matches any four character string which begins
+with a and ends with d.</p>
+</dd>
+</li>
+</dl>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Net/Cmd.html">the Net::Cmd manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Graham Barr &lt;<a href="mailto:gbarr@pobox.com">gbarr@pobox.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1995-1997 Graham Barr. All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<hr><p><em>$Id: //depot/libnet/Net/NNTP.pm#18 $</em></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Net::NNTP - NNTP Client class</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,246 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>B::C - Perl compiler's C backend</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::C - Perl compiler's C backend</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#options">OPTIONS</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>B::C - Perl compiler's C backend</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        perl -MO=C[,OPTIONS] foo.pl</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This compiler backend takes Perl source and generates C source code
+corresponding to the internal structures that perl uses to run
+your program. When the generated C source is compiled and run, it
+cuts out the time which perl would have taken to load and parse
+your program into its internal semi-compiled form. That means that
+compiling with this backend will not help improve the runtime
+execution speed of your program but may improve the start-up time.
+Depending on the environment in which your program runs this may be
+either a help or a hindrance.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options">OPTIONS</a></h1>
+<p>If there are any non-option arguments, they are taken to be
+names of objects to be saved (probably doesn't work properly yet).
+Without extra arguments, it saves the main program.</p>
+<dl>
+<dt><strong><a name="item__2dofilename"><strong>-ofilename</strong></a></strong>
+
+<dd>
+<p>Output to filename instead of STDOUT</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dv"><strong>-v</strong></a></strong>
+
+<dd>
+<p>Verbose compilation (currently gives a few compilation statistics).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2d_2d"><strong>--</strong></a></strong>
+
+<dd>
+<p>Force end of options</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dupackname"><strong>-uPackname</strong></a></strong>
+
+<dd>
+<p>Force apparently unused subs from package Packname to be compiled.
+This allows programs to use eval ``foo()'' even when sub foo is never
+seen to be used at compile time. The down side is that any subs which
+really are never used also have code generated. This option is
+necessary, for example, if you have a signal handler foo which you
+initialise with <code>$SIG{BAR} = &quot;foo&quot;</code>.  A better fix, though, is just
+to change it to <code>$SIG{BAR} = \&amp;foo</code>. You can have multiple <strong>-u</strong>
+options. The compiler tries to figure out which packages may possibly
+have subs in which need compiling but the current version doesn't do
+it very well. In particular, it is confused by nested packages (i.e.
+of the form <code>A::B</code>) where package <a href="/usr/lib/perl5/5.8/html/./pod/perlguts.html#item_a"><code>A</code></a> does not contain any subs.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dd"><strong>-D</strong></a></strong>
+
+<dd>
+<p>Debug options (concatenated or separate flags like <code>perl -D</code>).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddo"><strong>-Do</strong></a></strong>
+
+<dd>
+<p>OPs, prints each OP as it's processed</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddc"><strong>-Dc</strong></a></strong>
+
+<dd>
+<p>COPs, prints COPs as processed (incl. file &amp; line num)</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dda"><strong>-DA</strong></a></strong>
+
+<dd>
+<p>prints AV information on saving</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddc"><strong>-DC</strong></a></strong>
+
+<dd>
+<p>prints CV information on saving</p>
+</dd>
+</li>
+<dt><strong><a name="item__2ddm"><strong>-DM</strong></a></strong>
+
+<dd>
+<p>prints MAGIC information on saving</p>
+</dd>
+</li>
+<dt><strong><a name="item__2df"><strong>-f</strong></a></strong>
+
+<dd>
+<p>Force options/optimisations on or off one at a time. You can explicitly
+disable an option using <strong>-fno-option</strong>. All options default to
+<strong>disabled</strong>.</p>
+</dd>
+<dl>
+<dt><strong><a name="item__2dfcog"><strong>-fcog</strong></a></strong>
+
+<dd>
+<p>Copy-on-grow: PVs declared and initialised statically.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfsave_2ddata"><strong>-fsave-data</strong></a></strong>
+
+<dd>
+<p>Save package::DATA filehandles ( only available with PerlIO ).</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfppaddr"><strong>-fppaddr</strong></a></strong>
+
+<dd>
+<p>Optimize the initialization of op_ppaddr.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfwarn_2dsv"><strong>-fwarn-sv</strong></a></strong>
+
+<dd>
+<p>Optimize the initialization of cop_warnings.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfuse_2dscript_2dname"><strong>-fuse-script-name</strong></a></strong>
+
+<dd>
+<p>Use the script name instead of the program name as $0.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2dfsave_2dsig_2dhash"><strong>-fsave-sig-hash</strong></a></strong>
+
+<dd>
+<p>Save compile-time modifications to the %SIG hash.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item__2don"><strong>-On</strong></a></strong>
+
+<dd>
+<p>Optimisation level (n = 0, 1, 2, ...). <strong>-O</strong> means <strong>-O1</strong>.</p>
+</dd>
+<dl>
+<dt><strong><a name="item__2do0"><strong>-O0</strong></a></strong>
+
+<dd>
+<p>Disable all optimizations.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2do1"><strong>-O1</strong></a></strong>
+
+<dd>
+<p>Enable <strong>-fcog</strong>.</p>
+</dd>
+</li>
+<dt><strong><a name="item__2do2"><strong>-O2</strong></a></strong>
+
+<dd>
+<p>Enable <strong>-fppaddr</strong>, <strong>-fwarn-sv</strong>.</p>
+</dd>
+</li>
+</dl>
+<dt><strong><a name="item__2dllimit"><strong>-llimit</strong></a></strong>
+
+<dd>
+<p>Some C compilers impose an arbitrary limit on the length of string
+constants (e.g. 2048 characters for Microsoft Visual C++).  The
+<strong>-llimit</strong> options tells the C backend not to generate string literals
+exceeding that limit.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<pre>
+    perl -MO=C,-ofoo.c foo.pl
+    perl cc_harness -o foo foo.c</pre>
+<p>Note that <code>cc_harness</code> lives in the <code>B</code> subdirectory of your perl
+library directory. The utility called <code>perlcc</code> may also be used to
+help make use of this compiler.</p>
+<pre>
+    perl -MO=C,-v,-DcA,-l2048 bar.pl &gt; /dev/null</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Plenty. Current status: experimental.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Malcolm Beattie, <code>mbeattie@sable.ox.ac.uk</code>
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;B::C - Perl compiler's C backend</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

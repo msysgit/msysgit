@@ -1,0 +1,195 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Encode::PerlIO -- a detailed document on Encode and PerlIO</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::PerlIO -- a detailed document on Encode and PerlIO</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#overview">Overview</a></li>
+	<li><a href="#how_does_it_work">How does it work?</a></li>
+	<li><a href="#line_buffering">Line Buffering</a></li>
+	<ul>
+
+		<li><a href="#how_can_i_tell_whether_my_encoding_fully_supports_perlio_">How can I tell whether my encoding fully supports PerlIO ?</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Encode::PerlIO -- a detailed document on Encode and PerlIO</p>
+<p>
+</p>
+<hr />
+<h1><a name="overview">Overview</a></h1>
+<p>It is very common to want to do encoding transformations when
+reading or writing files, network connections, pipes etc.
+If Perl is configured to use the new 'perlio' IO system then
+<code>Encode</code> provides a ``layer'' (see <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the PerlIO manpage</a>) which can transform
+data as it is read or written.</p>
+<p>Here is how the blind poet would modernise the encoding:</p>
+<pre>
+    use Encode;
+    open(my $iliad,'&lt;:encoding(iso-8859-7)','iliad.greek');
+    open(my $utf8,'&gt;:utf8','iliad.utf8');
+    my @epic = &lt;$iliad&gt;;
+    print $utf8 @epic;
+    close($utf8);
+    close($illiad);</pre>
+<p>In addition, the new IO system can also be configured to read/write
+UTF-8 encoded characters (as noted above, this is efficient):</p>
+<pre>
+    open(my $fh,'&gt;:utf8','anything');
+    print $fh &quot;Any \x{0021} string \N{SMILEY FACE}\n&quot;;</pre>
+<p>Either of the above forms of ``layer'' specifications can be made the default
+for a lexical scope with the <code>use open ...</code> pragma. See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">the open manpage</a>.</p>
+<p>Once a handle is open, its layers can be altered using <code>binmode</code>.</p>
+<p>Without any such configuration, or if Perl itself is built using the
+system's own IO, then write operations assume that the file handle
+accepts only <em>bytes</em> and will <code>die</code> if a character larger than 255 is
+written to the handle. When reading, each octet from the handle becomes
+a byte-in-a-character. Note that this default is the same behaviour
+as bytes-only languages (including Perl before v5.6) would have,
+and is sufficient to handle native 8-bit encodings e.g. iso-8859-1,
+EBCDIC etc. and any legacy mechanisms for handling other encodings
+and binary data.</p>
+<p>In other cases, it is the program's responsibility to transform
+characters into bytes using the API above before doing writes, and to
+transform the bytes read from a handle into characters before doing
+``character operations'' (e.g. <code>lc</code>, <code>/\W+/</code>, ...).</p>
+<p>You can also use PerlIO to convert larger amounts of data you don't
+want to bring into memory.  For example, to convert between ISO-8859-1
+(Latin 1) and UTF-8 (or UTF-EBCDIC in EBCDIC machines):</p>
+<pre>
+    open(F, &quot;&lt;:encoding(iso-8859-1)&quot;, &quot;data.txt&quot;) or die $!;
+    open(G, &quot;&gt;:utf8&quot;,                 &quot;data.utf&quot;) or die $!;
+    while (&lt;F&gt;) { print G }</pre>
+<pre>
+    # Could also do &quot;print G &lt;F&gt;&quot; but that would pull
+    # the whole file into memory just to write it out again.</pre>
+<p>More examples:</p>
+<pre>
+    open(my $f, &quot;&lt;:encoding(cp1252)&quot;)
+    open(my $g, &quot;&gt;:encoding(iso-8859-2)&quot;)
+    open(my $h, &quot;&gt;:encoding(latin9)&quot;)       # iso-8859-15</pre>
+<p>See also <a href="/usr/lib/perl5/5.8/html/./ext/Encode/encoding.html">the encoding manpage</a> for how to change the default encoding of the
+data in your script.</p>
+<p>
+</p>
+<hr />
+<h1><a name="how_does_it_work">How does it work?</a></h1>
+<p>Here is a crude diagram of how filehandle, PerlIO, and Encode
+interact.</p>
+<pre>
+  filehandle &lt;-&gt; PerlIO        PerlIO &lt;-&gt; scalar (read/printed)
+                       \      /
+                        Encode</pre>
+<p>When PerlIO receives data from either direction, it fills a buffer
+(currently with 1024 bytes) and passes the buffer to Encode.
+Encode tries to convert the valid part and passes it back to PerlIO,
+leaving invalid parts (usually a partial character) in the buffer.
+PerlIO then appends more data to the buffer, calls Encode again,
+and so on until the data stream ends.</p>
+<p>To do so, PerlIO always calls (de|en)code methods with CHECK set to 1.
+This ensures that the method stops at the right place when it
+encounters partial character.  The following is what happens when
+PerlIO and Encode tries to encode (from utf8) more than 1024 bytes
+and the buffer boundary happens to be in the middle of a character.</p>
+<pre>
+   A   B   C   ....   ~     \x{3000}    ....
+  41  42  43   ....  7E   e3   80   80  ....
+  &lt;- buffer ---------------&gt;
+  &lt;&lt; encoded &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;
+                       &lt;- next buffer ------</pre>
+<p>Encode converts from the beginning to \x7E, leaving \xe3 in the buffer
+because it is invalid (partial character).</p>
+<p>Unfortunately, this scheme does not work well with escape-based
+encodings such as ISO-2022-JP.</p>
+<p>
+</p>
+<hr />
+<h1><a name="line_buffering">Line Buffering</a></h1>
+<p>Now let's see what happens when you try to decode from ISO-2022-JP and
+the buffer ends in the middle of a character.</p>
+<pre>
+                          JIS208-ESC   \x{5f3e}
+   A   B   C   ....   ~   \e   $   B  |DAN | ....
+  41  42  43   ....  7E   1b  24  41  43  46 ....
+  &lt;- buffer ---------------------------&gt;
+  &lt;&lt; encoded &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</pre>
+<p>As you see, the next buffer begins with \x43.  But \x43 is 'C' in
+ASCII, which is wrong in this case because we are now in JISX 0208
+area so it has to convert \x43\x46, not \x43.  Unlike utf8 and EUC,
+in escape-based encodings you can't tell if a given octet is a whole
+character or just part of it.</p>
+<p>Fortunately PerlIO also supports line buffer if you tell PerlIO to use
+one instead of fixed buffer.  Since ISO-2022-JP is guaranteed to revert to ASCII at the end of the line, partial
+character will never happen when line buffer is used.</p>
+<p>To tell PerlIO to use line buffer, implement -&gt;needs_lines method
+for your encoding object.  See  <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a> for details.</p>
+<p>Thanks to these efforts most encodings that come with Encode support
+PerlIO but that still leaves following encodings.</p>
+<pre>
+  iso-2022-kr
+  MIME-B
+  MIME-Header
+  MIME-Q</pre>
+<p>Fortunately iso-2022-kr is hardly used (according to Jungshik) and
+MIME-* are very unlikely to be fed to PerlIO because they are for mail
+headers.  See <a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/MIME/Header.html">the Encode::MIME::Header manpage</a> for details.</p>
+<p>
+</p>
+<h2><a name="how_can_i_tell_whether_my_encoding_fully_supports_perlio_">How can I tell whether my encoding fully supports PerlIO ?</a></h2>
+<p>As of this writing, any encoding whose class belongs to Encode::XS and
+Encode::Unicode works.  The Encode module has a <code>perlio_ok</code> method
+which you can use before applying PerlIO encoding to the filehandle.
+Here is an example:</p>
+<pre>
+  my $use_perlio = perlio_ok($enc);
+  my $layer = $use_perlio ? &quot;&lt;:raw&quot; : &quot;&lt;:encoding($enc)&quot;;
+  open my $fh, $layer, $file or die &quot;$file : $!&quot;;
+  while(&lt;$fh&gt;){
+    $_ = decode($enc, $_) unless $use_perlio;
+    # .... 
+  }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Encoding.html">the Encode::Encoding manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/Supported.html">the Encode::Supported manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/lib/Encode/PerlIO.html">the Encode::PerlIO manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./ext/Encode/encoding.html">the encoding manpage</a>,
+<a href="/usr/lib/perl5/5.8/html/./pod/perlebcdic.html">the perlebcdic manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/open.html">open in the perlfunc manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./pod/perlunicode.html">the perlunicode manpage</a>, 
+<a href="/usr/lib/perl5/5.8/html/./lib/utf8.html">the utf8 manpage</a>, 
+the Perl Unicode Mailing List &lt;<a href="mailto:perl-unicode@perl.org">perl-unicode@perl.org</a>&gt;</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Encode::PerlIO -- a detailed document on Encode and PerlIO</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

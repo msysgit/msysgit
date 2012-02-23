@@ -1,0 +1,110 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Pod::ParseLink - Parse an LE&lt;lt&gt;E&lt;gt&gt; formatting code in POD text</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::ParseLink - Parse an LE&lt;lt&gt;E&lt;gt&gt; formatting code in POD text</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Pod::ParseLink - Parse an L&lt;&gt; formatting code in POD text</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use Pod::ParseLink;
+    my ($text, $inferred, $name, $section, $type) = parselink ($link);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module only provides a single function, parselink(), which takes the
+text of an L&lt;&gt; formatting code and parses it.  It returns the anchor
+text for the link (if any was given), the anchor text possibly inferred from
+the name and section, the name or URL, the section if any, and the type of
+link.  The type will be one of 'url', 'pod', or 'man', indicating a URL, a
+link to a POD page, or a link to a Unix manual page.</p>
+<p>Parsing is implemented per <a href="/usr/lib/perl5/5.8/html/./pod/perlpodspec.html">the perlpodspec manpage</a>.  For backward compatibility,
+links where there is no section and name contains spaces, or links where the
+entirety of the link (except for the anchor text if given) is enclosed in
+double-quotes are interpreted as links to a section (L&lt;/section&gt;).</p>
+<p>The inferred anchor text is implemented per <a href="/usr/lib/perl5/5.8/html/./pod/perlpodspec.html">the perlpodspec manpage</a>:</p>
+<pre>
+    L&lt;name&gt;         =&gt;  L&lt;name|name&gt;
+    L&lt;/section&gt;     =&gt;  L&lt;&quot;section&quot;|/section&gt;
+    L&lt;name/section&gt; =&gt;  L&lt;&quot;section&quot; in name|name/section&gt;</pre>
+<p>The name may contain embedded E&lt;&gt; and Z&lt;&gt; formatting codes,
+and the section, anchor text, and inferred anchor text may contain any
+formatting codes.  Any double quotes around the section are removed as part
+of the parsing, as is any leading or trailing whitespace.</p>
+<p>If the text of the L&lt;&gt; escape is entirely enclosed in double quotes,
+it's interpreted as a link to a section for backwards compatibility.</p>
+<p>No attempt is made to resolve formatting codes.  This must be done after
+calling parselink (since E&lt;&gt; formatting codes can be used to escape
+characters that would otherwise be significant to the parser and resolving
+them before parsing would result in an incorrect parse of a formatting code
+like:</p>
+<pre>
+    L&lt;verticalE&lt;verbar&gt;barE&lt;sol&gt;slash&gt;</pre>
+<p>which should be interpreted as a link to the <code>vertical|bar/slash</code> POD page
+and not as a link to the <code>slash</code> section of the <code>bar</code> POD page with an
+anchor text of <code>vertical</code>.  Note that not only the anchor text will need to
+have formatting codes expanded, but so will the target of the link (to deal
+with E&lt;&gt; and Z&lt;&gt; formatting codes), and special handling of
+the section may be necessary depending on whether the translator wants to
+consider markup in sections to be significant when resolving links.  See
+<a href="/usr/lib/perl5/5.8/html/./pod/perlpodspec.html">the perlpodspec manpage</a> for more information.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./lib/Pod/Parser.html">the Pod::Parser manpage</a></p>
+<p>The current version of this module is always available from its web site at
+<a href="http://www.eyrie.org/~eagle/software/podlators/">http://www.eyrie.org/~eagle/software/podlators/</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Russ Allbery &lt;<a href="mailto:rra@stanford.edu">rra@stanford.edu</a>&gt;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright 2001 by Russ Allbery &lt;<a href="mailto:rra@stanford.edu">rra@stanford.edu</a>&gt;.</p>
+<p>This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Pod::ParseLink - Parse an LE&lt;lt&gt;E&lt;gt&gt; formatting code in POD text</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

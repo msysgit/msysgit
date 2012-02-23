@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>localtime - convert UNIX time into record or string using local time</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;localtime - convert UNIX time into record or string using local time</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>localtime - convert UNIX time into record or string using local time</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>localtime EXPR
+</p>
+<p>localtime</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Converts a time as returned by the time function to a 9-element list
+with the time analyzed for the local time zone.  Typically used as
+follows:</p>
+<pre>
+    #  0    1    2     3     4    5     6     7     8
+    ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+                                                localtime(time);</pre>
+<p>All list elements are numeric, and come straight out of the C `struct
+tm'.  <code>$sec</code>, <code>$min</code>, and <code>$hour</code> are the seconds, minutes, and hours
+of the specified time.</p>
+<p><code>$mday</code> is the day of the month, and <code>$mon</code> is the month itself, in
+the range <code>0..11</code> with 0 indicating January and 11 indicating December.
+This makes it easy to get a month name from a list:</p>
+<pre>
+    my @abbr = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+    print &quot;$abbr[$mon] $mday&quot;;
+    # $mon=9, $mday=18 gives &quot;Oct 18&quot;</pre>
+<p><code>$year</code> is the number of years since 1900, not just the last two digits
+of the year.  That is, <code>$year</code> is <code>123</code> in year 2023.  The proper way
+to get a complete 4-digit year is simply:</p>
+<pre>
+    $year += 1900;</pre>
+<p>To get the last two digits of the year (e.g., '01' in 2001) do:</p>
+<pre>
+    $year = sprintf(&quot;%02d&quot;, $year % 100);</pre>
+<p><code>$wday</code> is the day of the week, with 0 indicating Sunday and 3 indicating
+Wednesday.  <code>$yday</code> is the day of the year, in the range <code>0..364</code>
+(or <code>0..365</code> in leap years.)</p>
+<p><code>$isdst</code> is true if the specified time occurs during Daylight Saving
+Time, false otherwise.</p>
+<p>If EXPR is omitted, <code>localtime()</code> uses the current time (<code>localtime(time)</code>).</p>
+<p>In scalar context, <code>localtime()</code> returns the <code>ctime(3)</code> value:</p>
+<pre>
+    $now_string = localtime;  # e.g., &quot;Thu Oct 13 04:54:34 1994&quot;</pre>
+<p>This scalar value is <strong>not</strong> locale dependent but is a Perl builtin. For GMT
+instead of local time use the <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/gmtime.html">gmtime in the perlfunc manpage</a> builtin. See also the
+<code>Time::Local</code> module (to convert the second, minutes, hours, ... back to
+the integer value returned by time()), and the <a href="/usr/lib/perl5/5.8/html/./ext/POSIX/POSIX.html">the POSIX manpage</a> module's <code>strftime(3)</code>
+and <code>mktime(3)</code> functions.</p>
+<p>To get somewhat similar but locale dependent date strings, set up your
+locale environment variables appropriately (please see <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>) and
+try for example:</p>
+<pre>
+    use POSIX qw(strftime);
+    $now_string = strftime &quot;%a %b %e %H:%M:%S %Y&quot;, localtime;
+    # or for GMT formatted appropriately for your locale:
+    $now_string = strftime &quot;%a %b %e %H:%M:%S %Y&quot;, gmtime;</pre>
+<p>Note that the <code>%a</code> and <code>%b</code>, the short forms of the day of the week
+and the month of the year, may not necessarily be three characters wide.</p>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlport.html#localtime">localtime in the perlport manpage</a> for portability concerns.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;localtime - convert UNIX time into record or string using local time</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

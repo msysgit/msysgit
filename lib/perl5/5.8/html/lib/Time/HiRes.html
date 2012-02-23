@@ -1,0 +1,519 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#c_api">C API</a></li>
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<ul>
+
+		<li><a href="#negative_time_not_invented_yet">negative time not invented yet</a></li>
+		<li><a href="#internal_error__useconds___0__unsigned_____signed_____">internal error: useconds &lt; 0 (unsigned ... signed ...)</a></li>
+	</ul>
+
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep
+                      clock_gettime clock_getres clock_nanosleep clock );</pre>
+<pre>
+  usleep ($microseconds);
+  nanosleep ($nanoseconds);</pre>
+<pre>
+  ualarm ($microseconds);
+  ualarm ($microseconds, $interval_microseconds);</pre>
+<pre>
+  $t0 = [gettimeofday];
+  ($seconds, $microseconds) = gettimeofday;</pre>
+<pre>
+  $elapsed = tv_interval ( $t0, [$seconds, $microseconds]);
+  $elapsed = tv_interval ( $t0, [gettimeofday]);
+  $elapsed = tv_interval ( $t0 );</pre>
+<pre>
+  use Time::HiRes qw ( time alarm sleep );</pre>
+<pre>
+  $now_fractions = time;
+  sleep ($floating_seconds);
+  alarm ($floating_seconds);
+  alarm ($floating_seconds, $floating_interval);</pre>
+<pre>
+  use Time::HiRes qw( setitimer getitimer
+                      ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF ITIMER_REALPROF );</pre>
+<pre>
+  setitimer ($which, $floating_seconds, $floating_interval );
+  getitimer ($which);</pre>
+<pre>
+  $realtime   = clock_gettime(CLOCK_REALTIME);
+  $resolution = clock_getres(CLOCK_REALTIME);</pre>
+<pre>
+  clock_nanosleep(CLOCK_REALTIME, 1.5);
+  clock_nanosleep(CLOCK_REALTIME, time() + 10, TIMER_ABSTIME);</pre>
+<pre>
+  my $ticktock = clock();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The <code>Time::HiRes</code> module implements a Perl interface to the
+<a href="#item_usleep"><code>usleep</code></a>, <a href="#item_nanosleep"><code>nanosleep</code></a>, <a href="#item_ualarm"><code>ualarm</code></a>, <a href="#item_gettimeofday"><code>gettimeofday</code></a>, and
+<a href="#item_setitimer"><code>setitimer</code></a>/<a href="#item_getitimer"><code>getitimer</code></a> system calls, in other words, high
+resolution time and timers. See the <a href="#examples">EXAMPLES</a> section below and the
+test scripts for usage; see your system documentation for the
+description of the underlying <a href="#item_nanosleep"><code>nanosleep</code></a> or <a href="#item_usleep"><code>usleep</code></a>, <a href="#item_ualarm"><code>ualarm</code></a>,
+<a href="#item_gettimeofday"><code>gettimeofday</code></a>, and <a href="#item_setitimer"><code>setitimer</code></a>/<a href="#item_getitimer"><code>getitimer</code></a> calls.</p>
+<p>If your system lacks <a href="#item_gettimeofday"><code>gettimeofday()</code></a> or an emulation of it you don't
+get <a href="#item_gettimeofday"><code>gettimeofday()</code></a> or the one-argument form of <a href="#item_tv_interval"><code>tv_interval()</code></a>.
+If your system lacks all of <a href="#item_nanosleep"><code>nanosleep()</code></a>, <a href="#item_usleep"><code>usleep()</code></a>,
+<code>select()</code>, and <code>poll</code>, you don't get <a href="#item_usleep"><code>Time::HiRes::usleep()</code></a>,
+<a href="#item_nanosleep"><code>Time::HiRes::nanosleep()</code></a>, or <a href="#item_sleep"><code>Time::HiRes::sleep()</code></a>.
+If your system lacks both <a href="#item_ualarm"><code>ualarm()</code></a> and <a href="#item_setitimer"><code>setitimer()</code></a> you don't get
+<a href="#item_ualarm"><code>Time::HiRes::ualarm()</code></a> or <a href="#item_alarm"><code>Time::HiRes::alarm()</code></a>.</p>
+<p>If you try to import an unimplemented function in the <code>use</code> statement
+it will fail at compile time.</p>
+<p>If your subsecond sleeping is implemented with <a href="#item_nanosleep"><code>nanosleep()</code></a> instead
+of <a href="#item_usleep"><code>usleep()</code></a>, you can mix subsecond sleeping with signals since
+<a href="#item_nanosleep"><code>nanosleep()</code></a> does not use signals.  This, however, is not portable,
+and you should first check for the truth value of
+<code>&amp;Time::HiRes::d_nanosleep</code> to see whether you have nanosleep, and
+then carefully read your <a href="#item_nanosleep"><code>nanosleep()</code></a> C API documentation for any
+peculiarities.</p>
+<p>If you are using <a href="#item_nanosleep"><code>nanosleep</code></a> for something else than mixing sleeping
+with signals, give some thought to whether Perl is the tool you should
+be using for work requiring nanosecond accuracies.</p>
+<p>The following functions can be imported from this module.
+No functions are exported by default.</p>
+<dl>
+<dt><strong><a name="item_gettimeofday">gettimeofday ()</a></strong>
+
+<dd>
+<p>In array context returns a two-element array with the seconds and
+microseconds since the epoch.  In scalar context returns floating
+seconds like <a href="#item_time"><code>Time::HiRes::time()</code></a> (see below).</p>
+</dd>
+</li>
+<dt><strong><a name="item_usleep">usleep ( $useconds )</a></strong>
+
+<dd>
+<p>Sleeps for the number of microseconds (millionths of a second)
+specified.  Returns the number of microseconds actually slept.  Can
+sleep for more than one second, unlike the <a href="#item_usleep"><code>usleep</code></a> system call. Can
+also sleep for zero seconds, which often works like a <em>thread yield</em>.
+See also <a href="#item_usleep"><code>Time::HiRes::usleep()</code></a>, <a href="#item_sleep"><code>Time::HiRes::sleep()</code></a>, and
+<a href="#item_clock_nanosleep"><code>Time::HiRes::clock_nanosleep()</code></a>.</p>
+</dd>
+<dd>
+<p>Do not expect <a href="#item_usleep"><code>usleep()</code></a> to be exact down to one microsecond.</p>
+</dd>
+</li>
+<dt><strong><a name="item_nanosleep">nanosleep ( $nanoseconds )</a></strong>
+
+<dd>
+<p>Sleeps for the number of nanoseconds (1e9ths of a second) specified.
+Returns the number of nanoseconds actually slept (accurate only to
+microseconds, the nearest thousand of them).  Can sleep for more than
+one second.  Can also sleep for zero seconds, which often works like a
+<em>thread yield</em>.  See also <a href="#item_sleep"><code>Time::HiRes::sleep()</code></a>,
+<a href="#item_usleep"><code>Time::HiRes::usleep()</code></a>, and <a href="#item_clock_nanosleep"><code>Time::HiRes::clock_nanosleep()</code></a>.</p>
+</dd>
+<dd>
+<p>Do not expect <a href="#item_nanosleep"><code>nanosleep()</code></a> to be exact down to one nanosecond.
+Getting even accuracy of one thousand nanoseconds is good.</p>
+</dd>
+</li>
+<dt><strong><a name="item_ualarm">ualarm ( $useconds [, $interval_useconds ] )</a></strong>
+
+<dd>
+<p>Issues a <a href="#item_ualarm"><code>ualarm</code></a> call; the <code>$interval_useconds</code> is optional and
+will be zero if unspecified, resulting in <a href="#item_alarm"><code>alarm</code></a>-like behaviour.</p>
+</dd>
+<dd>
+<p>Note that the interaction between alarms and sleeps is unspecified.</p>
+</dd>
+</li>
+<dt><strong><a name="item_tv_interval">tv_interval</a></strong>
+
+<dd>
+<p>tv_interval ( $ref_to_gettimeofday [, $ref_to_later_gettimeofday] )</p>
+</dd>
+<dd>
+<p>Returns the floating seconds between the two times, which should have
+been returned by <a href="#item_gettimeofday"><code>gettimeofday()</code></a>. If the second argument is omitted,
+then the current time is used.</p>
+</dd>
+</li>
+<dt><strong><a name="item_time">time ()</a></strong>
+
+<dd>
+<p>Returns a floating seconds since the epoch. This function can be
+imported, resulting in a nice drop-in replacement for the <a href="#item_time"><code>time</code></a>
+provided with core Perl; see the <a href="#examples">EXAMPLES</a> below.</p>
+</dd>
+<dd>
+<p><strong>NOTE 1</strong>: This higher resolution timer can return values either less
+or more than the core <a href="#item_time"><code>time()</code></a>, depending on whether your platform
+rounds the higher resolution timer values up, down, or to the nearest second
+to get the core <a href="#item_time"><code>time()</code></a>, but naturally the difference should be never
+more than half a second.  See also <a href="#item_clock_getres">clock_getres</a>, if available
+in your system.</p>
+</dd>
+<dd>
+<p><strong>NOTE 2</strong>: Since Sunday, September 9th, 2001 at 01:46:40 AM GMT, when
+the <a href="#item_time"><code>time()</code></a> seconds since epoch rolled over to 1_000_000_000, the
+default floating point format of Perl and the seconds since epoch have
+conspired to produce an apparent bug: if you print the value of
+<a href="#item_time"><code>Time::HiRes::time()</code></a> you seem to be getting only five decimals, not
+six as promised (microseconds).  Not to worry, the microseconds are
+there (assuming your platform supports such granularity in the first
+place).  What is going on is that the default floating point format of
+Perl only outputs 15 digits.  In this case that means ten digits
+before the decimal separator and five after.  To see the microseconds
+you can use either <code>printf</code>/<code>sprintf</code> with <code>&quot;%.6f&quot;</code>, or the
+<a href="#item_gettimeofday"><code>gettimeofday()</code></a> function in list context, which will give you the
+seconds and microseconds as two separate values.</p>
+</dd>
+</li>
+<dt><strong><a name="item_sleep">sleep ( $floating_seconds )</a></strong>
+
+<dd>
+<p>Sleeps for the specified amount of seconds.  Returns the number of
+seconds actually slept (a floating point value).  This function can
+be imported, resulting in a nice drop-in replacement for the <a href="#item_sleep"><code>sleep</code></a>
+provided with perl, see the <a href="#examples">EXAMPLES</a> below.</p>
+</dd>
+<dd>
+<p>Note that the interaction between alarms and sleeps is unspecified.</p>
+</dd>
+</li>
+<dt><strong><a name="item_alarm">alarm ( $floating_seconds [, $interval_floating_seconds ] )</a></strong>
+
+<dd>
+<p>The <code>SIGALRM</code> signal is sent after the specified number of seconds.
+Implemented using <a href="#item_ualarm"><code>ualarm()</code></a>.  The <code>$interval_floating_seconds</code> argument
+is optional and will be zero if unspecified, resulting in <a href="#item_alarm"><code>alarm()</code></a>-like
+behaviour.  This function can be imported, resulting in a nice drop-in
+replacement for the <a href="#item_alarm"><code>alarm</code></a> provided with perl, see the <a href="#examples">EXAMPLES</a> below.</p>
+</dd>
+<dd>
+<p><strong>NOTE 1</strong>: With some combinations of operating systems and Perl
+releases <code>SIGALRM</code> restarts <code>select()</code>, instead of interrupting it.
+This means that an <a href="#item_alarm"><code>alarm()</code></a> followed by a <code>select()</code> may together
+take the sum of the times specified for the the <a href="#item_alarm"><code>alarm()</code></a> and the
+<code>select()</code>, not just the time of the <a href="#item_alarm"><code>alarm()</code></a>.</p>
+</dd>
+<dd>
+<p>Note that the interaction between alarms and sleeps is unspecified.</p>
+</dd>
+</li>
+<dt><strong><a name="item_setitimer">setitimer ( $which, $floating_seconds [, $interval_floating_seconds ] )</a></strong>
+
+<dd>
+<p>Start up an interval timer: after a certain time, a signal arrives,
+and more signals may keep arriving at certain intervals.  To disable
+an ``itimer'', use <code>$floating_seconds</code> of zero.  If the
+<code>$interval_floating_seconds</code> is set to zero (or unspecified), the
+timer is disabled <strong>after</strong> the next delivered signal.</p>
+</dd>
+<dd>
+<p>Use of interval timers may interfere with <a href="#item_alarm"><code>alarm()</code></a>, <a href="#item_sleep"><code>sleep()</code></a>,
+and <a href="#item_usleep"><code>usleep()</code></a>.  In standard-speak the ``interaction is unspecified'',
+which means that <em>anything</em> may happen: it may work, it may not.</p>
+</dd>
+<dd>
+<p>In scalar context, the remaining time in the timer is returned.</p>
+</dd>
+<dd>
+<p>In list context, both the remaining time and the interval are returned.</p>
+</dd>
+<dd>
+<p>There are usually three or four interval timers available: the
+<code>$which</code> can be <code>ITIMER_REAL</code>, <code>ITIMER_VIRTUAL</code>, <code>ITIMER_PROF</code>, or
+<code>ITIMER_REALPROF</code>.  Note that which ones are available depends: true
+UNIX platforms usually have the first three, but (for example) Win32
+and Cygwin have only <code>ITIMER_REAL</code>, and only Solaris seems to have
+<code>ITIMER_REALPROF</code> (which is used to profile multithreaded programs).</p>
+</dd>
+<dd>
+<p><code>ITIMER_REAL</code> results in <a href="#item_alarm"><code>alarm()</code></a>-like behaviour.  Time is counted in
+<em>real time</em>; that is, wallclock time.  <code>SIGALRM</code> is delivered when
+the timer expires.</p>
+</dd>
+<dd>
+<p><code>ITIMER_VIRTUAL</code> counts time in (process) <em>virtual time</em>; that is,
+only when the process is running.  In multiprocessor/user/CPU systems
+this may be more or less than real or wallclock time.  (This time is
+also known as the <em>user time</em>.)  <code>SIGVTALRM</code> is delivered when the
+timer expires.</p>
+</dd>
+<dd>
+<p><code>ITIMER_PROF</code> counts time when either the process virtual time or when
+the operating system is running on behalf of the process (such as I/O).
+(This time is also known as the <em>system time</em>.)  (The sum of user
+time and system time is known as the <em>CPU time</em>.)  <code>SIGPROF</code> is
+delivered when the timer expires.  <code>SIGPROF</code> can interrupt system calls.</p>
+</dd>
+<dd>
+<p>The semantics of interval timers for multithreaded programs are
+system-specific, and some systems may support additional interval
+timers.  See your <a href="#item_setitimer"><code>setitimer()</code></a> documentation.</p>
+</dd>
+</li>
+<dt><strong><a name="item_getitimer">getitimer ( $which )</a></strong>
+
+<dd>
+<p>Return the remaining time in the interval timer specified by <code>$which</code>.</p>
+</dd>
+<dd>
+<p>In scalar context, the remaining time is returned.</p>
+</dd>
+<dd>
+<p>In list context, both the remaining time and the interval are returned.
+The interval is always what you put in using <a href="#item_setitimer"><code>setitimer()</code></a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clock_gettime">clock_gettime ( $which )</a></strong>
+
+<dd>
+<p>Return as seconds the current value of the POSIX high resolution timer
+specified by <code>$which</code>.  All implementations that support POSIX high
+resolution timers are supposed to support at least the <code>$which</code> value
+of <code>CLOCK_REALTIME</code>, which is supposed to return results close to the
+results of <a href="#item_gettimeofday"><code>gettimeofday</code></a>, or the number of seconds since 00:00:00:00
+January 1, 1970 Greenwich Mean Time (GMT).  Do not assume that
+CLOCK_REALTIME is zero, it might be one, or something else.
+Another potentially useful (but not available everywhere) value is
+<code>CLOCK_MONOTONIC</code>, which guarantees a monotonically increasing time
+value (unlike time(), which can be adjusted).  See your system
+documentation for other possibly supported values.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clock_getres">clock_getres ( $which )</a></strong>
+
+<dd>
+<p>Return as seconds the resolution of the POSIX high resolution timer
+specified by <code>$which</code>.  All implementations that support POSIX high
+resolution timers are supposed to support at least the <code>$which</code> value
+of <code>CLOCK_REALTIME</code>, see <a href="#item_clock_gettime">clock_gettime</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clock_nanosleep">clock_nanosleep ( $which, $seconds, $flags = 0)</a></strong>
+
+<dd>
+<p>Sleeps for the number of seconds (1e9ths of a second) specified.
+Returns the number of seconds actually slept.  The $which is the
+``clock id'', as with <a href="#item_clock_gettime"><code>clock_gettime()</code></a> and clock_getres().  The flags
+default to zero but <code>TIMER_ABSTIME</code> can specified (must be exported
+explicitly) which means that <code>$nanoseconds</code> is not a time interval
+(as is the default) but instead an absolute time.  Can sleep for more
+than one second.  Can also sleep for zero seconds, which often works
+like a <em>thread yield</em>.  See also <a href="#item_sleep"><code>Time::HiRes::sleep()</code></a>,
+<a href="#item_usleep"><code>Time::HiRes::usleep()</code></a>, and <a href="#item_nanosleep"><code>Time::HiRes::nanosleep()</code></a>.</p>
+</dd>
+<dd>
+<p>Do not expect <a href="#item_clock_nanosleep"><code>clock_nanosleep()</code></a> to be exact down to one nanosecond.
+Getting even accuracy of one thousand nanoseconds is good.</p>
+</dd>
+</li>
+<dt><strong><a name="item_clock"><code>clock()</code></a></strong>
+
+<dd>
+<p>Return as seconds the <em>process time</em> (user + system time) spent by
+the process since the first call to <a href="#item_clock"><code>clock()</code></a> (the definition is <strong>not</strong>
+``since the start of the process'', though if you are lucky these times
+may be quite close to each other, depending on the system).  What this
+means is that you probably need to store the result of your first call
+to clock(), and subtract that value from the following results of clock().</p>
+</dd>
+<dd>
+<p>The time returned also includes the process times of the terminated
+child processes for which <code>wait()</code> has been executed.  This value is
+somewhat like the second value returned by the <code>times()</code> of core Perl,
+but not necessarily identical.  Note that due to backward
+compatibility limitations the returned value may wrap around at about
+2147 seconds or at about 36 minutes.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<pre>
+  use Time::HiRes qw(usleep ualarm gettimeofday tv_interval);</pre>
+<pre>
+  $microseconds = 750_000;
+  usleep($microseconds);</pre>
+<pre>
+  # signal alarm in 2.5s &amp; every .1s thereafter
+  ualarm(2_500_000, 100_000);</pre>
+<pre>
+  # get seconds and microseconds since the epoch
+  ($s, $usec) = gettimeofday();</pre>
+<pre>
+  # measure elapsed time 
+  # (could also do by subtracting 2 gettimeofday return values)
+  $t0 = [gettimeofday];
+  # do bunch of stuff here
+  $t1 = [gettimeofday];
+  # do more stuff here
+  $t0_t1 = tv_interval $t0, $t1;</pre>
+<pre>
+  $elapsed = tv_interval ($t0, [gettimeofday]);
+  $elapsed = tv_interval ($t0); # equivalent code</pre>
+<pre>
+  #
+  # replacements for time, alarm and sleep that know about
+  # floating seconds
+  #
+  use Time::HiRes;
+  $now_fractions = Time::HiRes::time;
+  Time::HiRes::sleep (2.5);
+  Time::HiRes::alarm (10.6666666);</pre>
+<pre>
+  use Time::HiRes qw ( time alarm sleep );
+  $now_fractions = time;
+  sleep (2.5);
+  alarm (10.6666666);</pre>
+<pre>
+  # Arm an interval timer to go off first at 10 seconds and
+  # after that every 2.5 seconds, in process virtual time</pre>
+<pre>
+  use Time::HiRes qw ( setitimer ITIMER_VIRTUAL time );</pre>
+<pre>
+  $SIG{VTALRM} = sub { print time, &quot;\n&quot; };
+  setitimer(ITIMER_VIRTUAL, 10, 2.5);</pre>
+<pre>
+  use Time::HiRes qw( clock_gettime clock_getres CLOCK_REALTIME );
+  # Read the POSIX high resolution timer.
+  my $high = clock_getres(CLOCK_REALTIME);
+  # But how accurate we can be, really?
+  my $reso = clock_getres(CLOCK_REALTIME);</pre>
+<pre>
+  use Time::HiRes qw( clock_nanosleep TIMER_ABSTIME );
+  clock_nanosleep(CLOCK_REALTIME, 1e6);
+  clock_nanosleep(CLOCK_REALTIME, 2e9, TIMER_ABSTIME);</pre>
+<pre>
+  use Time::HiRes qw( clock );
+  my $clock0 = clock();
+  ... # Do something.
+  my $clock1 = clock();
+  my $clockd = $clock1 - $clock0;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="c_api">C API</a></h1>
+<p>In addition to the perl API described above, a C API is available for
+extension writers.  The following C functions are available in the
+modglobal hash:</p>
+<pre>
+  name             C prototype
+  ---------------  ----------------------
+  Time::NVtime     double (*)()
+  Time::U2time     void (*)(pTHX_ UV ret[2])</pre>
+<p>Both functions return equivalent information (like <a href="#item_gettimeofday"><code>gettimeofday</code></a>)
+but with different representations.  The names <code>NVtime</code> and <code>U2time</code>
+were selected mainly because they are operating system independent.
+(<a href="#item_gettimeofday"><code>gettimeofday</code></a> is Unix-centric, though some platforms like Win32 and
+VMS have emulations for it.)</p>
+<p>Here is an example of using <code>NVtime</code> from C:</p>
+<pre>
+  double (*myNVtime)(); /* Returns -1 on failure. */
+  SV **svp = hv_fetch(PL_modglobal, &quot;Time::NVtime&quot;, 12, 0);
+  if (!svp)         croak(&quot;Time::HiRes is required&quot;);
+  if (!SvIOK(*svp)) croak(&quot;Time::NVtime isn't a function pointer&quot;);
+  myNVtime = INT2PTR(double(*)(), SvIV(*svp));
+  printf(&quot;The current time is: %f\n&quot;, (*myNVtime)());</pre>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<p>
+</p>
+<h2><a name="negative_time_not_invented_yet">negative time not invented yet</a></h2>
+<p>You tried to use a negative time argument.</p>
+<p>
+</p>
+<h2><a name="internal_error__useconds___0__unsigned_____signed_____">internal error: useconds &lt; 0 (unsigned ... signed ...)</a></h2>
+<p>Something went horribly wrong-- the number of microseconds that cannot
+become negative just became negative.  Maybe your compiler is broken?</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>Notice that the core <a href="#item_time"><code>time()</code></a> maybe rounding rather than truncating.
+What this means is that the core <a href="#item_time"><code>time()</code></a> may be reporting the time
+as one second later than <a href="#item_gettimeofday"><code>gettimeofday()</code></a> and <a href="#item_time"><code>Time::HiRes::time()</code></a>.</p>
+<p>Adjusting the system clock (either manually or by services like ntp)
+may cause problems, especially for long running programs that assume
+a monotonously increasing time (note that all platforms do not adjust
+time as gracefully as UNIX ntp does).  For example in Win32 (and derived
+platforms like Cygwin and MinGW) the Time::HiRes::time() may temporarily
+drift off from the system clock (and the original <a href="#item_time"><code>time())</code></a>  by up to 0.5
+seconds. Time::HiRes will notice this eventually and recalibrate.
+Note that since Time::HiRes 1.77 the <a href="#item_clock_gettime"><code>clock_gettime(CLOCK_MONOTONIC)</code></a>
+might help in this (in case your system supports CLOCK_MONOTONIC).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>Perl modules <a href="/usr/lib/perl5/5.8/html/BSD/Resource.html">the BSD::Resource manpage</a>, <a href="/usr/lib/perl5/5.8/html/Time/TAI64.html">the Time::TAI64 manpage</a>.</p>
+<p>Your system documentation for <a href="#item_clock_gettime"><code>clock_gettime</code></a>, <code>clock_settime</code>,
+<a href="#item_gettimeofday"><code>gettimeofday</code></a>, <a href="#item_getitimer"><code>getitimer</code></a>, <a href="#item_setitimer"><code>setitimer</code></a>, <a href="#item_ualarm"><code>ualarm</code></a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>D. Wegscheid &lt;<a href="mailto:wegscd@whirlpool.com">wegscd@whirlpool.com</a>&gt;
+R. Schertler &lt;<a href="mailto:roderick@argon.org">roderick@argon.org</a>&gt;
+J. Hietaniemi &lt;<a href="mailto:jhi@iki.fi">jhi@iki.fi</a>&gt;
+G. Aas &lt;<a href="mailto:gisle@aas.no">gisle@aas.no</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.</p>
+<p>Copyright (c) 2002, 2003, 2004, 2005 Jarkko Hietaniemi.  All rights reserved.</p>
+<p>This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

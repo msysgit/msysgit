@@ -1,0 +1,204 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>sort - sort a list of values</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sort - sort a list of values</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>sort - sort a list of values</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>sort SUBNAME LIST
+   </p>
+<p>sort BLOCK LIST</p>
+<p>sort LIST</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>In list context, this sorts the LIST and returns the sorted list value.
+In scalar context, the behaviour of <code>sort()</code> is undefined.</p>
+<p>If SUBNAME or BLOCK is omitted, <code>sort</code>s in standard string comparison
+order.  If SUBNAME is specified, it gives the name of a subroutine
+that returns an integer less than, equal to, or greater than <code>0</code>,
+depending on how the elements of the list are to be ordered.  (The <code>&lt;
+&lt;=</code> &gt;&gt; and <code>cmp</code> operators are extremely useful in such routines.)
+SUBNAME may be a scalar variable name (unsubscripted), in which case
+the value provides the name of (or a reference to) the actual
+subroutine to use.  In place of a SUBNAME, you can provide a BLOCK as
+an anonymous, in-line sort subroutine.</p>
+<p>If the subroutine's prototype is <code>($$)</code>, the elements to be compared
+are passed by reference in <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item___"><code>@_</code></a>, as for a normal subroutine.  This is
+slower than unprototyped subroutines, where the elements to be
+compared are passed into the subroutine
+as the package global variables $a and $b (see example below).  Note that
+in the latter case, it is usually counter-productive to declare $a and
+$b as lexicals.</p>
+<p>In either case, the subroutine may not be recursive.  The values to be
+compared are always passed by reference and should not be modified.</p>
+<p>You also cannot exit out of the sort block or subroutine using any of the
+loop control operators described in <a href="/usr/lib/perl5/5.8/html/./pod/perlsyn.html">the perlsyn manpage</a> or with <code>goto</code>.</p>
+<p>When <code>use locale</code> is in effect, <code>sort LIST</code> sorts LIST according to the
+current collation locale.  See <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>.</p>
+<p><code>sort()</code> returns aliases into the original list, much as a for loop's index
+variable aliases the list elements.  That is, modifying an element of a
+list returned by <code>sort()</code> (for example, in a <code>foreach</code>, <code>map</code> or <code>grep</code>)
+actually modifies the element in the original list.  This is usually
+something to be avoided when writing clear code.</p>
+<p>Perl 5.6 and earlier used a quicksort algorithm to implement sort.
+That algorithm was not stable, and <em>could</em> go quadratic.  (A <em>stable</em> sort
+preserves the input order of elements that compare equal.  Although
+quicksort's run time is <code>O(NlogN)</code> when averaged over all arrays of
+length N, the time can be O(N**2), <em>quadratic</em> behavior, for some
+inputs.)  In 5.7, the quicksort implementation was replaced with
+a stable mergesort algorithm whose worst-case behavior is O(NlogN).
+But benchmarks indicated that for some inputs, on some platforms,
+the original quicksort was faster.  5.8 has a sort pragma for
+limited control of the sort.  Its rather blunt control of the
+underlying algorithm may not persist into future Perls, but the
+ability to characterize the input or output in implementation
+independent ways quite probably will.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/sort.html">the sort manpage</a>.</p>
+<p>Examples:</p>
+<pre>
+    # sort lexically
+    @articles = sort @files;</pre>
+<pre>
+    # same thing, but with explicit sort routine
+    @articles = sort {$a cmp $b} @files;</pre>
+<pre>
+    # now case-insensitively
+    @articles = sort {uc($a) cmp uc($b)} @files;</pre>
+<pre>
+    # same thing in reversed order
+    @articles = sort {$b cmp $a} @files;</pre>
+<pre>
+    # sort numerically ascending
+    @articles = sort {$a &lt;=&gt; $b} @files;</pre>
+<pre>
+    # sort numerically descending
+    @articles = sort {$b &lt;=&gt; $a} @files;</pre>
+<pre>
+    # this sorts the %age hash by value instead of key
+    # using an in-line function
+    @eldest = sort { $age{$b} &lt;=&gt; $age{$a} } keys %age;</pre>
+<pre>
+    # sort using explicit subroutine name
+    sub byage {
+        $age{$a} &lt;=&gt; $age{$b};  # presuming numeric
+    }
+    @sortedclass = sort byage @class;</pre>
+<pre>
+    sub backwards { $b cmp $a }
+    @harry  = qw(dog cat x Cain Abel);
+    @george = qw(gone chased yz Punished Axed);
+    print sort @harry;
+            # prints AbelCaincatdogx
+    print sort backwards @harry;
+            # prints xdogcatCainAbel
+    print sort @george, 'to', @harry;
+            # prints AbelAxedCainPunishedcatchaseddoggonetoxyz</pre>
+<pre>
+    # inefficiently sort by descending numeric compare using
+    # the first integer after the first = sign, or the
+    # whole record case-insensitively otherwise</pre>
+<pre>
+    @new = sort {
+        ($b =~ /=(\d+)/)[0] &lt;=&gt; ($a =~ /=(\d+)/)[0]
+                            ||
+                    uc($a)  cmp  uc($b)
+    } @old;</pre>
+<pre>
+    # same thing, but much more efficiently;
+    # we'll build auxiliary indices instead
+    # for speed
+    @nums = @caps = ();
+    for (@old) {
+        push @nums, /=(\d+)/;
+        push @caps, uc($_);
+    }</pre>
+<pre>
+    @new = @old[ sort {
+                        $nums[$b] &lt;=&gt; $nums[$a]
+                                 ||
+                        $caps[$a] cmp $caps[$b]
+                       } 0..$#old
+               ];</pre>
+<pre>
+    # same thing, but without any temps
+    @new = map { $_-&gt;[0] }
+           sort { $b-&gt;[1] &lt;=&gt; $a-&gt;[1]
+                           ||
+                  $a-&gt;[2] cmp $b-&gt;[2]
+           } map { [$_, /=(\d+)/, uc($_)] } @old;</pre>
+<pre>
+    # using a prototype allows you to use any comparison subroutine
+    # as a sort subroutine (including other package's subroutines)
+    package other;
+    sub backwards ($$) { $_[1] cmp $_[0]; }     # $a and $b are not set here</pre>
+<pre>
+    package main;
+    @new = sort other::backwards @old;</pre>
+<pre>
+    # guarantee stability, regardless of algorithm
+    use sort 'stable';
+    @new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;</pre>
+<pre>
+    # force use of mergesort (not portable outside Perl 5.8)
+    use sort '_mergesort';  # note discouraging _
+    @new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;</pre>
+<p>If you're using strict, you <em>must not</em> declare $a
+and $b as lexicals.  They are package globals.  That means
+if you're in the <code>main</code> package and type</p>
+<pre>
+    @articles = sort {$b &lt;=&gt; $a} @files;</pre>
+<p>then <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__a"><code>$a</code></a> and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__b"><code>$b</code></a> are <code>$main::a</code> and <code>$main::b</code> (or <code>$::a</code> and <code>$::b</code>),
+but if you're in the <code>FooPack</code> package, it's the same as typing</p>
+<pre>
+    @articles = sort {$FooPack::b &lt;=&gt; $FooPack::a} @files;</pre>
+<p>The comparison function is required to behave.  If it returns
+inconsistent results (sometimes saying <code>$x[1]</code> is less than <code>$x[2]</code> and
+sometimes saying the opposite, for example) the results are not
+well-defined.</p>
+<p>Because <code>&lt;=&gt;</code> returns <code>undef</code> when either operand is <code>NaN</code>
+(not-a-number), and because <code>sort</code> will trigger a fatal error unless the
+result of a comparison is defined, when sorting with a comparison function
+like <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__a"><code>$a &lt;=&gt; $b</code></a>, be careful about lists that might contain a <code>NaN</code>.
+The following example takes advantage of the fact that <code>NaN != NaN</code> to
+eliminate any <code>NaN</code>s from the input.</p>
+<pre>
+    @result = sort { $a &lt;=&gt; $b } grep { $_ == $_ } @input;</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sort - sort a list of values</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

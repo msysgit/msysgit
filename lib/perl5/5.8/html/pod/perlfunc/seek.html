@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>seek - reposition file pointer for random-access I/O</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;seek - reposition file pointer for random-access I/O</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>seek - reposition file pointer for random-access I/O</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>seek FILEHANDLE,POSITION,WHENCE
+  </p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Sets FILEHANDLE's position, just like the <code>fseek</code> call of <code>stdio</code>.
+FILEHANDLE may be an expression whose value gives the name of the
+filehandle.  The values for WHENCE are <code>0</code> to set the new position
+<em>in bytes</em> to POSITION, <code>1</code> to set it to the current position plus
+POSITION, and <code>2</code> to set it to EOF plus POSITION (typically
+negative).  For WHENCE you may use the constants <code>SEEK_SET</code>,
+<code>SEEK_CUR</code>, and <code>SEEK_END</code> (start of the file, current position, end
+of the file) from the Fcntl module.  Returns <code>1</code> upon success, <code>0</code>
+otherwise.</p>
+<p>Note the <em>in bytes</em>: even if the filehandle has been set to
+operate on characters (for example by using the <code>:utf8</code> open
+layer), <code>tell()</code> will return byte offsets, not character offsets
+(because implementing that would render <code>seek()</code> and <code>tell()</code> rather slow).</p>
+<p>If you want to position file for <code>sysread</code> or <code>syswrite</code>, don't use
+<code>seek</code>--buffering makes its effect on the file's system position
+unpredictable and non-portable.  Use <code>sysseek</code> instead.</p>
+<p>Due to the rules and rigors of ANSI C, on some systems you have to do a
+seek whenever you switch between reading and writing.  Amongst other
+things, this may have the effect of calling stdio's clearerr(3).
+A WHENCE of <code>1</code> (<code>SEEK_CUR</code>) is useful for not moving the file position:</p>
+<pre>
+    seek(TEST,0,1);</pre>
+<p>This is also useful for applications emulating <code>tail -f</code>.  Once you hit
+EOF on your read, and then sleep for a while, you might have to stick in a
+<code>seek()</code> to reset things.  The <code>seek</code> doesn't change the current position,
+but it <em>does</em> clear the end-of-file condition on the handle, so that the
+next <code>&lt;FILE&gt;</code> makes Perl try again to read something.  We hope.</p>
+<p>If that doesn't work (some IO implementations are particularly
+cantankerous), then you may need something more like this:</p>
+<pre>
+    for (;;) {
+        for ($curpos = tell(FILE); $_ = &lt;FILE&gt;;
+             $curpos = tell(FILE)) {
+            # search for some stuff and put it into files
+        }
+        sleep($for_a_while);
+        seek(FILE, $curpos, 0);
+    }</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;seek - reposition file pointer for random-access I/O</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

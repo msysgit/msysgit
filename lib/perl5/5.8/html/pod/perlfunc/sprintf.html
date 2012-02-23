@@ -1,0 +1,384 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>sprintf - formatted print into a string</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sprintf - formatted print into a string</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>sprintf - formatted print into a string</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>sprintf FORMAT, LIST
+</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Returns a string formatted by the usual <code>printf</code> conventions of the C
+library function <code>sprintf</code>.  See below for more details
+and see <em>sprintf(3)</em> or <em>printf(3)</em> on your system for an explanation of
+the general principles.</p>
+<p>For example:</p>
+<pre>
+        # Format number with up to 8 leading zeroes
+        $result = sprintf(&quot;%08d&quot;, $number);</pre>
+<pre>
+        # Round number to 3 digits after decimal point
+        $rounded = sprintf(&quot;%.3f&quot;, $number);</pre>
+<p>Perl does its own <code>sprintf</code> formatting--it emulates the C
+function <code>sprintf</code>, but it doesn't use it (except for floating-point
+numbers, and even then only the standard modifiers are allowed).  As a
+result, any non-standard extensions in your local <code>sprintf</code> are not
+available from Perl.</p>
+<p>Unlike <code>printf</code>, <code>sprintf</code> does not do what you probably mean when you
+pass it an array as your first argument. The array is given scalar context,
+and instead of using the 0th element of the array as the format, Perl will
+use the count of elements in the array as the format, which is almost never
+useful.</p>
+<p>Perl's <code>sprintf</code> permits the following universally-known conversions:</p>
+<pre>
+   %%   a percent sign
+   %c   a character with the given number
+   %s   a string
+   %d   a signed integer, in decimal
+   %u   an unsigned integer, in decimal
+   %o   an unsigned integer, in octal
+   %x   an unsigned integer, in hexadecimal
+   %e   a floating-point number, in scientific notation
+   %f   a floating-point number, in fixed decimal notation
+   %g   a floating-point number, in %e or %f notation</pre>
+<p>In addition, Perl permits the following widely-supported conversions:</p>
+<pre>
+   %X   like %x, but using upper-case letters
+   %E   like %e, but using an upper-case &quot;E&quot;
+   %G   like %g, but with an upper-case &quot;E&quot; (if applicable)
+   %b   an unsigned integer, in binary
+   %p   a pointer (outputs the Perl value's address in hexadecimal)
+   %n   special: *stores* the number of characters output so far
+        into the next variable in the parameter list</pre>
+<p>Finally, for backward (and we do mean ``backward'') compatibility, Perl
+permits these unnecessary but widely-supported conversions:</p>
+<pre>
+   %i   a synonym for %d
+   %D   a synonym for %ld
+   %U   a synonym for %lu
+   %O   a synonym for %lo
+   %F   a synonym for %f</pre>
+<p>Note that the number of exponent digits in the scientific notation produced
+by <code>%e</code>, <code>%E</code>, <code>%g</code> and <code>%G</code> for numbers with the modulus of the
+exponent less than 100 is system-dependent: it may be three or less
+(zero-padded as necessary).  In other words, 1.23 times ten to the
+99th may be either ``1.23e99'' or ``1.23e099''.</p>
+<p>Between the <code>%</code> and the format letter, you may specify a number of
+additional attributes controlling the interpretation of the format.
+In order, these are:</p>
+<dl>
+<dt><strong><a name="item_format_parameter_index">format parameter index</a></strong>
+
+<dd>
+<p>An explicit format parameter index, such as <code>2$</code>. By default sprintf
+will format the next unused argument in the list, but this allows you
+to take the arguments out of order, e.g.:</p>
+</dd>
+<dd>
+<pre>
+  printf '%2$d %1$d', 12, 34;      # prints &quot;34 12&quot;
+  printf '%3$d %d %1$d', 1, 2, 3;  # prints &quot;3 1 1&quot;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_flags">flags</a></strong>
+
+<dd>
+<p>one or more of:
+   space   prefix positive number with a space
+   +       prefix positive number with a plus sign
+   -       left-justify within the field
+   0       use zeros, not spaces, to right-justify
+   #       prefix non-zero octal with ``0'', non-zero hex with ``0x'',
+           non-zero binary with ``0b''</p>
+</dd>
+<dd>
+<p>For example:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;% d&gt;', 12;   # prints &quot;&lt; 12&gt;&quot;
+  printf '&lt;%+d&gt;', 12;   # prints &quot;&lt;+12&gt;&quot;
+  printf '&lt;%6s&gt;', 12;   # prints &quot;&lt;    12&gt;&quot;
+  printf '&lt;%-6s&gt;', 12;  # prints &quot;&lt;12    &gt;&quot;
+  printf '&lt;%06s&gt;', 12;  # prints &quot;&lt;000012&gt;&quot;
+  printf '&lt;%#x&gt;', 12;   # prints &quot;&lt;0xc&gt;&quot;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_vector_flag">vector flag</a></strong>
+
+<dd>
+<p>This flag tells perl to interpret the supplied string as a vector of
+integers, one for each character in the string. Perl applies the format to
+each integer in turn, then joins the resulting strings with a separator (a
+dot <code>.</code> by default). This can be useful for displaying ordinal values of
+characters in arbitrary strings:</p>
+</dd>
+<dd>
+<pre>
+  printf &quot;%vd&quot;, &quot;AB\x{100}&quot;;           # prints &quot;65.66.256&quot;
+  printf &quot;version is v%vd\n&quot;, $^V;     # Perl's version</pre>
+</dd>
+<dd>
+<p>Put an asterisk <code>*</code> before the <code>v</code> to override the string to
+use to separate the numbers:</p>
+</dd>
+<dd>
+<pre>
+  printf &quot;address is %*vX\n&quot;, &quot;:&quot;, $addr;   # IPv6 address
+  printf &quot;bits are %0*v8b\n&quot;, &quot; &quot;, $bits;   # random bitstring</pre>
+</dd>
+<dd>
+<p>You can also explicitly specify the argument number to use for
+the join string using e.g. <code>*2$v</code>:</p>
+</dd>
+<dd>
+<pre>
+  printf '%*4$vX %*4$vX %*4$vX', @addr[1..3], &quot;:&quot;;   # 3 IPv6 addresses</pre>
+</dd>
+</li>
+<dt><strong><a name="item__28minimum_29_width">(minimum) width</a></strong>
+
+<dd>
+<p>Arguments are usually formatted to be only as wide as required to
+display the given value. You can override the width by putting
+a number here, or get the width from the next argument (with <code>*</code>)
+or from a specified argument (with e.g. <code>*2$</code>):</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%s&gt;', &quot;a&quot;;       # prints &quot;&lt;a&gt;&quot;
+  printf '&lt;%6s&gt;', &quot;a&quot;;      # prints &quot;&lt;     a&gt;&quot;
+  printf '&lt;%*s&gt;', 6, &quot;a&quot;;   # prints &quot;&lt;     a&gt;&quot;
+  printf '&lt;%*2$s&gt;', &quot;a&quot;, 6; # prints &quot;&lt;     a&gt;&quot;
+  printf '&lt;%2s&gt;', &quot;long&quot;;   # prints &quot;&lt;long&gt;&quot; (does not truncate)</pre>
+</dd>
+<dd>
+<p>If a field width obtained through <code>*</code> is negative, it has the same
+effect as the <code>-</code> flag: left-justification.</p>
+</dd>
+</li>
+<dt><strong><a name="item_precision_2c_or_maximum_width_x_3cprecision_3e">precision, or maximum width
+</a></strong>
+
+<dd>
+<p>You can specify a precision (for numeric conversions) or a maximum
+width (for string conversions) by specifying a <code>.</code> followed by a number.
+For floating point formats, with the exception of 'g' and 'G', this specifies
+the number of decimal places to show (the default being 6), e.g.:</p>
+</dd>
+<dd>
+<pre>
+  # these examples are subject to system-specific variation
+  printf '&lt;%f&gt;', 1;    # prints &quot;&lt;1.000000&gt;&quot;
+  printf '&lt;%.1f&gt;', 1;  # prints &quot;&lt;1.0&gt;&quot;
+  printf '&lt;%.0f&gt;', 1;  # prints &quot;&lt;1&gt;&quot;
+  printf '&lt;%e&gt;', 10;   # prints &quot;&lt;1.000000e+01&gt;&quot;
+  printf '&lt;%.1e&gt;', 10; # prints &quot;&lt;1.0e+01&gt;&quot;</pre>
+</dd>
+<dd>
+<p>For 'g' and 'G', this specifies the maximum number of digits to show,
+including prior to the decimal point as well as after it, e.g.:</p>
+</dd>
+<dd>
+<pre>
+  # these examples are subject to system-specific variation
+  printf '&lt;%g&gt;', 1;        # prints &quot;&lt;1&gt;&quot;
+  printf '&lt;%.10g&gt;', 1;     # prints &quot;&lt;1&gt;&quot;
+  printf '&lt;%g&gt;', 100;      # prints &quot;&lt;100&gt;&quot;
+  printf '&lt;%.1g&gt;', 100;    # prints &quot;&lt;1e+02&gt;&quot;
+  printf '&lt;%.2g&gt;', 100.01; # prints &quot;&lt;1e+02&gt;&quot;
+  printf '&lt;%.5g&gt;', 100.01; # prints &quot;&lt;100.01&gt;&quot;
+  printf '&lt;%.4g&gt;', 100.01; # prints &quot;&lt;100&gt;&quot;</pre>
+</dd>
+<dd>
+<p>For integer conversions, specifying a precision implies that the
+output of the number itself should be zero-padded to this width:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%.6x&gt;', 1;      # prints &quot;&lt;000001&gt;&quot;
+  printf '&lt;%#.6x&gt;', 1;     # prints &quot;&lt;0x000001&gt;&quot;
+  printf '&lt;%-10.6x&gt;', 1;   # prints &quot;&lt;000001    &gt;&quot;</pre>
+</dd>
+<dd>
+<p>For string conversions, specifying a precision truncates the string
+to fit in the specified width:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%.5s&gt;', &quot;truncated&quot;;   # prints &quot;&lt;trunc&gt;&quot;
+  printf '&lt;%10.5s&gt;', &quot;truncated&quot;; # prints &quot;&lt;     trunc&gt;&quot;</pre>
+</dd>
+<dd>
+<p>You can also get the precision from the next argument using <code>.*</code>:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%.6x&gt;', 1;       # prints &quot;&lt;000001&gt;&quot;
+  printf '&lt;%.*x&gt;', 6, 1;    # prints &quot;&lt;000001&gt;&quot;</pre>
+</dd>
+<dd>
+<p>You cannot currently get the precision from a specified number,
+but it is intended that this will be possible in the future using
+e.g. <code>.*2$</code>:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%.*2$x&gt;', 1, 6;   # INVALID, but in future will print &quot;&lt;000001&gt;&quot;</pre>
+</dd>
+</li>
+<dt><strong><a name="item_size">size</a></strong>
+
+<dd>
+<p>For numeric conversions, you can specify the size to interpret the
+number as using <code>l</code>, <code>h</code>, <code>V</code>, <code>q</code>, <code>L</code>, or <code>ll</code>. For integer
+conversions (<code>d u o x X b i D U O</code>), numbers are usually assumed to be
+whatever the default integer size is on your platform (usually 32 or 64
+bits), but you can override this to use instead one of the standard C types,
+as supported by the compiler used to build Perl:</p>
+</dd>
+<dd>
+<pre>
+   l           interpret integer as C type &quot;long&quot; or &quot;unsigned long&quot;
+   h           interpret integer as C type &quot;short&quot; or &quot;unsigned short&quot;
+   q, L or ll  interpret integer as C type &quot;long long&quot;, &quot;unsigned long long&quot;.
+               or &quot;quads&quot; (typically 64-bit integers)</pre>
+</dd>
+<dd>
+<p>The last will produce errors if Perl does not understand ``quads'' in your
+installation. (This requires that either the platform natively supports quads
+or Perl was specifically compiled to support quads.) You can find out
+whether your Perl supports quads via <a href="/usr/lib/perl5/5.8/html/./lib/Config.html">the Config manpage</a>:</p>
+</dd>
+<dd>
+<pre>
+        use Config;
+        ($Config{use64bitint} eq 'define' || $Config{longsize} &gt;= 8) &amp;&amp;
+                print &quot;quads\n&quot;;</pre>
+</dd>
+<dd>
+<p>For floating point conversions (<code>e f g E F G</code>), numbers are usually assumed
+to be the default floating point size on your platform (double or long double),
+but you can force 'long double' with <code>q</code>, <code>L</code>, or <code>ll</code> if your
+platform supports them. You can find out whether your Perl supports long
+doubles via <a href="/usr/lib/perl5/5.8/html/./lib/Config.html">the Config manpage</a>:</p>
+</dd>
+<dd>
+<pre>
+        use Config;
+        $Config{d_longdbl} eq 'define' &amp;&amp; print &quot;long doubles\n&quot;;</pre>
+</dd>
+<dd>
+<p>You can find out whether Perl considers 'long double' to be the default
+floating point size to use on your platform via <a href="/usr/lib/perl5/5.8/html/./lib/Config.html">the Config manpage</a>:</p>
+</dd>
+<dd>
+<pre>
+        use Config;
+        ($Config{uselongdouble} eq 'define') &amp;&amp;
+                print &quot;long doubles by default\n&quot;;</pre>
+</dd>
+<dd>
+<p>It can also be the case that long doubles and doubles are the same thing:</p>
+</dd>
+<dd>
+<pre>
+        use Config;
+        ($Config{doublesize} == $Config{longdblsize}) &amp;&amp;
+                print &quot;doubles are long doubles\n&quot;;</pre>
+</dd>
+<dd>
+<p>The size specifier <code>V</code> has no effect for Perl code, but it is supported
+for compatibility with XS code; it means 'use the standard size for
+a Perl integer (or floating-point number)', which is already the
+default for Perl code.</p>
+</dd>
+</li>
+<dt><strong><a name="item_order_of_arguments">order of arguments</a></strong>
+
+<dd>
+<p>Normally, sprintf takes the next unused argument as the value to
+format for each format specification. If the format specification
+uses <code>*</code> to require additional arguments, these are consumed from
+the argument list in the order in which they appear in the format
+specification <em>before</em> the value to format. Where an argument is
+specified using an explicit index, this does not affect the normal
+order for the arguments (even when the explicitly specified index
+would have been the next argument in any case).</p>
+</dd>
+<dd>
+<p>So:</p>
+</dd>
+<dd>
+<pre>
+  printf '&lt;%*.*s&gt;', $a, $b, $c;</pre>
+</dd>
+<dd>
+<p>would use <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__a"><code>$a</code></a> for the width, <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__b"><code>$b</code></a> for the precision and <code>$c</code>
+as the value to format, while:</p>
+</dd>
+<dd>
+<pre>
+  print '&lt;%*1$.*s&gt;', $a, $b;</pre>
+</dd>
+<dd>
+<p>would use <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__a"><code>$a</code></a> for the width and the precision, and <a href="/usr/lib/perl5/5.8/html/./pod/perlvar.html#item__b"><code>$b</code></a> as the
+value to format.</p>
+</dd>
+<dd>
+<p>Here are some more examples - beware that when using an explicit
+index, the <code>$</code> may need to be escaped:</p>
+</dd>
+<dd>
+<pre>
+  printf &quot;%2\$d %d\n&quot;,    12, 34;               # will print &quot;34 12\n&quot;
+  printf &quot;%2\$d %d %d\n&quot;, 12, 34;               # will print &quot;34 12 34\n&quot;
+  printf &quot;%3\$d %d %d\n&quot;, 12, 34, 56;           # will print &quot;56 12 34\n&quot;
+  printf &quot;%2\$*3\$d %d\n&quot;, 12, 34, 3;           # will print &quot; 34 12\n&quot;</pre>
+</dd>
+</li>
+</dl>
+<p>If <code>use locale</code> is in effect, the character used for the decimal
+point in formatted real numbers is affected by the LC_NUMERIC locale.
+See <a href="/usr/lib/perl5/5.8/html/./pod/perllocale.html">the perllocale manpage</a>.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;sprintf - formatted print into a string</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,367 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>attributes - get/set subroutine or variable attributes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;attributes - get/set subroutine or variable attributes</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#builtin_attributes">Built-in Attributes</a></li>
+		<li><a href="#available_subroutines">Available Subroutines</a></li>
+		<li><a href="#packagespecific_attribute_handling">Package-specific Attribute Handling</a></li>
+		<li><a href="#syntax_of_attribute_lists">Syntax of Attribute Lists</a></li>
+	</ul>
+
+	<li><a href="#exports">EXPORTS</a></li>
+	<ul>
+
+		<li><a href="#default_exports">Default exports</a></li>
+		<li><a href="#available_exports">Available exports</a></li>
+		<li><a href="#export_tags_defined">Export tags defined</a></li>
+	</ul>
+
+	<li><a href="#examples">EXAMPLES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>attributes - get/set subroutine or variable attributes</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  sub foo : method ;
+  my ($x,@y,%z) : Bent = 1;
+  my $s = sub : method { ... };</pre>
+<pre>
+  use attributes ();    # optional, to get subroutine declarations
+  my @attrlist = attributes::get(\&amp;foo);</pre>
+<pre>
+  use attributes 'get'; # import the attributes::get subroutine
+  my @attrlist = get \&amp;foo;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Subroutine declarations and definitions may optionally have attribute lists
+associated with them.  (Variable <code>my</code> declarations also may, but see the
+warning below.)  Perl handles these declarations by passing some information
+about the call site and the thing being declared along with the attribute
+list to this module.  In particular, the first example above is equivalent to
+the following:</p>
+<pre>
+    use attributes __PACKAGE__, \&amp;foo, 'method';</pre>
+<p>The second example in the synopsis does something equivalent to this:</p>
+<pre>
+    use attributes ();
+    my ($x,@y,%z);
+    attributes::-&gt;import(__PACKAGE__, \$x, 'Bent');
+    attributes::-&gt;import(__PACKAGE__, \@y, 'Bent');
+    attributes::-&gt;import(__PACKAGE__, \%z, 'Bent');
+    ($x,@y,%z) = 1;</pre>
+<p>Yes, that's a lot of expansion.</p>
+<p><strong>WARNING</strong>: attribute declarations for variables are still evolving.
+The semantics and interfaces of such declarations could change in
+future versions.  They are present for purposes of experimentation
+with what the semantics ought to be.  Do not rely on the current
+implementation of this feature.</p>
+<p>There are only a few attributes currently handled by Perl itself (or
+directly by this module, depending on how you look at it.)  However,
+package-specific attributes are allowed by an extension mechanism.
+(See <a href="#packagespecific_attribute_handling">Package-specific Attribute Handling</a> below.)</p>
+<p>The setting of subroutine attributes happens at compile time.
+Variable attributes in <code>our</code> declarations are also applied at compile time.
+However, <code>my</code> variables get their attributes applied at run-time.
+This means that you have to <em>reach</em> the run-time component of the <code>my</code>
+before those attributes will get applied.  For example:</p>
+<pre>
+    my $x : Bent = 42 if 0;</pre>
+<p>will neither assign 42 to $x <em>nor</em> will it apply the <code>Bent</code> attribute
+to the variable.</p>
+<p>An attempt to set an unrecognized attribute is a fatal error.  (The
+error is trappable, but it still stops the compilation within that
+<code>eval</code>.)  Setting an attribute with a name that's all lowercase
+letters that's not a built-in attribute (such as ``foo'') will result in
+a warning with <strong>-w</strong> or <code>use warnings 'reserved'</code>.</p>
+<p>
+</p>
+<h2><a name="builtin_attributes">Built-in Attributes</a></h2>
+<p>The following are the built-in attributes for subroutines:</p>
+<dl>
+<dt><strong><a name="item_locked">locked</a></strong>
+
+<dd>
+<p><strong>5.005 threads only!  The use of the ``locked'' attribute currently
+only makes sense if you are using the deprecated ``Perl 5.005 threads''
+implementation of threads.</strong></p>
+</dd>
+<dd>
+<p>Setting this attribute is only meaningful when the subroutine or
+method is to be called by multiple threads.  When set on a method
+subroutine (i.e., one marked with the <strong>method</strong> attribute below),
+Perl ensures that any invocation of it implicitly locks its first
+argument before execution.  When set on a non-method subroutine,
+Perl ensures that a lock is taken on the subroutine itself before
+execution.  The semantics of the lock are exactly those of one
+explicitly taken with the <code>lock</code> operator immediately after the
+subroutine is entered.</p>
+</dd>
+</li>
+<dt><strong><a name="item_method">method</a></strong>
+
+<dd>
+<p>Indicates that the referenced subroutine is a method.
+This has a meaning when taken together with the <strong>locked</strong> attribute,
+as described there.  It also means that a subroutine so marked
+will not trigger the ``Ambiguous call resolved as CORE::%s'' warning.</p>
+</dd>
+</li>
+<dt><strong><a name="item_lvalue">lvalue</a></strong>
+
+<dd>
+<p>Indicates that the referenced subroutine is a valid lvalue and can
+be assigned to. The subroutine must return a modifiable value such
+as a scalar variable, as described in <a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html">the perlsub manpage</a>.</p>
+</dd>
+</li>
+</dl>
+<p>For global variables there is <code>unique</code> attribute: see <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/our.html">our in the perlfunc manpage</a>.</p>
+<p>
+</p>
+<h2><a name="available_subroutines">Available Subroutines</a></h2>
+<p>The following subroutines are available for general use once this module
+has been loaded:</p>
+<dl>
+<dt><strong><a name="item_get">get</a></strong>
+
+<dd>
+<p>This routine expects a single parameter--a reference to a
+subroutine or variable.  It returns a list of attributes, which may be
+empty.  If passed invalid arguments, it uses <code>die()</code> (via <a href="/usr/lib/perl5/5.8/html/./lib/Carp.html">Carp::croak</a>)
+to raise a fatal exception.  If it can find an appropriate package name
+for a class method lookup, it will include the results from a
+<a href="#item_fetch_type_attributes"><code>FETCH_type_ATTRIBUTES</code></a> call in its return list, as described in
+<a href="#packagespecific_attribute_handling">Package-specific Attribute Handling</a> below.
+Otherwise, only <a href="#builtin_attributes">built-in attributes</a> will be returned.</p>
+</dd>
+</li>
+<dt><strong><a name="item_reftype">reftype</a></strong>
+
+<dd>
+<p>This routine expects a single parameter--a reference to a subroutine or
+variable.  It returns the built-in type of the referenced variable,
+ignoring any package into which it might have been blessed.
+This can be useful for determining the <em>type</em> value which forms part of
+the method names described in <a href="#packagespecific_attribute_handling">Package-specific Attribute Handling</a> below.</p>
+</dd>
+</li>
+</dl>
+<p>Note that these routines are <em>not</em> exported by default.</p>
+<p>
+</p>
+<h2><a name="packagespecific_attribute_handling">Package-specific Attribute Handling</a></h2>
+<p><strong>WARNING</strong>: the mechanisms described here are still experimental.  Do not
+rely on the current implementation.  In particular, there is no provision
+for applying package attributes to 'cloned' copies of subroutines used as
+closures.  (See <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html#making_references">Making References in the perlref manpage</a> for information on closures.)
+Package-specific attribute handling may change incompatibly in a future
+release.</p>
+<p>When an attribute list is present in a declaration, a check is made to see
+whether an attribute 'modify' handler is present in the appropriate package
+(or its @ISA inheritance tree).  Similarly, when <code>attributes::get</code> is
+called on a valid reference, a check is made for an appropriate attribute
+'fetch' handler.  See <a href="#examples">EXAMPLES</a> to see how the ``appropriate package''
+determination works.</p>
+<p>The handler names are based on the underlying type of the variable being
+declared or of the reference passed.  Because these attributes are
+associated with subroutine or variable declarations, this deliberately
+ignores any possibility of being blessed into some package.  Thus, a
+subroutine declaration uses ``CODE'' as its <em>type</em>, and even a blessed
+hash reference uses ``HASH'' as its <em>type</em>.</p>
+<p>The class methods invoked for modifying and fetching are these:</p>
+<dl>
+<dt><strong><a name="item_fetch_type_attributes">FETCH_<em>type</em>_ATTRIBUTES</a></strong>
+
+<dd>
+<p>This method receives a single argument, which is a reference to the
+variable or subroutine for which package-defined attributes are desired.
+The expected return value is a list of associated attributes.
+This list may be empty.</p>
+</dd>
+</li>
+<dt><strong><a name="item_modify_type_attributes">MODIFY_<em>type</em>_ATTRIBUTES</a></strong>
+
+<dd>
+<p>This method is called with two fixed arguments, followed by the list of
+attributes from the relevant declaration.  The two fixed arguments are
+the relevant package name and a reference to the declared subroutine or
+variable.  The expected return value is a list of attributes which were
+not recognized by this handler.  Note that this allows for a derived class
+to delegate a call to its base class, and then only examine the attributes
+which the base class didn't already handle for it.</p>
+</dd>
+<dd>
+<p>The call to this method is currently made <em>during</em> the processing of the
+declaration.  In particular, this means that a subroutine reference will
+probably be for an undefined subroutine, even if this declaration is
+actually part of the definition.</p>
+</dd>
+</li>
+</dl>
+<p>Calling <a href="#item_get"><code>attributes::get()</code></a> from within the scope of a null package
+declaration <code>package ;</code> for an unblessed variable reference will
+not provide any starting package name for the 'fetch' method lookup.
+Thus, this circumstance will not result in a method call for package-defined
+attributes.  A named subroutine knows to which symbol table entry it belongs
+(or originally belonged), and it will use the corresponding package.
+An anonymous subroutine knows the package name into which it was compiled
+(unless it was also compiled with a null package declaration), and so it
+will use that package name.</p>
+<p>
+</p>
+<h2><a name="syntax_of_attribute_lists">Syntax of Attribute Lists</a></h2>
+<p>An attribute list is a sequence of attribute specifications, separated by
+whitespace or a colon (with optional whitespace).
+Each attribute specification is a simple
+name, optionally followed by a parenthesised parameter list.
+If such a parameter list is present, it is scanned past as for the rules
+for the <code>q()</code> operator.  (See <a href="/usr/lib/perl5/5.8/html/./pod/perlop.html#quote_and_quotelike_operators">Quote and Quote-like Operators in the perlop manpage</a>.)
+The parameter list is passed as it was found, however, and not as per <code>q()</code>.</p>
+<p>Some examples of syntactically valid attribute lists:</p>
+<pre>
+    switch(10,foo(7,3))  :  expensive
+    Ugly('\(&quot;) :Bad
+    _5x5
+    locked method</pre>
+<p>Some examples of syntactically invalid attribute lists (with annotation):</p>
+<pre>
+    switch(10,foo()             # ()-string not balanced
+    Ugly('(')                   # ()-string not balanced
+    5x5                         # &quot;5x5&quot; not a valid identifier
+    Y2::north                   # &quot;Y2::north&quot; not a simple identifier
+    foo + bar                   # &quot;+&quot; neither a colon nor whitespace</pre>
+<p>
+</p>
+<hr />
+<h1><a name="exports">EXPORTS</a></h1>
+<p>
+</p>
+<h2><a name="default_exports">Default exports</a></h2>
+<p>None.</p>
+<p>
+</p>
+<h2><a name="available_exports">Available exports</a></h2>
+<p>The routines <a href="#item_get"><code>get</code></a> and <a href="#item_reftype"><code>reftype</code></a> are exportable.</p>
+<p>
+</p>
+<h2><a name="export_tags_defined">Export tags defined</a></h2>
+<p>The <code>:ALL</code> tag will get all of the above exports.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>Here are some samples of syntactically valid declarations, with annotation
+as to how they resolve internally into <code>use attributes</code> invocations by
+perl.  These examples are primarily useful to see how the ``appropriate
+package'' is found for the possible method lookups for package-defined
+attributes.</p>
+<ol>
+<li>
+<p>Code:</p>
+<pre>
+    package Canine;
+    package Dog;
+    my Canine $spot : Watchful ;</pre>
+<p>Effect:</p>
+<pre>
+    use attributes ();
+    attributes::-&gt;import(Canine =&gt; \$spot, &quot;Watchful&quot;);</pre>
+</li>
+<li>
+<p>Code:</p>
+<pre>
+    package Felis;
+    my $cat : Nervous;</pre>
+<p>Effect:</p>
+<pre>
+    use attributes ();
+    attributes::-&gt;import(Felis =&gt; \$cat, &quot;Nervous&quot;);</pre>
+</li>
+<li>
+<p>Code:</p>
+<pre>
+    package X;
+    sub foo : locked ;</pre>
+<p>Effect:</p>
+<pre>
+    use attributes X =&gt; \&amp;foo, &quot;locked&quot;;</pre>
+</li>
+<li>
+<p>Code:</p>
+<pre>
+    package X;
+    sub Y::x : locked { 1 }</pre>
+<p>Effect:</p>
+<pre>
+    use attributes Y =&gt; \&amp;Y::x, &quot;locked&quot;;</pre>
+</li>
+<li>
+<p>Code:</p>
+<pre>
+    package X;
+    sub foo { 1 }</pre>
+<pre>
+    package Y;
+    BEGIN { *bar = \&amp;X::foo; }</pre>
+<pre>
+    package Z;
+    sub Y::bar : locked ;</pre>
+<p>Effect:</p>
+<pre>
+    use attributes X =&gt; \&amp;X::foo, &quot;locked&quot;;</pre>
+</li>
+</ol>
+<p>This last example is purely for purposes of completeness.  You should not
+be trying to mess with the attributes of something in a package that's
+not your own.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html#private_variables_via_my__">Private Variables via my() in the perlsub manpage</a> and
+<a href="/usr/lib/perl5/5.8/html/./pod/perlsub.html#subroutine_attributes">Subroutine Attributes in the perlsub manpage</a> for details on the basic declarations;
+<a href="/usr/lib/perl5/5.8/html/./ext/attrs/attrs.html">the attrs manpage</a> for the obsolescent form of subroutine attribute specification
+which this module replaces;
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/use.html">use in the perlfunc manpage</a> for details on the normal invocation mechanism.</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;attributes - get/set subroutine or variable attributes</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>

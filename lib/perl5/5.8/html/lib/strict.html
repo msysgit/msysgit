@@ -1,0 +1,153 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>strict - Perl pragma to restrict unsafe constructs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:mingw-dvlpr@lists.sourceforge.net" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;strict - Perl pragma to restrict unsafe constructs</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>strict - Perl pragma to restrict unsafe constructs</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use strict;</pre>
+<pre>
+    use strict &quot;vars&quot;;
+    use strict &quot;refs&quot;;
+    use strict &quot;subs&quot;;</pre>
+<pre>
+    use strict;
+    no strict &quot;vars&quot;;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>If no import list is supplied, all possible restrictions are assumed.
+(This is the safest mode to operate in, but is sometimes too strict for
+casual programming.)  Currently, there are three possible things to be
+strict about:  ``subs'', ``vars'', and ``refs''.</p>
+<dl>
+<dt><strong><a name="item_strict_refs"><code>strict refs</code></a></strong>
+
+<dd>
+<p>This generates a runtime error if you 
+use symbolic references (see <a href="/usr/lib/perl5/5.8/html/./pod/perlref.html">the perlref manpage</a>).</p>
+</dd>
+<dd>
+<pre>
+    use strict 'refs';
+    $ref = \$foo;
+    print $$ref;        # ok
+    $ref = &quot;foo&quot;;
+    print $$ref;        # runtime error; normally ok
+    $file = &quot;STDOUT&quot;;
+    print $file &quot;Hi!&quot;;  # error; note: no comma after $file</pre>
+</dd>
+<dd>
+<p>There is one exception to this rule:</p>
+</dd>
+<dd>
+<pre>
+    $bar = \&amp;{'foo'};
+    &amp;$bar;</pre>
+</dd>
+<dd>
+<p>is allowed so that <code>goto &amp;$AUTOLOAD</code> would not break under stricture.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strict_vars"><code>strict vars</code></a></strong>
+
+<dd>
+<p>This generates a compile-time error if you access a variable that wasn't
+declared via <code>our</code> or <code>use vars</code>,
+localized via <code>my()</code>, or wasn't fully qualified.  Because this is to avoid
+variable suicide problems and subtle dynamic scoping issues, a merely
+<code>local()</code> variable isn't good enough.  See <a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/my.html">my in the perlfunc manpage</a> and
+<a href="/usr/lib/perl5/5.8/html/./pod/perlfunc/local.html">local in the perlfunc manpage</a>.</p>
+</dd>
+<dd>
+<pre>
+    use strict 'vars';
+    $X::foo = 1;         # ok, fully qualified
+    my $foo = 10;        # ok, my() var
+    local $foo = 9;      # blows up</pre>
+</dd>
+<dd>
+<pre>
+    package Cinna;
+    our $bar;                   # Declares $bar in current package
+    $bar = 'HgS';               # ok, global declared via pragma</pre>
+</dd>
+<dd>
+<p>The <code>local()</code> generated a compile-time error because you just touched a global
+name without fully qualifying it.</p>
+</dd>
+<dd>
+<p>Because of their special use by sort(), the variables $a and $b are
+exempted from this check.</p>
+</dd>
+</li>
+<dt><strong><a name="item_strict_subs"><code>strict subs</code></a></strong>
+
+<dd>
+<p>This disables the poetry optimization, generating a compile-time error if
+you try to use a bareword identifier that's not a subroutine, unless it
+is a simple identifier (no colons) and that it appears in curly braces or
+on the left hand side of the <code>=&gt;</code> symbol.</p>
+</dd>
+<dd>
+<pre>
+    use strict 'subs';
+    $SIG{PIPE} = Plumber;       # blows up
+    $SIG{PIPE} = &quot;Plumber&quot;;     # just fine: quoted string is always ok
+    $SIG{PIPE} = \&amp;Plumber;     # preferred form</pre>
+</dd>
+</li>
+</dl>
+<p>See <a href="/usr/lib/perl5/5.8/html/./pod/perlmodlib.html#pragmatic_modules">Pragmatic Modules in the perlmodlib manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p><code>strict 'subs'</code>, with Perl 5.6.1, erroneously permitted to use an unquoted
+compound identifier (e.g. <code>Foo::Bar</code>) as a hash key (before <code>=&gt;</code> or
+inside curlies), but without forcing it always to a literal string.</p>
+<p>Starting with Perl 5.8.1 strict is strict about its restrictions:
+if unknown restrictions are used, the strict pragma will abort with</p>
+<pre>
+    Unknown 'strict' tag(s) '...'</pre>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" style="background-color: #cccccc" valign="middle">
+<big><strong><span class="block">&nbsp;strict - Perl pragma to restrict unsafe constructs</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>
