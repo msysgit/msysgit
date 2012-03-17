@@ -172,10 +172,10 @@ git-checkout -l -f -q -b master origin/master ||
 # Copy profile.d/*.sh if there is any
 
 cd ../.. &&
-if test -d "$INSTALL_PATH"/profile.d
+if test -d "$INSTALL_PATH"/installer-tmp/profile.d
 then
 	mkdir -p etc/profile.d &&
-	for file in "$INSTALL_PATH"/profile.d/*.sh
+	for file in "$INSTALL_PATH"/installer-tmp/profile.d/*.sh
 	do
 		cp "$file" etc/profile.d/
 	done
