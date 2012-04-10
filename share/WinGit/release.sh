@@ -52,13 +52,19 @@ test -z "$force" && {
 }
 
 create_msysgit_tag () {
-	i=0 &&
-	tag=$(git describe HEAD | cut -d- -f1) &&
-	tag=${tag%.msysgit.*} &&
-	while ! git tag -a -m "Git for Windows $1" $tag.msysgit.$i
-	do
-		i=$(($i+1))
-	done
+	if tag=$(git describe --exact-match --match "*.msysgit.*" HEAD 2> /dev/null)
+	then
+		echo "Using existing tag $tag"
+	else
+		i=0 &&
+		tag=$(git describe HEAD | cut -d- -f1) &&
+		tag=${tag%.msysgit.*} &&
+		while ! git tag -a -m "Git for Windows $1" $tag.msysgit.$i 2> /dev/null
+		do
+			i=$(($i+1))
+		done &&
+		echo "Created tag $tag.msysgit.$i"
+	fi
 }
 
 # compile everything needed for standard setup
