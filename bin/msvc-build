@@ -37,6 +37,13 @@ t)
 	;;
 esac
 
+to_ignore="$(git ls-files --other --exclude-standard msvcgit msvc-build.cmd)"
+test -z "$to_ignore" || {
+	mkdir -p .git/info &&
+	echo "$to_ignore" |
+	sed 's/^/\//' >> .git/info/exclude
+} || exit
+
 test -d msvcgit || git clone git://repo.or.cz/msvcgit.git
 
 vsvars=
