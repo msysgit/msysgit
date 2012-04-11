@@ -587,7 +587,7 @@ begin
             'this is the recommended setting on Windows ("core.autocrlf" is set to "true").';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
-        Width:=ScaleX(372);
+        Width:=ScaleX(380);
         Height:=ScaleY(47);
     end;
 
@@ -613,7 +613,7 @@ begin
             'this is the recommended setting on Unix ("core.autocrlf" is set to "input").';
         Left:=ScaleX(28);
         Top:=ScaleY(104);
-        Width:=ScaleX(372);
+        Width:=ScaleX(380);
         Height:=ScaleY(47);
     end;
 
@@ -639,7 +639,7 @@ begin
             'projects ("core.autocrlf" is set to "false").';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
-        Width:=ScaleX(372);
+        Width:=ScaleX(380);
         Height:=ScaleY(47);
     end;
 
