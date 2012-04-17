@@ -63,15 +63,19 @@ for_version="for official Git for Windows $for_version"
 case "$basename" in
 Git-*)
 	description="${description:-Full installer $for_version}"
+	repository=${repository:-msysgit/git}
 	;;
 PortableGit-*)
 	description="${description:-Portable application $for_version}"
+	repository=${repository:-msysgit/git}
 	;;
 msysGit-netinstall-*)
 	description="${description:-Net installer if you want to hack on Git}"
+	repository=${repository:-msysgit/git}
 	;;
 msysGit-fullinstall-*)
 	description="${description:-Full installer (self-contained) if you want to hack on Git}"
+	repository=${repository:-msysgit/git}
 	;;
 esac
 
