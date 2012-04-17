@@ -79,6 +79,10 @@ msysGit-fullinstall-*)
 	;;
 esac
 
+test -z "$user" &&
+user="$(grep -A2 -i '^machine  *api.github.com' < "$HOME/.netrc" 2> /dev/null |
+	sed -n 's|login  *||pi')"
+
 if test -z "$description" || test -z "$user" || test -z "$repository"
 then
 	echo "$USAGE"
