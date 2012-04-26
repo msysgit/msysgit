@@ -34,7 +34,7 @@ echo "Environment is clean. Can install msysgit."
 
 echo
 echo -------------------------------------------------------
-echo Fetching the latest MSys environment
+echo Fetching the latest msysgit environment
 echo -------------------------------------------------------
 MSYSGIT_REPO_GIT=git://github.com/msysgit/msysgit
 MSYSGIT_REPO_HTTP=https://github.com/msysgit/msysgit.git
@@ -74,7 +74,7 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
 echo
 echo -------------------------------------------------------
-echo Checking out the @@MSYSGITBRANCH@@ branch
+echo Checking out the msysgit @@MSYSGITBRANCH@@ branch
 echo -------------------------------------------------------
 git-checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
 	error Couldn\'t checkout the @@MSYSGITBRANCH@@ branch!
@@ -88,7 +88,7 @@ rm -rf git
 
 echo
 echo -------------------------------------------------------
-echo Fetching the latest MinGW Git sources
+echo Fetching the latest Git sources
 echo -------------------------------------------------------
 
 case "$USE_HTTP" in
@@ -97,12 +97,14 @@ t)
 	HTMLDOCS_REPO_URL=https://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=http://repo.or.cz/r/git/mingw.git/
 	MINGW4MSYSGIT_REPO_URL=https://github.com/msysgit/git.git
+	GITCHEETAH_REPO_URL=https://github.com/msysgit/Git-Cheetah.git
 ;;
 '')
 	GIT_REPO_URL=git://github.com/git/git
 	HTMLDOCS_REPO_URL=git://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
 	MINGW4MSYSGIT_REPO_URL=git://github.com/msysgit/git
+	GITCHEETAH_REPO_URL=git://github.com/msysgit/Git-Cheetah
 ;;
 esac
 
@@ -134,7 +136,7 @@ error Couldn\'t update submodule git!
 
 echo
 echo -------------------------------------------------------
-echo Fetching HTML help pages
+echo Fetching Git html help submodule
 echo -------------------------------------------------------
 
 cd .. &&
@@ -150,3 +152,19 @@ git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
 	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
 error "Couldn't update submodule doc/git/html (HTML help will not work)."
 
+echo
+echo -------------------------------------------------------
+echo Fetching git-cheetah submodule
+echo -------------------------------------------------------
+
+cd ../../.. &&
+rm -rf /src/git-cheetah &&
+git config submodule.git-cheetah.url $GITCHEETAH_REPO_URL &&
+mkdir -p src/git-cheetah &&
+cd src/git-cheetah &&
+git init &&
+git config remote.origin.url $GITCHEETAH_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git fetch origin &&
+git-checkout -l -f -q -b master origin/master ||
+	error "Could not update the submodule src/git-cheetah!"

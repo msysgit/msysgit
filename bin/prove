@@ -1,344 +1,350 @@
-#!/usr/bin/perl
-    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-	if $running_under_some_shell;
 #!/usr/bin/perl -w
 
+eval 'exec /usr/bin/perl -w -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
 use strict;
+use App::Prove;
 
-use Test::Harness;
-use Getopt::Long;
-use Pod::Usage 1.12;
-use File::Spec;
-
-use vars qw( $VERSION );
-$VERSION = "1.04";
-
-my @ext = ();
-my $shuffle = 0;
-my $dry = 0;
-my $blib = 0;
-my $lib = 0;
-my $recurse = 0;
-my @includes = ();
-my @switches = ();
-
-# Allow cuddling the paths with the -I
-@ARGV = map { /^(-I)(.+)/ ? ($1,$2) : $_ } @ARGV;
-
-# Stick any default switches at the beginning, so they can be overridden
-# by the command line switches.
-unshift @ARGV, split( " ", $ENV{PROVE_SWITCHES} ) if defined $ENV{PROVE_SWITCHES};
-
-Getopt::Long::Configure( "no_ignore_case" );
-Getopt::Long::Configure( "bundling" );
-GetOptions(
-    'b|blib'        => \$blib,
-    'd|debug'       => \$Test::Harness::debug,
-    'D|dry'         => \$dry,
-    'h|help|?'      => sub {pod2usage({-verbose => 1}); exit},
-    'H|man'         => sub {pod2usage({-verbose => 2}); exit},
-    'I=s@'          => \@includes,
-    'l|lib'         => \$lib,
-    'r|recurse'     => \$recurse,
-    's|shuffle'     => \$shuffle,
-    't'             => sub { unshift @switches, "-t" }, # Always want -t up front
-    'T'             => sub { unshift @switches, "-T" }, # Always want -T up front
-    'timer'         => \$Test::Harness::Timer,
-    'v|verbose'     => \$Test::Harness::verbose,
-    'V|version'     => sub { print_version(); exit; },
-    'ext=s@'        => \@ext,
-) or exit 1;
-
-$ENV{TEST_VERBOSE} = 1 if $Test::Harness::verbose;
-
-# Build up extensions regex
-@ext = map { split /,/ } @ext;
-s/^\.// foreach @ext;
-@ext = ("t") unless @ext;
-my $ext_regex = join( "|", map { quotemeta } @ext );
-$ext_regex = qr/\.($ext_regex)$/;
-
-# Handle blib includes
-if ( $blib ) {
-    my @blibdirs = blibdirs();
-    if ( @blibdirs ) {
-        unshift @includes, @blibdirs;
-    } else {
-        warn "No blib directories found.\n";
-    }
-}
-
-# Handle lib includes
-if ( $lib ) {
-    unshift @includes, "lib";
-}
-
-# Build up TH switches
-push( @switches, map { /\s/ && !/^".*"$/ ? qq["-I$_"] : "-I$_" } @includes );
-$Test::Harness::Switches = join( " ", @switches );
-print "# \$Test::Harness::Switches: $Test::Harness::Switches\n" if $Test::Harness::debug;
-
-my @tests;
-@ARGV = File::Spec->curdir unless @ARGV;
-push( @tests, -d $_ ? all_in( $_ ) : $_ ) for map { glob } @ARGV;
-
-if ( @tests ) {
-    shuffle(@tests) if $shuffle;
-    if ( $dry ) {
-        print join( "\n", @tests, "" );
-    } else {
-        print "# ", scalar @tests, " tests to run\n" if $Test::Harness::debug;
-        runtests(@tests);
-    }
-}
-
-sub all_in {
-    my $start = shift;
-
-    my @hits = ();
-
-    local *DH;
-    if ( opendir( DH, $start ) ) {
-        my @files = sort readdir DH;
-        closedir DH;
-        for my $file ( @files ) {
-            next if $file eq File::Spec->updir || $file eq File::Spec->curdir;
-            next if $file eq ".svn";
-            next if $file eq "CVS";
-
-            my $currfile = File::Spec->catfile( $start, $file );
-            if ( -d $currfile ) {
-                push( @hits, all_in( $currfile ) ) if $recurse;
-            } else {
-                push( @hits, $currfile ) if $currfile =~ $ext_regex;
-            }
-        }
-    } else {
-        warn "$start: $!\n";
-    }
-
-    return @hits;
-}
-
-sub shuffle {
-    # Fisher-Yates shuffle
-    my $i = @_;
-    while ($i) {
-        my $j = rand $i--;
-        @_[$i, $j] = @_[$j, $i];
-    }
-}
-
-sub print_version {
-    printf( "prove v%s, using Test::Harness v%s and Perl v%vd\n",
-        $VERSION, $Test::Harness::VERSION, $^V );
-}
-
-# Stolen directly from blib.pm
-sub blibdirs {
-    my $dir = File::Spec->curdir;
-    if ($^O eq 'VMS') {
-        ($dir = VMS::Filespec::unixify($dir)) =~ s-/\z--;
-    }
-    my $archdir = "arch";
-    if ( $^O eq "MacOS" ) {
-        # Double up the MP::A so that it's not used only once.
-        $archdir = $MacPerl::Architecture = $MacPerl::Architecture;
-    }
-
-    my $i = 5;
-    while ($i--) {
-        my $blib      = File::Spec->catdir( $dir, "blib" );
-        my $blib_lib  = File::Spec->catdir( $blib, "lib" );
-        my $blib_arch = File::Spec->catdir( $blib, $archdir );
-
-        if ( -d $blib && -d $blib_arch && -d $blib_lib ) {
-            return ($blib_arch,$blib_lib);
-        }
-        $dir = File::Spec->catdir($dir, File::Spec->updir);
-    }
-    warn "$0: Cannot find blib\n";
-    return;
-}
+my $app = App::Prove->new;
+$app->process_args(@ARGV);
+exit( $app->run ? 0 : 1 );
 
 __END__
 
 =head1 NAME
 
-prove -- A command-line tool for running tests against Test::Harness
+prove - Run tests through a TAP harness.
 
-=head1 SYNOPSIS
+=head1 USAGE
 
-prove [options] [files/directories]
+ prove [options] [files or directories]
 
-Options:
+=head1 OPTIONS
 
-    -b, --blib      Adds blib/lib to the path for your tests, a la "use blib".
-    -d, --debug     Includes extra debugging information.
-    -D, --dry       Dry run: Show the tests to run, but don't run them.
-        --ext=x     Extensions (defaults to .t)
-    -h, --help      Display this help
-    -H, --man       Longer manpage for prove
-    -I              Add libraries to @INC, as Perl's -I
-    -l, --lib       Add lib to the path for your tests.
-    -r, --recurse   Recursively descend into directories.
-    -s, --shuffle   Run the tests in a random order.
-    -T              Enable tainting checks
-    -t              Enable tainting warnings
-        --timer     Print elapsed time after each test file
-    -v, --verbose   Display standard output of test scripts while running them.
-    -V, --version   Display version info
+Boolean options:
 
-Single-character options may be stacked.  Default options may be set by
-specifying the PROVE_SWITCHES environment variable.
+ -v,  --verbose         Print all test lines.
+ -l,  --lib             Add 'lib' to the path for your tests (-Ilib).
+ -b,  --blib            Add 'blib/lib' and 'blib/arch' to the path for
+                        your tests
+ -s,  --shuffle         Run the tests in random order.
+ -c,  --color           Colored test output (default).
+      --nocolor         Do not color test output.
+      --count           Show the X/Y test count when not verbose
+                        (default)
+      --nocount         Disable the X/Y test count.
+ -D   --dry             Dry run. Show test that would have run.
+      --ext             Set the extension for tests (default '.t')
+ -f,  --failures        Show failed tests.
+ -o,  --comments        Show comments.
+      --ignore-exit     Ignore exit status from test scripts.
+ -m,  --merge           Merge test scripts' STDERR with their STDOUT.
+ -r,  --recurse         Recursively descend into directories.
+      --reverse         Run the tests in reverse order.
+ -q,  --quiet           Suppress some test output while running tests.
+ -Q,  --QUIET           Only print summary results.
+ -p,  --parse           Show full list of TAP parse errors, if any.
+      --directives      Only show results with TODO or SKIP directives.
+      --timer           Print elapsed time after each test.
+      --trap            Trap Ctrl-C and print summary on interrupt.
+      --normalize       Normalize TAP output in verbose output
+ -T                     Enable tainting checks.
+ -t                     Enable tainting warnings.
+ -W                     Enable fatal warnings.
+ -w                     Enable warnings.
+ -h,  --help            Display this help
+ -?,                    Display this help
+ -H,  --man             Longer manpage for prove
+      --norc            Don't process default .proverc
 
-=head1 OVERVIEW
+Options that take arguments:
 
-F<prove> is a command-line interface to the test-running functionality
-of C<Test::Harness>.  With no arguments, it will run all tests in the
-current directory.
+ -I                     Library paths to include.
+ -P                     Load plugin (searches App::Prove::Plugin::*.)
+ -M                     Load a module.
+ -e,  --exec            Interpreter to run the tests ('' for compiled
+                        tests.)
+      --harness         Define test harness to use.  See TAP::Harness.
+      --formatter       Result formatter to use. See FORMATTERS.
+      --source          Load and/or configure a SourceHandler. See
+                        SOURCE HANDLERS.
+ -a,  --archive out.tgz Store the resulting TAP in an archive file.
+ -j,  --jobs N          Run N test jobs in parallel (try 9.)
+      --state=opts      Control prove's persistent state.
+      --rc=rcfile       Process options from rcfile
 
-Shell metacharacters may be used with command lines options and will be exanded 
-via C<glob>.
+=head1 NOTES
 
-=head1 PROVE VS. "MAKE TEST"
+=head2 .proverc
 
-F<prove> has a number of advantages over C<make test> when doing development.
+If F<~/.proverc> or F<./.proverc> exist they will be read and any
+options they contain processed before the command line options. Options
+in F<.proverc> are specified in the same way as command line options:
 
-=over 4
+    # .proverc
+    --state=hot,fast,save
+    -j9
 
-=item * F<prove> is designed as a development tool
+Additional option files may be specified with the C<--rc> option.
+Default option file processing is disabled by the C<--norc> option.
 
-Perl users typically run the test harness through a makefile via
-C<make test>.  That's fine for module distributions, but it's
-suboptimal for a test/code/debug development cycle.
+Under Windows and VMS the option file is named F<_proverc> rather than
+F<.proverc> and is sought only in the current directory.
 
-=item * F<prove> is granular 
+=head2 Reading from C<STDIN>
 
-F<prove> lets your run against only the files you want to check.
-Running C<prove t/live/ t/master.t> checks every F<*.t> in F<t/live>,
-plus F<t/master.t>.
+If you have a list of tests (or URLs, or anything else you want to test) in a
+file, you can add them to your tests by using a '-':
 
-=item * F<prove> has an easy verbose mode
+ prove - < my_list_of_things_to_test.txt
 
-F<prove> has a C<-v> option to see the raw output from the tests.
-To do this with C<make test>, you must set C<HARNESS_VERBOSE=1> in
-the environment.
+See the C<README> in the C<examples> directory of this distribution.
 
-=item * F<prove> can run under taint mode
+=head2 Default Test Directory
 
-F<prove>'s C<-T> runs your tests under C<perl -T>, and C<-t> runs them
-under C<perl -t>.
+If no files or directories are supplied, C<prove> looks for all files
+matching the pattern C<t/*.t>.
 
-=item * F<prove> can shuffle tests
+=head2 Colored Test Output
 
-You can use F<prove>'s C<--shuffle> option to try to excite problems
-that don't show up when tests are run in the same order every time.
+Colored test output is the default, but if output is not to a
+terminal, color is disabled. You can override this by adding the
+C<--color> switch.
 
-=item * F<prove> doesn't rely on a make tool
+Color support requires L<Term::ANSIColor> on Unix-like platforms and
+L<Win32::Console> windows. If the necessary module is not installed
+colored output will not be available.
 
-Not everyone wants to write a makefile, or use L<ExtUtils::MakeMaker>
-to do so.  F<prove> has no external dependencies.
+=head2 Exit Code
 
-=item * Not everything is a module
+If the tests fail C<prove> will exit with non-zero status.
 
-More and more users are using Perl's testing tools outside the
-context of a module distribution, and may not even use a makefile
-at all.
+=head2 Arguments to Tests
+
+It is possible to supply arguments to tests. To do so separate them from
+prove's own arguments with the arisdottle, '::'. For example
+
+ prove -v t/mytest.t :: --url http://example.com
+
+would run F<t/mytest.t> with the options '--url http://example.com'.
+When running multiple tests they will each receive the same arguments.
+
+=head2 C<--exec>
+
+Normally you can just pass a list of Perl tests and the harness will know how
+to execute them.  However, if your tests are not written in Perl or if you
+want all tests invoked exactly the same way, use the C<-e>, or C<--exec>
+switch:
+
+ prove --exec '/usr/bin/ruby -w' t/
+ prove --exec '/usr/bin/perl -Tw -mstrict -Ilib' t/
+ prove --exec '/path/to/my/customer/exec'
+
+=head2 C<--merge>
+
+If you need to make sure your diagnostics are displayed in the correct
+order relative to test results you can use the C<--merge> option to
+merge the test scripts' STDERR into their STDOUT.
+
+This guarantees that STDOUT (where the test results appear) and STDOUT
+(where the diagnostics appear) will stay in sync. The harness will
+display any diagnostics your tests emit on STDERR.
+
+Caveat: this is a bit of a kludge. In particular note that if anything
+that appears on STDERR looks like a test result the test harness will
+get confused. Use this option only if you understand the consequences
+and can live with the risk.
+
+=head2 C<--trap>
+
+The C<--trap> option will attempt to trap SIGINT (Ctrl-C) during a test
+run and display the test summary even if the run is interrupted
+
+=head2 C<--state>
+
+You can ask C<prove> to remember the state of previous test runs and
+select and/or order the tests to be run based on that saved state.
+
+The C<--state> switch requires an argument which must be a comma
+separated list of one or more of the following options.
+
+=over
+
+=item C<last>
+
+Run the same tests as the last time the state was saved. This makes it
+possible, for example, to recreate the ordering of a shuffled test.
+
+    # Run all tests in random order
+    $ prove -b --state=save --shuffle
+
+    # Run them again in the same order
+    $ prove -b --state=last
+
+=item C<failed>
+
+Run only the tests that failed on the last run.
+
+    # Run all tests
+    $ prove -b --state=save
+
+    # Run failures
+    $ prove -b --state=failed
+
+If you also specify the C<save> option newly passing tests will be
+excluded from subsequent runs.
+
+    # Repeat until no more failures
+    $ prove -b --state=failed,save
+
+=item C<passed>
+
+Run only the passed tests from last time. Useful to make sure that no
+new problems have been introduced.
+
+=item C<all>
+
+Run all tests in normal order. Multple options may be specified, so to
+run all tests with the failures from last time first:
+
+    $ prove -b --state=failed,all,save
+
+=item C<hot>
+
+Run the tests that most recently failed first. The last failure time of
+each test is stored. The C<hot> option causes tests to be run in most-recent-
+failure order.
+
+    $ prove -b --state=hot,save
+
+Tests that have never failed will not be selected. To run all tests with
+the most recently failed first use
+
+    $ prove -b --state=hot,all,save
+
+This combination of options may also be specified thus
+
+    $ prove -b --state=adrian
+
+=item C<todo>
+
+Run any tests with todos.
+
+=item C<slow>
+
+Run the tests in slowest to fastest order. This is useful in conjunction
+with the C<-j> parallel testing switch to ensure that your slowest tests
+start running first.
+
+    $ prove -b --state=slow -j9
+
+=item C<fast>
+
+Run test tests in fastest to slowest order.
+
+=item C<new>
+
+Run the tests in newest to oldest order based on the modification times
+of the test scripts.
+
+=item C<old>
+
+Run the tests in oldest to newest order.
+
+=item C<fresh>
+
+Run those test scripts that have been modified since the last test run.
+
+=item C<save>
+
+Save the state on exit. The state is stored in a file called F<.prove>
+(F<_prove> on Windows and VMS) in the current directory.
 
 =back
 
-=head1 COMMAND LINE OPTIONS
+The C<--state> switch may be used more than once.
 
-=head2 -b, --blib
+    $ prove -b --state=hot --state=all,save
 
-Adds blib/lib to the path for your tests, a la "use blib".
+=head2 @INC
 
-=head2 -d, --debug
+prove introduces a separation between "options passed to the perl which
+runs prove" and "options passed to the perl which runs tests"; this
+distinction is by design. Thus the perl which is running a test starts
+with the default C<@INC>. Additional library directories can be added
+via the C<PERL5LIB> environment variable, via -Ifoo in C<PERL5OPT> or
+via the C<-Ilib> option to F<prove>.
 
-Include debug information about how F<prove> is being run.  This
-option doesn't show the output from the test scripts.  That's handled
-by -v,--verbose.
+=head2 Taint Mode
 
-=head2 -D, --dry
+Normally when a Perl program is run in taint mode the contents of the
+C<PERL5LIB> environment variable do not appear in C<@INC>.
 
-Dry run: Show the tests to run, but don't run them.
+Because C<PERL5LIB> is often used during testing to add build
+directories to C<@INC> prove passes the names of any directories found
+in C<PERL5LIB> as -I switches. The net effect of this is that
+C<PERL5LIB> is honoured even when prove is run in taint mode.
 
-=head2 --ext=extension
 
-Specify extensions of the test files to run.  By default, these are .t,
-but you may have other non-.t test files, most likely .sh shell scripts.
-The --ext is repeatable.
+=head1 FORMATTERS
 
-=head2 -I
+You can load a custom L<TAP::Parser::Formatter>:
 
-Add libraries to @INC, as Perl's -I.
+  prove --formatter MyFormatter
 
-=head2 -l, --lib
+=head1 SOURCE HANDLERS
 
-Add C<lib> to @INC.  Equivalent to C<-Ilib>.
+You can load custom L<TAP::Parser::SourceHandler>s, to change the way the
+parser interprets particular I<sources> of TAP.
 
-=head2 -r, --recurse
+  prove --source MyHandler --source YetAnother t
 
-Descends into subdirectories of any directories specified, looking for tests.
+If you want to provide config to the source you can use:
 
-=head2 -s, --shuffle
+  prove --source MyCustom \
+        --source Perl --perl-option 'foo=bar baz' --perl-option avg=0.278 \
+        --source File --file-option extensions=.txt --file-option extensions=.tmp t
+        --source pgTAP --pgtap-option pset=format=html --pgtap-option pset=border=2
 
-Sometimes tests are accidentally dependent on tests that have been
-run before.  This switch will shuffle the tests to be run prior to
-running them, thus ensuring that hidden dependencies in the test
-order are likely to be revealed.  The author hopes the run the
-algorithm on the preceding sentence to see if he can produce something
-slightly less awkward.
+Each C<--$source-option> option must specify a key/value pair separated by an
+C<=>. If an option can take multiple values, just specify it multiple times,
+as with the C<extensions=> examples above. If the option should be a hash
+reference, specify the value as a second pair separated by a C<=>, as in the
+C<pset=> examples above (escape C<=> with a backslash).
 
-=head2 -t
+All C<--sources> are combined into a hash, and passed to L<TAP::Harness/new>'s
+C<sources> parameter.
 
-Runs test programs under perl's -t taint warning mode.
+See L<TAP::Parser::IteratorFactory> for more details on how configuration is
+passed to I<SourceHandlers>.
 
-=head2 -T
+=head1 PLUGINS
 
-Runs test programs under perl's -T taint mode.
+Plugins can be loaded using the C<< -PI<plugin> >> syntax, eg:
 
-=head2 --timer
+  prove -PMyPlugin
 
-Print elapsed time after each test file
+This will search for a module named C<App::Prove::Plugin::MyPlugin>, or failing
+that, C<MyPlugin>.  If the plugin can't be found, C<prove> will complain & exit.
 
-=head2 -v, --verbose
+You can pass arguments to your plugin by appending C<=arg1,arg2,etc> to the
+plugin name:
 
-Display standard output of test scripts while running them.  Also sets
-TEST_VERBOSE in case your tests rely on them.
+  prove -PMyPlugin=fou,du,fafa
 
-=head2 -V, --version
+Please check individual plugin documentation for more details.
 
-Display version info.
+=head2 Available Plugins
 
-=head1 BUGS
+For an up-to-date list of plugins available, please check CPAN:
 
-Please use the CPAN bug ticketing system at L<http://rt.cpan.org/>.
-You can also mail bugs, fixes and enhancements to 
-C<< <bug-test-harness@rt.cpan.org> >>.
+L<http://search.cpan.org/search?query=App%3A%3AProve+Plugin>
 
-=head1 TODO
+=head2 Writing Plugins
 
-=over 4
-
-=item *
-
-Shuffled tests must be recreatable
-
-=back
-
-=head1 AUTHORS
-
-Andy Lester C<< <andy@petdance.com> >>
-
-=head1 COPYRIGHT
-
-Copyright 2005 by Andy Lester C<< <andy@petdance.com> >>.
-
-This program is free software; you can redistribute it and/or 
-modify it under the same terms as Perl itself.
-
-See L<http://www.perl.com/perl/misc/Artistic.html>.
+Please see L<App::Prove/PLUGINS>.
 
 =cut
+
+# vim:ts=4:sw=4:et:sta

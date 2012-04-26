@@ -45,7 +45,7 @@ dirname.exe,\
 du.exe,echo,egrep,env.exe,expr.exe,false.exe,find.exe,flex.exe,gawk.exe,grep.exe,\
 head.exe,id.exe,kill.exe,less.exe,libW11.dll,ln.exe,\
 ls.exe,m4.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
-patch.exe.manifest,perl.exe,printf,ps.exe,pwd,rm.exe,rmdir.exe,rxvt.exe,\
+patch.exe.manifest,perl.exe,printf,ps.exe,pwd,recodetree,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,\
 ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,\
@@ -95,6 +95,7 @@ cp $MSYSGITROOT/etc/ssh_config etc/ &&
 cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
 mkdir git-cheetah &&
 cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
+cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext64.dll git-cheetah/ &&
 cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< $MSYSGITROOT/etc/profile > etc/profile &&

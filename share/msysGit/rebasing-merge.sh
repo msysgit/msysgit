@@ -139,6 +139,7 @@ then
 else
 	FINISH="$(git rev-parse --git-dir)/finish-rebasing-merge.sh"
 	cat > "$FINISH" << EOF
+#!/bin/sh
 git merge -s ours -m '$MESSAGE' $ORIG_HEAD
 EOF
 	chmod a+x "$FINISH"

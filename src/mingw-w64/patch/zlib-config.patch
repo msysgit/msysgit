@@ -2,28 +2,15 @@ diff --git a/configure b/configure
 index bd9edd2..23a9d60 100644
 --- a/configure
 +++ b/configure
-@@ -119,9 +119,9 @@ if test "$gcc" -eq 1 && ($cc -c $cflags $test.c) 2>/dev/null; then
-   fi
-   case "$uname" in
-   Linux* | linux* | GNU | GNU/* | *BSD | DragonFly) LDSHARED=${LDSHARED-"$cc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map"} ;;
+@@ -177,9 +177,9 @@ if test "$gcc" -eq 1 && ($cc -c $cflags $test.c) >> configure.log 2>&1; then
+   *BSD | *bsd* | DragonFly)
+         LDSHARED=${LDSHARED-"$cc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map"}
+         LDCONFIG="ldconfig -m" ;;
 -  CYGWIN* | Cygwin* | cygwin* | OS/2*)
 +  CYGWIN* | Cygwin* | cygwin* | OS/2* | MINGW*)
          EXE='.exe' ;;
--  MINGW*|mingw*)
-+  DISABLED_MINGW*|mingw*)
+-  MINGW* | mingw*)
++  DISABLED_MINGW* | mingw*)
  # temporary bypass
          rm -f $test.[co] $test $test$shared_ext
-         echo "Please use win32/Makefile.gcc instead."
-diff --git a/Makefile.in b/Makefile.in
-index 5b15bd0..d35ffd9 100644
---- a/Makefile.in
-+++ b/Makefile.in
-@@ -168,7 +168,7 @@ install-libs: $(LIBS)
- 	-@if [ ! -d $(DESTDIR)$(man3dir)      ]; then mkdir -p $(DESTDIR)$(man3dir); fi
- 	-@if [ ! -d $(DESTDIR)$(pkgconfigdir) ]; then mkdir -p $(DESTDIR)$(pkgconfigdir); fi
- 	cp $(STATICLIB) $(DESTDIR)$(libdir)
--	cp $(SHAREDLIBV) $(DESTDIR)$(sharedlibdir)
-+	test -z "$(SHAREDLIBV)" || cp $(SHAREDLIBV) $(DESTDIR)$(sharedlibdir)
- 	cd $(DESTDIR)$(libdir); chmod u=rw,go=r $(STATICLIB)
- 	-@(cd $(DESTDIR)$(libdir); $(RANLIB) libz.a || true) >/dev/null 2>&1
- 	-@cd $(DESTDIR)$(sharedlibdir); if test "$(SHAREDLIBV)" -a -f $(SHAREDLIBV); then \
+         echo "Please use win32/Makefile.gcc instead." | tee -a configure.log

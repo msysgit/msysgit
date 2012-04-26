@@ -51,7 +51,7 @@ Name: ext; Description: Windows Explorer integration; Types: custom
 Name: ext\reg; Description: Context menu entries; Flags: exclusive; Types: custom
 Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
 Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
-Name: ext\cheetah; Description: git-cheetah shell extension (32-bit only); Flags: exclusive; Types: custom
+Name: ext\cheetah; Description: git-cheetah shell extension; Flags: exclusive; Types: custom
 Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
 Name: assoc_sh; Description: Associate .sh files to be run with Bash; Types: custom
 Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
@@ -59,8 +59,9 @@ Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
 [Files]
 ; Install files that might be in use during setup under a different name.
 Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah
+Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah
 
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll; Flags: recursesubdirs replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion
 Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]
@@ -204,6 +205,7 @@ var
     RdbCRLF:array[GC_LFOnly..GC_CRLFCommitAsIs] of TRadioButton;
 
     // Wizard page and variables for the processes page.
+    SessionHandle:DWORD;
     Processes:ProcessList;
     ProcessesPage:TWizardPage;
     ProcessesListBox:TListBox;
@@ -266,38 +268,61 @@ end;
 
 procedure RefreshProcessList(Sender:TObject);
 var
+    Version:TWindowsVersion;
     Modules:TArrayOfString;
-    ProcsCloseRequired,ProcsCloseRestart:ProcessList;
-    Found:Boolean;
+    ProcsCloseRequired,ProcsCloseOptional:ProcessList;
     i:Longint;
     Caption:String;
+    ManualClosingRequired:Boolean;
 begin
-    SetArrayLength(Modules,2);
-    Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
-    Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
-    Found:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
+    GetWindowsVersionEx(Version);
 
-    Found:=FindProcessesUsingModule(ExpandConstant('{app}\git-cheetah\git_shell_ext.dll'),ProcsCloseRestart) or Found;
+    // Use the Restart Manager API when installing the shell extension on Windows Vista and above.
+    if Version.Major>=6 then begin
+        SetArrayLength(Modules,5);
+        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        Modules[2]:=ExpandConstant('{app}\bin\tk85.dll');
+        Modules[3]:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        Modules[4]:=ExpandConstant('{app}\git-cheetah\git_shell_ext64.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,Processes);
+    end else begin
+        SetArrayLength(Modules,3);
+        Modules[0]:=ExpandConstant('{app}\bin\msys-1.0.dll');
+        Modules[1]:=ExpandConstant('{app}\bin\tcl85.dll');
+        Modules[2]:=ExpandConstant('{app}\bin\tk85.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,ProcsCloseRequired);
 
-    // Misuse the "Restartable" flag to indicate which processes are required
-    // to be closed before setup can continue, and which just should be closed
-    // in order to make changes take effect immediately.
-    SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseRestart));
-    for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
-        Processes[i]:=ProcsCloseRequired[i];
-        Processes[i].Restartable:=False;
+        SetArrayLength(Modules,2);
+        Modules[0]:=ExpandConstant('{app}\git-cheetah\git_shell_ext.dll');
+        Modules[1]:=ExpandConstant('{app}\git-cheetah\git_shell_ext64.dll');
+        SessionHandle:=FindProcessesUsingModules(Modules,ProcsCloseOptional) or SessionHandle;
+
+        // Misuse the "Restartable" flag to indicate which processes are required
+        // to be closed before setup can continue, and which just should be closed
+        // in order to make changes take effect immediately.
+        SetArrayLength(Processes,GetArrayLength(ProcsCloseRequired)+GetArrayLength(ProcsCloseOptional));
+        for i:=0 to GetArrayLength(ProcsCloseRequired)-1 do begin
+            Processes[i]:=ProcsCloseRequired[i];
+            Processes[i].Restartable:=False;
+        end;
+        for i:=0 to GetArrayLength(ProcsCloseOptional)-1 do begin
+            Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseOptional[i];
+            Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
+        end;
     end;
-    for i:=0 to GetArrayLength(ProcsCloseRestart)-1 do begin
-        Processes[GetArrayLength(ProcsCloseRequired)+i]:=ProcsCloseRestart[i];
-        Processes[GetArrayLength(ProcsCloseRequired)+i].Restartable:=True;
-    end;
+
+    ManualClosingRequired:=False;
 
     ProcessesListBox.Items.Clear;
-    if (Sender=NIL) or Found then begin
+    if (Sender=NIL) or (SessionHandle>0) then begin
         for i:=0 to GetArrayLength(Processes)-1 do begin
             Caption:=Processes[i].Name+' (PID '+IntToStr(Processes[i].ID);
-            if not Processes[i].Restartable then begin
+            if Processes[i].Restartable then begin
+                Caption:=Caption+', closing is optional';
+            end else begin
                 Caption:=Caption+', closing is required';
+                ManualClosingRequired:=True;
             end;
             Caption:=Caption+')';
             ProcessesListBox.Items.Append(Caption);
@@ -305,7 +330,7 @@ begin
     end;
 
     if ContinueButton<>NIL then begin
-        ContinueButton.Enabled:=(GetArrayLength(ProcsCloseRequired)=0);
+        ContinueButton.Enabled:=not ManualClosingRequired;
     end;
 end;
 
@@ -323,19 +348,6 @@ var
     BtnPlink:TButton;
     Data:String;
 begin
-    // Until we have a 64-bit version of git-cheetah, disable it on 64-bit Windows.
-    if isWin64 then begin
-        for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
-            Data:=LowerCase(WizardForm.ComponentsList.ItemCaption[i]);
-            if Pos('context',Data)>0 then begin
-                // Select the Registry-based context menu entries.
-                WizardForm.ComponentsList.Checked[i]:=True;
-            end else if Pos('cheetah',Data)>0 then begin
-                // Disable the git-cheetah shell extension.
-                WizardForm.ComponentsList.ItemEnabled[i]:=False;
-            end;
-        end;
-    end;
 
     PrevPageID:=wpSelectProgramGroup;
 
@@ -661,10 +673,10 @@ begin
     ProcessesRefresh:=TNewButton.Create(WizardForm);
     with ProcessesRefresh do begin
         Parent:=WizardForm;
-        Width:=WizardForm.NextButton.Width;
-        Height:=WizardForm.NextButton.Height;
-        Top:=WizardForm.NextButton.Top;
-        Left:=WizardForm.ClientWidth-WizardForm.NextButton.Left-WizardForm.NextButton.Width;
+        Width:=WizardForm.CancelButton.Width;
+        Height:=WizardForm.CancelButton.Height;
+        Top:=WizardForm.CancelButton.Top;
+        Left:=WizardForm.ClientWidth-(WizardForm.CancelButton.Left+WizardForm.CancelButton.Width);
         Caption:='&Refresh';
         OnClick:=@RefreshProcessList;
     end;
@@ -712,6 +724,7 @@ end;
 function NextButtonClick(CurPageID:Integer):Boolean;
 var
     i:Integer;
+    Version:TWindowsVersion;
 begin
     Result:=True;
 
@@ -735,22 +748,26 @@ begin
         Result:=(GetArrayLength(Processes)=0);
 
         if not Result then begin
-            Result:=(MsgBox(
-                'If you continue without closing the listed applications, you will need to log off and on again before changes take effect.' + #13 + #13 +
-                'Are you sure you want to continue anyway?',
-                mbConfirmation,
-                MB_YESNO
-            )=IDYES);
+            GetWindowsVersionEx(Version);
+            if Version.Major>=6 then begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications they will be closed and restarted automatically.' + #13 + #13 +
+                    'Are you sure you want to continue?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end else begin
+                Result:=(MsgBox(
+                    'If you continue without closing the listed applications you will need to log off and on again before changes take effect.' + #13 + #13 +
+                    'Are you sure you want to continue anyway?',
+                    mbConfirmation,
+                    MB_YESNO
+                )=IDYES);
+            end;
         end;
     end;
 end;
 
-// AfterInstall
-//
-// Even though the name of this procedure suggests otherwise most of the
-// code below is only executed once after the regular installation code
-// is finished. This happens because of the if-guard right in the
-// beginning of this procedure.
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,DllPath,FileName,TempName,Cmd,Msg:String;
@@ -760,6 +777,18 @@ var
     FindRec:TFindRec;
     RootKey:Integer;
 begin
+    if CurStep=ssInstall then begin
+        // Shutdown locking processes just before the actual installation starts.
+        if SessionHandle>0 then try
+            RmShutdown(SessionHandle,RmShutdownOnlyRegistered,0);
+        except
+            Log('Line {#__LINE__}: RmShutdown not supported.');
+        end;
+
+        Exit;
+    end;
+
+    // Make sure the code below is only executed just after the actual installation finishes.
     if CurStep<>ssPostInstall then begin
         Exit;
     end;
@@ -938,10 +967,6 @@ begin
             // so we continue.
         end;
 
-        // Set SVN_SSH as specified by the user, but with escaped backslashes and quotes.
-        StringChangeEx(EnvSSH[0],'\','\\',True);
-        EnvSSH[0]:=AddQuotes(EnvSSH[0]);
-
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#__LINE__}: Unable to set the SVN_SSH environment variable.';
             MsgBox(Msg,mbError,MB_OK);
@@ -1114,10 +1139,25 @@ begin
     if IsComponentSelected('ext\cheetah') then begin
         DeleteContextMenuEntries;
 
-        FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
+        if isWin64 then begin
+            FileName:=AppDir+'\git-cheetah\git_shell_ext64.dll';
+        end else begin
+            FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
+        end;
         if not ReplaceInUseFile(FileName,FileName+'.new',True) then begin
             Log('Line {#__LINE__}: Replacing file "'+FileName+'" failed.');
         end;
+    end;
+
+    {
+        Restart any processes that were shut down via the Restart Manager
+    }
+
+    if SessionHandle>0 then try
+        RmRestart(SessionHandle,0,0);
+        RmEndSession(SessionHandle);
+    except
+        Log('Line {#__LINE__}: RmRestart not supported.');
     end;
 end;
 
@@ -1359,7 +1399,11 @@ begin
 
     DeleteContextMenuEntries;
 
-    FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
+    if isWin64 then begin
+        FileName:=AppDir+'\git-cheetah\git_shell_ext64.dll';
+    end else begin
+        FileName:=AppDir+'\git-cheetah\git_shell_ext.dll';
+    end;
     if FileExists(FileName) then begin
         if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
             Msg:='Line {#__LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
