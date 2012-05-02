@@ -95,9 +95,6 @@ cp $MSYSGITROOT/etc/gitignore etc/ &&
 mkdir etc/ssh &&
 cp $MSYSGITROOT/etc/ssh/ssh_config etc/ssh &&
 cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
-mkdir git-cheetah &&
-cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
-cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext64.dll git-cheetah/ &&
 cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< $MSYSGITROOT/etc/profile > etc/profile &&
