@@ -24,7 +24,7 @@ do
 			echo "Option '$1' needs a value" >&2
 			exit 1
 		}
-		eval ${1#--}="$2"
+		eval ${1#--}="\"$2\""
 		shift
 		;;
 	--description=*|--user=*|--repository=*)
