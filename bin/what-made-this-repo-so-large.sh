@@ -32,7 +32,7 @@ OBJECT_LIST="$( (cd "$GIT_DIR" &&
 	sed 's/^\([^ ]* *\)\{4\}\([^ ]*\).* objects\/\(..\)\/\(.\{38\}\)$/\2 \3\4/' &&
 	for pack in "$(ls objects/pack/*.pack 2> /dev/null)"
 	do
-		git verify-pack -v "$pack" |
+		git verify-pack -v "$pack" 2>&1 |
 		sed -n 's/^\([^ ]\{40\}\) *[^ ]* *[^ ]* *\([1-9][0-9]*\).*$/\2 \1/p'
 	done) |
 	sort -n -r |
