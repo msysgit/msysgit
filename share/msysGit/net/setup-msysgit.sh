@@ -168,3 +168,15 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch origin &&
 git-checkout -l -f -q -b master origin/master ||
 	error "Could not update the submodule src/git-cheetah!"
+
+# Copy profile.d/*.sh if there is any
+
+cd ../.. &&
+if test -d "$INSTALL_PATH"/installer-tmp/profile.d
+then
+	mkdir -p etc/profile.d &&
+	for file in "$INSTALL_PATH"/installer-tmp/profile.d/*.sh
+	do
+		cp "$file" etc/profile.d/
+	done
+fi

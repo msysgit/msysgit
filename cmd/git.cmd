@@ -10,6 +10,7 @@
 @if not exist "%HOME%" @set HOME=%USERPROFILE%
 
 @set PLINK_PROTOCOL=ssh
+@if not defined TERM set TERM=msys
 
 @if "%1"=="gui" @goto gui
 

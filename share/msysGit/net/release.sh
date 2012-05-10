@@ -34,6 +34,10 @@ test 0 = "$(cat /tmp/exitstatus)" &&
 strip bin/*.exe libexec/git-core/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
+if test -d /etc/profile.d
+then
+	cp -R /etc/profile.d ./
+fi &&
 sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
     -e "s|@@FOURMSYSGITBRANCH@@|$FOURMSYSGITBRANCH|g" \
   < "$SHARE"/setup-msysgit.sh > setup-msysgit.sh &&
