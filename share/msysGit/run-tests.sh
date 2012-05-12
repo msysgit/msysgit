@@ -55,7 +55,7 @@ get_finished_tests () {
 	CURRENT_TESTS="$REMAINING_TESTS"
 }
 
-cd /git &&
+cd /usr/git &&
 for file in *.exe
 do
 	dir=${file%.exe} &&
