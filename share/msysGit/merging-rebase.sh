@@ -38,7 +38,7 @@ do
 		;;
 	-h|--help)
 		cat >&2 << EOF
-Usage: $0 [options]
+Usage: $0 [options] [<upstream>]
 
 Options:
 -s|--show	show which commits would be cherry-picked
@@ -85,6 +85,8 @@ HEAD) ;; # okay
 	exit 1
 	;;
 esac
+FROM_SHA1=$(git rev-parse --short HEAD)
+TO_SHA1=$(git rev-parse --short $TO)
 
 is_ours_merge () {
 	test "$(git rev-parse $1:)" = "$(git rev-parse "$1^:")"
@@ -94,10 +96,7 @@ list_merges () {
 	git rev-list --parents "$@" | sed -n 's/ .* .*//p'
 }
 
-FROM_SHA1=$(git rev-parse --short HEAD)
-TO_SHA1=$(git rev-parse --short $TO)
-
-# Find old rebasing merge, if any
+# Find old merging rebase, if any
 
 REBASING_BASE=
 for commit in $(list_merges $TO..)
@@ -109,13 +108,13 @@ do
 	fi
 done
 
-# old style rebasing merge?
 BASE_MESSAGE=
 if test -n "$REBASING_BASE"
 then
 	BASE_MESSAGE="using $REBASING_BASE as base."
 	MESSAGE="$(git cat-file commit $REBASING_BASE |
 		sed '1,/^$/d')"
+	# old style rebasing merge?
 	case "$MESSAGE" in
 	"Rebasing merge to "*)
 		BASE_MESSAGE="using the rebasing merge $REBASING_BASE."
@@ -133,20 +132,18 @@ then
 	esac
 fi
 
-MESSAGE="$(printf "%s\n\n%s\n%s" "Start the merging-rebase to $TO" \
-	"This commit starts the rebase of $FROM_SHA1 to $TO_SHA1" \
-	"$BASE_MESSAGE")"
 RANGE=$REBASING_BASE..
-
 if test -n "$dryrun"
 then
 	git log --oneline $graph $cherry --boundary $RANGE
 	exit
 fi
 
-# Get the commits to rebase
+# Fake our own editor to inject initial steps into the edit script
 TODO_EXTRA="$(git rev-parse --git-dir)/.todo-extra"
-echo "$MESSAGE" > "$TODO_EXTRA.msg"
+printf "%s\n\n%s\n%s" "Start the merging-rebase to $TO" \
+	"This commit starts the rebase of $FROM_SHA1 to $TO_SHA1" \
+	"$BASE_MESSAGE" > "$TODO_EXTRA.msg"
 cat > "$TODO_EXTRA" << EOF
 # Start the merging rebase:
 # Reset to $TO and ...
@@ -167,5 +164,7 @@ case "\$1" in
 esac &&
 exec "$(git var GIT_EDITOR)" "\$@"
 EOF
-chmod a+x "$TMP_EDITOR" &&
+chmod a+x "$TMP_EDITOR"
+
+# Rebase!
 GIT_EDITOR="$TMP_EDITOR" git rebase --autosquash -i $REBASING_BASE
