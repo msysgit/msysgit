@@ -1115,7 +1115,7 @@ begin
 
     if IsComponentSelected('ext\reg\shellhere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','wscript "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
