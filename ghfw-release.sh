@@ -52,7 +52,8 @@ die "Failed to build git"
 echo "Building Portable Git..."
 # This puts the Portable Git release into /tmp/WinGit
 cd / &&
-NO_COMPRESS=1 sh ./share/WinGit/portable-release.sh ghfw >/dev/null ||
+NO_SFX=1 sh ./share/WinGit/portable-release.sh ghfw >/dev/null &&
+mv "$HOME/PortableGit-ghfw.7z" /tmp/WinGit/PortableGit.7z ||
 die "Couldn't build PortableGit"
 
 echo "Committing to the PortableGit branch..."
