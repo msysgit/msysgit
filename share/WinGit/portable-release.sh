@@ -44,6 +44,6 @@ then
  echo ';!@InstallEnd@!7z' &&
  cat $TARGET7) > "$TARGET"
 else
- mv $TARGET7 > "$TARGET"
+ mv $TARGET7 "$TARGET"
 fi &&
 echo "Created $TARGET"
