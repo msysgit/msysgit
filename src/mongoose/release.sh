@@ -9,6 +9,8 @@ die () {
 	exit 1
 }
 
+cd "$(dirname "$0")" || die "Could not cd to source directory"
+
 test -d $DIR || {
 	test -f $FILE ||
 	curl -O $URL ||
