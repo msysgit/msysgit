@@ -20,6 +20,7 @@ TMPDIR=/tmp/WinGit
 
 DONT_REMOVE_BUILTINS=1 "$(dirname $0)/copy-files.sh" $TMPDIR &&
 cd "$TMPDIR" &&
+GIT_DIR=/.git git rev-parse HEAD > ./VERSION &&
 cp $MSYSGITROOT/share/WinGit/README.portable ./ &&
 cp $MSYSGITROOT/msys.bat ./git-bash.bat &&
 cp $MSYSGITROOT/git-cmd.bat ./ ||
@@ -51,6 +52,6 @@ then
  echo ';!@InstallEnd@!7z' &&
  cat $TARGET7) > "$TARGET"
 else
- mv $TARGET7 > "$TARGET"
+ mv $TARGET7 "$TARGET"
 fi &&
 echo "Created $TARGET"
