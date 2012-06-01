@@ -891,6 +891,26 @@ begin
         // aliases for built-ins, so we continue.
     end;
 
+    // Create a git-upload-pack.exe hard link in the bin folder
+    FileName := AppDir + '\bin\git-upload-pack.exe'
+    try
+      LinkCreated := CreateHardLink(FileName, AppDir + '\libexec\git-core\git-upload-pack.exe', 0);
+    except
+      LinkCreated := False;
+    end;
+    if not LinkCreated then
+      Log('Line {#__LINE__}: Creating hardlink "' + FileName + '" failed.');
+
+    // Create a git-receive-pack.exe hard link in the bin folder
+    FileName := AppDir + '\bin\git-receive-pack.exe'
+    try
+      LinkCreated := CreateHardLink(FileName, AppDir + '\bin\git.exe', 0);
+    except
+      LinkCreated := False;
+    end;
+    if not LinkCreated then
+      Log('Line {#__LINE__}: Creating hardlink "' + FileName + '" failed.');
+
     {
         Adapt core.autocrlf
     }
