@@ -159,13 +159,6 @@ external 'CreateHardLinkW@Kernel32.dll stdcall delayload setuponly';
 external 'CreateHardLinkA@Kernel32.dll stdcall delayload setuponly';
 #endif
 
-function CreateSymbolicLink(lpSymlinkFileName,lpTargetFileName:String;dwFlags:DWORD):Boolean;
-#ifdef UNICODE
-external 'CreateSymbolicLinkW@Kernel32.dll stdcall delayload setuponly';
-#else
-external 'CreateSymbolicLinkA@Kernel32.dll stdcall delayload setuponly';
-#endif
-
 function BindImageEx(Flags:DWORD;ImageName,DllPath,SymbolPath:AnsiString;StatusRoutine:Integer):Boolean;
 external 'BindImageEx@Imagehlp.dll stdcall delayload setuponly';
 
@@ -845,21 +838,11 @@ begin
             end;
 
             try
-                // This will throw an exception on pre-WinVista systems.
-                LinkCreated:=CreateSymbolicLink(FileName,AppDir+'\bin\git.exe',0);
+                // This will throw an exception on pre-Win2k systems.
+                LinkCreated:=CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
             except
                 LinkCreated:=False;
-                Log('Line {#__LINE__}: Creating symbolic link "'+FileName+'" failed, will try a hard link.');
-            end;
-
-            if not LinkCreated then begin
-                try
-                    // This will throw an exception on pre-Win2k systems.
-                    LinkCreated:=CreateHardLink(FileName,AppDir+'\bin\git.exe',0);
-                except
-                    LinkCreated:=False;
-                    Log('Line {#__LINE__}: Creating hardlink "'+FileName+'" failed, will try a copy.');
-                end;
+                Log('Line {#__LINE__}: Creating hardlink "'+FileName+'" failed, will try a copy.');
             end;
 
             if not LinkCreated then begin
