@@ -1,0 +1,83 @@
+From 5a0811c893bb409e3a1ec192f12d49353b96fc61 Mon Sep 17 00:00:00 2001
+From: Adam Roben <adam@roben.org>
+Date: Tue, 5 Jun 2012 10:48:17 -0400
+Subject: [PATCH] Make Unicode cert file paths work on Windows
+
+Cert file paths are now assumed to be UTF-8 encoded. We transcode them
+to UTF-16 and then open them with _wfopen, which correctly handles
+non-ASCII characters, unlike fopen.
+
+Signed-off-by: Adam Roben <adam@roben.org>
+---
+ crypto/bio/bss_file.c |   50 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 49 insertions(+), 1 deletion(-)
+
+diff --git a/crypto/bio/bss_file.c b/crypto/bio/bss_file.c
+index 47fa266..82a8fe2 100644
+--- a/crypto/bio/bss_file.c
++++ b/crypto/bio/bss_file.c
+@@ -116,12 +116,60 @@ static BIO_METHOD methods_filep=
+ 	NULL,
+ 	};
+ 
++#if defined(OPENSSL_SYS_WINDOWS)
++static wchar_t* utf8_to_utf16(const char* input)
++	{
++	wchar_t *buf;
++	int required_size;
++	size_t input_length_including_null = strlen(input) + 1;
++	required_size = MultiByteToWideChar(CP_UTF8, 0, input, input_length_including_null, NULL, 0);
++	if (required_size <= 0)
++		return(NULL);
++	buf = malloc(required_size * sizeof(wchar_t));
++	if (MultiByteToWideChar(CP_UTF8, 0, input, input_length_including_null, buf, required_size) <= 0)
++		{
++		free(buf);
++		return(NULL);
++		}
++
++	return buf;
++	}
++#endif
++
++static FILE *open_file(const char* filename, const char* mode)
++	{
++		FILE *ret;
++#if defined(OPENSSL_SYS_WINDOWS)
++		wchar_t *wfilename, *wmode;
++
++		if ((wfilename=utf8_to_utf16(filename)) == NULL)
++			{
++			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
++			return(NULL);
++			}
++
++		if ((wmode=utf8_to_utf16(mode)) == NULL)
++			{
++			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
++			free(wfilename);
++			return(NULL);
++			}
++
++		ret=_wfopen(wfilename, wmode);
++		free(wfilename);
++		free(wmode);
++#else
++		ret=fopen(filename, mode);
++#endif
++		return(ret);
++	}
++
+ BIO *BIO_new_file(const char *filename, const char *mode)
+ 	{
+ 	BIO *ret;
+ 	FILE *file;
+ 
+-	if ((file=fopen(filename,mode)) == NULL)
++	if ((file=open_file(filename, mode)) == NULL)
+ 		{
+ 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
+ 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
+-- 
+1.7.10.msysgit.1
+
