@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=7.21.1
+VERSION=7.25.0
 DIR=curl-$VERSION
 URL=http://curl.haxx.se/download/$DIR.tar.bz2
 FILE=${URL##*/}
