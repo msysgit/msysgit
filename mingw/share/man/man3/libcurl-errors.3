@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -44,9 +44,15 @@ can be a misspelled protocol string or just a protocol libcurl has no code
 for.
 .IP "CURLE_FAILED_INIT (2)"
 Very early initialization code failed. This is likely to be an internal error
-or problem.
+or problem, or a resource problem where something fundamental couldn't get
+done at init time.
 .IP "CURLE_URL_MALFORMAT (3)"
 The URL was not properly formatted.
+.IP "CURLE_NOT_BUILT_IN (4)"
+A requested feature, protocol or option was not found built-in in this libcurl
+due to a build-time decision. This means that a feature or option was not
+enabled or explicitly disabled when libcurl was built and in order to get it
+to function you have to get a rebuilt libcurl.
 .IP "CURLE_COULDNT_RESOLVE_PROXY (5)"
 Couldn't resolve proxy. The given proxy host could not be resolved.
 .IP "CURLE_COULDNT_RESOLVE_HOST (6)"
@@ -60,20 +66,21 @@ remote server is probably not an OK FTP server.
 .IP "CURLE_REMOTE_ACCESS_DENIED (9)"
 We were denied access to the resource given in the URL.  For FTP, this occurs
 while trying to change to the remote directory.
+.IP "CURLE_FTP_ACCEPT_FAILED (10)"
+While waiting for the server to connect back when an active FTP session is
+used, an error code was sent over the control connection or similar.
 .IP "CURLE_FTP_WEIRD_PASS_REPLY (11)"
 After having sent the FTP password to the server, libcurl expects a proper
 reply. This error code indicates that an unexpected code was returned.
+.IP "CURLE_FTP_ACCEPT_TIMEOUT (12)"
+During an active FTP session while waiting for the server to connect, the
+\fICURLOPT_ACCEPTTIMOUT_MS\fP (or the internal default) timeout expired.
 .IP "CURLE_FTP_WEIRD_PASV_REPLY (13)"
 libcurl failed to get a sensible result back from the server as a response to
 either a PASV or a EPSV command. The server is flawed.
 .IP "CURLE_FTP_WEIRD_227_FORMAT (14)"
 FTP servers return a 227-line as a response to a PASV command. If libcurl
 fails to parse that line, this return code is passed back.
-.IP "CURLE_FTP_PRET_FAILED (84)"
-The FTP server does not understand the PRET command at all or does not support
-the given argument. Be careful when using \fICURLOPT_CUSTOMREQUEST\fP, a
-custom LIST command will be sent with PRET CMD before PASV as well. (Added in
-7.20.0)
 .IP "CURLE_FTP_CANT_GET_HOST (15)"
 An internal failure to lookup the host used for the new connection.
 .IP "CURLE_FTP_COULDNT_SET_TYPE (17)"
@@ -145,9 +152,11 @@ CURLOPT_INTERFACE.
 .IP "CURLE_TOO_MANY_REDIRECTS (47)"
 Too many redirects. When following redirects, libcurl hit the maximum amount.
 Set your limit with CURLOPT_MAXREDIRS.
-.IP "CURLE_UNKNOWN_TELNET_OPTION (48)"
-An option set with CURLOPT_TELNETOPTIONS was not recognized/known. Refer to
-the appropriate documentation.
+.IP "CURLE_UNKNOWN_OPTION (48)"
+An option passed to libcurl is not recognized/known. Refer to the appropriate
+documentation. This is most likely a problem in the program that uses
+libcurl. The error buffer might contain more specific information about which
+exact option it concerns.
 .IP "CURLE_TELNET_OPTION_SYNTAX (49)"
 A telnet option string was Illegally formatted.
 .IP "CURLE_PEER_FAILED_VERIFICATION (51)"
@@ -219,7 +228,10 @@ Failed to load CRL file (Added in 7.19.0)
 .IP "CURLE_SSL_ISSUER_ERROR (83)"
 Issuer check failed (Added in 7.19.0)
 .IP "CURLE_FTP_PRET_FAILED (84)"
-PRET command failed
+The FTP server does not understand the PRET command at all or does not support
+the given argument. Be careful when using \fICURLOPT_CUSTOMREQUEST\fP, a
+custom LIST command will be sent with PRET CMD before PASV as well. (Added in
+7.20.0)
 .IP "CURLE_RTSP_CSEQ_ERROR (85)"
 Mismatch of RTSP CSeq numbers.
 .IP "CURLE_RTSP_SESSION_ERROR (86)"
@@ -269,3 +281,6 @@ An invalid share object was passed to the function.
 .IP "CURLSHE_NOMEM (4)"
 Not enough memory was available.
 (Added in 7.12.0)
+.IP "CURLSHE_NOT_BUILT_IN (5)"
+The requsted sharing could not be done because the library you use don't have
+that particular feature enabled. (Added in 7.23.0)
