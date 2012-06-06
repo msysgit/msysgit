@@ -1485,6 +1485,11 @@ The variables available at this point are:
 The URL that was fetched last. This is most meaningful if you've told curl
 to follow location: headers.
 .TP
+.B filename_effective
+The ultimate filename that curl writes out to. This is only meaningful if curl
+is told to write to a file with the --remote-name or --output option. It's most
+useful in combination with the --remote-header-name option. (Added in 7.25.1)
+.TP
 .B http_code
 The numerical response code that was found in the last retrieved HTTP(S) or
 FTP(s) transfer. In 7.18.2 the alias \fBresponse_code\fP was added to show the
@@ -1569,7 +1574,7 @@ means the verification was successful. (Added in 7.19.0)
 .RE
 
 If this option is used several times, the last one will be used.
-.IP "-x, --proxy <[protocol://][user@password]proxyhost[:port]>"
+.IP "-x, --proxy <[protocol://][user:password@]proxyhost[:port]>"
 Use the specified HTTP proxy. If the port number is not specified, it is
 assumed at port 1080.
 
@@ -1581,6 +1586,10 @@ All operations that are performed over a HTTP proxy will transparently be
 converted to HTTP. It means that certain protocol specific operations might
 not be available. This is not the case if you can tunnel through the proxy, as
 one with the \fI-p, --proxytunnel\fP option.
+
+User and password that might be provided in the proxy string are URL decoded
+by libcurl. This allows you to pass in special characters such as @ by using
+%40 or pass in a colon with %3a.
 
 The proxy host can be specified the exact same way as the proxy environment
 variables, including the protocol prefix (http://) and the embedded user +
@@ -1628,12 +1637,12 @@ speed-time seconds it gets aborted. speed-time is set with -y and is 30 if
 not set.
 
 If this option is used several times, the last one will be used.
-.IP "-z, --time-cond <date expression>"
-(HTTP/FTP/FILE) Request a file that has been modified later than the given time
-and date, or one that has been modified before that time. The date expression
-can be all sorts of date strings or if it doesn't match any internal ones, it
-tries to get the time from a given file name instead! See the
-\fIcurl_getdate(3)\fP man pages for date expression details.
+.IP "-z/--time-cond <date expression>|<file>"
+(HTTP/FTP) Request a file that has been modified later than the given time and
+date, or one that has been modified before that time. The <date expression> can
+be all sorts of date strings or if it doesn't match any internal ones, it is
+taken as a filename and tries to get the modification date (mtime) from <file>
+instead. See the \fIcurl_getdate(3)\fP man pages for date expression details.
 
 Start the date expression with a dash (-) to make it request for a document
 that is older than the given date/time, default is a document that is newer

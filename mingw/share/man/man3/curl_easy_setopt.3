@@ -357,7 +357,7 @@ of bytes actually taken care of. If that amount differs from the amount passed
 to your function, it'll signal an error to the library. This will abort the
 transfer and return \fICURL_WRITE_ERROR\fP.
 
-A complete header that is passed to this function can be up to
+A complete HTTP header that is passed to this function can be up to
 \fICURL_MAX_HTTP_HEADER\fP (100K) bytes.
 
 If this option is not set, or if it is set to NULL, but
@@ -380,6 +380,9 @@ to detect it being a trailer and not an ordinary header: 1) it comes after the
 response-body. 2) it comes after the final header line (CR LF) 3) a Trailer:
 header among the regular response-headers mention what header(s) to expect in
 the trailer.
+
+For non-HTTP protocols like FTP, POP3, IMAP and SMTP this function will get
+called with the server responses to the commands that libcurl sends.
 .IP CURLOPT_WRITEHEADER
 (This option is also known as \fBCURLOPT_HEADERDATA\fP) Pass a pointer to be
 used to write the header part of the received data to. If you don't use
@@ -1061,8 +1064,8 @@ HTTP NTLM authentication. A proprietary protocol invented and used by
 Microsoft. It uses a challenge-response and hash concept similar to Digest, to
 prevent the password from being eavesdropped.
 
-You need to build libcurl with either OpenSSL or NSS support for this option
-to work, or build libcurl on Windows.
+You need to build libcurl with either OpenSSL, GnuTLS or NSS support for this
+option to work, or build libcurl on Windows.
 .IP CURLAUTH_NTLM_WB
 NTLM delegating to winbind helper. Authentication is performed by a separate
 binary application that is executed when needed. The name of the application
@@ -1180,12 +1183,13 @@ Setting the limit to 0 will make libcurl refuse any redirect. Set it to -1 for
 an infinite number of redirects (which is the default)
 .IP CURLOPT_POSTREDIR
 Pass a bitmask to control how libcurl acts on redirects after POSTs that get a
-301 or 302 response back.  A parameter with bit 0 set (value
+301, 302 or 303 response back.  A parameter with bit 0 set (value
 \fBCURL_REDIR_POST_301\fP) tells the library to respect RFC 2616/10.3.2 and
 not convert POST requests into GET requests when following a 301
 redirection. Setting bit 1 (value CURL_REDIR_POST_302) makes libcurl maintain
-the request method after a 302 redirect. CURL_REDIR_POST_ALL is a convenience
-define that sets both bits.
+the request method after a 302 redirect. Setting bit 2 (value
+\fBCURL_REDIR_POST_303) makes libcurl maintain the request method after a 302
+redirect. CURL_REDIR_POST_ALL is a convenience define that sets both bits.
 
 The non-RFC behaviour is ubiquitous in web browsers, so the library does the
 conversion by default to maintain consistency. However, a server may require a
@@ -1839,16 +1843,20 @@ source file to the remote target file.
 Pass a curl_off_t as parameter. It contains the offset in number of bytes that
 you want the transfer to start from. (Added in 7.11.0)
 .IP CURLOPT_CUSTOMREQUEST
-Pass a pointer to a zero terminated string as parameter. It will be used
-instead of GET or HEAD when doing a HTTP request, or instead of LIST or NLST
-when doing a FTP directory listing. This is useful for doing DELETE or other
-more or less obscure HTTP requests. Don't do this at will, make sure your
-server supports the command first.
+Pass a pointer to a zero terminated string as parameter. It can be used to
+specify the request instead of GET or HEAD when performing HTTP based
+requests, instead of LIST and NLST when performing FTP directory listings and
+instead of LIST and RETR when issuing POP3 based commands. This is
+particularly useful, for example, for performing a HTTP DELETE request or a
+POP3 DELE command.
 
+Please don't perform this at will, on HTTP based requests, by making sure
+your server supports the command you are sending first.
+ 
 When you change the request method by setting \fBCURLOPT_CUSTOMREQUEST\fP to
-something, you don't actually change how libcurl behaves or acts in regards to
-the particular request method, it will only change the actual string sent in
-the request.
+something, you don't actually change how libcurl behaves or acts in regards
+to the particular request method, it will only change the actual string sent
+in the request.
 
 For example: if you tell libcurl to do a HEAD request, but then change the
 request to a "GET" with \fBCURLOPT_CUSTOMREQUEST\fP you'll still see libcurl
@@ -1860,12 +1868,14 @@ POST, use \fICURLOPT_POST\fP or \fICURLOPT_POSTFIELDS\fP and so on.
 Restore to the internal default by setting this to NULL.
 
 Many people have wrongly used this option to replace the entire request with
-their own, including multiple headers and POST contents. While that might work
-in many cases, it will cause libcurl to send invalid requests and it could
-possibly confuse the remote server badly. Use \fICURLOPT_POST\fP and
+their own, including multiple headers and POST contents. While that might
+work in many cases, it will cause libcurl to send invalid requests and it
+could possibly confuse the remote server badly. Use \fICURLOPT_POST\fP and
 \fICURLOPT_POSTFIELDS\fP to set POST data. Use \fICURLOPT_HTTPHEADER\fP to
 replace or extend the set of headers sent by libcurl. Use
 \fICURLOPT_HTTP_VERSION\fP to change HTTP version.
+
+(Support for POP3 added in 7.26.0)
 .IP CURLOPT_FILETIME
 Pass a long. If it is 1, libcurl will attempt to get the modification date of
 the remote document in this operation. This requires that the remote server
@@ -1874,11 +1884,11 @@ sends the time or replies to a time querying command. The
 can be used after a transfer to extract the received time (if any).
 .IP CURLOPT_NOBODY
 A parameter set to 1 tells the library to not include the body-part in the
-output. This is only relevant for protocols that have separate header and body
-parts. On HTTP(S) servers, this will make libcurl do a HEAD request.
+output. This is only relevant for protocols that have separate header and
+body parts. On HTTP(S) servers, this will make libcurl do a HEAD request.
 
-To change request to GET, you should use \fICURLOPT_HTTPGET\fP. Change request
-to POST with \fICURLOPT_POST\fP etc.
+To change request to GET, you should use \fICURLOPT_HTTPGET\fP. Change
+request to POST with \fICURLOPT_POST\fP etc.
 .IP CURLOPT_INFILESIZE
 When uploading a file to a remote site, this option should be used to tell
 libcurl what the expected size of the infile is. This value should be passed
@@ -1958,6 +1968,8 @@ SIGALRM to enable time-outing system calls.
 
 In unix-like systems, this might cause signals to be used unless
 \fICURLOPT_NOSIGNAL\fP is set.
+
+Default timeout is 0 (zero) which means it never times out.
 .IP CURLOPT_TIMEOUT_MS
 Like \fICURLOPT_TIMEOUT\fP but takes number of milliseconds instead. If
 libcurl is built to use the standard system name resolver, that portion
@@ -2374,6 +2386,9 @@ Pass a char * pointing to a file name for your public key. If not used,
 libcurl defaults to \fB$HOME/.ssh/id_dsa.pub\fP if the HOME environment
 variable is set, and just "id_dsa.pub" in the current directory if HOME is not
 set.  (Added in 7.16.1)
+If an empty string is passed, libcurl will pass no public key to libssh2
+which then tries to compute it from the private key, this is known to work
+when libssh2 1.4.0+ is linked against OpenSSL. (Added in 7.26.0)
 .IP CURLOPT_SSH_PRIVATE_KEYFILE
 Pass a char * pointing to a file name for your private key. If not used,
 libcurl defaults to \fB$HOME/.ssh/id_dsa\fP if the HOME environment variable
