@@ -10,6 +10,7 @@ package require registry 1.0
 
 set wer "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows"
 set wer "$wer\\Windows Error Reporting"
+registry set "$wer" "Disabled" 1 dword
 registry set "$wer" "ForceQueue" 1 dword
 registry set "$wer" "DontShowUI" 1 dword
 registry set "$wer\\Consent" "DefaultConsent" 1 dword
