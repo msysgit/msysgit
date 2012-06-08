@@ -90,7 +90,7 @@ cp $MSYSGITROOT/etc/bash_profile etc/ &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
 cp $MSYSGITROOT/etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
-cp $MSYSGITROOT/etc/gitattributes etc/ &&
+cp $MSYSGITROOT/etc/gitattributes{,.suggested} etc/ &&
 cp $MSYSGITROOT/etc/gitignore.suggested etc/ &&
 mkdir etc/ssh &&
 cp $MSYSGITROOT/etc/ssh/ssh_config etc/ssh &&
