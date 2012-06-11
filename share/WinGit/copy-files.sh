@@ -47,7 +47,7 @@ head.exe,id.exe,kill.exe,less.exe,libW11.dll,ln.exe,\
 ls.exe,m4.exe,md5sum.exe,mkdir.exe,msys-1.0.dll,msysltdl-3.dll,mv.exe,patch.exe,\
 patch.exe.manifest,perl.exe,printf,ps.exe,pwd,recodetree,rm.exe,rmdir.exe,rxvt.exe,\
 scp.exe,sed.exe,sh.exe,sleep.exe,sort.exe,split.exe,\
-ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,\
+ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,ssh-noprompt,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,\
 unzip.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
@@ -86,14 +86,15 @@ cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
 md5sum $MSYSGITROOT/bin/msys-1.0.dll > etc/msys-1.0.dll.md5 &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
+cp $MSYSGITROOT/etc/bash_profile etc/ &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
 cp $MSYSGITROOT/etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
 cp $MSYSGITROOT/etc/gitattributes etc/ &&
+cp $MSYSGITROOT/etc/gitignore etc/ &&
+mkdir etc/ssh &&
+cp $MSYSGITROOT/etc/ssh/ssh_config etc/ssh &&
 cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
-mkdir git-cheetah &&
-cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext.dll git-cheetah/ &&
-cp $MSYSGITROOT/src/git-cheetah/explorer/git_shell_ext64.dll git-cheetah/ &&
 cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< $MSYSGITROOT/etc/profile > etc/profile &&
