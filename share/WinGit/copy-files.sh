@@ -65,6 +65,7 @@ vim.exe}) |
 tar xf - &&
 rm -rf bin/cvs.exe &&
 (test ! -f $MSYSGITROOT/lib/Git.pm || cp -u $MSYSGITROOT/lib/Git.pm lib/perl5/site_perl/Git.pm) &&
+(test ! -d $MSYSGITROOT/lib/Git || cp -uR $MSYSGITROOT/lib/Git lib/perl5/site_perl/Git) &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
