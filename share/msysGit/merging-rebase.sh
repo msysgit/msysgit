@@ -68,20 +68,20 @@ fi
 
 HEAD_NAME="$(git rev-parse --symbolic-full-name HEAD)"
 case "$HEAD_NAME" in
-refs/heads/devel)
+refs/heads/*)
 	UPSTREAM=$(git rev-parse --symbolic-full-name HEAD@{u}) || {
 		echo "Not tracking any remote branch!" >&2
 		exit 1
 	}
 	test "$(git rev-parse HEAD)" = "$(git rev-parse $UPSTREAM)" ||
-	test "$(git rev-parse devel@{1})" = "$(git rev-parse $UPSTREAM)" || {
-		echo "Your 'devel' is not up-to-date!" >&2
+	test "$(git rev-parse $HEAD_NAME@{1})" = "$(git rev-parse $UPSTREAM)" || {
+		echo "Your '$HEAD_NAME' is not up-to-date!" >&2
 		exit 1
 	}
 	;; # okay
 HEAD) ;; # okay
 *)
-	echo "Not on 'devel'!" >&2
+	echo "Not on any branch!" >&2
 	exit 1
 	;;
 esac
@@ -167,4 +167,4 @@ EOF
 chmod a+x "$TMP_EDITOR"
 
 # Rebase!
-GIT_EDITOR="$TMP_EDITOR" git rebase --autosquash -i $REBASING_BASE
+GIT_EDITOR="$TMP_EDITOR" git rebase --autosquash -i ${REBASING_BASE:-$TO}
