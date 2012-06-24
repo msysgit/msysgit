@@ -505,7 +505,7 @@ begin
             Parent:=PuTTYPage.Surface;
             Caption:=
                 'PuTTY sessions were found in your Registry. You may specify the path' + #13 +
-                'to an existing copy of (Tortoise)Plink.exe from the TortoiseSVN/CVS' + #13 +
+                'to an existing copy of (Tortoise)Plink.exe from the TortoiseGit/SVN/CVS' + #13 +
                 'or PuTTY applications. The GIT_SSH and SVN_SSH environment' + #13 +
                 'variables will be adjusted to point to the following executable:';
             Left:=ScaleX(28);
