@@ -2,8 +2,8 @@
 
 cd "$(dirname "$0")"
 
-URL=http://ftp.uni-koeln.de/util/arc/
-TAR=unzip60.tar.gz
+URL=ftp://ftp.info-zip.org/pub/infozip/src/
+TAR=unzip60.tgz
 DIR=unzip60
 
 if test ! -f $TAR
