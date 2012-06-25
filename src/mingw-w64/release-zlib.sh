@@ -7,6 +7,11 @@ mirror=http://zlib.net/
 file=zlib-1.2.7.tar.gz
 dir=${file%.tar.gz}
 
+die () {
+	echo "$*" >&2
+	exit 1
+}
+
 # download it
 if ! (test -f $file || curl $mirror$file -o $file)
 then
@@ -18,17 +23,16 @@ then
 fi
 
 # unpack it
-test -d $dir || tar xzf $file || exit
+test -d $dir || tar xzf $file || die "Failed to unpack archive"
 
 # initialize Git repository
 test -d $dir/.git ||
-(cd $dir && git init && git add . && git commit -m initial) || exit
-
-# patch it
-if ! grep DISABLED_MINGW $dir/configure > /dev/null 2>&1
-then
-	(cd $dir && git apply --verbose ../patch/zlib-config.patch) || exit
-fi
+(cd $dir &&
+ git init &&
+ git config core.autocrlf false &&
+ git add . &&
+ git commit -m "Import of $file"
+) || die "Failed to create repository"
 
 # compile it
 sysroot="$(pwd)/sysroot/x86_64-w64-mingw32"
@@ -36,8 +40,8 @@ cross="$(pwd)/sysroot/bin/x86_64-w64-mingw32"
 test -f $dir/example.exe || {
 	(cd $dir &&
 	 CC="$cross-gcc.exe" AR="$cross-ar.exe" RANLIB="$cross-ranlib.exe" \
-	 ./configure --static --prefix=$sysroot &&
-	 make) || exit
+	 ./configure --static --prefix=$sysroot --uname=CYGWIN &&
+	 make) || die "Failed to compile"
 }
 
 # install it

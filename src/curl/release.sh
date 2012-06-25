@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=7.21.1
+VERSION=7.26.0
 DIR=curl-$VERSION
 URL=http://curl.haxx.se/download/$DIR.tar.bz2
 FILE=${URL##*/}
@@ -31,7 +31,7 @@ test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
 die "Could not apply patches"
 
 (cd $DIR &&
-./configure --prefix=/mingw --with-ssl=/mingw --enable-sspi &&
+./configure --prefix=/mingw --with-ssl=/mingw --enable-sspi --disable-shared &&
 make &&
 index=$(/share/msysGit/pre-install.sh) &&
 make install &&
