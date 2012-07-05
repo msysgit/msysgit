@@ -67,7 +67,7 @@ release_msys() {
 	 cd bld &&
 	 DLL=i686-pc-msys/winsup/cygwin/new-msys-1.0.dll &&
 	 (test -f Makefile && test -z "$debug_clean" ||
-	  ../src/configure --prefix=/usr) &&
+	  ../src/configure --prefix=/usr --enable-newlib-mb) &&
 	 (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
 	 (test -z "$debug_clean" || make clean) &&
 	 (make || test -f $DLL) &&
@@ -101,7 +101,7 @@ release_bash() {
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--localstatedir=/var \
-		--disable-nls \
+		--enable-multibyte \
 		--disable-rpath \
 		--without-curses) &&
 	 (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&

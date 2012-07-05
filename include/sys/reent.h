@@ -150,6 +150,8 @@ struct __sFILE {
   struct _reent *_data;
 };
 
+typedef struct __sFILE   __FILE;
+
 /*
  * rand48 family support
  *
@@ -226,6 +228,14 @@ struct _reent
           int _gamma_signgam;
           __extension__ unsigned long long _rand_next;
           struct _rand48 _r48;
+          _mbstate_t _mblen_state;
+          _mbstate_t _mbtowc_state;
+          _mbstate_t _wctomb_state;
+          _mbstate_t _mbrlen_state;
+          _mbstate_t _mbrtowc_state;
+          _mbstate_t _mbsrtowcs_state;
+          _mbstate_t _wcrtomb_state;
+          _mbstate_t _wcsrtombs_state;
         } _reent;
   /* Two next two fields were once used by malloc.  They are no longer
      used. They are used to preserve the space used before so as to
@@ -259,7 +269,19 @@ struct _reent
     0, _NULL, _NULL, 0, _NULL, _NULL, 0, _NULL, { {0, _NULL, "", \
     { 0,0,0,0,0,0,0,0}, 0, 1, \
     {{_RAND48_SEED_0, _RAND48_SEED_1, _RAND48_SEED_2}, \
-     {_RAND48_MULT_0, _RAND48_MULT_1, _RAND48_MULT_2}, _RAND48_ADD}} } }
+     {_RAND48_MULT_0, _RAND48_MULT_1, _RAND48_MULT_2}, _RAND48_ADD}, \
+     {0,{0}}, {0,{0}}, {0,{0}}, {0,{0}}, {0,{0}}, {0,{0}}, {0,{0}}, {0,{0}} \
+     } } }
+
+#define _REENT_MBLEN_STATE(ptr)	((ptr)->_new._reent._mblen_state)
+#define _REENT_MBTOWC_STATE(ptr)((ptr)->_new._reent._mbtowc_state)
+#define _REENT_WCTOMB_STATE(ptr)((ptr)->_new._reent._wctomb_state)
+#define _REENT_MBRLEN_STATE(ptr)((ptr)->_new._reent._mbrlen_state)
+#define _REENT_MBRTOWC_STATE(ptr)((ptr)->_new._reent._mbrtowc_state)
+#define _REENT_MBSRTOWCS_STATE(ptr)((ptr)->_new._reent._mbsrtowcs_state)
+#define _REENT_WCRTOMB_STATE(ptr)((ptr)->_new._reent._wcrtomb_state)
+#define _REENT_WCSRTOMBS_STATE(ptr)((ptr)->_new._reent._wcsrtombs_state)
+#define _REENT_CHECK_MISC(ptr)	        /* nothing */
 
 /*
  * All references to struct _reent are via this pointer.

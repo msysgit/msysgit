@@ -1,0 +1,39 @@
+From d046b8196bc53e294c99c6dd7fe4fc642a2541e2 Mon Sep 17 00:00:00 2001
+From: Karsten Blees <blees@dcon.de>
+Date: Thu, 5 Jul 2012 10:57:36 +0200
+Subject: [PATCH 17/17] bash: fix compile errors
+
+According to POSIX, MB_CUR_MAX is the maximum multibyte length of the
+_current_ locale, thus it cannot be used to size an array. Use MB_LEN_MAX
+instead.
+
+Signed-off-by: Karsten Blees <blees@dcon.de>
+---
+ msys/packages/bash/3.1/subst.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/subst.c b/msys/packages/bash/3.1/subst.c
+index d4f18e7..1b538aa 100644
+--- a/msys/packages/bash/3.1/subst.c
++++ b/msys/packages/bash/3.1/subst.c
+@@ -1789,7 +1789,7 @@ string_list_dollar_star (list)
+      WORD_LIST *list;
+ {
+ #if defined (HANDLE_MULTIBYTE)
+-  char sep[MB_CUR_MAX + 1];
++  char sep[MB_LEN_MAX + 1];
+ #else
+   char sep[2];
+ #endif
+@@ -1830,7 +1830,7 @@ string_list_dollar_at (list, quoted)
+ {
+   char *ifs, *ret;
+ #if defined (HANDLE_MULTIBYTE)
+-  char sep[MB_CUR_MAX + 1];
++  char sep[MB_LEN_MAX + 1];
+ #else
+   char sep[2];
+ #endif
+-- 
+1.7.10.rc1.5708.g87c2b
+
