@@ -101,7 +101,7 @@ release_bash() {
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--localstatedir=/var \
-		--disable-nls \
+		--enable-multibyte \
 		--disable-rpath \
 		--without-curses) &&
 	 (test -z "$debug" || perl -i.bak -pe 's/-O2//g' $(find -name Makefile)) &&
