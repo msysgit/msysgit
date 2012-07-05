@@ -15,6 +15,7 @@ extern "C" {
 #define __need_size_t
 #define __need_wchar_t
 #include <stddef.h>
+#include <wchar.h>
 
 #include <sys/reent.h>
 
@@ -69,15 +70,15 @@ long	_EXFUN(labs,(long));
 ldiv_t	_EXFUN(ldiv,(long __numer, long __denom));
 _PTR	_EXFUN(malloc,(size_t __size));
 int	_EXFUN(mblen,(const char *, size_t));
-int	_EXFUN(_mblen_r,(struct _reent *, const char *, size_t, int *));
+int	_EXFUN(_mblen_r,(struct _reent *, const char *, size_t, mbstate_t *));
 int	_EXFUN(mbtowc,(wchar_t *, const char *, size_t));
-int	_EXFUN(_mbtowc_r,(struct _reent *, wchar_t *, const char *, size_t, int *));
+int	_EXFUN(_mbtowc_r,(struct _reent *, wchar_t *, const char *, size_t, mbstate_t *));
 int	_EXFUN(wctomb,(char *, wchar_t));
-int	_EXFUN(_wctomb_r,(struct _reent *, char *, wchar_t, int *));
+int	_EXFUN(_wctomb_r,(struct _reent *, char *, wchar_t, mbstate_t *));
 size_t	_EXFUN(mbstowcs,(wchar_t *, const char *, size_t));
-size_t	_EXFUN(_mbstowcs_r,(struct _reent *, wchar_t *, const char *, size_t, int *));
+size_t	_EXFUN(_mbstowcs_r,(struct _reent *, wchar_t *, const char *, size_t, mbstate_t *));
 size_t	_EXFUN(wcstombs,(char *, const wchar_t *, size_t));
-size_t	_EXFUN(_wcstombs_r,(struct _reent *, char *, const wchar_t *, size_t, int *));
+size_t	_EXFUN(_wcstombs_r,(struct _reent *, char *, const wchar_t *, size_t, mbstate_t *));
 #ifndef __STRICT_ANSI__
 #ifndef _REENT_ONLY
 int     _EXFUN(mkstemp,(char *));

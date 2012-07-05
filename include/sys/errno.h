@@ -145,6 +145,7 @@ extern __IMPORT int sys_nerr;
 #define ENOMEDIUM 135   /* No medium (in tape drive) */
 #define ENOSHARE 136    /* No such host or network path */
 #define ECASECLASH 137  /* Filename exists with different case */
+#define EILSEQ 138
 
 /* From cygwin32 and MSYS.  */
 #define EWOULDBLOCK EAGAIN	/* Operation would block */
