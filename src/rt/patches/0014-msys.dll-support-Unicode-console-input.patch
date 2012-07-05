@@ -1,0 +1,94 @@
+From ddcfdc189bfc751c226962ace8c5812ba666b0b2 Mon Sep 17 00:00:00 2001
+From: Karsten Blees <blees@dcon.de>
+Date: Thu, 5 Jul 2012 10:18:33 +0200
+Subject: [PATCH 14/17] msys.dll: support Unicode console input
+
+The msys.dll console handler still uses Windows system encoding for console
+input, while everything else in msys.dll has been switched to UTF-8.
+
+Use ReadConsoleInputW for console input and convert from UTF-16 to UTF-8.
+
+Limitations: the current implementation doesn't support UTF-16 surrogate
+pairs. I don't know if its even possible to enter CJK extended chars (i.e.
+> \u0ffff) on a keyboard, and I have no way to test this.
+
+Signed-off-by: Karsten Blees <blees@dcon.de>
+---
+ msys/rt/src/winsup/cygwin/fhandler_console.cc |   26 +++++++++++++++----------
+ 1 file changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/msys/rt/src/winsup/cygwin/fhandler_console.cc b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+index 233bf09..724db03 100644
+--- a/msys/rt/src/winsup/cygwin/fhandler_console.cc
++++ b/msys/rt/src/winsup/cygwin/fhandler_console.cc
+@@ -258,7 +258,7 @@ fhandler_console::read (void *pv, size_t buflen)
+       INPUT_RECORD input_rec;
+       const char *toadd = NULL;
+ 
+-      if (!ReadConsoleInput (h, &input_rec, 1, &nread))
++      if (!ReadConsoleInputW (h, &input_rec, 1, &nread))
+ 	{
+ 	  __seterrno ();
+ 	  syscall_printf ("ReadConsoleInput failed, %E");
+@@ -301,7 +301,6 @@ fhandler_console::read (void *pv, size_t buflen)
+ 	  if (!input_rec.Event.KeyEvent.bKeyDown)
+ 	    continue;
+ 
+-#define ich (input_rec.Event.KeyEvent.uChar.AsciiChar)
+ #define wch (input_rec.Event.KeyEvent.uChar.UnicodeChar)
+ #define ALT_PRESSED (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)
+ #define CTRL_PRESSED (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)
+@@ -317,11 +316,20 @@ fhandler_console::read (void *pv, size_t buflen)
+ 	    }
+ 	  else
+ 	    {
+-	      tmp[1] = ich;
+-	      /* Need this check since US code page seems to have a bug when
+-		 converting a CTRL-U. */
+-	      if ((unsigned char)ich > 0x7f)
+-		con_to_str (tmp + 1, tmp + 1, 1);
++	      if (wch < 0x80)
++		{
++		  tmp[1] = wch;
++		}
++	      else
++		{
++		  wchar_t wtmp[2];
++		  wtmp[0] = wch;
++		  wtmp[1] = 0;
++		  int len = wcstoutf(&tmp[1], wtmp, sizeof(tmp) - 1);
++		  if (len < 0)
++		    return -1;
++		  nread = (unsigned int) len;
++		}
+ 	      /* Determine if the keystroke is modified by META.  The tricky
+ 		 part is to distinguish whether the right Alt key should be
+ 		 recognized as Alt, or as AltGr. */
+@@ -332,7 +340,7 @@ fhandler_console::read (void *pv, size_t buflen)
+ 		   an ASCII control character, interpret is as META. */
+ 		meta = (control_key_state & ALT_PRESSED) != 0
+ 		       && ((control_key_state & CTRL_PRESSED) == 0
+-			   || (ich >= 0 && ich <= 0x1f || ich == 0x7f));
++			   || (wch <= 0x1f || wch == 0x7f));
+ 	      else
+ 		/* Win9x: there's no way to distinguish Alt from AltGr, so rely
+ 		   on meta_mask heuristic (see fhandler_console constructor). */
+@@ -347,7 +355,6 @@ fhandler_console::read (void *pv, size_t buflen)
+ 		  nread++;
+ 		}
+ 	    }
+-#undef ich
+ #undef wch
+ #undef ALT_PRESSED
+ #undef CTRL_PRESSED
+@@ -454,7 +461,6 @@ fhandler_console::read (void *pv, size_t buflen)
+ 	  else if (res)
+ 	    break;
+ 	}
+-#undef ich
+     }
+ 
+   while (buflen)
+-- 
+1.7.10.rc1.5708.g87c2b
+
