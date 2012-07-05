@@ -104,7 +104,7 @@ int main(void)
             } else {
                 WCHAR script[MAX_PATH];
                 gui = 1;
-                wcscat(script, exepath);
+                wcscpy(script, exepath);
                 PathAppend(script, L"libexec\\git-core\\git-gui");
                 PathQuoteSpaces(script);
                 wcscpy(cmd, L"wish.exe ");
