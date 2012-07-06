@@ -11,12 +11,33 @@
 #include <windows.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include <stdio.h>
 
-#ifdef __MSC_VER__
-int __stdcall wmain(void)
-#else
-int main(void)
-#endif
+static void
+PrintError(LPCWSTR wszPrefix, DWORD dwError)
+{
+    LPWSTR lpsz = NULL;
+    DWORD cch = 0;
+
+    cch = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER
+                         | FORMAT_MESSAGE_FROM_SYSTEM
+                         | FORMAT_MESSAGE_IGNORE_INSERTS,
+                         NULL, dwError, LANG_NEUTRAL,
+                         (LPTSTR)&lpsz, 0, NULL);
+    if (cch < 1) {
+        cch = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER
+                             | FORMAT_MESSAGE_FROM_STRING
+                             | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                             L"Code 0x%1!08x!",
+                             0, LANG_NEUTRAL, (LPTSTR)&lpsz, 0,
+                             (va_list*)&dwError);
+    }
+    fwprintf(stderr, L"%s: %s", wszPrefix, lpsz);
+    LocalFree((HLOCAL)lpsz);
+}
+
+int
+main(void)
 {
     int r = 1, wait = 1;
     WCHAR exepath[MAX_PATH], exe[MAX_PATH];
@@ -136,20 +157,29 @@ int main(void)
     {
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
+        BOOL br = FALSE;
         ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
         ZeroMemory(&si, sizeof(STARTUPINFO));
         si.cb = sizeof(STARTUPINFO);
-        CreateProcess(exep,/* module: null means use command line */
-                      cmd,  /* modified command line */
-                      NULL, /* process handle inheritance */
-                      NULL, /* thread handle inheritance */
-                      TRUE, /* handles inheritable? */
-                      CREATE_UNICODE_ENVIRONMENT,
-                      NULL, /* environment: use parent */
-                      NULL, /* starting directory: use parent */
-                      &si, &pi);
-        if (wait)
-            WaitForSingleObject(pi.hProcess, INFINITE);
+        br = CreateProcess(exep,/* module: null means use command line */
+                           cmd,  /* modified command line */
+                           NULL, /* process handle inheritance */
+                           NULL, /* thread handle inheritance */
+                           TRUE, /* handles inheritable? */
+                           CREATE_UNICODE_ENVIRONMENT,
+                           NULL, /* environment: use parent */
+                           NULL, /* starting directory: use parent */
+                           &si, &pi);
+        if (br) {
+            if (wait)
+                WaitForSingleObject(pi.hProcess, INFINITE);
+            if (!GetExitCodeProcess(pi.hProcess, (DWORD *)&r))
+                PrintError(L"error reading exit code", GetLastError());
+            CloseHandle(pi.hProcess);
+        } else {
+            PrintError(L"error launching git", GetLastError());
+            r = 1;
+        }
     }
 
     free(cmd);
@@ -158,3 +188,12 @@ int main(void)
     SetConsoleCP(codepage);
     ExitProcess(r);
 }
+
+/*
+ * Local variables:
+ * mode: c
+ * indent-tabs-mode: nil
+ * c-basic-offset: 4
+ * tab-width: 4
+ * End:
+ */
