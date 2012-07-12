@@ -76,6 +76,8 @@ test "$do_compile" && {
 			git add share/WinGit/ReleaseNotes.rtf &&
 			git commit -m "Git for Windows $version"
 		 fi) &&
+		(cd git/contrib/subtree &&
+			make install INSTALL=/bin/install prefix=) &&
 		(cd git &&
 		 create_msysgit_tag $version &&
 		 make install) &&
