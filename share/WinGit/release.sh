@@ -119,6 +119,9 @@ test -z "$force" && {
 		*/git-gui--askpass|*/git-gui--askyesno|*/git-gui.tcl)
 			basename=git-gui/$(basename "$f")
 			;;
+		*/git-subtree)
+			basename=contrib/subtree/$(basename "$f")
+			;;
 		*)
 			basename=$(basename "$f")
 			;;
