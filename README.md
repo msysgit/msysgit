@@ -35,4 +35,4 @@ Consequently, MSys ships with a POSIX layer (based on an old version of Cygwin) 
 
 For more information and documentation, please have a look and enhance our [Wiki](https://github.com/msysgit/msysgit/wiki).
 
-For code contributions and discussions, please see our [mailing list](http://groups.google.com/group/msysgit).
+For code contributions and discussions, please see our [mailing list](http://groups.google.com/group/msysgit). 
