@@ -99,5 +99,6 @@ cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
 sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
 	< $MSYSGITROOT/etc/profile > etc/profile &&
 cp $MSYSGITROOT/share/resources/git.ico etc/ &&
+cp $MSYSGITROOT/share/resources/git.ico share/git-gui/lib/git-gui.ico &&
 find bin libexec -iname \*.exe -o -iname \*.dll | sort > etc/fileList-bindimage.txt ||
 exit 1
