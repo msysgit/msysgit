@@ -32,7 +32,7 @@ DisableProgramGroupPage=auto
 DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
-UninstallDisplayIcon=etc\git.ico
+UninstallDisplayIcon={app}\etc\git.ico
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
