@@ -152,16 +152,23 @@ esac
 
 
 . /git/contrib/completion/git-completion.bash
+
+# non-printable characters must be enclosed inside \[ and \]
+PS1='\[\033[0m\]'              # VT100 compat: reset all colors
+PS1="$PS1"'$MSYSTEM:\w'        # e.g. MINGW32:/path/to/cwd
+PS1="$PS1"'\[\007\]'           # Ascii character BEL
+PS1="$PS1"'\n'                 # new line
+PS1="$PS1"'\[\033[32m\]'       # change color
+PS1="$PS1"'\u@\h '             # user@host<space>
+PS1="$PS1"'\[\033[33m\]'       # change color
+PS1="$PS1"'\w'                 # current working directory
 if test -z "$WINELOADERNOEXEC"
 then
-	PS1='\[\033]0;$MSYSTEM:\w\007
-\033[32m\]\u@\h \[\033[33m\w$(__git_ps1)\033[0m\]
-$ '
-else
-	PS1='\[\033]0;$MSYSTEM:\w\007
-\033[32m\]\u@\h \[\033[33m\w\033[0m\]
-$ '
+	PS1="$PS1"'$(__git_ps1)'   # bash function
 fi
+PS1="$PS1"'\[\033[0m\]'        # change color
+PS1="$PS1"'\n'                 # new line
+PS1="$PS1"'$ '                 # prompt: always $
 
 # set default options for 'less'
 export LESS=-FRSX
