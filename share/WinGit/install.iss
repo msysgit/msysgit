@@ -702,7 +702,7 @@ begin
         if not IsDirWritable(WizardDirValue) then begin
             // If the default directory is not writable, choose another default that most likely is.
             // This will be checked later again when the user clicks "Next".
-            WizardForm.DirEdit.Text:=ExpandConstant('{localappdata}\{#APP_NAME}');
+            WizardForm.DirEdit.Text:=ExpandConstant('{userpf}\{#APP_NAME}');
         end;
     end;
 
