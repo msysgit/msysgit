@@ -63,24 +63,43 @@ begin
     end;
 end;
 
-// Checks whether the specified directory can be created and written to.
-// Note that the created dummy file is not explicitly deleted here, so that
-// needs to be done as part of the uninstall process.
+// Checks whether the specified directory can be created and written to
+// by creating all intermediate directories and a temporary file.
 function IsDirWritable(DirName:String):Boolean;
 var
-    FileName:String;
+    AbsoluteDir,FirstExistingDir,FirstCreatedDir,FileName:String;
 begin
-    Result:=False;
+    Result:=True;
 
-    if not ForceDirectories(DirName) then begin
-        Exit;
+    AbsoluteDir:=ExpandFileName(DirName);
+
+    FirstExistingDir:=AbsoluteDir;
+    while not DirExists(FirstExistingDir) do begin
+        FirstCreatedDir:=FirstExistingDir;
+        FirstExistingDir:=ExtractFileDir(FirstExistingDir);
     end;
+    Log('Line {#__LINE__}: First directory in hierarchy that already exists is "' + FirstExistingDir + '".')
 
-    FileName:=DirName+'\setup.ini';
+    if Length(FirstCreatedDir)>0 then begin
+        Log('Line {#__LINE__}: First directory in hierarchy needs to be created is "' + FirstCreatedDir + '".')
 
-    if not SetIniBool('Dummy','Writable',true,FileName) then begin
-        Exit;
+        if ForceDirectories(DirName) then begin
+            FileName:=GenerateUniqueName(DirName,'.txt');
+            Log('Line {#__LINE__}: Trying to write to temporary file "' + Filename + '".')
+
+            if SaveStringToFile(FileName,'This file is writable.',False) then begin
+                if not DeleteFile(FileName) then begin
+                    Result:=False;
+                end;
+            end else begin
+                Result:=False;
+            end;
+        end else begin
+            Result:=False;
+        end;
+
+        if not DelTree(FirstCreatedDir,True,False,True) then begin
+            Result:=False;
+        end;
     end;
-
-    Result:=GetIniBool('Dummy','Writable',false,FileName);
 end;
