@@ -1,3 +1,5 @@
+[Code]
+
 // Returns the value(s) of the environment variable "VarName", which is tokenized
 // by ";" into an array of strings. This makes it easy query PATH-like variables
 // in addition to normal variables. If "AllUsers" is true, the common variables

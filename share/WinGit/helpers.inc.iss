@@ -1,3 +1,5 @@
+[Code]
+
 // Copies a NULL-terminated array of characters to a string.
 function ArrayToString(Chars:array of Char):String;
 var

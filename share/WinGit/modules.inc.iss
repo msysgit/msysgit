@@ -1,3 +1,5 @@
+[Code]
+
 // This file contains code paths for Windows 95, Windows 2000 and Windows Vista
 // to get a list of processes that use a given module (DLL). For the processes
 // that lock the file, the process ID, the full path to the executable, and file
