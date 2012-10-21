@@ -22,6 +22,7 @@ SolidCompression=yes
 ; Installer-related
 AllowNoIcons=yes
 AppName={#APP_NAME}
+AppPublisher=The Git Development Community
 AppPublisherURL={#APP_URL}
 AppVersion={#APP_VERSION}
 ChangesEnvironment=yes
@@ -33,6 +34,11 @@ DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
 UninstallDisplayIcon={app}\etc\git.ico
+#if Pos('-',APP_VERSION)>0
+    VersionInfoVersion={#Copy(APP_VERSION,1,Pos('-',APP_VERSION)-1)}
+#else
+    VersionInfoVersion={#APP_VERSION}
+#endif
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
