@@ -335,7 +335,7 @@ end;
 
 procedure InitializeWizard;
 var
-    i,PrevPageID:Integer;
+    PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
     PuTTYSessions:TArrayOfString;
