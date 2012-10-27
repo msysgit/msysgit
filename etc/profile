@@ -24,8 +24,10 @@ fi
 # strip out cygwin paths from PATH
 case "$PATH" in
 */cygwin/*)
-  export PATH=$(IFS=':'; t=($PATH); unset IFS; t=(${t[@]%%*/cygwin/*}); IFS=':'; echo "${t[*]}")
-  ;;
+	PATH="$(awk -vRS=: -vORS=: '!/cygwin/' <<< "$PATH")"
+	# awk always adds a trailing separator
+	export PATH="${PATH%:}"
+	;;
 esac
 
 if [ -z "$USERNAME" ]; then
