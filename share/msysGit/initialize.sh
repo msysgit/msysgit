@@ -7,7 +7,7 @@ test -d /git/.git || {
 	git init &&
 	git config core.autocrlf false &&
 	git remote add -f origin \
-		git://github.com/msysgit/git &&
+		https://github.com/msysgit/git &&
 	if test ! -f /etc/full-git-sha1 ||
 		! git reset $(cat /etc/full-git-sha1)
 	then
@@ -23,7 +23,7 @@ test -d /.git || {
 	cd / &&
 	git init &&
 	git config core.autocrlf false &&
-	git remote add -f origin git://github.com/msysgit/msysgit &&
+	git remote add -f origin https://github.com/msysgit/msysgit &&
 	if test ! -f /etc/full-msysgit-sha1 ||
 		! git reset $(cat /etc/full-msysgit-sha1)
 	then
