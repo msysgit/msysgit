@@ -1,4 +1,4 @@
-From 182f26a8f3abd4b7171757540753fc387a7a9115 Mon Sep 17 00:00:00 2001
+From 2eba3794fc214f8f471ae2563ddb0f5a5df610dc Mon Sep 17 00:00:00 2001
 From: Erik Faye-Lund <kusmabite@gmail.com>
 Date: Tue, 9 Oct 2012 22:48:36 +0200
 Subject: [PATCH] dirty patch
@@ -6,15 +6,13 @@ Subject: [PATCH] dirty patch
 ---
  Makefile.pre.in       |  11 +-
  Modules/Setup         | 506 ++++++++++++++++++++++++++++++++++++++++++++++++++
- Modules/Setup.dist    |   2 +-
  Modules/posixmodule.c |  35 ++--
- Modules/pwdmodule.c   |   3 +-
  PC/_winreg.c          |  16 ++
  PC/import_nt.c        |   2 +-
  Python/dynload_win.c  |   3 +-
  Python/random.c       |   7 +
  configure             |  12 +-
- 10 files changed, 566 insertions(+), 31 deletions(-)
+ 8 files changed, 563 insertions(+), 29 deletions(-)
  create mode 100644 Modules/Setup
 
 diff --git a/Makefile.pre.in b/Makefile.pre.in
@@ -56,7 +54,7 @@ index e2237a9..966a915 100644
  platform: $(BUILDPYTHON)
 diff --git a/Modules/Setup b/Modules/Setup
 new file mode 100644
-index 0000000..1da3d75
+index 0000000..2daecba
 --- /dev/null
 +++ b/Modules/Setup
 @@ -0,0 +1,506 @@
@@ -176,7 +174,7 @@ index 0000000..1da3d75
 +
 +posix posixmodule.c		# posix (UNIX) system calls
 +errno errnomodule.c		# posix (UNIX) errno values
-+pwd pwdmodule.c			# this is needed to find out the user's home dir
++# pwd pwdmodule.c			# this is needed to find out the user's home dir
 +				# if $HOME is not set
 +_sre _sre.c			# Fredrik Lundh's new regular expressions
 +_codecs _codecsmodule.c		# access to the builtin codecs and codec registry
@@ -566,19 +564,6 @@ index 0000000..1da3d75
 +_winred ../PC/_winreg.c
 +_subprocess ../PC/_subprocess.c
 +msvcrt ../PC/msvcrtmodule.c
-diff --git a/Modules/Setup.dist b/Modules/Setup.dist
-index e02fd77..3814c04 100644
---- a/Modules/Setup.dist
-+++ b/Modules/Setup.dist
-@@ -168,7 +168,7 @@ GLHACK=-Dclear=__GLclear
- 
- # Modules that should always be present (non UNIX dependent):
- 
--#array arraymodule.c	# array objects
-+array arraymodule.c	# array objects
- #cmath cmathmodule.c _math.c # -lm # complex math library functions
- #math mathmodule.c _math.c # -lm # math library functions, e.g. sin()
- #_struct _struct.c	# binary structure packing/unpacking
 diff --git a/Modules/posixmodule.c b/Modules/posixmodule.c
 index 1bd5c1a..2147f4e 100644
 --- a/Modules/posixmodule.c
@@ -711,21 +696,6 @@ index 1bd5c1a..2147f4e 100644
  #define INITFUNC initnt
  #define MODNAME "nt"
  
-diff --git a/Modules/pwdmodule.c b/Modules/pwdmodule.c
-index 6729c84..c3f0a72 100644
---- a/Modules/pwdmodule.c
-+++ b/Modules/pwdmodule.c
-@@ -1,4 +1,4 @@
--
-+#ifndef __MINGW32__
- /* UNIX password file access module */
- 
- #include "Python.h"
-@@ -198,3 +198,4 @@ initpwd(void)
-     PyModule_AddObject(m, "struct_pwent", (PyObject *) &StructPwdType);
-     initialized = 1;
- }
-+#endif
 diff --git a/PC/_winreg.c b/PC/_winreg.c
 index 445c3ed..c0bcd8b 100644
 --- a/PC/_winreg.c
@@ -829,5 +799,5 @@ index 3948080..1675812 100644
  fi
  
 -- 
-1.7.11.msysgit.0.5.g0225efe.dirty
+1.7.11.msysgit.1.1.gf0affa1
 
