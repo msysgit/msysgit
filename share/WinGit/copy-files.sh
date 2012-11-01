@@ -87,6 +87,8 @@ cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
 cp $MSYSGITROOT/git/contrib/completion/git-prompt.sh etc/ &&
+cp $MSYSGITROOT/git/contrib/credential/wincred/git-credential-wincred.exe \
+	bin/git-credential-wincred.exe &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
 cp $MSYSGITROOT/etc/inputrc etc/ &&
 sed 's/ = \/mingw\// = \//' < $MSYSGITROOT/etc/gitconfig > etc/gitconfig &&
