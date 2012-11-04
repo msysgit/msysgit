@@ -75,11 +75,11 @@ Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
 
 [Files]
 ; Install files that might be in use during setup under a different name.
-Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah
-Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah
+Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah; AfterInstall: DeleteFromVirtualStore
+Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah; AfterInstall: DeleteFromVirtualStore
 
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion sortfilesbyextension
-Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion sortfilesbyextension; AfterInstall: DeleteFromVirtualStore
+Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion; AfterInstall: DeleteFromVirtualStore
 
 [Icons]
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
@@ -168,6 +168,25 @@ Type: dirifempty; Name: {app}\home
 #include "environment.inc.iss"
 #include "putty.inc.iss"
 #include "modules.inc.iss"
+
+procedure DeleteFromVirtualStore;
+var
+    VirtualStore,FileName:String;
+    DriveChars:Integer;
+begin
+    VirtualStore:=AddBackslash(ExpandConstant('{localappdata}'))+'VirtualStore';
+    FileName:=ExpandConstant(CurrentFileName);
+    DriveChars:=Length(ExtractFileDrive(FileName));
+    if DriveChars>0 then begin
+        Delete(FileName,1,DriveChars);
+        FileName:=VirtualStore+FileName;
+        if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+            Log('Line {#__LINE__}: Unable delete "'+FileName+'".');
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+end;
 
 function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
 #ifdef UNICODE
