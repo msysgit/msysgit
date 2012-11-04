@@ -1,5 +1,12 @@
+; Uncomment the line below to be able to compile the script from within the IDE.
+;#define COMPILE_FROM_IDE
+
 #define APP_NAME      'Git'
+#ifdef COMPILE_FROM_IDE
+#define APP_VERSION   'Snapshot'
+#else
 #define APP_VERSION   '%APPVERSION%'
+#endif
 #define APP_URL       'http://msysgit.googlecode.com/'
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
@@ -15,9 +22,9 @@ LZMAUseSeparateProcess=yes
 OutputBaseFilename={#APP_NAME+'-'+APP_VERSION}
 OutputDir={#GetEnv('USERPROFILE')}
 SolidCompression=yes
-
-; Uncomment the line below to be able to compile the script from within the IDE.
-;SourceDir={#GetEnv('TEMP')}\WinGit
+#ifdef COMPILE_FROM_IDE
+SourceDir={#GetEnv('TEMP')}\WinGit
+#endif
 
 ; Installer-related
 AllowNoIcons=yes
@@ -34,10 +41,12 @@ DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
 UninstallDisplayIcon={app}\etc\git.ico
+#ifndef COMPILE_FROM_IDE
 #if Pos('-',APP_VERSION)>0
-    VersionInfoVersion={#Copy(APP_VERSION,1,Pos('-',APP_VERSION)-1)}
+VersionInfoVersion={#Copy(APP_VERSION,1,Pos('-',APP_VERSION)-1)}
 #else
-    VersionInfoVersion={#APP_VERSION}
+VersionInfoVersion={#APP_VERSION}
+#endif
 #endif
 
 ; Cosmetic
