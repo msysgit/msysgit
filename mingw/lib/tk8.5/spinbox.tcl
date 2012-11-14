@@ -221,7 +221,7 @@ if {[tk windowingsystem] eq "aqua"} {
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
-if {$tcl_platform(platform) ne "windows"} {
+if {[tk windowingsystem] ne "win32"} {
     bind Spinbox <Insert> {
 	catch {::tk::EntryInsert %W [::tk::GetSelection %W PRIMARY]}
     }

@@ -214,7 +214,7 @@ if {[tk windowingsystem] eq "aqua"} {
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
-if {$tcl_platform(platform) ne "windows"} {
+if {[tk windowingsystem] ne "win32"} {
     bind Entry <Insert> {
 	catch {tk::EntryInsert %W [::tk::GetSelection %W PRIMARY]}
     }
@@ -574,7 +574,7 @@ proc ::tk::EntryTranspose w {
 # w -		The entry window in which the cursor is to move.
 # start -	Position at which to start search.
 
-if {$tcl_platform(platform) eq "windows"}  {
+if {[tk windowingsystem] eq "win32"}  {
     proc ::tk::EntryNextWord {w start} {
 	set pos [tcl_endOfWord [$w get] [$w index $start]]
 	if {$pos >= 0} {

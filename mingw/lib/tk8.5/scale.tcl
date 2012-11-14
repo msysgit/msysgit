@@ -60,7 +60,7 @@ bind Scale <ButtonRelease-2> {
     tk::ScaleEndDrag %W
     tk::ScaleActivate %W %x %y
 }
-if {$tcl_platform(platform) eq "windows"} {
+if {[tk windowingsystem] eq "win32"} {
     # On Windows do the same with button 3, as that is the right mouse button
     bind Scale <3>		[bind Scale <2>]
     bind Scale <B3-Motion>	[bind Scale <B2-Motion>]

@@ -29,7 +29,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
 #ifndef Tk_AttachHWND_TCL_DECLARED
 #define Tk_AttachHWND_TCL_DECLARED
 /* 0 */
@@ -108,12 +108,12 @@ EXTERN void		TkMacOSXInvalClipRgns(Tk_Window tkwin);
 #ifndef TkMacOSXGetDrawablePort_TCL_DECLARED
 #define TkMacOSXGetDrawablePort_TCL_DECLARED
 /* 7 */
-EXTERN GWorldPtr	TkMacOSXGetDrawablePort(Drawable drawable);
+EXTERN VOID *		TkMacOSXGetDrawablePort(Drawable drawable);
 #endif
 #ifndef TkMacOSXGetRootControl_TCL_DECLARED
 #define TkMacOSXGetRootControl_TCL_DECLARED
 /* 8 */
-EXTERN ControlRef	TkMacOSXGetRootControl(Drawable drawable);
+EXTERN VOID *		TkMacOSXGetRootControl(Drawable drawable);
 #endif
 #ifndef Tk_MacOSXSetupTkNotifier_TCL_DECLARED
 #define Tk_MacOSXSetupTkNotifier_TCL_DECLARED
@@ -131,7 +131,7 @@ typedef struct TkPlatStubs {
     int magic;
     struct TkPlatStubHooks *hooks;
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
     Window (*tk_AttachHWND) (Tk_Window tkwin, HWND hwnd); /* 0 */
     HINSTANCE (*tk_GetHINSTANCE) (void); /* 1 */
     HWND (*tk_GetHWND) (Window window); /* 2 */
@@ -147,8 +147,8 @@ typedef struct TkPlatStubs {
     void (*tkMacOSXInitAppleEvents) (Tcl_Interp *interp); /* 4 */
     void (*tkGenWMConfigureEvent) (Tk_Window tkwin, int x, int y, int width, int height, int flags); /* 5 */
     void (*tkMacOSXInvalClipRgns) (Tk_Window tkwin); /* 6 */
-    GWorldPtr (*tkMacOSXGetDrawablePort) (Drawable drawable); /* 7 */
-    ControlRef (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
+    VOID * (*tkMacOSXGetDrawablePort) (Drawable drawable); /* 7 */
+    VOID * (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
     void (*tk_MacOSXSetupTkNotifier) (void); /* 9 */
     int (*tk_MacOSXIsAppInFront) (void); /* 10 */
 #endif /* AQUA */
@@ -168,7 +168,7 @@ extern TkPlatStubs *tkPlatStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
 #ifndef Tk_AttachHWND
 #define Tk_AttachHWND \
 	(tkPlatStubsPtr->tk_AttachHWND) /* 0 */

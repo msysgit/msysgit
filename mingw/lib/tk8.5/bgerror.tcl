@@ -214,14 +214,16 @@ proc ::tk::dialog::error::bgerror err {
     bind $dlg <Destroy>	[namespace code [list Destroy %W]]
     $dlg.function configure -command [namespace code Details]
 
-    # 6. Place the window (centered in the display) and deiconify it.
+    # 6. Withdraw the window, then update all the geometry information
+    # so we know how big it wants to be, then center the window in the
+    # display (Motif style) and de-iconify it.
 
     ::tk::PlaceWindow $dlg
 
     # 7. Ensure that we are topmost.
 
     raise $dlg
-    if {$tcl_platform(platform) eq "windows"} {
+    if {[tk windowingsystem] eq "win32"} {
 	# Place it topmost if we aren't at the top of the stacking
 	# order to ensure that it's seen
 	if {[lindex [wm stackorder .] end] ne "$dlg"} {

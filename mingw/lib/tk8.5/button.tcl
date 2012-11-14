@@ -39,7 +39,7 @@ if {[tk windowingsystem] eq "aqua"} {
 	tk::ButtonLeave %W
     }
 }
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
     bind Checkbutton <equal> {
 	tk::CheckRadioInvoke %W select
     }
@@ -131,7 +131,7 @@ bind Radiobutton <Leave> {
     tk::ButtonLeave %W
 }
 
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
 
 #########################
 # Windows implementation 
