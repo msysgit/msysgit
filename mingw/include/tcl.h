@@ -58,10 +58,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  11
+#define TCL_RELEASE_SERIAL  13
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.11"
+#define TCL_PATCH_LEVEL	    "8.5.13"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -352,29 +352,16 @@ typedef long LONG;
  */
 
 #if !defined(TCL_WIDE_INT_TYPE)&&!defined(TCL_WIDE_INT_IS_LONG)
-#   if defined(__WIN32__) && !defined(__CYGWIN__)
+#   if defined(__WIN32__)
 #      define TCL_WIDE_INT_TYPE __int64
 #      ifdef __BORLANDC__
-typedef struct stati64 Tcl_StatBuf;
 #         define TCL_LL_MODIFIER	"L"
 #      else /* __BORLANDC__ */
-#         if defined(_WIN64)
-typedef struct __stat64 Tcl_StatBuf;
-#         elif (defined(_MSC_VER) && (_MSC_VER < 1400))
-typedef struct _stati64	Tcl_StatBuf;
-#         else
-typedef struct _stat32i64 Tcl_StatBuf;
-#         endif /* _MSC_VER < 1400 */
 #         define TCL_LL_MODIFIER	"I64"
 #      endif /* __BORLANDC__ */
 #   elif defined(__GNUC__)
 #      define TCL_WIDE_INT_TYPE long long
 #      define TCL_LL_MODIFIER	"ll"
-#      if defined(__WIN32__)
-typedef struct _stat32i64 Tcl_StatBuf;
-#      else
-typedef struct stat	Tcl_StatBuf;
-#      endif
 #   else /* ! __WIN32__ && ! __GNUC__ */
 /*
  * Don't know what platform it is and configure hasn't discovered what is
@@ -401,7 +388,6 @@ typedef TCL_WIDE_INT_TYPE		Tcl_WideInt;
 typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
 
 #ifdef TCL_WIDE_INT_IS_LONG
-typedef struct stat	Tcl_StatBuf;
 #   define Tcl_WideAsLong(val)		((long)(val))
 #   define Tcl_LongAsWide(val)		((long)(val))
 #   define Tcl_WideAsDouble(val)	((double)((long)(val)))
@@ -415,11 +401,6 @@ typedef struct stat	Tcl_StatBuf;
  * or some other strange platform.
  */
 #   ifndef TCL_LL_MODIFIER
-#      ifdef HAVE_STRUCT_STAT64
-typedef struct stat64	Tcl_StatBuf;
-#      else
-typedef struct stat	Tcl_StatBuf;
-#      endif /* HAVE_STRUCT_STAT64 */
 #      define TCL_LL_MODIFIER		"ll"
 #   endif /* !TCL_LL_MODIFIER */
 #   define Tcl_WideAsLong(val)		((long)((Tcl_WideInt)(val)))
@@ -428,6 +409,39 @@ typedef struct stat	Tcl_StatBuf;
 #   define Tcl_DoubleAsWide(val)	((Tcl_WideInt)((double)(val)))
 #endif /* TCL_WIDE_INT_IS_LONG */
 
+#if defined(__WIN32__)
+#   ifdef __BORLANDC__
+	typedef struct stati64 Tcl_StatBuf;
+#   elif defined(_WIN64)
+	typedef struct __stat64 Tcl_StatBuf;
+#   elif (defined(_MSC_VER) && (_MSC_VER < 1400)) || defined(_USE_32BIT_TIME_T)
+	typedef struct _stati64	Tcl_StatBuf;
+#   else
+	typedef struct _stat32i64 Tcl_StatBuf;
+#   endif /* _MSC_VER < 1400 */
+#elif defined(__CYGWIN__)
+    typedef struct _stat32i64 {
+	dev_t st_dev;
+	unsigned short st_ino;
+	unsigned short st_mode;
+	short st_nlink;
+	short st_uid;
+	short st_gid;
+	/* Here is a 2-byte gap */
+	dev_t st_rdev;
+	/* Here is a 4-byte gap */
+	long long st_size;
+	struct {long tv_sec;} st_atim;
+	struct {long tv_sec;} st_mtim;
+	struct {long tv_sec;} st_ctim;
+	/* Here is a 4-byte gap */
+    } Tcl_StatBuf;
+#elif defined(HAVE_STRUCT_STAT64)
+    typedef struct stat64 Tcl_StatBuf;
+#else
+    typedef struct stat Tcl_StatBuf;
+#endif
+
 /*
  * Data structures defined opaquely in this module. The definitions below just
  * provide dummy types. A few fields are made visible in Tcl_Interp

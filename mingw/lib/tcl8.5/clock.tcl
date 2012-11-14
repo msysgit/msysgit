@@ -3494,7 +3494,7 @@ proc ::tcl::clock::LoadZoneinfoFile { fileName } {
 proc ::tcl::clock::ReadZoneinfoFile {fileName fname} {
     variable MINWIDE
     variable TZData
-    if { ![info exists fname] } {
+    if { ![file exists $fname] } {
 	return -code error "$fileName not found"
     }
 
@@ -3584,8 +3584,10 @@ proc ::tcl::clock::ReadZoneinfoFile {fileName fname} {
     set i 0
     set abbrevs {}
     foreach a $abbrList {
-	dict set abbrevs $i $a
-	incr i [expr { [string length $a] + 1 }]
+	for {set j 0} {$j <= [string length $a]} {incr j} {
+	    dict set abbrevs $i [string range $a $j end]
+	    incr i
+	}
     }
 
     # Package up a list of tuples, each of which contains transition time,
