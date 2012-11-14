@@ -1,7 +1,7 @@
 param([string]$path)
 
 if (!(test-path $path)) {
-  write-host "Usage: extract-git-tfs \"path-to-git-tfs.zip\""
+  write-host "Usage: extract-git-tfs ""path-to-git-tfs.zip"""
   exit
 }
 
