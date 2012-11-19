@@ -86,6 +86,7 @@ tar xf - &&
 cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
+cp $MSYSGITROOT/git/contrib/completion/git-prompt.sh etc/ &&
 cp $MSYSGITROOT/etc/bash_profile etc/ &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
 cp $MSYSGITROOT/etc/inputrc etc/ &&
@@ -96,7 +97,7 @@ mkdir etc/ssh &&
 cp $MSYSGITROOT/etc/ssh/ssh_config etc/ssh &&
 cp $MSYSGITROOT/share/WinGit/Git\ Bash.vbs . &&
 cp $MSYSGITROOT/share/WinGit/ReleaseNotes.rtf . &&
-sed 's/^\. .*\(git-completion.bash\)/. \/etc\/\1/' \
+sed 's@/git/contrib/completion@/etc@g' \
 	< $MSYSGITROOT/etc/profile > etc/profile &&
 cp $MSYSGITROOT/share/resources/git.ico etc/ &&
 cp $MSYSGITROOT/share/resources/git.ico share/git-gui/lib/git-gui.ico &&

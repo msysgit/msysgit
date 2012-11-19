@@ -22,6 +22,7 @@ SolidCompression=yes
 ; Installer-related
 AllowNoIcons=yes
 AppName={#APP_NAME}
+AppPublisher=The Git Development Community
 AppPublisherURL={#APP_URL}
 AppVersion={#APP_VERSION}
 ChangesEnvironment=yes
@@ -32,7 +33,12 @@ DisableProgramGroupPage=auto
 DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
-UninstallDisplayIcon=etc\git.ico
+UninstallDisplayIcon={app}\etc\git.ico
+#if Pos('-',APP_VERSION)>0
+    VersionInfoVersion={#Copy(APP_VERSION,1,Pos('-',APP_VERSION)-1)}
+#else
+    VersionInfoVersion={#APP_VERSION}
+#endif
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
@@ -63,7 +69,7 @@ Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
 Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah
 Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah
 
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion sortfilesbyextension
 Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
 
 [Icons]
@@ -335,7 +341,7 @@ end;
 
 procedure InitializeWizard;
 var
-    i,PrevPageID:Integer;
+    PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
     PuTTYSessions:TArrayOfString;
@@ -698,6 +704,14 @@ procedure CurPageChanged(CurPageID:Integer);
 var
     i:Integer;
 begin
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            // If the default directory is not writable, choose another default that most likely is.
+            // This will be checked later again when the user clicks "Next".
+            WizardForm.DirEdit.Text:=ExpandConstant('{userpf}\{#APP_NAME}');
+        end;
+    end;
+
     // Uncheck the console font option by default.
     if CurPageID=wpSelectComponents then begin
         for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
@@ -722,6 +736,19 @@ var
     Version:TWindowsVersion;
 begin
     Result:=True;
+
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            MsgBox(
+                'The specified installation directory does not seem to be writable. ' +
+            +   'Please choose another directory or restart setup as a user with sufficient permissions.'
+            ,   mbCriticalError
+            ,   MB_OK
+            );
+            Result:=False;
+            Exit;
+        end;
+    end;
 
     if (PuTTYPage<>NIL) and (CurPageID=PuTTYPage.ID) then begin
         Result:=RdbSSH[GS_OpenSSH].Checked or
