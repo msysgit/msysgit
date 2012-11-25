@@ -23,5 +23,10 @@ test -d $d/.git || (
 setup &&
 rm -f $d/pyconfig.h &&
 cp $d/PC/pyconfig.h $d &&
-(cd "$d" && make python.exe) &&
-echo "finished building"
+(cd "$d" &&
+	make &&
+	index=$(/share/msysGit/pre-install.sh) &&
+	make install &&
+	/share/msysGit/post-install.sh $INDEX Install $DIR
+) &&
+echo "Finished building"
