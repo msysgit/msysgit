@@ -83,7 +83,8 @@ Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion; Af
 
 [Icons]
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
-Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
+Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; OnlyBelowVersion: 6.0
+Name: {group}\Git Bash; Filename: {app}\bin\sh.exe; Parameters: "--login -i"; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; MinVersion: 6.0
 
 [Messages]
 BeveledLabel={#APP_URL}
