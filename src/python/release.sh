@@ -7,7 +7,7 @@ version=2.7.3
 url=http://www.python.org/ftp/python/$version
 d=$package-$version
 tar=$d.tar.bz2
-configure_options=
+configure_options=--enable-shared
 export CPPFLAGS="-IPC"
 
 download &&

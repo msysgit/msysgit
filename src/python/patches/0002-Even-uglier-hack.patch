@@ -1,0 +1,81 @@
+From 594b871c58d7977f378d88fc81bf04936770e89f Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Mon, 26 Nov 2012 17:03:22 -0600
+Subject: [PATCH 2/3] Even uglier hack
+
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ Lib/distutils/ccompiler.py | 2 +-
+ Lib/distutils/sysconfig.py | 4 ++++
+ Lib/sysconfig.py           | 4 ++++
+ setup.py                   | 4 ++--
+ 4 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/Lib/distutils/ccompiler.py b/Lib/distutils/ccompiler.py
+index 7076b93..d018617 100644
+--- a/Lib/distutils/ccompiler.py
++++ b/Lib/distutils/ccompiler.py
+@@ -897,7 +897,7 @@ _default_compilers = (
+ 
+     # OS name mappings
+     ('posix', 'unix'),
+-    ('nt', 'msvc'),
++    ('nt', 'unix'),
+ 
+     )
+ 
+diff --git a/Lib/distutils/sysconfig.py b/Lib/distutils/sysconfig.py
+index 4b193b2..e07193a 100644
+--- a/Lib/distutils/sysconfig.py
++++ b/Lib/distutils/sysconfig.py
+@@ -472,6 +472,10 @@ def _init_nt():
+     g['EXE'] = ".exe"
+     g['VERSION'] = get_python_version().replace(".", "")
+     g['BINDIR'] = os.path.dirname(os.path.abspath(sys.executable))
++    g['CC'] = 'gcc'
++    g['CFLAGS'] = '-g'
++    g['CCSHARED'] = '-shared'
++    g['OPT'] = '-g'
+ 
+     global _config_vars
+     _config_vars = g
+diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
+index 6314cfe..5f026bf 100644
+--- a/Lib/sysconfig.py
++++ b/Lib/sysconfig.py
+@@ -314,6 +314,10 @@ def _init_non_posix(vars):
+     vars['EXE'] = '.exe'
+     vars['VERSION'] = _PY_VERSION_SHORT_NO_DOT
+     vars['BINDIR'] = os.path.dirname(_safe_realpath(sys.executable))
++    if os.name == 'nt':
++        vars['CCSHARED'] = '-shared'
++        vars['CFLAGS'] = '-g'
++        vars['CONFIG_ARGS'] = '--enable-shared'
+ 
+ #
+ # public APIs
+diff --git a/setup.py b/setup.py
+index 6b47451..090ad3f 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1141,7 +1141,7 @@ class PyBuildExt(build_ext):
+ 
+         dbm_order = ['gdbm']
+         # The standard Unix dbm module:
+-        if platform not in ['cygwin']:
++        if platform not in ['cygwin', 'win32']:
+             config_args = [arg.strip("'")
+                            for arg in sysconfig.get_config_var("CONFIG_ARGS").split()]
+             dbm_args = [arg for arg in config_args
+@@ -1357,7 +1357,7 @@ class PyBuildExt(build_ext):
+         #
+         # More information on Expat can be found at www.libexpat.org.
+         #
+-        if '--with-system-expat' in sysconfig.get_config_var("CONFIG_ARGS"):
++        if '--with-system-expat' in sysconfig.get_config_var('CONFIG_ARGS'):
+             expat_inc = []
+             define_macros = []
+             expat_lib = ['expat']
+-- 
+1.8.0.msysgit.0.1.g1cbcfae
+
