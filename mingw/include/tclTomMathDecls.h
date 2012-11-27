@@ -455,17 +455,17 @@ EXTERN int		TclBN_s_mp_sub(mp_int *a, mp_int *b, mp_int *c);
 #ifndef TclBN_mp_init_set_int_TCL_DECLARED
 #define TclBN_mp_init_set_int_TCL_DECLARED
 /* 61 */
-EXTERN int		TclBN_mp_init_set_int(mp_int*a, unsigned long i);
+EXTERN int		TclBN_mp_init_set_int(mp_int *a, unsigned long i);
 #endif
 #ifndef TclBN_mp_set_int_TCL_DECLARED
 #define TclBN_mp_set_int_TCL_DECLARED
 /* 62 */
-EXTERN int		TclBN_mp_set_int(mp_int*a, unsigned long i);
+EXTERN int		TclBN_mp_set_int(mp_int *a, unsigned long i);
 #endif
 #ifndef TclBN_mp_cnt_lsb_TCL_DECLARED
 #define TclBN_mp_cnt_lsb_TCL_DECLARED
 /* 63 */
-EXTERN int		TclBN_mp_cnt_lsb(mp_int*a);
+EXTERN int		TclBN_mp_cnt_lsb(mp_int *a);
 #endif
 
 typedef struct TclTomMathStubs {
@@ -533,9 +533,9 @@ typedef struct TclTomMathStubs {
     int (*tclBN_s_mp_mul_digs) (mp_int *a, mp_int *b, mp_int *c, int digs); /* 58 */
     int (*tclBN_s_mp_sqr) (mp_int *a, mp_int *b); /* 59 */
     int (*tclBN_s_mp_sub) (mp_int *a, mp_int *b, mp_int *c); /* 60 */
-    int (*tclBN_mp_init_set_int) (mp_int*a, unsigned long i); /* 61 */
-    int (*tclBN_mp_set_int) (mp_int*a, unsigned long i); /* 62 */
-    int (*tclBN_mp_cnt_lsb) (mp_int*a); /* 63 */
+    int (*tclBN_mp_init_set_int) (mp_int *a, unsigned long i); /* 61 */
+    int (*tclBN_mp_set_int) (mp_int *a, unsigned long i); /* 62 */
+    int (*tclBN_mp_cnt_lsb) (mp_int *a); /* 63 */
 } TclTomMathStubs;
 
 #ifdef __cplusplus

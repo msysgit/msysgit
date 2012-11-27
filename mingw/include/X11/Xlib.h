@@ -1,14 +1,14 @@
 /* $XConsortium: Xlib.h,v 11.221 93/07/02 14:13:28 gildea Exp $ */
-/* 
+/*
  * Copyright 1985, 1986, 1987, 1991 by the Massachusetts Institute of Technology
  *
  * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided 
- * that the above copyright notice appear in all copies and that both that 
- * copyright notice and this permission notice appear in supporting 
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
  * documentation, and that the name of M.I.T. not be used in advertising
- * or publicity pertaining to distribution of the software without specific, 
- * written prior permission. M.I.T. makes no representations about the 
+ * or publicity pertaining to distribution of the software without specific,
+ * written prior permission. M.I.T. makes no representations about the
  * suitability of this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
  *
@@ -163,10 +163,10 @@ typedef struct {
 	unsigned long background;/* background pixel */
 	int line_width;		/* line width */
 	int line_style;	 	/* LineSolid, LineOnOffDash, LineDoubleDash */
-	int cap_style;	  	/* CapNotLast, CapButt, 
+	int cap_style;	  	/* CapNotLast, CapButt,
 				   CapRound, CapProjecting */
 	int join_style;	 	/* JoinMiter, JoinRound, JoinBevel */
-	int fill_style;	 	/* FillSolid, FillTiled, 
+	int fill_style;	 	/* FillSolid, FillTiled,
 				   FillStippled, FillOpaeueStippled */
 	int fill_rule;	  	/* EvenOddRule, WindingRule */
 	int arc_mode;		/* ArcChord, ArcPieSlice */
@@ -209,7 +209,7 @@ typedef struct {
 
 /*
  * Depth structure; contains information for each possible depth.
- */	
+ */
 typedef struct {
 	int depth;		/* this depth (Z) of the depth */
 	int nvisuals;		/* number of Visual types at this depth */
@@ -237,7 +237,7 @@ typedef struct {
 	unsigned long black_pixel;	/* White and Black pixel values */
 	int max_maps, min_maps;	/* max and min color maps */
 	int backing_store;	/* Never, WhenMapped, Always */
-	Bool save_unders;	
+	Bool save_unders;
 	long root_input_mask;	/* initial root input mask */
 } Screen;
 
@@ -348,7 +348,7 @@ typedef struct _XImage {
 	} f;
 } XImage;
 
-/* 
+/*
  * Data structure for XReconfigureWindow
  */
 typedef struct {
@@ -369,7 +369,7 @@ typedef struct {
 	char pad;
 } XColor;
 
-/* 
+/*
  * Data structures for graphics operations.  On most machines, these are
  * congruent with the wire protocol structures, so reformatting the data
  * can be avoided on these architectures.
@@ -381,12 +381,12 @@ typedef struct {
 typedef struct {
     short x, y;
 } XPoint;
-    
+
 typedef struct {
     short x, y;
     unsigned short width, height;
 } XRectangle;
-    
+
 typedef struct {
     short x, y;
     unsigned short width, height;
@@ -487,7 +487,7 @@ typedef struct _XDisplay {
 	struct _XExten *ext_procs; /* extensions initialized on this display */
 	/*
 	 * the following can be fixed size, as the protocol defines how
-	 * much address space is available. 
+	 * much address space is available.
 	 * While this could be done using the extension vector, there
 	 * may be MANY events processed, so a search through the extension
 	 * list to find the right procedure for each event might be
@@ -602,7 +602,7 @@ typedef struct {
 	int mode;		/* NotifyNormal, NotifyGrab, NotifyUngrab */
 	int detail;
 	/*
-	 * NotifyAncestor, NotifyVirtual, NotifyInferior, 
+	 * NotifyAncestor, NotifyVirtual, NotifyInferior,
 	 * NotifyNonlinear,NotifyNonlinearVirtual
 	 */
 	Bool same_screen;	/* same screen flag */
@@ -621,9 +621,9 @@ typedef struct {
 	int mode;		/* NotifyNormal, NotifyGrab, NotifyUngrab */
 	int detail;
 	/*
-	 * NotifyAncestor, NotifyVirtual, NotifyInferior, 
+	 * NotifyAncestor, NotifyVirtual, NotifyInferior,
 	 * NotifyNonlinear,NotifyNonlinearVirtual, NotifyPointer,
-	 * NotifyPointerRoot, NotifyDetailNone 
+	 * NotifyPointerRoot, NotifyDetailNone
 	 */
 } XFocusChangeEvent;
 typedef XFocusChangeEvent XFocusInEvent;
@@ -637,7 +637,7 @@ typedef struct {
 	Display *display;	/* Display the event was read from */
 	Window window;
 	char key_vector[32];
-} XKeymapEvent;	
+} XKeymapEvent;
 
 typedef struct {
 	int type;
@@ -1124,7 +1124,7 @@ typedef struct {
 typedef unsigned long XIMFeedback;
 
 #define XIMReverse	1
-#define XIMUnderline	(1<<1) 
+#define XIMUnderline	(1<<1)
 #define XIMHighlight	(1<<2)
 #define XIMPrimary 	(1<<5)
 #define XIMSecondary	(1<<6)
@@ -1133,11 +1133,11 @@ typedef unsigned long XIMFeedback;
 typedef struct _XIMText {
     unsigned short length;
     XIMFeedback *feedback;
-    Bool encoding_is_wchar; 
+    Bool encoding_is_wchar;
     union {
 	char *multi_byte;
 	wchar_t *wide_char;
-    } string; 
+    } string;
 } XIMText;
 
 typedef struct _XIMPreeditDrawCallbackStruct {
@@ -1152,13 +1152,13 @@ typedef enum {
     XIMForwardWord, XIMBackwardWord,
     XIMCaretUp, XIMCaretDown,
     XIMNextLine, XIMPreviousLine,
-    XIMLineStart, XIMLineEnd, 
+    XIMLineStart, XIMLineEnd,
     XIMAbsolutePosition,
     XIMDontChange
 } XIMCaretDirection;
 
 typedef enum {
-    XIMIsInvisible,	/* Disable caret feedback */ 
+    XIMIsInvisible,	/* Disable caret feedback */
     XIMIsPrimary,	/* UI defined caret feedback */
     XIMIsSecondary	/* UI defined caret feedback */
 } XIMCaretStyle;
@@ -1173,7 +1173,7 @@ typedef enum {
     XIMTextType,
     XIMBitmapType
 } XIMStatusDataType;
-	
+
 typedef struct _XIMStatusDrawCallbackStruct {
     XIMStatusDataType type;
     union {

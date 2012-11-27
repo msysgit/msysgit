@@ -77,6 +77,16 @@ foreach {country capital currency} $data {
 
 ## Code to do the sorting of the tree contents when clicked on
 proc SortBy {tree col direction} {
+    # Determine currently sorted column and its sort direction
+    foreach c {country capital currency} {
+	set s [$tree heading $c state]
+	if {("selected" in $s || "alternate" in $s) && $col ne $c} {
+	    # Sorted column has changed
+	    $tree heading $c state {!selected !alternate !user1}
+	    set direction [expr {"alternate" in $s}]
+	}
+    }
+
     # Build something we can sort
     set data {}
     foreach row [$tree children {}] {
@@ -92,5 +102,10 @@ proc SortBy {tree col direction} {
     }
 
     # Switch the heading so that it will sort in the opposite direction
-    $tree heading $col -command [list SortBy $tree $col [expr {!$direction}]]
+    $tree heading $col -command [list SortBy $tree $col [expr {!$direction}]] \
+	state [expr {$direction?"!selected alternate":"selected !alternate"}]
+    if {[tk windowingsystem] eq "aqua"} {
+	# Aqua theme displays native sort arrows when user1 state is set
+	$tree heading $col state "user1"
+    }
 }

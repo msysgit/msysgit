@@ -6,13 +6,13 @@ and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or MIT not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -33,7 +33,7 @@ SOFTWARE.
 #   define Region XRegion
 #endif
 
-/* 
+/*
  * Bitmask returned by XParseGeometry().  Each bit tells if the corresponding
  * value (x, y, width, height) was found in the parsed string.
  */
@@ -128,7 +128,7 @@ IconPositionHint|IconMaskHint|WindowGroupHint)
 
 
 /*
- * new structure for manipulating TEXT properties; used with WM_NAME, 
+ * new structure for manipulating TEXT properties; used with WM_NAME,
  * WM_ICON_NAME, WM_CLIENT_MACHINE, and WM_COMMAND.
  */
 typedef struct {
@@ -206,16 +206,16 @@ typedef struct _XComposeStatus {
    || ((unsigned)(keysym) == XK_Mode_switch) \
    || ((unsigned)(keysym) == XK_Num_Lock))
 /*
- * opaque reference to Region data type 
+ * opaque reference to Region data type
  */
-typedef struct _XRegion *Region; 
+typedef struct _XRegion *Region;
 
 /* Return values from XRectInRegion() */
- 
+
 #define RectangleOut 0
 #define RectangleIn  1
 #define RectanglePart 2
- 
+
 
 /*
  * Information used by the visual utility routines to find desired visual
@@ -435,7 +435,7 @@ extern Status XGetStandardColormap(
     Display*		/* display */,
     Window		/* w */,
     XStandardColormap*	/* colormap_return */,
-    Atom		/* property */			    
+    Atom		/* property */
 #endif
 );
 
@@ -460,7 +460,7 @@ extern Status XGetWMClientMachine(
 extern XWMHints *XGetWMHints(
 #if NeedFunctionPrototypes
     Display*		/* display */,
-    Window		/* w */		      
+    Window		/* w */
 #endif
 );
 
@@ -485,7 +485,7 @@ extern Status XGetWMNormalHints(
     Display*		/* display */,
     Window		/* w */,
     XSizeHints*		/* hints_return */,
-    long*		/* supplied_return */ 
+    long*		/* supplied_return */
 #endif
 );
 
@@ -591,7 +591,7 @@ extern void XSetIconSizes(
     Display*		/* display */,
     Window		/* w */,
     XIconSize*		/* size_list */,
-    int			/* count */    
+    int			/* count */
 #endif
 );
 
