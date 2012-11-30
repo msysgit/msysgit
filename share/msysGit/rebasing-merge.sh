@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Rebase 'devel' on top of an upstream branch (defaults to 'junio/next').
-# This merges the old state of 'devel' using the merge strategy 'ours'
+# Rebase 'master' on top of an upstream branch (defaults to 'junio/next').
+# This merges the old state of 'master' using the merge strategy 'ours'
 # to enable a fast-forward.
 #
 # options:
@@ -58,20 +58,20 @@ fi
 TODO_EXTRA="$(git rev-parse --git-dir)/todo-extra"
 
 case "$(git rev-parse --symbolic-full-name HEAD)" in
-refs/heads/devel)
+refs/heads/master)
 	UPSTREAM=$(git rev-parse --symbolic-full-name HEAD@{u}) || {
 		echo "Not tracking any remote branch!" >&2
 		exit 1
 	}
 	test "$(git rev-parse HEAD)" = "$(git rev-parse $UPSTREAM)" ||
-	test "$(git rev-parse devel@{1})" = "$(git rev-parse $UPSTREAM)" || {
-		echo "Your 'devel' is not up-to-date!" >&2
+	test "$(git rev-parse master@{1})" = "$(git rev-parse $UPSTREAM)" || {
+		echo "Your 'master' is not up-to-date!" >&2
 		exit 1
 	}
 	;; # okay
 HEAD) ;; # okay
 *)
-	echo "Not on 'devel'!" >&2
+	echo "Not on 'master'!" >&2
 	exit 1
 	;;
 esac

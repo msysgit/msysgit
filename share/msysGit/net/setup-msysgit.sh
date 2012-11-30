@@ -124,7 +124,7 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
-	FOURMSYS=origin/devel
+	FOURMSYS=origin/master
 else
 	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
 fi &&
