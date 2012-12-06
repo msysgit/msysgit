@@ -20,11 +20,19 @@ TMPDIR=/tmp/WinGit
 
 DONT_REMOVE_BUILTINS=1 "$(dirname $0)/copy-files.sh" $TMPDIR &&
 cd "$TMPDIR" &&
+GIT_DIR=/.git git rev-parse HEAD > ./VERSION &&
 cp $MSYSGITROOT/share/WinGit/README.portable ./ &&
 cp $MSYSGITROOT/msys.bat ./git-bash.bat &&
-cp $MSYSGITROOT/git-cmd.bat ./ &&
-$MSYSGITROOT/share/7-Zip/7za.exe a $OPTS7 $TARGET7 * ||
+cp $MSYSGITROOT/git-cmd.bat ./ ||
 exit
+
+if test -z "$NO_COMPRESS"
+then
+ $MSYSGITROOT/share/7-Zip/7za.exe a $OPTS7 $TARGET7 * ||
+ exit
+else
+ exit 0
+fi
 
 if test -z "$NO_SFX"
 then

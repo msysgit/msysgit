@@ -12,6 +12,9 @@ rem ember to set the "Start in:" field of the shortcut.
 rem A value similar to C:\msys\1.0\bin is what the "Start in:" field needs
 rem to represent.
 
+rem ember to not even start if we are a submodule
+if not exist .git\nul goto failed_submodule
+
 rem this should let run MSYS shell on x64
 if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
   SET COMSPEC=%WINDIR%\SysWOW64\cmd.exe
@@ -56,6 +59,10 @@ if "win%OS_VERSION%"=="win9x" goto failed
 set BIN="%~dp0bin\"
 if EXIST %BIN%bash.exe goto startbash
 if EXIST %BIN%rxvt.exe goto startrxvt
+
+:failed_submodule
+echo You cannot run this in a submodule, please make a fresh clone of msysgit.
+goto EOF
 
 :failed
 echo Cannot find the rxvt.exe or bash.exe binary -- aborting.
