@@ -135,14 +135,16 @@ Root: HKCU; Subkey: Software\Classes\.gitmodules; ValueType: string; ValueName: 
 ; Install under HKEY_LOCAL_MACHINE if an administrator is installing.
 Root: HKLM; Subkey: Software\Classes\.sh; ValueType: string; ValueData: sh_auto_file; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh
 Root: HKLM; Subkey: Software\Classes\sh_auto_file; ValueType: string; ValueData: "Shell Script"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh
-Root: HKLM; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: "{syswow64}\cmd.exe /C """"{app}\bin\sh.exe"" ""--login"" ""%1"" %*"""; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh
+Root: HKLM; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: "{syswow64}\cmd.exe /C """"{app}\bin\sh.exe"" ""--login"" ""%1"" %*"""; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh; OnlyBelowVersion: 6.0
+Root: HKLM; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: """{app}\bin\sh.exe"" ""--login"" ""%1"" %*"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh; MinVersion: 6.0
 Root: HKLM; Subkey: Software\Classes\sh_auto_file\DefaultIcon; ValueType: string; ValueData: "%SystemRoot%\System32\shell32.dll,-153"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh
 Root: HKLM; Subkey: Software\Classes\sh_auto_file\ShellEx\DropHandler; ValueType: string; ValueData: {#DROP_HANDLER_GUID}; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: IsAdminLoggedOn; Components: assoc_sh
 
 ; Install under HKEY_CURRENT_USER if a non-administrator is installing.
 Root: HKCU; Subkey: Software\Classes\.sh; ValueType: string; ValueData: sh_auto_file; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh
 Root: HKCU; Subkey: Software\Classes\sh_auto_file; ValueType: string; ValueData: "Shell Script"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh
-Root: HKCU; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: "{syswow64}\cmd.exe /C """"{app}\bin\sh.exe"" ""--login"" ""%1"" %*"""; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh
+Root: HKCU; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: "{syswow64}\cmd.exe /C """"{app}\bin\sh.exe"" ""--login"" ""%1"" %*"""; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh; OnlyBelowVersion: 6.0
+Root: HKCU; Subkey: Software\Classes\sh_auto_file\shell\open\command; ValueType: string; ValueData: """{app}\bin\sh.exe"" ""--login"" ""%1"" %*"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh; MinVersion: 6.0
 Root: HKCU; Subkey: Software\Classes\sh_auto_file\DefaultIcon; ValueType: string; ValueData: "%SystemRoot%\System32\shell32.dll,-153"; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh
 Root: HKCU; Subkey: Software\Classes\sh_auto_file\ShellEx\DropHandler; ValueType: string; ValueData: {#DROP_HANDLER_GUID}; Flags: createvalueifdoesntexist uninsdeletekeyifempty uninsdeletevalue; Check: not IsAdminLoggedOn; Components: assoc_sh
 
@@ -827,6 +829,7 @@ var
     LinkCreated:Boolean;
     FindRec:TFindRec;
     RootKey:Integer;
+    Version:TWindowsVersion;
 begin
     if CurStep=ssInstall then begin
         // Shutdown locking processes just before the actual installation starts.
@@ -1101,8 +1104,14 @@ begin
         Create shortcuts that need to be created regardless of the "Don't create a Start Menu folder" toggle
     }
 
-    Cmd:=ExpandConstant('{syswow64}\cmd.exe');
-    TempName:='/c ""'+AppDir+'\bin\sh.exe" --login -i"';
+    GetWindowsVersionEx(Version);
+    if Version.Major<6 then begin
+        Cmd:=ExpandConstant('{syswow64}\cmd.exe');
+        TempName:='/c ""'+AppDir+'\bin\sh.exe" --login -i"';
+    end else begin
+        Cmd:=AppDir+'\bin\sh.exe';
+        TempName:='--login -i';
+    end;
     FileName:=AppDir+'\etc\git.ico';
 
     if IsComponentSelected('icons\quicklaunch') then begin
