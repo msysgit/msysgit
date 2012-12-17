@@ -263,7 +263,8 @@ end;
 procedure DeleteContextMenuEntries;
 var
     AppDir,Command,Msg:String;
-    RootKey:Integer;
+    RootKey,i:Integer;
+    Keys:TArrayOfString;
 begin
     AppDir:=ExpandConstant('{app}');
 
@@ -273,27 +274,23 @@ begin
         RootKey:=HKEY_CURRENT_USER;
     end;
 
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell') then begin
-            Msg:='Line {#__LINE__}: Unable to remove "Git Bash Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
-        end;
-    end;
+    SetArrayLength(Keys,4);
+    Keys[0]:='SOFTWARE\Classes\Directory\shell\git_shell';
+    Keys[1]:='SOFTWARE\Classes\Directory\Background\shell\git_shell';
+    Keys[2]:='SOFTWARE\Classes\Directory\shell\git_gui';
+    Keys[3]:='SOFTWARE\Classes\Directory\Background\shell\git_gui';
 
-    Command:='';
-    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
-    if Pos(AppDir,Command)>0 then begin
-        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui') then begin
-            Msg:='Line {#__LINE__}: Unable to remove "Git GUI Here" shell extension.';
-            MsgBox(Msg,mbError,MB_OK);
-            Log(Msg);
-            // This is not a critical error, the user can probably fix it manually,
-            // so we continue.
+    for i:=0 to Length(Keys)-1 do begin
+        Command:='';
+        RegQueryStringValue(RootKey,Keys[i]+'\command','',Command);
+        if Pos(AppDir,Command)>0 then begin
+            if not RegDeleteKeyIncludingSubkeys(RootKey,Keys[i]) then begin
+                Msg:='Line {#__LINE__}: Unable to remove "Git Bash / GUI Here" shell extension.';
+                MsgBox(Msg,mbError,MB_OK);
+                Log(Msg);
+                // This is not a critical error, the user can probably fix it manually,
+                // so we continue.
+            end;
         end;
     end;
 end;
@@ -1164,8 +1161,12 @@ begin
     end;
 
     if IsComponentSelected('ext\reg\shellhere') then begin
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
+        Msg:='Git Ba&sh Here';
+        Cmd:='"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%v"';
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','',Msg)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell','',Msg)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell\command','',Cmd)) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
@@ -1175,8 +1176,12 @@ begin
     end;
 
     if IsComponentSelected('ext\reg\guihere') then begin
-        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','','Git &GUI Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','','"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"')) then begin
+        Msg:='Git &GUI Here';
+        Cmd:='"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%v"';
+        if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','',Msg)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Cmd)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_gui','',Msg)) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_gui\command','',Cmd)) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git GUI Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
