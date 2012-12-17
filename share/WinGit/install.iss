@@ -284,6 +284,18 @@ begin
             // so we continue.
         end;
     end;
+    
+    Command:='';
+    RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell\command','',Command);
+    if Pos(AppDir,Command)>0 then begin
+        if not RegDeleteKeyIncludingSubkeys(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell') then begin
+            Msg:='Line {#__LINE__}: Unable to remove "Git Bash Here" shell extension.';
+            MsgBox(Msg,mbError,MB_OK);
+            Log(Msg);
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
 
     Command:='';
     RegQueryStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Command);
@@ -1165,7 +1177,9 @@ begin
 
     if IsComponentSelected('ext\reg\shellhere') then begin
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','','Git Ba&sh Here')) or
-           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%1"')) then begin
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','','"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%1"')) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell','','Git Ba&sh Here')) or
+           (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell\command','','"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%V"')) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
             MsgBox(Msg,mbError,MB_OK);
             Log(Msg);
