@@ -1,4 +1,5 @@
 @echo off
+@setlocal
 rem Copyright (C):  2001, 2002  Earnie Boyd
 rem   mailto:earnie@users.sf.net
 rem This file is part of Minimal SYStem
