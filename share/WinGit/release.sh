@@ -124,6 +124,9 @@ test -z "$force" && {
 		*/git-subtree)
 			basename=contrib/subtree/$(basename "$f")
 			;;
+		*/git-credential-wincred.exe)
+			basename=contrib/credential/wincred/$(basename "$f")
+			;;
 		*)
 			basename=$(basename "$f")
 			;;
