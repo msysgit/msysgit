@@ -11,7 +11,7 @@ begin
     i:=0;
     while (i<Len) and (Chars[i]<>#0) do begin
         Result[i+1]:=Chars[i];
-        Inc(i);
+        i:=i+1;
     end;
 
     SetLength(Result,i);
@@ -28,7 +28,7 @@ begin
     i:=0;
     while i<Len do begin
         Result[i]:=Str[i+1];
-        Inc(i);
+        i:=i+1;
     end;
 
     Result[i]:=#0;
