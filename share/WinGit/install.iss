@@ -1162,9 +1162,10 @@ begin
 
     if IsComponentSelected('ext\reg\shellhere') then begin
         Msg:='Git Ba&sh Here';
-        Cmd:='"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%v"';
+        Cmd:='"'+ExpandConstant('{syswow64}')+'\wscript" "'+AppDir+'\Git Bash.vbs" "%1"';
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell','',Msg)) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_shell\command','',Cmd)) or
+           (StringChangeEx(Cmd,'%1','%v',false)<>1) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell','',Msg)) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_shell\command','',Cmd)) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
@@ -1177,9 +1178,10 @@ begin
 
     if IsComponentSelected('ext\reg\guihere') then begin
         Msg:='Git &GUI Here';
-        Cmd:='"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%v"';
+        Cmd:='"'+AppDir+'\bin\wish.exe" "'+AppDir+'\libexec\git-core\git-gui" "--working-dir" "%1"';
         if (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui','',Msg)) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\shell\git_gui\command','',Cmd)) or
+           (StringChangeEx(Cmd,'%1','%v',false)<>1) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_gui','',Msg)) or
            (not RegWriteStringValue(RootKey,'SOFTWARE\Classes\Directory\Background\shell\git_gui\command','',Cmd)) then begin
             Msg:='Line {#__LINE__}: Unable to create "Git GUI Here" shell extension.';
