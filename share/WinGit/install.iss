@@ -398,7 +398,7 @@ begin
         Caption:='Use Git Bash only';
         Left:=ScaleX(4);
         Top:=ScaleY(8);
-        Width:=ScaleX(129);
+        Width:=ScaleX(405);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=0;
@@ -423,7 +423,7 @@ begin
         Caption:='Run Git from the Windows Command Prompt';
         Left:=ScaleX(4);
         Top:=ScaleY(76);
-        Width:=ScaleX(281);
+        Width:=ScaleX(405);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=1;
@@ -470,7 +470,7 @@ begin
             'sort.exe. Select this option only if you understand the implications.';
         Left:=ScaleX(28);
         Top:=ScaleY(192);
-        Width:=ScaleX(376);
+        Width:=ScaleX(405);
         Height:=ScaleY(26);
         Font.Color:=255;
         Font.Style:=[fsBold];
@@ -506,7 +506,7 @@ begin
             Caption:='Use OpenSSH';
             Left:=ScaleX(4);
             Top:=ScaleY(8);
-            Width:=ScaleX(129);
+            Width:=ScaleX(405);
             Height:=ScaleY(17);
             Font.Style:=[fsBold];
             TabOrder:=0;
@@ -520,7 +520,7 @@ begin
                 'environment variables will not be modified.';
             Left:=ScaleX(28);
             Top:=ScaleY(32);
-            Width:=ScaleX(324);
+            Width:=ScaleX(405);
             Height:=ScaleY(26);
         end;
 
@@ -531,7 +531,7 @@ begin
             Caption:='Use (Tortoise)Plink';
             Left:=ScaleX(4);
             Top:=ScaleY(76);
-            Width:=ScaleX(281);
+            Width:=ScaleX(405);
             Height:=ScaleY(17);
             Font.Style:=[fsBold];
             TabOrder:=1;
@@ -546,7 +546,7 @@ begin
                 'variables will be adjusted to point to the following executable:';
             Left:=ScaleX(28);
             Top:=ScaleY(100);
-            Width:=ScaleX(340);
+            Width:=ScaleX(405);
             Height:=ScaleY(52);
         end;
         EdtPlink:=TEdit.Create(PuTTYPage);
@@ -601,7 +601,7 @@ begin
         Caption:='Checkout Windows-style, commit Unix-style line endings';
         Left:=ScaleX(4);
         Top:=ScaleY(8);
-        Width:=ScaleX(340);
+        Width:=ScaleX(405);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=0;
@@ -616,7 +616,7 @@ begin
             'this is the recommended setting on Windows ("core.autocrlf" is set to "true").';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
-        Width:=ScaleX(380);
+        Width:=ScaleX(405);
         Height:=ScaleY(47);
     end;
 
@@ -627,7 +627,7 @@ begin
         Caption:='Checkout as-is, commit Unix-style line endings';
         Left:=ScaleX(4);
         Top:=ScaleY(80);
-        Width:=ScaleX(340);
+        Width:=ScaleX(405);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=1;
@@ -642,7 +642,7 @@ begin
             'this is the recommended setting on Unix ("core.autocrlf" is set to "input").';
         Left:=ScaleX(28);
         Top:=ScaleY(104);
-        Width:=ScaleX(380);
+        Width:=ScaleX(405);
         Height:=ScaleY(47);
     end;
 
@@ -653,7 +653,7 @@ begin
         Caption:='Checkout as-is, commit as-is';
         Left:=ScaleX(4);
         Top:=ScaleY(152);
-        Width:=ScaleX(340);
+        Width:=ScaleX(405);
         Height:=ScaleY(17);
         Font.Style:=[fsBold];
         TabOrder:=2;
@@ -668,7 +668,7 @@ begin
             'projects ("core.autocrlf" is set to "false").';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
-        Width:=ScaleX(380);
+        Width:=ScaleX(405);
         Height:=ScaleY(47);
     end;
 
