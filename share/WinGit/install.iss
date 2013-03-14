@@ -11,8 +11,6 @@
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
-#define COMP_CONSOLE_FONT 'Use a TrueType font in all console windows (not only for Git Bash)'
-
 #define DROP_HANDLER_GUID '{{86C86720-42A0-1069-A2E8-08002B30309D}'
 
 [Setup]
@@ -57,21 +55,21 @@ WizardImageFile=git.bmp
 WizardSmallImageFile=gitsmall.bmp
 
 [Types]
-; Define a dummy type to avoid getting the default ones.
-Name: custom; Description: Custom installation; Flags: iscustom
+; Define a custom type to avoid getting the three default types.
+Name: default; Description: Default installation; Flags: iscustom
 
 [Components]
-Name: icons; Description: Additional icons; Types: custom
-Name: icons\quicklaunch; Description: In the Quick Launch; Types: custom
-Name: icons\desktop; Description: On the Desktop; Types: custom
-Name: ext; Description: Windows Explorer integration; Types: custom
-Name: ext\reg; Description: Simple context menu (Registry based); Flags: exclusive; Types: custom
-Name: ext\reg\shellhere; Description: Git Bash Here; Types: custom
-Name: ext\reg\guihere; Description: Git GUI Here; Types: custom
-Name: ext\cheetah; Description: Advanced context menu (git-cheetah plugin); Flags: exclusive; Types: custom
-Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: custom
-Name: assoc_sh; Description: Associate .sh files to be run with Bash; Types: custom
-Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
+Name: icons; Description: Additional icons; Types: default
+Name: icons\quicklaunch; Description: In the Quick Launch; Types: default
+Name: icons\desktop; Description: On the Desktop; Types: default
+Name: ext; Description: Windows Explorer integration; Types: default
+Name: ext\reg; Description: Simple context menu (Registry based); Flags: exclusive; Types: default
+Name: ext\reg\shellhere; Description: Git Bash Here; Types: default
+Name: ext\reg\guihere; Description: Git GUI Here; Types: default
+Name: ext\cheetah; Description: Advanced context menu (git-cheetah plugin); Flags: exclusive; Types: default
+Name: assoc; Description: Associate .git* configuration files with the default text editor; Types: default
+Name: assoc_sh; Description: Associate .sh files to be run with Bash; Types: default
+Name: consolefont; Description: Use a TrueType font in all console windows (not only for Git Bash)
 
 [Files]
 ; Install files that might be in use during setup under a different name.
@@ -729,24 +727,12 @@ begin
 end;
 
 procedure CurPageChanged(CurPageID:Integer);
-var
-    i:Integer;
 begin
     if CurPageID=wpSelectDir then begin
         if not IsDirWritable(WizardDirValue) then begin
             // If the default directory is not writable, choose another default that most likely is.
             // This will be checked later again when the user clicks "Next".
             WizardForm.DirEdit.Text:=ExpandConstant('{userpf}\{#APP_NAME}');
-        end;
-    end;
-
-    // Uncheck the console font option by default.
-    if CurPageID=wpSelectComponents then begin
-        for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
-            if WizardForm.ComponentsList.ItemCaption[i]='{#COMP_CONSOLE_FONT}' then begin
-                WizardForm.ComponentsList.Checked[i]:=False;
-                Break;
-            end;
         end;
     end;
 
