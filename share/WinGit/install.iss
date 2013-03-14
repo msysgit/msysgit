@@ -59,9 +59,9 @@ WizardSmallImageFile=gitsmall.bmp
 Name: default; Description: Default installation; Flags: iscustom
 
 [Components]
-Name: icons; Description: Additional icons; Types: default
-Name: icons\quicklaunch; Description: In the Quick Launch; Types: default
-Name: icons\desktop; Description: On the Desktop; Types: default
+Name: icons; Description: Additional icons
+Name: icons\quicklaunch; Description: In the Quick Launch
+Name: icons\desktop; Description: On the Desktop
 Name: ext; Description: Windows Explorer integration; Types: default
 Name: ext\reg; Description: Simple context menu (Registry based); Flags: exclusive; Types: default
 Name: ext\reg\shellhere; Description: Git Bash Here; Types: default
