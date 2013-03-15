@@ -552,7 +552,10 @@ begin
         EdtPlink:=TEdit.Create(PuTTYPage);
         with EdtPlink do begin
             Parent:=PuTTYPage.Surface;
-            Text:=GetPuTTYLocation;
+            Text:=GetPreviousData('Plink Path','');
+            if not FileExists(Text) then begin
+                Text:=GetPuTTYLocation;
+            end;
             if not FileExists(Text) then begin
                 Text:='';
             end;
@@ -1227,6 +1230,7 @@ begin
         Data:='OpenSSH';
     end else if RdbSSH[GS_Plink].Checked then begin
         Data:='Plink';
+        SetPreviousData(PreviousDataKey,'Plink Path',EdtPlink.Text);
     end;
     SetPreviousData(PreviousDataKey,'SSH Option',Data);
 
