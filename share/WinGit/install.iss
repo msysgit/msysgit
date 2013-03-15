@@ -11,6 +11,8 @@
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
+#define PLINK_PATH_ERROR_MSG 'Please enter a valid path to (Tortoise)Plink.exe.'
+
 #define DROP_HANDLER_GUID '{{86C86720-42A0-1069-A2E8-08002B30309D}'
 
 [Setup]
@@ -254,7 +256,7 @@ begin
         EdtPlink.Text:=Path+'\plink.exe';
         RdbSSH[GS_Plink].Checked:=True;
     end else begin
-        MsgBox('Please enter a valid path to "TortoisePlink.exe" or "plink.exe".',mbError,MB_OK);
+        MsgBox('{#PLINK_PATH_ERROR_MSG}',mbError,MB_OK);
     end;
 end;
 
@@ -768,7 +770,7 @@ begin
         Result:=RdbSSH[GS_OpenSSH].Checked or
             (RdbSSH[GS_Plink].Checked and FileExists(EdtPlink.Text));
         if not Result then begin
-            MsgBox('Please enter a valid path to (Tortoise)Plink.exe.',mbError,MB_OK);
+            MsgBox('{#PLINK_PATH_ERROR_MSG}',mbError,MB_OK);
         end;
     end else if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
         // It would have been nicer to just disable the "Next" button, but the
