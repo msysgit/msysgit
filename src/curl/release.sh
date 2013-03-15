@@ -42,8 +42,10 @@ test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
 die "Could not apply patches"
 
 (cd $DIR &&
-CFG='-ipv6 -zlib -sspi -spnego -winssl -ldaps' \
-ZLIB_PATH=/src/zlib/zlib-1.2.7 \
+CFG='-ssl-ipv6-zlib-sspi-spnego-ldaps' \
+OPENSSL_PATH=/mingw \
+OPENSSL_LIBPATH=/mingw/lib \
+OPENSSL_LIBS='-lcrypto.dll -lssl.dll' \
 make mingw32 &&
 index=$(/share/msysGit/pre-install.sh) &&
 cleanup_old_curl &&
