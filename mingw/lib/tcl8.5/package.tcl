@@ -393,7 +393,7 @@ proc pkg_mkIndex {args} {
 	    break
 	}
 	lappend cmd ::tcl::Pkg::Create -name $name -version $version
-	foreach spec $files($pkg) {
+	foreach spec [lsort -index 0 $files($pkg)] {
 	    foreach {file type procs} $spec {
 		if { $direct } {
 		    set procs {}

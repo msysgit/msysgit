@@ -89,7 +89,7 @@ proc ::tk::dialog::color:: {args} {
 
     # 5. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display and de-iconify it.
+    # display (Motif style) and de-iconify it.
 
     ::tk::PlaceWindow $w widget $data(-parent)
     wm title $w $data(-title)

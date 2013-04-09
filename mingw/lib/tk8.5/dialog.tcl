@@ -146,27 +146,9 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     # 6. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display and de-iconify it.
+    # display (Motif style) and de-iconify it.
 
-    wm withdraw $w
-    update idletasks
-    set x [expr {[winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
-	    - [winfo vrootx [winfo parent $w]]}]
-    set y [expr {[winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
-	    - [winfo vrooty [winfo parent $w]]}]
-    # Make sure that the window is on the screen and set the maximum
-    # size of the window is the size of the screen.  That'll let things
-    # fail fairly gracefully when very large messages are used. [Bug 827535]
-    if {$x < 0} {
-	set x 0
-    }
-    if {$y < 0} {
-	set y 0
-    }
-    wm maxsize $w [winfo screenwidth $w] [winfo screenheight $w]
-    wm geometry $w +$x+$y
-    wm deiconify $w
-
+    ::tk::PlaceWindow $w 
     tkwait visibility $w
 
     # 7. Set a grab and claim the focus too.

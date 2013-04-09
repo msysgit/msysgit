@@ -24,9 +24,7 @@ fi
 # strip out cygwin paths from PATH
 case "$PATH" in
 */cygwin/*)
-	PATH="$(awk -vRS=: -vORS=: '!/cygwin/' <<< "$PATH")"
-	# awk always adds a trailing separator
-	export PATH="${PATH%:}"
+	export PATH=$(p=$(echo $PATH | tr ":" "\n" | grep -v "/cygwin/" | tr "\n" ":"); echo ${p%:})
 	;;
 esac
 
@@ -152,6 +150,7 @@ esac
 
 
 . /git/contrib/completion/git-completion.bash
+[ -r /git/contrib/completion/git-prompt.sh ] && . /git/contrib/completion/git-prompt.sh
 
 # non-printable characters must be enclosed inside \[ and \]
 PS1='\[\033]0;$MSYSTEM:\w\007\]' # set window title
@@ -162,7 +161,7 @@ PS1="$PS1"'\[\033[33m\]'       # change color
 PS1="$PS1"'\w'                 # current working directory
 if test -z "$WINELOADERNOEXEC"
 then
-	PS1="$PS1"'$(__git_ps1)'   # bash function
+    PS1="$PS1"'$(__git_ps1)'   # bash function
 fi
 PS1="$PS1"'\[\033[0m\]'        # change color
 PS1="$PS1"'\n'                 # new line

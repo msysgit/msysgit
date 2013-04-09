@@ -76,11 +76,13 @@ test "$do_compile" && {
 			git add share/WinGit/ReleaseNotes.rtf &&
 			git commit -m "Git for Windows $version"
 		 fi) &&
-		(cd git/contrib/subtree &&
-			make install INSTALL=/bin/install prefix=) &&
 		(cd git &&
 		 create_msysgit_tag $version &&
 		 make install) &&
+		(cd git/contrib/subtree &&
+			make install INSTALL=/bin/install prefix=) &&
+		(cd git/contrib/credential/wincred &&
+			make install INSTALL=/bin/install prefix=) &&
 		/src/mingw-w64/release-easy.sh &&
 		/src/mingw-w64/release-zlib.sh &&
 		(cd src/git-cheetah/explorer/ &&

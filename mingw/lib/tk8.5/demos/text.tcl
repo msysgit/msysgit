@@ -67,11 +67,11 @@ cursor.  Control-t transposes the two characters on either side of the
 insertion cursor.  Control-z undoes the last editing action performed,
 and }
 
-switch $tcl_platform(platform) {
-    "unix" {
+switch [tk windowingsystem] {
+    "aqua" - "x11" {
 	$w.text insert end "Control-Shift-z"
     }
-    "windows" {
+    "win32" {
 	$w.text insert end "Control-y"
     }
 }

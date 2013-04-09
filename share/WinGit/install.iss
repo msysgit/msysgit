@@ -1,5 +1,12 @@
+; Uncomment the line below to be able to compile the script from within the IDE.
+;#define COMPILE_FROM_IDE
+
 #define APP_NAME      'Git'
+#ifdef COMPILE_FROM_IDE
+#define APP_VERSION   'Snapshot'
+#else
 #define APP_VERSION   '%APPVERSION%'
+#endif
 #define APP_URL       'http://msysgit.googlecode.com/'
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
@@ -15,13 +22,14 @@ LZMAUseSeparateProcess=yes
 OutputBaseFilename={#APP_NAME+'-'+APP_VERSION}
 OutputDir={#GetEnv('USERPROFILE')}
 SolidCompression=yes
-
-; Uncomment the line below to be able to compile the script from within the IDE.
-;SourceDir={#GetEnv('TEMP')}\WinGit
+#ifdef COMPILE_FROM_IDE
+SourceDir={#GetEnv('TEMP')}\WinGit
+#endif
 
 ; Installer-related
 AllowNoIcons=yes
 AppName={#APP_NAME}
+AppPublisher=The Git Development Community
 AppPublisherURL={#APP_URL}
 AppVersion={#APP_VERSION}
 ChangesEnvironment=yes
@@ -32,7 +40,14 @@ DisableProgramGroupPage=auto
 DisableReadyPage=yes
 InfoBeforeFile=gpl-2.0.rtf
 PrivilegesRequired=none
-UninstallDisplayIcon=etc\git.ico
+UninstallDisplayIcon={app}\etc\git.ico
+#ifndef COMPILE_FROM_IDE
+#if Pos('-',APP_VERSION)>0
+VersionInfoVersion={#Copy(APP_VERSION,1,Pos('-',APP_VERSION)-1)}
+#else
+VersionInfoVersion={#APP_VERSION}
+#endif
+#endif
 
 ; Cosmetic
 SetupIconFile=etc\git.ico
@@ -60,15 +75,16 @@ Name: consolefont; Description: {#COMP_CONSOLE_FONT}; Types: custom
 
 [Files]
 ; Install files that might be in use during setup under a different name.
-Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah
-Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah
+Source: git-cheetah\git_shell_ext.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext.dll.new; Flags: replacesameversion; Components: ext\cheetah; AfterInstall: DeleteFromVirtualStore
+Source: git-cheetah\git_shell_ext64.dll; DestDir: {app}\git-cheetah; DestName: git_shell_ext64.dll.new; Flags: replacesameversion; Components: ext\cheetah; AfterInstall: DeleteFromVirtualStore
 
-Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion
-Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion
+Source: *; DestDir: {app}; Excludes: \*.bmp, gpl-2.0.rtf, \*.iss, \tmp.*, \bin\*install*, \git-cheetah\git_shell_ext.dll, \git-cheetah\git_shell_ext64.dll; Flags: recursesubdirs replacesameversion sortfilesbyextension; AfterInstall: DeleteFromVirtualStore
+Source: ReleaseNotes.rtf; DestDir: {app}; Flags: isreadme replacesameversion; AfterInstall: DeleteFromVirtualStore
 
 [Icons]
 Name: {group}\Git GUI; Filename: {app}\bin\wish.exe; Parameters: """{app}\libexec\git-core\git-gui"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
-Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico
+Name: {group}\Git Bash; Filename: {syswow64}\cmd.exe; Parameters: "/c """"{app}\bin\sh.exe"" --login -i"""; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; OnlyBelowVersion: 6.0
+Name: {group}\Git Bash; Filename: {app}\bin\sh.exe; Parameters: "--login -i"; WorkingDir: %HOMEDRIVE%%HOMEPATH%; IconFilename: {app}\etc\git.ico; MinVersion: 6.0
 
 [Messages]
 BeveledLabel={#APP_URL}
@@ -153,6 +169,25 @@ Type: dirifempty; Name: {app}\home
 #include "environment.inc.iss"
 #include "putty.inc.iss"
 #include "modules.inc.iss"
+
+procedure DeleteFromVirtualStore;
+var
+    VirtualStore,FileName:String;
+    DriveChars:Integer;
+begin
+    VirtualStore:=AddBackslash(ExpandConstant('{localappdata}'))+'VirtualStore';
+    FileName:=ExpandConstant(CurrentFileName);
+    DriveChars:=Length(ExtractFileDrive(FileName));
+    if DriveChars>0 then begin
+        Delete(FileName,1,DriveChars);
+        FileName:=VirtualStore+FileName;
+        if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+            Log('Line {#__LINE__}: Unable delete "'+FileName+'".');
+            // This is not a critical error, the user can probably fix it manually,
+            // so we continue.
+        end;
+    end;
+end;
 
 function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
 #ifdef UNICODE
@@ -335,7 +370,7 @@ end;
 
 procedure InitializeWizard;
 var
-    i,PrevPageID:Integer;
+    PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
     PuTTYSessions:TArrayOfString;
@@ -698,6 +733,14 @@ procedure CurPageChanged(CurPageID:Integer);
 var
     i:Integer;
 begin
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            // If the default directory is not writable, choose another default that most likely is.
+            // This will be checked later again when the user clicks "Next".
+            WizardForm.DirEdit.Text:=ExpandConstant('{userpf}\{#APP_NAME}');
+        end;
+    end;
+
     // Uncheck the console font option by default.
     if CurPageID=wpSelectComponents then begin
         for i:=0 to WizardForm.ComponentsList.Items.Count-1 do begin
@@ -722,6 +765,19 @@ var
     Version:TWindowsVersion;
 begin
     Result:=True;
+
+    if CurPageID=wpSelectDir then begin
+        if not IsDirWritable(WizardDirValue) then begin
+            MsgBox(
+                'The specified installation directory does not seem to be writable. ' +
+            +   'Please choose another directory or restart setup as a user with sufficient permissions.'
+            ,   mbCriticalError
+            ,   MB_OK
+            );
+            Result:=False;
+            Exit;
+        end;
+    end;
 
     if (PuTTYPage<>NIL) and (CurPageID=PuTTYPage.ID) then begin
         Result:=RdbSSH[GS_OpenSSH].Checked or

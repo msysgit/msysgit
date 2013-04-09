@@ -15,31 +15,31 @@ TCL_DLL_FILE="tcl85.dll"
 TCL_VERSION='8.5'
 TCL_MAJOR_VERSION='8'
 TCL_MINOR_VERSION='5'
-TCL_PATCH_LEVEL='.11'
+TCL_PATCH_LEVEL='.13'
 
 # C compiler to use for compilation.
-TCL_CC='cl'
+TCL_CC='gcc'
 
 # -D flags for use with the C compiler.
-TCL_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -Dinline=__inline -DSTDC_HEADERS=1 -DHAVE_NO_LPFN_DECLS=1 -DHAVE_NO_STRUCT_STAT32I64=1 -DHAVE_NO_FINDEX_ENUMS=1 -DTCL_CFGVAL_ENCODING=\"cp1252\" -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -Dintptr_t=int -Duintptr_t=unsigned\ int -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1 '
+TCL_DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DSTDC_HEADERS=1 -DTCL_CFGVAL_ENCODING=\"cp1252\" -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NO_SEH=1 -DEXCEPTION_DISPOSITION=int -DHAVE_WINNT_IGNORE_VOID=1 -DHAVE_CAST_TO_UNION=1 -DHAVE_INTPTR_T=1 -DHAVE_UINTPTR_T=1 -DNDEBUG=1 -DTCL_CFG_OPTIMIZED=1 '
 
 # If TCL was built with debugging symbols, generated libraries contain
 # this string at the end of the library name (before the extension).
 TCL_DBGX=
 
 # Default flags used in an optimized and debuggable build, respectively.
-TCL_CFLAGS_DEBUG='-nologo -Z7 -Od -WX -MDd -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE'
-TCL_CFLAGS_OPTIMIZE='-nologo -O2 -MD -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE'
+TCL_CFLAGS_DEBUG='-g'
+TCL_CFLAGS_OPTIMIZE='-O2 -fomit-frame-pointer'
 
 # Default linker flags used in an optimized and debuggable build, respectively.
-TCL_LDFLAGS_DEBUG='-debug'
-TCL_LDFLAGS_OPTIMIZE='-release'
+TCL_LDFLAGS_DEBUG=''
+TCL_LDFLAGS_OPTIMIZE=''
 
 # Flag, 1: we built a shared lib, 0 we didn't
 TCL_SHARED_BUILD=1
 
 # The name of the Tcl library (may be either a .a file or a shared library):
-TCL_LIB_FILE='tcl85.lib'
+TCL_LIB_FILE='libtcl85.a'
 
 # Flag to indicate whether shared libraries need export files.
 TCL_NEEDS_EXP_FILE=
@@ -48,10 +48,10 @@ TCL_NEEDS_EXP_FILE=
 # name that comes after the "libxxx" (includes version number, if any,
 # extension, and anything else needed).  May depend on the variables
 # VERSION.  On most UNIX systems this is ${VERSION}.exp.
-TCL_EXPORT_FILE_SUFFIX='${NODOT_VERSION}${DBGX}.lib'
+TCL_EXPORT_FILE_SUFFIX='${NODOT_VERSION}${DBGX}.a'
 
 # Additional libraries to use when linking Tcl.
-TCL_LIBS='user32.lib advapi32.lib ws2_32.lib'
+TCL_LIBS='-lws2_32'
 
 # Top-level directory in which Tcl's platform-independent files are
 # installed.
@@ -65,16 +65,16 @@ TCL_EXEC_PREFIX='/mingw'
 TCL_SHLIB_CFLAGS=''
 
 # Flags to pass to cc to get warning messages
-TCL_CFLAGS_WARNING='-W3'
+TCL_CFLAGS_WARNING='-Wall'
 
 # Extra flags to pass to cc:
-TCL_EXTRA_CFLAGS=''
+TCL_EXTRA_CFLAGS='-pipe'
 
 # Base command to use for combining object files into a shared library:
-TCL_SHLIB_LD='link -dll -incremental:no -nologo'
+TCL_SHLIB_LD='${CC} -shared ${CFLAGS}'
 
 # Base command to use for combining object files into a static library:
-TCL_STLIB_LD='link -lib -nologo'
+TCL_STLIB_LD='${AR} cr'
 
 # Either '$LIBS' (if dependent libraries should be included when linking
 # shared libraries) or an empty string.  See Tcl's configure.in for more
@@ -110,7 +110,7 @@ TCL_LIB_FLAG='-ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # build directory.
-TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.11/win -ltcl85'
+TCL_BUILD_LIB_SPEC='-L/src/tcltk/tcl8.5.13/win -ltcl85'
 
 # String to pass to linker to pick up the Tcl library from its
 # installed directory.
@@ -137,7 +137,7 @@ TCL_SHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.dll'
 # name that comes after the "libxxx" (includes version number, if any,
 # extension, and anything else needed).  May depend on the variable
 # VERSION.  On most UNIX systems this is ${VERSION}.a.
-TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.lib'
+TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.a'
 
 # Location of the top-level source directory from which Tcl was built.
 # This is the directory that contains a README file as well as
@@ -145,7 +145,7 @@ TCL_UNSHARED_LIB_SUFFIX='${NODOT_VERSION}${DBGX}.lib'
 # different place than the directory containing the source files, this
 # points to the location of the sources, not the location where Tcl was
 # compiled.
-TCL_SRC_DIR='/src/tcltk/tcl8.5.11'
+TCL_SRC_DIR='/src/tcltk/tcl8.5.13'
 
 # List of standard directories in which to look for packages during
 # "package require" commands.  Contains the "prefix" directory plus also
@@ -156,24 +156,24 @@ TCL_PACKAGE_PATH='/mingw/lib'
 TCL_SUPPORTS_STUBS=1
 
 # The name of the Tcl stub library (.a):
-TCL_STUB_LIB_FILE='tclstub85.lib'
+TCL_STUB_LIB_FILE='libtclstub85.a'
 
 # -l flag to pass to the linker to pick up the Tcl stub library
 TCL_STUB_LIB_FLAG='-ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # build directory.
-TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.11/win -ltclstub85'
+TCL_BUILD_STUB_LIB_SPEC='-L/src/tcltk/tcl8.5.13/win -ltclstub85'
 
 # String to pass to linker to pick up the Tcl stub library from its
 # installed directory.
 TCL_STUB_LIB_SPEC='-L/mingw/lib -ltclstub85'
 
 # Path to the Tcl stub library in the build directory.
-TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.11/win/tclstub85.lib'
+TCL_BUILD_STUB_LIB_PATH='/src/tcltk/tcl8.5.13/win/libtclstub85.a'
 
 # Path to the Tcl stub library in the install directory.
-TCL_STUB_LIB_PATH='/mingw/lib/tclstub85.lib'
+TCL_STUB_LIB_PATH='/mingw/lib/libtclstub85.a'
 
 # Flag, 1: we built Tcl with threads enables, 0 we didn't
 TCL_THREADS=0

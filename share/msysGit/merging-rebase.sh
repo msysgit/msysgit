@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Rebase 'devel' on top of an upstream branch (defaults to 'junio/next'),
+# Rebase 'master' on top of an upstream branch (defaults to 'junio/next'),
 # retaining "fast-forwardability" by "merging" (with the "ours" strategy) the
 # previous state on top of the current upstream state.
 #

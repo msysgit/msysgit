@@ -1,3 +1,5 @@
+[Code]
+
 const
     TortoiseGitInstallKey='SOFTWARE\TortoiseGit';
     TortoiseSVNInstallKey='SOFTWARE\TortoiseSVN';
