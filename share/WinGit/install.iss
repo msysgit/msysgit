@@ -733,16 +733,19 @@ end;
 
 procedure CurPageChanged(CurPageID:Integer);
 begin
-    if CurPageID=wpSelectDir then begin
+    if CurPageID=wpInfoBefore then begin
+        if WizardForm.NextButton.Enabled then begin
+            // By default, do not show a blinking cursor for InfoBeforeFile.
+            WizardForm.ActiveControl:=WizardForm.NextButton;
+        end;
+    end else if CurPageID=wpSelectDir then begin
         if not IsDirWritable(WizardDirValue) then begin
             // If the default directory is not writable, choose another default that most likely is.
             // This will be checked later again when the user clicks "Next".
             WizardForm.DirEdit.Text:=ExpandConstant('{userpf}\{#APP_NAME}');
         end;
-    end;
-
-    // Show the "Refresh" button only on the processes page.
-    if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
+    end else if (ProcessesPage<>NIL) and (CurPageID=ProcessesPage.ID) then begin
+        // Show the "Refresh" button only on the processes page.
         ProcessesRefresh.Show;
     end else begin
         ProcessesRefresh.Hide;
