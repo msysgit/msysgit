@@ -69,12 +69,9 @@ rm -rf bin/cvs.exe &&
 test -f lib/perl5/site_perl/Git.pm &&
 gitmd5=$(md5sum bin/git.exe | cut -c 1-32) &&
 mkdir etc &&
-if test -z "$DONT_REMOVE_BUILTINS"
-then
-	md5sum {bin,libexec/git-core}/git-*.exe libexec/git-core/git.exe |
-	sed -n -r "s/^$gitmd5\s+\*?(.*)/\1/p" > etc/fileList-builtins.txt &&
-	rm $(cat etc/fileList-builtins.txt)
-fi &&
+md5sum {bin,libexec/git-core}/git-*.exe libexec/git-core/git.exe |
+sed -n -r "s/^$gitmd5\s+\*?(.*)/\1/p" > etc/fileList-builtins.txt &&
+rm $(cat etc/fileList-builtins.txt) &&	# rm builtins - if needed we'll restore them after strip
 (cd $MSYSGITROOT/mingw && tar cf - \
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv}* \
@@ -85,6 +82,16 @@ fi &&
 tar xf - &&
 cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
+if test -n "$DONT_REMOVE_BUILTINS"
+then
+	# restore builtins after git.exe was stripped
+	# (for PE, strip embeds current time into file header, and if we just
+	#  pass all git builtins to strip the result will be lots of
+	#  not-bit-exact exe's)
+	for b in $(cat etc/fileList-builtins.txt); do
+		ln bin/git.exe $b
+	done
+fi &&
 cp $MSYSGITROOT/git/contrib/completion/git-completion.bash etc/ &&
 cp $MSYSGITROOT/git/contrib/completion/git-prompt.sh etc/ &&
 cp $MSYSGITROOT/etc/termcap etc/ &&
