@@ -1,0 +1,163 @@
+From 5e1ddeddca818e4f9785fb1d47c930df05e5dfcc Mon Sep 17 00:00:00 2001
+From: Pat Thoyts <patthoyts@users.sourceforge.net>
+Date: Wed, 15 May 2013 13:15:51 +0100
+Subject: [PATCH] ccache on win32 crashes sometimes
+
+Compiling a more or less large project under Windows XP with ccache-2.4-
+win32 aborts with a crash dialog ("send problem report to microsoft" -
+dialog) in irregular intervals.
+
+I could trace the problem to the x_realloc code, which looks like this:
+
+/*
+  this is like realloc() but dies if the malloc fails
+*/
+void *x_realloc(void *ptr, size_t size)
+{
+        void *p2;
+        if (!ptr) return x_malloc(size);
+        p2 = malloc(size);
+        if (!p2) {
+                fatal("out of memory in x_realloc");
+        }
+        if (ptr) {
+                memcpy(p2, ptr, size);
+                free(ptr);
+        }
+        return p2;
+}
+
+Suppose ptr points to a 100 bytes area of memory and you
+reallocate this to 1000000 bytes. Then this line
+
+                memcpy(p2, ptr, size);
+
+will copy 1000000 bytes of data from the old to the new
+location, which means that memcpy will read memory far
+outside the original allocated area.
+
+[ccache-win32 issue #8]
+
+Signed-off-by: Pat Thoyts <patthoyts@users.sourceforge.net>
+---
+ args.c    | 11 ++++++++---
+ ccache.h  |  3 ++-
+ cleanup.c |  6 +++++-
+ util.c    |  4 ++--
+ 4 files changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/args.c b/args.c
+index 31e5471..edbde7f 100644
+--- a/args.c
++++ b/args.c
+@@ -26,7 +26,8 @@ ARGS *args_init(int init_argc, char **init_args)
+ 	int i;
+ 	args = (ARGS *)x_malloc(sizeof(ARGS));
+ 	args->argc = 0;
+-	args->argv = (char **)x_malloc(sizeof(char *));
++	args->argvSize = sizeof(char *);
++	args->argv = (char **)x_malloc(args->argvSize);
+ 	args->argv[0] = NULL;
+ 	for (i=0;i<init_argc;i++) {
+ 		args_add(args, init_args[i]);
+@@ -37,7 +38,9 @@ ARGS *args_init(int init_argc, char **init_args)
+ 
+ void args_add(ARGS *args, const char *s)
+ {
+-	args->argv = (char**)x_realloc(args->argv, (args->argc + 2) * sizeof(char *));
++    size_t size = (args->argc + 2) * sizeof(char *);
++	args->argv = (char**)x_realloc(args->argv, size, args->argvSize);
++	args->argvSize = size;
+ 	args->argv[args->argc] = x_strdup(s);
+ 	args->argc++;
+ 	args->argv[args->argc] = NULL;
+@@ -66,7 +69,9 @@ void args_remove_first(ARGS *args)
+ /* add an argument into the front of the argument list */
+ void args_add_prefix(ARGS *args, const char *s)
+ {
+-	args->argv = (char**)x_realloc(args->argv, (args->argc + 2) * sizeof(char *));
++    size_t size = (args->argc + 2) * sizeof(char *);
++	args->argv = (char**)x_realloc(args->argv, size, args->argvSize);
++	args->argvSize = size;
+ 	memmove(&args->argv[1], &args->argv[0], 
+ 		(args->argc+1) * sizeof(args->argv[0]));
+ 	args->argv[0] = x_strdup(s);
+diff --git a/ccache.h b/ccache.h
+index d512e78..e65888d 100644
+--- a/ccache.h
++++ b/ccache.h
+@@ -95,7 +95,7 @@ int copy_file(const char *src, const char *dest);
+ int create_dir(const char *dir);
+ void x_asprintf(char **ptr, const char *format, ...);
+ char *x_strdup(const char *s);
+-void *x_realloc(void *ptr, size_t size);
++void *x_realloc(void *ptr, size_t size, size_t oldSize);
+ void *x_malloc(size_t size);
+ void traverse(const char *dir, void (*fn)(const char *, struct stat *));
+ char *str_basename(const char *s);
+@@ -143,6 +143,7 @@ char *find_executable(const char *name, const char *exclude_name);
+ typedef struct {
+ 	char **argv;
+ 	int argc;
++	size_t argvSize;
+ } ARGS;
+ 
+ 
+diff --git a/cleanup.c b/cleanup.c
+index 9931228..1956e04 100644
+--- a/cleanup.c
++++ b/cleanup.c
+@@ -49,6 +49,7 @@ static int files_compare(struct files **f1, struct files **f2)
+ static void traverse_fn(const char *fname, struct stat *st)
+ {
+ 	char *p;
++	unsigned oldAllocated;
+ 
+ 	if (!S_ISREG(st->st_mode)) return;
+ 
+@@ -60,9 +61,11 @@ static void traverse_fn(const char *fname, struct stat *st)
+ 	free(p);
+ 
+ 	if (num_files == allocated) {
++	    oldAllocated = allocated;
+ 		allocated = 10000 + num_files*2;
+ 		files = (struct files **)x_realloc(files, 
+-						   sizeof(struct files *)*allocated);
++						   sizeof(struct files *)*allocated,
++						   sizeof(struct files *)*oldAllocated);
+ 	}
+ 
+ 	files[num_files] = (struct files *)x_malloc(sizeof(struct files));
+@@ -111,6 +114,7 @@ void cleanup_dir(const char *dir, size_t maxfiles, size_t maxsize)
+ 	files_threshold = maxfiles * LIMIT_MULTIPLE;
+ 
+ 	num_files = 0;
++	allocated = 0;
+ 	total_size = 0;
+ 
+ 	/* build a list of files */
+diff --git a/util.c b/util.c
+index 54fae89..531883d 100644
+--- a/util.c
++++ b/util.c
+@@ -200,7 +200,7 @@ void *x_malloc(size_t size)
+ /*
+   this is like realloc() but dies if the malloc fails
+ */
+-void *x_realloc(void *ptr, size_t size)
++void *x_realloc(void *ptr, size_t size, size_t oldSize)
+ {
+ 	void *p2;
+ 	if (!ptr) return x_malloc(size);
+@@ -209,7 +209,7 @@ void *x_realloc(void *ptr, size_t size)
+ 		fatal("out of memory in x_realloc");
+ 	}
+ 	if (ptr) {
+-		memcpy(p2, ptr, size);
++		memcpy(p2, ptr, ((oldSize < size) ? oldSize : size));
+ 		free(ptr);
+ 	}
+ 	return p2;
+-- 
+1.8.1.msysgit.1
+

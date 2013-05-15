@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-REPO=http://ccache-win32.googlecode.com/svn/trunk/ccache-win32
+REPO=https://ccache-win32.googlecode.com/svn/trunk/ccache-win32
 DIR=ccache-svn
 REV=2
 

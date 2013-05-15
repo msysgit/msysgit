@@ -1,0 +1,54 @@
+From c7d25bb9c54af16d70f98bff1bc55de314023d7a Mon Sep 17 00:00:00 2001
+From: Pat Thoyts <patthoyts@users.sourceforge.net>
+Date: Wed, 15 May 2013 13:25:52 +0100
+Subject: [PATCH] ccache: handle both forward and backward slashes as path
+ names
+
+I was using a mingw ccache from these sources, when it started complaining
+about not being able to unlink files from the Administrator home directory.
+
+So what should have been happening was deleting stuff from
+
+  C:\Dokumente und Einstellungen\Administrator\.ccache
+
+What happened is that the program interpreted
+
+  dirname("C:\Dokumente und Einstellungen\Administrator/.ccache")
+
+as "C:\Dokumente und Einstellungen" due to the dirname code not properly
+seeing "/" as seperator. So this can be fixed by rewriting dirname() as in
+the patch I'll attach.
+
+[ccache-win32 issue #7]
+
+Signed-off-by: Pat Thoyts <patthoyts@users.sourceforge.net>
+---
+ util.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/util.c b/util.c
+index 531883d..c129914 100644
+--- a/util.c
++++ b/util.c
+@@ -285,12 +285,13 @@ char *str_basename(const char *s)
+ /* return the dir name of a file - caller frees */
+ char *dirname(char *s)
+ {
+-	char *p;
++	char *p, *delim;
+ 	s = x_strdup(s);
+-	p = strrchr(s, '/');
+-	p = strrchr(s, '\\');
+-	if (p) {
+-		*p = 0;
++	for (p = s; *p; p++)
++	    if (*p == '/' || *p == '\\')
++		delim = p;
++	if (delim) {
++		*delim = 0;
+ 	} 
+ 	return s;
+ }
+-- 
+1.8.1.msysgit.1
+
