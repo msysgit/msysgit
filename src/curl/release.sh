@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=7.28.1
+VERSION=7.30.0
 DIR=curl-$VERSION
 URL=http://curl.haxx.se/download/$DIR.tar.bz2
 FILE=${URL##*/}
@@ -31,7 +31,7 @@ test -d $DIR || {
 	tar xjvf $FILE && (
 		cd $DIR &&
 		git init &&
-                git config core.autocrlf false &&
+		git config core.autocrlf false &&
 		git add . &&
 		git commit -m "Import of $FILE"
 	)
