@@ -374,7 +374,7 @@ var
     PrevPageID:Integer;
     LblGitBash,LblGitCmd,LblGitCmdTools,LblGitCmdToolsWarn:TLabel;
     LblOpenSSH,LblPlink:TLabel;
-    PuTTYSessions:TArrayOfString;
+    PuTTYSessions,EnvSSH:TArrayOfString;
     LblLFOnly,LblCRLFAlways,LblCRLFCommitAsIs:TLabel;
     BtnPlink:TButton;
     Data:String;
@@ -554,13 +554,21 @@ begin
         EdtPlink:=TEdit.Create(PuTTYPage);
         with EdtPlink do begin
             Parent:=PuTTYPage.Surface;
-            Text:=GetPreviousData('Plink Path','');
+
+            EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
+            if (GetArrayLength(EnvSSH)=1) and (Pos('plink',LowerCase(EnvSSH[0]))>0) then begin
+                Text:=EnvSSH[0];
+            end;
+            if not FileExists(Text) then begin
+                Text:=GetPreviousData('Plink Path','');
+            end;
             if not FileExists(Text) then begin
                 Text:=GuessPlinkExecutable;
             end;
             if not FileExists(Text) then begin
                 Text:='';
             end;
+
             Left:=ScaleX(28);
             Top:=ScaleY(161);
             Width:=ScaleX(316);
