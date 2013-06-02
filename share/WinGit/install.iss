@@ -11,7 +11,7 @@
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
-#define PLINK_PATH_ERROR_MSG 'Please enter a valid path to (Tortoise)Plink.exe.'
+#define PLINK_PATH_ERROR_MSG 'Please enter a valid path to a version of Plink.'
 
 #define DROP_HANDLER_GUID '{{86C86720-42A0-1069-A2E8-08002B30309D}'
 
@@ -245,15 +245,17 @@ var
 
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
-    Path:String;
+    Name:String;
 begin
-    Path:=ExtractFilePath(EdtPlink.Text);
-    BrowseForFolder('Please select the PuTTY folder:',Path,False);
-    if FileExists(Path+'\TortoisePlink.exe') then begin
-        EdtPlink.Text:=Path+'\TortoisePlink.exe';
-        RdbSSH[GS_Plink].Checked:=True;
-    end else if FileExists(Path+'\plink.exe') then begin
-        EdtPlink.Text:=Path+'\plink.exe';
+    GetOpenFileName(
+        'Please select the Plink executable:',
+        Name,
+        ExtractFilePath(EdtPlink.Text),
+        'Executable Files|*.exe',
+        'exe'
+    );
+    if Pos('plink',LowerCase(Name))>0 then begin
+        EdtPlink.Text:=Name;
         RdbSSH[GS_Plink].Checked:=True;
     end else begin
         MsgBox('{#PLINK_PATH_ERROR_MSG}',mbError,MB_OK);
