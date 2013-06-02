@@ -10,7 +10,7 @@ const
 // Tries to detect the path to a PuTTY installation / an application that comes
 // with an improved version of Plink. TortoisePlink from TortoiseGit/SVN features a
 // GUI dialog to accept new host keys, for example.
-function GetPuTTYLocation:string;
+function GuessPlinkExecutable:string;
 begin
     // Prefer TortoisePlink over vanilla Plink for its GUI dialog to accept host keys.
     if (IsWin64 and RegQueryStringValue(HKEY_LOCAL_MACHINE_64,TortoiseGitInstallKey,'Directory',Result)) or

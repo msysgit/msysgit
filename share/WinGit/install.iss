@@ -554,7 +554,7 @@ begin
             Parent:=PuTTYPage.Surface;
             Text:=GetPreviousData('Plink Path','');
             if not FileExists(Text) then begin
-                Text:=GetPuTTYLocation;
+                Text:=GuessPlinkExecutable;
             end;
             if not FileExists(Text) then begin
                 Text:='';
