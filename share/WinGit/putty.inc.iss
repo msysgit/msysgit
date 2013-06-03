@@ -52,3 +52,8 @@ begin
 
     Result:=Result+'plink.exe'
 end;
+
+function IsPlinkExecutable(Path:String):Boolean;
+begin
+    Result:=(Pos('plink',LowerCase(ExtractFileName(Path)))>0);
+end;

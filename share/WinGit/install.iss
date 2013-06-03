@@ -11,7 +11,7 @@
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
-#define PLINK_PATH_ERROR_MSG 'Please enter a valid path to a version of Plink.'
+#define PLINK_PATH_ERROR_MSG 'Please enter a valid path to a Plink executable.'
 
 #define DROP_HANDLER_GUID '{{86C86720-42A0-1069-A2E8-08002B30309D}'
 
@@ -247,18 +247,19 @@ procedure BrowseForPuTTYFolder(Sender:TObject);
 var
     Name:String;
 begin
-    GetOpenFileName(
-        'Please select the Plink executable:',
+    if GetOpenFileName(
+        'Please select a Plink executable',
         Name,
         ExtractFilePath(EdtPlink.Text),
         'Executable Files|*.exe',
         'exe'
-    );
-    if Pos('plink',LowerCase(Name))>0 then begin
-        EdtPlink.Text:=Name;
-        RdbSSH[GS_Plink].Checked:=True;
-    end else begin
-        MsgBox('{#PLINK_PATH_ERROR_MSG}',mbError,MB_OK);
+    ) then begin
+        if IsPlinkExecutable(Name) then begin
+            EdtPlink.Text:=Name;
+            RdbSSH[GS_Plink].Checked:=True;
+        end else begin
+            MsgBox('{#PLINK_PATH_ERROR_MSG}',mbError,MB_OK);
+        end;
     end;
 end;
 
@@ -556,7 +557,7 @@ begin
             Parent:=PuTTYPage.Surface;
 
             EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
-            if (GetArrayLength(EnvSSH)=1) and (Pos('plink',LowerCase(EnvSSH[0]))>0) then begin
+            if (GetArrayLength(EnvSSH)=1) and IsPlinkExecutable(EnvSSH[0]) then begin
                 Text:=EnvSSH[0];
             end;
             if not FileExists(Text) then begin
