@@ -8,6 +8,7 @@ http://mid.gmane.org*)
 	curl -D $TMP "$URL" > /dev/null
 	URL=$(sed -n 's/^Location: //p' < $TMP | tr -d '\r\n');;
 http://thread.*) URL=http://article.${URL#http://thread.};;
+http://permalink.gmane.org*) URL=http://article.${URL#http://permalink.};;
 http://*|article.gmane.org*) ;;
 *@*)
 	TMP=.git/apply.tmp
