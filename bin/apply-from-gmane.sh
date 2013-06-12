@@ -22,4 +22,4 @@ case "$URL" in
 *) URL=${URL%/}/raw;;
 esac
 
-curl $URL | git am --whitespace=fix -s
+curl $URL | git am --whitespace=fix -3 -s
