@@ -180,4 +180,4 @@ EOF
 chmod a+x "$TMP_EDITOR"
 
 # Rebase!
-GIT_EDITOR="$TMP_EDITOR" git rebase --autosquash -i ${REBASING_BASE:-$TO}
+GIT_EDITOR="$TMP_EDITOR" GIT_SEQUENCE_EDITOR="$TMP_EDITOR" git rebase --autosquash -i ${REBASING_BASE:-$TO}
