@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 srcdir=$(pwd)
 
 # Limit the number of RSS feed entries.
-limit=500
+limit=1000
 
 rss="$(curl -s http://sourceforge.net/api/file/index/project-id/202880/mtime/desc/limit/$limit/rss)"
 if test $? -ne 0
