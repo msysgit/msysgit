@@ -609,12 +609,11 @@ end;
 // Tries to replace an in-use file, e.g. a registered shell extension, by
 // renaming it and then renaming the new file to the original name. Optionally,
 // performs (un-)registering via regsvr32.
-function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean):Boolean;
+function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean;var ErrorMsg:String):Boolean;
 var
     CurFilePath,CurFileName,NewFileName:String;
     CurFileStem,CurFileTemp:String;
     UnregisterFailed,RenameFailed:Boolean;
-    Msg:String;
 begin
     Result:=False;
 
@@ -649,20 +648,18 @@ begin
     end;
 
     if not RenameFile(NewFile,CurFile) then begin
-        Msg:='Unable to install a new version of "'+CurFileName+'". ' +
-             'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
+        ErrorMsg:='Unable to install a new version of "'+CurFileName+'". ' +
+                  'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
         if FileExists(CurFile) then begin
             if UnregisterFailed then begin
-                Msg := Msg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
+                ErrorMsg := ErrorMsg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
             end;
             if RenameFailed then begin
-                Msg := Msg + '- rename "' + CurFileName + '" to something else,' + #13;
+                ErrorMsg := ErrorMsg + '- rename "' + CurFileName + '" to something else,' + #13;
             end;
         end;
-        Msg         := Msg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
-        Msg         := Msg + '- run "regsvr32 ' + CurFileName + '".';
-
-        MsgBox(Msg,mbError,MB_OK);
+        ErrorMsg         := ErrorMsg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
+        ErrorMsg         := ErrorMsg + '- run "regsvr32 ' + CurFileName + '".';
     end else begin
         if Register then begin
             RegisterServer(Is64BitInstallMode,CurFile,False);
