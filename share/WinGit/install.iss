@@ -388,9 +388,9 @@ begin
      *)
 
     PathPage:=CreateCustomPage(
-        PrevPageID,
-        'Adjusting your PATH environment',
-        'How would you like to use Git from the command line?'
+        PrevPageID
+    ,   'Adjusting your PATH environment'
+    ,   'How would you like to use Git from the command line?'
     );
     PrevPageID:=PathPage.ID;
 
@@ -496,9 +496,9 @@ begin
 
     if RegGetSubkeyNames(HKEY_CURRENT_USER,'Software\SimonTatham\PuTTY\Sessions',PuTTYSessions) and (GetArrayLength(PuTTYSessions)>0) then begin
         PuTTYPage:=CreateCustomPage(
-            PrevPageID,
-            'Choosing the SSH executable',
-            'Which Secure Shell client program would you like Git to use?'
+            PrevPageID
+        ,   'Choosing the SSH executable'
+        ,   'Which Secure Shell client program would you like Git to use?'
         );
         PrevPageID:=PuTTYPage.ID;
 
@@ -602,9 +602,9 @@ begin
      *)
 
     CRLFPage:=CreateCustomPage(
-        PrevPageID,
-        'Configuring the line ending conversions',
-        'How should Git treat line endings in text files?'
+        PrevPageID
+    ,   'Configuring the line ending conversions'
+    ,   'How should Git treat line endings in text files?'
     );
     PrevPageID:=CRLFPage.ID;
 
@@ -701,9 +701,9 @@ begin
      *)
 
     ProcessesPage:=CreateCustomPage(
-        wpPreparing,
-        'Replacing in-use files',
-        'The following applications use files that need to be replaced, please close them.'
+        wpPreparing
+    ,   'Replacing in-use files'
+    ,   'The following applications use files that need to be replaced, please close them.'
     );
 
     ProcessesListBox:=TListBox.Create(ProcessesPage);
