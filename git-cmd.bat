@@ -12,5 +12,5 @@
 @set PLINK_PROTOCOL=ssh
 @if not defined TERM set TERM=msys
 
-@cd %HOME%
+@cd /d %HOME%
 @start %COMSPEC%
