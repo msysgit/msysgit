@@ -1140,6 +1140,7 @@ begin
         ,   SW_SHOWNORMAL
         );
     end;
+
     if IsComponentSelected('icons\desktop') then begin
         CreateShellLink(
             GetShellFolder('desktop')+'\Git Bash.lnk'
@@ -1152,20 +1153,6 @@ begin
         ,   SW_SHOWNORMAL
         );
     end;
-
-    // Create a special shortcut that does not set a working directory (Note: Since Inno Setup 5.3.11,
-    // passing an empty WorkingDir gets replaced with {sys}, so use '.' instead).
-    // This shortcut is used by "Git Bash.vbs", which in turn is run by the "Git Bash Here" shell extension.
-    CreateShellLink(
-        AppDir+'\Git Bash.lnk'
-    ,   'Git Bash'
-    ,   Cmd
-    ,   TempName
-    ,   '.'
-    ,   FileName
-    ,   0
-    ,   SW_SHOWNORMAL
-    );
 
     {
         Create the Windows Explorer integrations
