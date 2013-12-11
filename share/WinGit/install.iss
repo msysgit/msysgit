@@ -224,6 +224,10 @@ var
     ProcessesListBox:TListBox;
     ProcessesRefresh,ContinueButton:TButton;
 
+{
+    Specific helper functions
+}
+
 procedure BrowseForPuTTYFolder(Sender:TObject);
 var
     Name:String;
@@ -350,7 +354,7 @@ begin
 end;
 
 {
-    Installer code
+    Setup event functions
 }
 
 procedure InitializeWizard;
@@ -1247,7 +1251,7 @@ begin
 end;
 
 {
-    Uninstaller code
+    Uninstall event functions
 }
 
 function InitializeUninstall:Boolean;
