@@ -184,7 +184,7 @@ begin
         Delete(FileName,1,DriveChars);
         FileName:=VirtualStore+FileName;
         if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             Log('Line {#__LINE__}: Unable delete "'+FileName+'".');
         end;
     end;
@@ -291,7 +291,7 @@ begin
             if not RegDeleteKeyIncludingSubkeys(RootKey,Keys[i]) then begin
                 Msg:='Line {#__LINE__}: Unable to remove "Git Bash / GUI Here" shell extension.';
 
-                // This is not a critical error, so just notify the user an continue.
+                // This is not a critical error, so just notify the user and continue.
                 SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
                 Log(Msg);
             end;
@@ -964,7 +964,7 @@ begin
                 AppDir + '\etc', SW_HIDE, ewWaitUntilTerminated, i) then begin
         Msg:='Unable to configure the line ending conversion: ' + Cmd;
 
-        // This is not a critical error, so just notify the user an continue.
+        // This is not a critical error, so just notify the user and continue.
         SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
         Log(Msg);
     end;
@@ -985,7 +985,7 @@ begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to reset GIT_SSH prior to install.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -997,7 +997,7 @@ begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to reset SVN_SSH prior to install.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1011,7 +1011,7 @@ begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#__LINE__}: Unable to set the GIT_SSH environment variable.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1020,7 +1020,7 @@ begin
         if not SetIniString('Environment','GIT_SSH',EnvSSH[0],FileName) then begin
             Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1028,7 +1028,7 @@ begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
             Msg:='Line {#__LINE__}: Unable to set the SVN_SSH environment variable.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1037,7 +1037,7 @@ begin
         if not SetIniString('Environment','SVN_SSH',EnvSSH[0],FileName) then begin
             Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1060,7 +1060,7 @@ begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to reset HOME prior to install.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1088,7 +1088,7 @@ begin
                 if not SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome) then begin
                     Msg:='Line {#__LINE__}: Unable to set the HOME environment variable.';
 
-                    // This is not a critical error, so just notify the user an continue.
+                    // This is not a critical error, so just notify the user and continue.
                     SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
                     Log(Msg);
                 end;
@@ -1097,7 +1097,7 @@ begin
                 if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
                     Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
 
-                    // This is not a critical error, so just notify the user an continue.
+                    // This is not a critical error, so just notify the user and continue.
                     SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
                     Log(Msg);
                 end;
@@ -1109,7 +1109,7 @@ begin
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
         Msg:='Line {#__LINE__}: Unable to set the PATH environment variable.';
 
-        // This is not a critical error, so just notify the user an continue.
+        // This is not a critical error, so just notify the user and continue.
         SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
         Log(Msg);
     end;
@@ -1175,7 +1175,7 @@ begin
         begin
             Msg:='Line {#__LINE__}: Unable to create "Git Bash Here" shell extension.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1192,7 +1192,7 @@ begin
         then begin
             Msg:='Line {#__LINE__}: Unable to create "Git GUI Here" shell extension.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1402,7 +1402,7 @@ begin
         if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to revert any possible changes to GIT_SSH.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1414,7 +1414,7 @@ begin
         if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to revert any possible changes to SVN_SSH.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1435,7 +1435,7 @@ begin
     if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
         Msg:='Line {#__LINE__}: Unable to revert any possible changes to PATH.';
 
-        // This is not a critical error, so just notify the user an continue.
+        // This is not a critical error, so just notify the user and continue.
         SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
         Log(Msg);
     end;
@@ -1447,7 +1447,7 @@ begin
         if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
             Msg:='Line {#__LINE__}: Unable to revert any possible changes to HOME.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1456,7 +1456,7 @@ begin
     if FileExists(FileName) and (not DeleteFile(FileName)) then begin
         Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'".';
 
-        // This is not a critical error, so just notify the user an continue.
+        // This is not a critical error, so just notify the user and continue.
         SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
         Log(Msg);
     end;
@@ -1476,7 +1476,7 @@ begin
         if not UnregisterServer(Is64BitInstallMode,FileName,False) then begin
             Msg:='Line {#__LINE__}: Unable to unregister file "'+FileName+'". Please do it manually by running "regsvr32 /u '+ExtractFileName(FileName)+'".';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
@@ -1484,7 +1484,7 @@ begin
         if not DeleteFile(FileName) then begin
             Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'". Please do it manually after logging off and on again.';
 
-            // This is not a critical error, so just notify the user an continue.
+            // This is not a critical error, so just notify the user and continue.
             SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
             Log(Msg);
         end;
