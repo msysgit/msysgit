@@ -233,12 +233,13 @@ var
     Name:String;
 begin
     if GetOpenFileName(
-        'Please select a Plink executable',
-        Name,
-        ExtractFilePath(EdtPlink.Text),
-        'Executable Files|*.exe',
-        'exe'
-    ) then begin
+        'Please select a Plink executable'
+    ,   Name
+    ,   ExtractFilePath(EdtPlink.Text)
+    ,   'Executable Files|*.exe'
+    ,   'exe'
+    )
+    then begin
         if IsPlinkExecutable(Name) then begin
             EdtPlink.Text:=Name;
             RdbSSH[GS_Plink].Checked:=True;
