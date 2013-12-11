@@ -353,6 +353,54 @@ begin
     end;
 end;
 
+procedure SetAndMarkEnvString(Name,Value:String);
+var
+    Env:TArrayOfString;
+    FileName,Msg:String;
+begin
+    SetArrayLength(Env,1);
+    Env[0]:=Value;
+
+    // Try to set the variable as specified by the user.
+    if not SetEnvStrings(Name,IsAdminLoggedOn,True,Env) then begin
+        Msg:='Line {#__LINE__}: Unable to set the '+Name+' environment variable.';
+
+        // This is not a critical error, so just notify the user and continue.
+        SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
+        Log(Msg);
+    end else begin
+        // Mark that we have changed the variable by writing its value to a file.
+        FileName:=ExpandConstant('{app}')+'\setup.ini';
+        if not SetIniString('Environment',Name,Value,FileName) then begin
+            Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
+
+            // This is not a critical error, so just notify the user and continue.
+            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
+            Log(Msg);
+        end;
+    end;
+end;
+
+procedure DeleteMarkedEnvString(Name:String);
+var
+   Env:TArrayOfString;
+   FileName,Msg:String;
+begin
+    Env:=GetEnvStrings(Name,IsAdminLoggedOn);
+    FileName:=ExpandConstant('{app}')+'\setup.ini';
+
+    if (GetArrayLength(Env)=1) and
+       (CompareStr(RemoveQuotes(Env[0]),GetIniString('Environment',Name,'',FileName))=0) then begin
+        if not SetEnvStrings(Name,IsAdminLoggedOn,True,[]) then begin
+            Msg:='Line {#__LINE__}: Unable to delete the '+Name+' environment variable.';
+
+            // This is not a critical error, so just notify the user and continue.
+            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
+            Log(Msg);
+        end;
+    end;
+end;
+
 {
     Setup event functions
 }
@@ -823,7 +871,7 @@ end;
 procedure CurStepChanged(CurStep:TSetupStep);
 var
     AppDir,DllPath,FileName,TempName,Cmd,Msg:String;
-    BuiltIns,ImageNames,EnvPath,EnvHome,EnvSSH:TArrayOfString;
+    BuiltIns,ImageNames,EnvPath,EnvHome:TArrayOfString;
     Count,i:Longint;
     LinkCreated:Boolean;
     FindRec:TFindRec;
@@ -962,71 +1010,13 @@ begin
         "ChangesEnvironment=yes" not happend before the change!
     }
 
-    FileName:=AppDir+'\setup.ini';
-
     // Delete GIT_SSH and SVN_SSH if a previous installation set them (this is required for the GS_OpenSSH case).
-    EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
-    if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
-        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to reset GIT_SSH prior to install.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
-
-    EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
-    if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
-        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to reset SVN_SSH prior to install.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
+    DeleteMarkedEnvString('GIT_SSH');
+    DeleteMarkedEnvString('SVN_SSH');
 
     if (PuTTYPage<>NIL) and RdbSSH[GS_Plink].Checked then begin
-        SetArrayLength(EnvSSH,1);
-        EnvSSH[0]:=EdtPlink.Text;
-
-        // Set GIT_SSH as specified by the user.
-        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
-            Msg:='Line {#__LINE__}: Unable to set the GIT_SSH environment variable.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-
-        // Mark that we have changed GIT_SSH by writing its value to a file.
-        if not SetIniString('Environment','GIT_SSH',EnvSSH[0],FileName) then begin
-            Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-
-        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,EnvSSH) then begin
-            Msg:='Line {#__LINE__}: Unable to set the SVN_SSH environment variable.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-
-        // Mark that we have changed SVN_SSH by writing its value to a file.
-        if not SetIniString('Environment','SVN_SSH',EnvSSH[0],FileName) then begin
-            Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
+        SetAndMarkEnvString('GIT_SSH',EdtPlink.Text);
+        SetAndMarkEnvString('SVN_SSH',EdtPlink.Text);
     end;
 
     // Get the current user's directories in PATH.
@@ -1040,17 +1030,7 @@ begin
     end;
 
     // Delete HOME if a previous installation modified it.
-    EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
-    if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
-        if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to reset HOME prior to install.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
+    DeleteMarkedEnvString('HOME');
 
     // Modify the PATH variable as requested by the user.
     if RdbPath[GP_Cmd].Checked or RdbPath[GP_CmdTools].Checked then begin
@@ -1069,24 +1049,7 @@ begin
             EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
             i:=GetArrayLength(EnvHome);
             if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
-                SetArrayLength(EnvHome,1);
-                EnvHome[0]:=ExpandConstant('{%HOMEDRIVE}{%HOMEPATH}');
-                if not SetEnvStrings('HOME',IsAdminLoggedOn,True,EnvHome) then begin
-                    Msg:='Line {#__LINE__}: Unable to set the HOME environment variable.';
-
-                    // This is not a critical error, so just notify the user and continue.
-                    SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-                    Log(Msg);
-                end;
-
-                // Mark that we have changed HOME.
-                if not SetIniString('Environment','HOME',EnvHome[0],FileName) then begin
-                    Msg:='Line {#__LINE__}: Unable to write to file "'+FileName+'".';
-
-                    // This is not a critical error, so just notify the user and continue.
-                    SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-                    Log(Msg);
-                end;
+                SetAndMarkEnvString('HOME',ExpandConstant('{%HOMEDRIVE}{%HOMEPATH}'));
             end;
         end;
     end;
@@ -1355,7 +1318,7 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep:TUninstallStep);
 var
     AppDir,FileName,Msg:String;
-    EnvPath,EnvHome,EnvSSH:TArrayOfString;
+    EnvPath:TArrayOfString;
     i:Longint;
 begin
     if CurUninstallStep<>usUninstall then begin
@@ -1382,29 +1345,8 @@ begin
     FileName:=AppDir+'\setup.ini';
 
     // Delete the current user's GIT_SSH and SVN_SSH if we set it.
-    EnvSSH:=GetEnvStrings('GIT_SSH',IsAdminLoggedOn);
-    if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','GIT_SSH','',FileName))=0) then begin
-        if not SetEnvStrings('GIT_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to revert any possible changes to GIT_SSH.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
-
-    EnvSSH:=GetEnvStrings('SVN_SSH',IsAdminLoggedOn);
-    if (GetArrayLength(EnvSSH)=1) and
-       (CompareStr(RemoveQuotes(EnvSSH[0]),GetIniString('Environment','SVN_SSH','',FileName))=0) then begin
-        if not SetEnvStrings('SVN_SSH',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to revert any possible changes to SVN_SSH.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
+    DeleteMarkedEnvString('GIT_SSH');
+    DeleteMarkedEnvString('SVN_SSH');
 
     // Get the current user's directories in PATH.
     EnvPath:=GetEnvStrings('PATH',IsAdminLoggedOn);
@@ -1427,17 +1369,7 @@ begin
     end;
 
     // Reset the current user's HOME if we modified it.
-    EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
-    if (GetArrayLength(EnvHome)=1) and
-       (CompareStr(RemoveQuotes(EnvHome[0]),GetIniString('Environment','HOME','',FileName))=0) then begin
-        if not SetEnvStrings('HOME',IsAdminLoggedOn,True,[]) then begin
-            Msg:='Line {#__LINE__}: Unable to revert any possible changes to HOME.';
-
-            // This is not a critical error, so just notify the user and continue.
-            SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
-            Log(Msg);
-        end;
-    end;
+    DeleteMarkedEnvString('HOME');
 
     if FileExists(FileName) and (not DeleteFile(FileName)) then begin
         Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'".';
