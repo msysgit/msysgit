@@ -172,24 +172,6 @@ Type: dirifempty; Name: {app}\home
 #include "putty.inc.iss"
 #include "modules.inc.iss"
 
-procedure DeleteFromVirtualStore;
-var
-    VirtualStore,FileName:String;
-    DriveChars:Integer;
-begin
-    VirtualStore:=AddBackslash(ExpandConstant('{localappdata}'))+'VirtualStore';
-    FileName:=ExpandConstant(CurrentFileName);
-    DriveChars:=Length(ExtractFileDrive(FileName));
-    if DriveChars>0 then begin
-        Delete(FileName,1,DriveChars);
-        FileName:=VirtualStore+FileName;
-        if FileExists(FileName) and (not DeleteFile(FileName)) then begin
-            // This is not a critical error, so just notify the user and continue.
-            Log('Line {#__LINE__}: Unable delete "'+FileName+'".');
-        end;
-    end;
-end;
-
 function CreateHardLink(lpFileName,lpExistingFileName:String;lpSecurityAttributes:Integer):Boolean;
 #ifdef UNICODE
 external 'CreateHardLinkW@Kernel32.dll stdcall delayload setuponly';

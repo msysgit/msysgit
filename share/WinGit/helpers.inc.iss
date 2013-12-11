@@ -34,6 +34,26 @@ begin
     Result[i]:=#0;
 end;
 
+// Deletes the currently processed file as part of Check, BeforeInstall or AfterInstall
+// from the user's virtual store to ensure the installed file is used.
+procedure DeleteFromVirtualStore;
+var
+    VirtualStore,FileName:String;
+    DriveChars:Integer;
+begin
+    VirtualStore:=AddBackslash(ExpandConstant('{localappdata}'))+'VirtualStore';
+    FileName:=ExpandConstant(CurrentFileName);
+    DriveChars:=Length(ExtractFileDrive(FileName));
+    if DriveChars>0 then begin
+        Delete(FileName,1,DriveChars);
+        FileName:=VirtualStore+FileName;
+        if FileExists(FileName) and (not DeleteFile(FileName)) then begin
+            // This is not a critical error, so just notify the user and continue.
+            Log('Line {#__LINE__}: Unable delete "'+FileName+'".');
+        end;
+    end;
+end;
+
 // Returns the path to the common or user shell folder as specified in "Param".
 function GetShellFolder(Param:string):string;
 begin
