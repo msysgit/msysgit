@@ -80,7 +80,7 @@ rm $(cat etc/fileList-builtins.txt) &&	# rm builtins - if needed we'll restore t
 	bin/{libpoppler-7.dll,pdfinfo.exe,pdftotext.exe} \
 	lib/{tcl,tk,dde,reg}* ) |
 tar xf - &&
-cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/dos2unix.exe &&
+cp $MSYSGITROOT/mingw/bin/hd2u.exe bin/hd2u.exe &&
 strip bin/{[a-fh-z],g[a-oq-z]}*.exe libexec/git-core/*.exe &&
 if test -n "$DONT_REMOVE_BUILTINS"
 then
