@@ -152,6 +152,11 @@ case " $extra_commands " in
 	;;
 esac
 
+string2regex () {
+	echo "$*" |
+	sed 's/[][\\\/*?]/\\&/g'
+}
+
 ensure_labeled () {
 	for n in "$@"
 	do
@@ -291,6 +296,40 @@ EOF
 			sed "${linenumber}a\\
 exec git update-ref refs/rewritten/$commit HEAD\\
 ")"
+	done
+
+	lastline=9999
+	while true
+	do
+		fixup="$(echo "$todo" |
+			sed "$lastline,\$d" |
+			grep -n -e '^pick [^ ]* \(fixup\|squash\)!' |
+			tail -n 1)"
+		test -n "$fixup" || break
+
+		linenumber=${fixup%%:*}
+		oneline="${fixup#* }"
+		shortsha1="${oneline%% *}"
+		oneline="${oneline#* }"
+		command=${oneline%%!*}
+		oneline="${oneline#*! }"
+		oneline_regex="^pick [^ ]* $(string2regex "$oneline")\$"
+		targetline="$(echo "$todo" |
+			sed "$linenumber,\$d" |
+			grep -n "$oneline_regex" |
+			tail -n 1)"
+		targetline=${targetline%%:*}
+		if test -n "$targetline"
+		then
+			todo="$(echo "$todo" |
+				sed -e "${linenumber}d" \
+					-e "${targetline}a\\
+$command $shortsha1 $oneline")"
+			lastline=$(($linenumber+1))
+		else
+			echo "UNHANDLED: $oneline" >&2
+			lastline=$(($linenumber))
+		fi
 	done
 
 	todo="$(printf '%s\n\n%s' "$todo" "cleanup $needslabel")"
