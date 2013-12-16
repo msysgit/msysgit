@@ -161,6 +161,13 @@ string2regex () {
 	sed 's/[][\\\/*?]/\\&/g'
 }
 
+merge2branch_name () {
+	git show -s --format=%s "$1" |
+		sed -n -e "s/^Merge [^']*'\([^']*\).*/\1/p" \
+		-e "s/^Merge pull request #[0-9]* from //p" |
+	tr ' 	' '-'
+}
+
 ensure_labeled () {
 	for n in "$@"
 	do
@@ -285,6 +292,20 @@ EOF
 			handled="$handled $commit"
 			commit=${parents%% *}
 		done
+
+		# try to figure out the branch name
+		merged_by="$(echo "$list" |
+			sed -n "s/^\([^ ]*\) [^ ]* $tip$/\1/p" |
+			head -n 1)"
+		if test -n "$merged_by"
+		then
+			branch_name="$(merge2branch_name "$merged_by")"
+			test -z "$branch_name" ||
+			subtodo="$(echo "$subtodo" |
+				sed -e "1a\\
+# Branch: $branch_name")"
+		fi
+
 		todo="$(printf '%s\n\n%s' "$todo" "$subtodo")"
 	done
 
