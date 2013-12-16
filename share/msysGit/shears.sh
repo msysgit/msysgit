@@ -74,33 +74,49 @@ rewind () {
 merge () {
 	# parse command-line arguments
 	parents=
-	while test "a$1" != a-C
+	while test $# -gt 0 && test "a$1" != a-C
 	do
 		parents="$parents $1" &&
 		shift
 	done &&
-	shift &&
-	orig="$1" &&
-	shift &&
-	# determine whether the merge needs to be redone
-	p="$(git rev-parse HEAD)$parents" &&
-	o="$(git rev-list -1 --parents $orig |
-		sed "s/[^ ]*//")" &&
-	while p=${p# }; o=${o# }; test -n "$p$o"
-	do
-		p1=${p%% *}; o1=${o%% *};
-		test $o1 = "$(git rev-parse "$p1")" || break
-		p=${p#$p1}; o=${o#$o1}
-	done &&
-	# either redo merge or fast-forward
-	if test -z "$p$o"
+	if test "a$1" = "a-C"
 	then
-		git reset --hard $orig
-	else
+		shift &&
+		orig="$1" &&
+		shift &&
+		# determine whether the merge needs to be redone
+		p="$(git rev-parse HEAD)$parents" &&
+		o="$(git rev-list -1 --parents $orig |
+			sed "s/[^ ]*//")" &&
+		while p=${p# }; o=${o# }; test -n "$p$o"
+		do
+			p1=${p%% *}; o1=${o%% *};
+			test $o1 = "$(git rev-parse "$p1")" || break
+			p=${p#$p1}; o=${o#$o1}
+		done &&
+		# either redo merge or fast-forward
+		if test -z "$p$o"
+		then
+			git reset --hard $orig
+			return
+		fi &&
 		msg="$(git cat-file commit $orig |
-			sed "1,/^$/d")" &&
-		git merge -n --no-ff -m "$msg" $p
-	fi
+			sed "1,/^$/d")"
+	else
+		msg=
+		p=
+		for parent in $parents
+		do
+			test -z "$msg" ||
+			msg="$msg and "
+			msg="$msg'$parent'"
+			p="$p $(git rev-parse --verify refs/rewritten/$parent \
+					2> /dev/null ||
+				echo $parent)"
+		done &&
+		msg="Merge $msg into HEAD"
+	fi &&
+	git merge -n --no-ff -m "$msg" $p
 }
 
 start_merging_rebase () {
