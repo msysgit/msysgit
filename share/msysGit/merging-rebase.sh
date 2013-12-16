@@ -152,32 +152,4 @@ then
 	exit
 fi
 
-# Fake our own editor to inject initial steps into the edit script
-TODO_EXTRA="$(git rev-parse --git-dir)/.todo-extra"
-printf "%s\n\n%s\n%s" "Start the merging-rebase to $TO" \
-	"This commit starts the rebase of $FROM_SHA1 to $TO_SHA1" \
-	"$BASE_MESSAGE" > "$TODO_EXTRA.msg"
-cat > "$TODO_EXTRA" << EOF
-# Start the merging rebase:
-# Reset to $TO and ...
-exec git reset --hard $TO
-# ... fake-merge current $HEAD_NAME
-exec git merge -s ours -m "\$(cat "$TODO_EXTRA.msg")" $FROM_SHA1
-
-# Patches to rebase:
-EOF
-TMP_EDITOR="$(git rev-parse --git-dir)/.rebasing-editor.sh" &&
-cat > "$TMP_EDITOR" << EOF &&
-#!/bin/sh
-case "\$1" in
-*/git-rebase-todo)
-	# prepend the initialising commands
-	cat "\$1" >> "$TODO_EXTRA" &&
-	mv "$TODO_EXTRA" "\$1"
-esac &&
-exec "$(git var GIT_EDITOR)" "\$@"
-EOF
-chmod a+x "$TMP_EDITOR"
-
-# Rebase!
-GIT_EDITOR="$TMP_EDITOR" GIT_SEQUENCE_EDITOR="$TMP_EDITOR" git rebase --autosquash -i ${REBASING_BASE:-$TO}
+exec "$(dirname "$0")"/shears.sh --merging --onto=$TO ${REBASING_BASE:-$TO}
