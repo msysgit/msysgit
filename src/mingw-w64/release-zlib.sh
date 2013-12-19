@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 srcdir=$(pwd)
 
 mirror=http://zlib.net/
-file=zlib-1.2.7.tar.gz
+file=zlib-1.2.8.tar.gz
 dir=${file%.tar.gz}
 
 die () {
