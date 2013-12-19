@@ -33,6 +33,7 @@ Usage: $0 [options] <upstream>
 Options:
 -m|--merging[=<msg>]	allow fast-forwarding the current to the rebased branch
 --onto=<commit>		rebase onto the given commit
+--recreate=<merge>	recreate the branch merged in the specified commit
 EOF
 	exit 1
 }
@@ -155,6 +156,7 @@ cleanup () {
 merging=
 base_message=
 onto=
+recreate=
 while test $# -gt 0
 do
 	case "$1" in
@@ -172,6 +174,13 @@ do
 		;;
 	--onto=*)
 		onto="${1#--onto=}"
+		;;
+	--recreate)
+		shift
+		recreate="$recreate $1"
+		;;
+	--recreate=*)
+		recreate="$recreate ${1#--recreate=}"
 		;;
 	-h|--help)
 		help
@@ -393,6 +402,50 @@ $command $shortsha1 $oneline")"
 			echo "UNHANDLED: $oneline" >&2
 			lastline=$(($linenumber))
 		fi
+	done
+
+	while test -n "$recreate"
+	do
+		recreate="${recreate# }"
+		merge="${recreate%% *}"
+		recreate="${recreate#$merge}"
+
+		mark="$(git rev-parse --short --verify "$merge^2")" ||
+		die "Could not find merge commit: $merge^2"
+
+		branch_name="$(merge2branch_name "$merge")"
+		partfile="$git_dir/SHEARS-PART"
+		printf '%s' "$(test -z "$branch_name" ||
+			   echo "# Branch to recreate: $branch_name")" \
+			> "$partfile"
+		for sha1 in $(git rev-list --reverse $merge^..$merge^2)
+		do
+			msg="$(git show -s --format=%s $sha1)"
+			msg_regex="^pick [^ ]* $(string2regex "$msg")\$"
+			linenumber="$(echo "$todo" |
+				grep -n "$msg_regex" |
+				sed 's/:.*//')"
+			test -n "$linenumber" ||
+			die "Not a commit to rebase: $msg"
+			test 1 = $(echo "$linenumber" | wc -l) ||
+			die "More than one match for: $msg"
+			echo "$todo" |
+			sed -n "${linenumber}p" >> "$partfile"
+			todo="$(echo "$todo" |
+				sed "${linenumber}d")"
+		done
+
+		linenumber="$(echo "$todo" |
+			grep -n "^bud\$" |
+			tail -n 1 |
+			sed 's/:.*//')"
+
+		printf 'mark %s\n\nbud\n' \
+			"$mark" >> "$partfile"
+		todo="$(echo "$todo" |
+			sed -e "${linenumber}r$partfile" \
+				-e "\$a\\
+merge refs/rewritten/$mark -C $merge")"
 	done
 
 	todo="$(printf '%s\n\n%s' "$todo" "cleanup $needslabel")"
