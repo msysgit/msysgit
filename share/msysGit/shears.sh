@@ -38,7 +38,7 @@ EOF
 }
 
 # Extra commands for use in the rebase script
-extra_commands="edit mark merge start_merging_rebase cleanup"
+extra_commands="edit mark rewind merge start_merging_rebase cleanup"
 
 edit () {
 	GIT_EDITOR="$1" &&
@@ -65,6 +65,10 @@ edit () {
 
 mark () {
 	git update-ref -m "Marking '$1' as rewritten" refs/rewritten/"$1" HEAD
+}
+
+rewind () {
+	git reset --hard refs/rewritten/"$1"
 }
 
 merge () {
@@ -242,9 +246,8 @@ EOF
 			case "$handled " in
 			*" $commit "*)
 				ensure_labeled $commit
-				subtodo="$(printf '\nexec %s %s # %s\n%s' \
-					'git reset --hard' \
-					"refs/rewritten/$commit" \
+				subtodo="$(printf '\nrewind %s # %s\n%s' \
+					"$(name_commit $commit)" \
 					"$(git show -s --format=%s $commit)" \
 					"$subtodo")"
 				break
