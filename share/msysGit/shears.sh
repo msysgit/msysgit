@@ -221,6 +221,13 @@ merge2branch_name () {
 	tr ' 	' '-'
 }
 
+commit_name_map=
+name_commit () {
+	name="$(echo "$commit_name_map" |
+	sed -n "s/^$1 //p")"
+	echo "${name:-$1}"
+}
+
 ensure_labeled () {
 	for n in "$@"
 	do
@@ -278,6 +285,36 @@ EOF
 
 	branch_tips="$(printf '%s\n%s' "$branch_tips" "$shorthead")"
 
+	# set up the map tip -> branch name
+	for tip in $branch_tips
+	do
+		merged_by="$(echo "$list" |
+			sed -n "s/^\([^ ]*\) [^ ]* $tip$/\1/p" |
+			head -n 1)"
+		if test -n "$merged_by"
+		then
+			branch_name="$(merge2branch_name "$merged_by")"
+			test -z "$branch_name" ||
+			commit_name_map="$(printf '%s\n%s' \
+				"$tip $branch_name" "$commit_name_map")"
+		fi
+	done
+	branch_name_dupes="$(echo "$commit_name_map" |
+		sed 's/[^ ]* //' |
+		sort |
+		uniq -d)"
+	if test -n "$branch_name_dupes"
+	then
+		exprs="$(echo "$branch_name_dupes" |
+			while read branch_name
+			do
+				printf " -e '%s'" \
+					"$(string2regex "$branch_name")"
+			done)"
+		commit_name_map="$(echo "$commit_name_map" |
+			eval grep -v $exprs)"
+	fi
+
 	for tip in $branch_tips
 	do
 		# if this is not a commit to be rebased, skip
@@ -322,7 +359,7 @@ EOF
 							printf refs/rewritten/
 							;;
 						esac
-						echo "$parent "
+						echo "$(name_commit $parent) "
 					done`"
 				subtodo="$(printf '%s # %s\n%s' \
 					"merge $parents2-C $commit" \
@@ -344,18 +381,12 @@ EOF
 			commit=${parents%% *}
 		done
 
-		# try to figure out the branch name
-		merged_by="$(echo "$list" |
-			sed -n "s/^\([^ ]*\) [^ ]* $tip$/\1/p" |
-			head -n 1)"
-		if test -n "$merged_by"
-		then
-			branch_name="$(merge2branch_name "$merged_by")"
-			test -z "$branch_name" ||
-			subtodo="$(echo "$subtodo" |
-				sed -e "1a\\
+		branch_name="$(name_commit "$tip")"
+		test -n "$branch_name" &&
+		test "$branch_name" = "$tip" ||
+		subtodo="$(echo "$subtodo" |
+			sed -e "1a\\
 # Branch: $branch_name")"
-		fi
 
 		todo="$(printf '%s\n\n%s' "$todo" "$subtodo")"
 	done
@@ -370,7 +401,7 @@ EOF
 		die "Internal error: could not find $commit in $todo"
 		todo="$(echo "$todo" |
 			sed "${linenumber}a\\
-mark $commit\\
+mark $(name_commit $commit)\\
 ")"
 	done
 
@@ -445,13 +476,17 @@ $command $shortsha1 $oneline")"
 			sed 's/:.*//')"
 
 		printf 'mark %s\n\nbud\n' \
-			"$mark" >> "$partfile"
+			"$(name_commit $mark)" >> "$partfile"
 		todo="$(echo "$todo" |
 			sed -e "${linenumber}r$partfile" \
 				-e "\$a\\
-merge refs/rewritten/$mark -C $merge")"
+merge refs/rewritten/$mark -C $(name_commit $merge)")"
 	done
 
+	needslabel="$(for commit in $needslabel
+		do
+			printf ' %s' $(name_commit $commit)
+		done)"
 	todo="$(printf '%s\n\n%s' "$todo" "cleanup $needslabel")"
 	echo "$todo" | uniq
 }
