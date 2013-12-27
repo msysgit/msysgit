@@ -361,6 +361,20 @@ sub read_commits ($) {
 	close($in);
 }
 
+my $use_gitk = 0;
+my $dashdash = -1;
+for (my $i = 0; $i <= $#ARGV; $i++) {
+	if ($ARGV[$i] eq '--') {
+		$dashdash = $i;
+		last;
+	}
+	if ($ARGV[$i] eq '--gitk') {
+		$use_gitk = 1;
+		splice(@ARGV, $i, 1);
+		$i--;
+	}
+}
+
 read_commits(\@ARGV);
 
 # Unfortunately, there is no scriptable way to use the --graph support of `git
@@ -399,6 +413,10 @@ sub show () {
 		$i++;
 		push(@args, @ARGV[$i..$#ARGV]) if $i <= $#ARGV;
 		last;
+	}
+	if ($use_gitk) {
+		splice(@args, 0, 3);
+		exec('gitk', @args);
 	}
 	exec('git', @args);
 }
