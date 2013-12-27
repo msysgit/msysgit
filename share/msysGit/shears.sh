@@ -540,6 +540,11 @@ upstream="$1" &&
 onto=${onto:-$upstream}||
 die "Could not determine rebase parameters"
 
+git update-index -q --ignore-submodules --refresh &&
+git diff-files --quiet --ignore-submodules &&
+git diff-index --cached --quiet --ignore-submodules HEAD -- ||
+die 'There are uncommitted changes!'
+
 setup
 
 # Rebase!
