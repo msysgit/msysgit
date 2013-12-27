@@ -242,6 +242,7 @@ ensure_labeled () {
 }
 
 generate_script () {
+	echo "Generating script..." >&2
 	origtodo="$(git rev-list --no-merges --cherry-pick --pretty=oneline \
 		--abbrev-commit --abbrev=7 --reverse --left-right --topo-order \
 		$upstream..$head | \
@@ -315,8 +316,12 @@ EOF
 			eval grep -v $exprs)"
 	fi
 
+	tip_total=$(printf '%s' "$branch_tips" | wc -l)
+	tip_counter=0
 	for tip in $branch_tips
 	do
+		printf '%d/%d...\r' $tip_counter $tip_total >&2
+		tip_counter=$(($tip_counter+1))
 		# if this is not a commit to be rebased, skip
 		case "$toberebased" in *" $tip "*) ;; *) continue;; esac
 
@@ -328,6 +333,7 @@ EOF
 		commit=$tip
 		while true
 		do
+			printf '\tcommit %s...\r' "$commit" >&2
 			# if already handled, this is our branch point
 			case "$handled " in
 			*" $commit "*)
@@ -413,6 +419,7 @@ mark $(name_commit $commit)\\
 			grep -n -e '^pick [^ ]* \(fixup\|squash\)!' |
 			tail -n 1)"
 		test -n "$fixup" || break
+		printf '%s...\r' "$fixup" >&2
 
 		linenumber=${fixup%%:*}
 		oneline="${fixup#* }"
@@ -444,6 +451,7 @@ $command $shortsha1 $oneline")"
 		recreate="${recreate# }"
 		merge="${recreate%% *}"
 		recreate="${recreate#$merge}"
+		printf 'Recreating %s...\r' "$merge" >&2
 
 		mark="$(git rev-parse --short --verify "$merge^2")" ||
 		die "Could not find merge commit: $merge^2"
