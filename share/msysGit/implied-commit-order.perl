@@ -36,6 +36,15 @@ sub ordered_set () {
 	};
 	return {
 		'add' => $add,
+		'remove' => sub ($) {
+			my $index = $seen{$_[0]};
+			return if $index eq undef;
+			delete $seen{$_[0]};
+			splice(@list, $index, 1);
+			for (; $i <= $#list; $i++) {
+				$seen{$list[$i]} = $i;
+			}
+		},
 		'contains' => sub ($) {
 			return $seen{$_[0]} ne undef;
 		},
@@ -362,6 +371,7 @@ sub read_commits ($) {
 }
 
 my $use_gitk = 0;
+my $simplify = 1;
 my $dashdash = -1;
 for (my $i = 0; $i <= $#ARGV; $i++) {
 	if ($ARGV[$i] eq '--') {
@@ -370,12 +380,54 @@ for (my $i = 0; $i <= $#ARGV; $i++) {
 	}
 	if ($ARGV[$i] eq '--gitk') {
 		$use_gitk = 1;
-		splice(@ARGV, $i, 1);
-		$i--;
+	} elsif ($ARGV[$i] eq '--simplify') {
+		$simplify = 1;
+	} elsif ($ARGV[$i] eq '--no-simplify') {
+		$simplify = 0;
+	} else {
+		next;
 	}
+	splice(@ARGV, $i, 1);
+	$i--;
 }
 
 read_commits(\@ARGV);
+
+sub get_parents ($) {
+	my $parents = $forward{$_[0]};
+	return [] if $parents eq undef;
+	return $parents->{'list'}();
+}
+
+# We can simplify the implied history by skipping parents that are ancestors of
+# other parents (e.g. if a commit is already an implied grandparent, it does
+# not have to be an implied parent, too).
+
+if ($simplify) {
+	foreach my $current (@commits) {
+		my @stack = ();
+		my %seen = ();
+		my %parents = ();
+		foreach my $parent (@{get_parents($current)}) {
+			$parents{$parent} = 1;
+			foreach my $grampy (@{get_parents($parent)}) {
+				push(@stack, $grampy);
+			}
+		}
+		while ($#stack >= 0) {
+			my $commit = pop(@stack);
+			next if $seen{$commit} ne undef;
+			if ($parents{$commit} ne undef) {
+				$forward{$current}->{'remove'}($commit);
+				delete $parents{$commit};
+			}
+			foreach my $parent (@{get_parents($commit)}) {
+				push(@stack, $parent);
+			}
+			$seen{$commit} = 1;
+		}
+	}
+}
 
 # Unfortunately, there is no scriptable way to use the --graph support of `git
 # log`.
