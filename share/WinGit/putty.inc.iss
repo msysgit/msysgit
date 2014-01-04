@@ -10,6 +10,7 @@ const
 // Tries to detect the path to a PuTTY installation / an application that comes
 // with an improved version of Plink. TortoisePlink from TortoiseGit/SVN features a
 // GUI dialog to accept new host keys, for example.
+// Prefer TortoiseGitPlink (optimized for Git) over TortoisePlink.
 function GuessPlinkExecutable:string;
 begin
     // Prefer TortoisePlink over vanilla Plink for its GUI dialog to accept host keys.
@@ -31,6 +32,11 @@ begin
     end;
 
     if DirExists(Result) then begin
+        if FileExists(Result+'TortoiseGitPlink.exe') then begin
+            Result:=Result+'TortoiseGitPlink.exe'
+            Exit;
+        end;
+
         Result:=Result+'TortoisePlink.exe'
         Exit;
     end;
