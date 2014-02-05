@@ -354,7 +354,7 @@ begin
     end;
 end;
 
-procedure SetAndMarkEnvString(Name,Value:String);
+procedure SetAndMarkEnvString(Name,Value:String;Expandable:Boolean);
 var
     Env:TArrayOfString;
     FileName,Msg:String;
@@ -363,7 +363,7 @@ begin
     Env[0]:=Value;
 
     // Try to set the variable as specified by the user.
-    if not SetEnvStrings(Name,IsAdminLoggedOn,True,Env) then begin
+    if not SetEnvStrings(Name,Env,Expandable,IsAdminLoggedOn,True) then begin
         Msg:='Line {#__LINE__}: Unable to set the '+Name+' environment variable.';
 
         // This is not a critical error, so just notify the user and continue.
@@ -392,7 +392,7 @@ begin
 
     if (GetArrayLength(Env)=1) and
        (CompareStr(RemoveQuotes(Env[0]),GetIniString('Environment',Name,'',FileName))=0) then begin
-        if not SetEnvStrings(Name,IsAdminLoggedOn,True,[]) then begin
+        if not SetEnvStrings(Name,[],False,IsAdminLoggedOn,True) then begin
             Msg:='Line {#__LINE__}: Unable to delete the '+Name+' environment variable.';
 
             // This is not a critical error, so just notify the user and continue.
@@ -1016,8 +1016,8 @@ begin
     DeleteMarkedEnvString('SVN_SSH');
 
     if (PuTTYPage<>NIL) and RdbSSH[GS_Plink].Checked then begin
-        SetAndMarkEnvString('GIT_SSH',EdtPlink.Text);
-        SetAndMarkEnvString('SVN_SSH',EdtPlink.Text);
+        SetAndMarkEnvString('GIT_SSH',EdtPlink.Text,True);
+        SetAndMarkEnvString('SVN_SSH',EdtPlink.Text,True);
     end;
 
     // Get the current user's directories in PATH.
@@ -1050,13 +1050,13 @@ begin
             EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
             i:=GetArrayLength(EnvHome);
             if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
-                SetAndMarkEnvString('HOME',ExpandConstant('{%HOMEDRIVE}{%HOMEPATH}'));
+                SetAndMarkEnvString('HOME','%HOMEDRIVE%%HOMEPATH%',True);
             end;
         end;
     end;
 
     // Set the current user's PATH directories.
-    if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
+    if not SetEnvStrings('PATH',EnvPath,True,IsAdminLoggedOn,True) then begin
         Msg:='Line {#__LINE__}: Unable to set the PATH environment variable.';
 
         // This is not a critical error, so just notify the user and continue.
@@ -1361,7 +1361,7 @@ begin
     end;
 
     // Reset the current user's directories in PATH.
-    if not SetEnvStrings('PATH',IsAdminLoggedOn,True,EnvPath) then begin
+    if not SetEnvStrings('PATH',EnvPath,True,IsAdminLoggedOn,True) then begin
         Msg:='Line {#__LINE__}: Unable to revert any possible changes to PATH.';
 
         // This is not a critical error, so just notify the user and continue.

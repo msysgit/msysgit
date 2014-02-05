@@ -54,10 +54,12 @@ external 'SetEnvironmentVariableA@Kernel32.dll stdcall delayload';
 #endif
 
 // Sets the environment variable "VarName" to the concatenation of "DirStrings"
-// using ";" as the delimiter. If "AllUsers" is true, a common variable is set,
-// else a user-specific one. If "DeleteIfEmpty" is true and "DirStrings" is
-// empty, "VarName" is deleted instead of set if it exists.
-function SetEnvStrings(VarName:string;AllUsers,DeleteIfEmpty:Boolean;DirStrings:TArrayOfString):Boolean;
+// using ";" as the delimiter. If "Expandable" is true, the "DirStrings" will be
+// written as expandable strings, i.e. they may in turn contain environment variable
+// names that are expanded at evaluation time. If "AllUsers" is true, a common
+// variable is set, else a user-specific one. If "DeleteIfEmpty" is true and
+// "DirStrings" is empty, "VarName" is deleted instead of set if it exists.
+function SetEnvStrings(VarName:string;DirStrings:TArrayOfString;Expandable,AllUsers,DeleteIfEmpty:Boolean):Boolean;
 var
     Path,KeyName:string;
     i:Longint;
@@ -81,7 +83,11 @@ begin
             Result:=(not RegValueExists(HKEY_LOCAL_MACHINE,KeyName,VarName)) or
                          RegDeleteValue(HKEY_LOCAL_MACHINE,KeyName,VarName);
         end else begin
-            Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+            if Expandable then begin
+                Result:=RegWriteExpandStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+            end else begin
+                Result:=RegWriteStringValue(HKEY_LOCAL_MACHINE,KeyName,VarName,Path);
+            end;
         end;
     end else begin
         KeyName:='Environment';
@@ -89,7 +95,11 @@ begin
             Result:=(not RegValueExists(HKEY_CURRENT_USER,KeyName,VarName)) or
                          RegDeleteValue(HKEY_CURRENT_USER,KeyName,VarName);
         end else begin
-            Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
+            if Expandable then begin
+                Result:=RegWriteExpandStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
+            end else begin
+                Result:=RegWriteStringValue(HKEY_CURRENT_USER,KeyName,VarName,Path);
+            end;
         end;
     end;
 
