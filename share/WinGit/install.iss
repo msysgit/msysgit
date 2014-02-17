@@ -1030,9 +1030,6 @@ begin
         end;
     end;
 
-    // Delete HOME if a previous installation modified it.
-    DeleteMarkedEnvString('HOME');
-
     // Modify the PATH variable as requested by the user.
     if RdbPath[GP_Cmd].Checked or RdbPath[GP_CmdTools].Checked then begin
         i:=GetArrayLength(EnvPath);
@@ -1045,13 +1042,6 @@ begin
         if RdbPath[GP_CmdTools].Checked then begin
             SetArrayLength(EnvPath,i+2);
             EnvPath[i+1]:=AppDir+'\bin';
-
-            // Set HOME for the Windows Command Prompt, but only if it has not been set manually before.
-            EnvHome:=GetEnvStrings('HOME',IsAdminLoggedOn);
-            i:=GetArrayLength(EnvHome);
-            if (i=0) or ((i=1) and (Length(EnvHome[0])=0)) then begin
-                SetAndMarkEnvString('HOME','%HOMEDRIVE%%HOMEPATH%',True);
-            end;
         end;
     end;
 
@@ -1368,9 +1358,6 @@ begin
         SuppressibleMsgBox(Msg,mbError,MB_OK,IDOK);
         Log(Msg);
     end;
-
-    // Reset the current user's HOME if we modified it.
-    DeleteMarkedEnvString('HOME');
 
     if FileExists(FileName) and (not DeleteFile(FileName)) then begin
         Msg:='Line {#__LINE__}: Unable to delete file "'+FileName+'".';
