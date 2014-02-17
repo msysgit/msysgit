@@ -401,10 +401,10 @@ EOF
 	do
 		linenumber="$(echo "$todo" |
 			grep -n -e "^\(pick\|# skip\) $commit" \
-				-e "^merge [0-9a-f/ ]* -C $commit")"
+				-e "^merge [-\.0-9a-zA-Z/ ]* -C $commit")"
 		linenumber=${linenumber%%:*}
 		test -n "$linenumber" ||
-		die "Internal error: could not find $commit in $todo"
+		die "Internal error: could not find $commit ($(name_commit $commit)) in $todo"
 		todo="$(echo "$todo" |
 			sed "${linenumber}a\\
 mark $(name_commit $commit)\\
