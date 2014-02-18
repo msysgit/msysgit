@@ -123,3 +123,34 @@ begin
         end;
     end;
 end;
+
+// Allow for custom settings to be saved to the INF file set by the /SAVEINF parameter.
+// http://www.vincenzo.net/isxkb/index.php?title=Remembering_Custom_Page_Settings
+var
+    LoadInfFilename,SaveInfFilename:String;
+	
+procedure UpdateInfFilenames;
+begin
+    LoadInfFilename:=ExpandFileName(ExpandConstant('{param:loadinf}'));
+    SaveInfFilename:=ExpandFileName(ExpandConstant('{param:saveinf}'));
+end;
+
+function ShouldLoadInf:Boolean;
+begin
+    Result:=(LoadInfFilename<>'');
+end;
+
+function ShouldSaveInf:Boolean;
+begin
+    Result:=(SaveInfFilename<>'');
+end;
+
+function LoadInfString(Section,Key,Default:String):String;
+begin
+    Result:=GetIniString(Section,Key,Default,LoadInfFilename);
+end;
+
+procedure SaveInfString(Section,Key,Value:String);
+begin
+    SetIniString(Section,Key,Value,SaveInfFilename);
+end;
