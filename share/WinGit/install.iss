@@ -406,6 +406,12 @@ end;
     Setup event functions
 }
 
+function InitializeSetup:Boolean;
+begin
+    UpdateInfFilenames;
+    Result:=True;
+end;
+
 procedure InitializeWizard;
 var
     PrevPageID:Integer;
@@ -517,6 +523,12 @@ begin
 
     // Restore the setting chosen during a previous install.
     Data:=GetPreviousData('Path Option','BashOnly');
+
+    // Use settings from the user provided INF.
+    if ShouldLoadInf then begin
+        Data:=LoadInfString('Setup','PathOption','BashOnly');
+    end;
+
     if Data='BashOnly' then begin
         RdbPath[GP_BashOnly].Checked:=True;
     end else if Data='Cmd' then begin
@@ -624,6 +636,12 @@ begin
 
         // Restore the setting chosen during a previous install.
         Data:=GetPreviousData('SSH Option','OpenSSH');
+
+        // Use settings from the user provided INF. 
+        if ShouldLoadInf then begin
+            Data:=LoadInfString('Setup','SSHOption','OpenSSH');
+        end;
+
         if Data='OpenSSH' then begin
             RdbSSH[GS_OpenSSH].Checked:=True;
         end else if Data='Plink' then begin
@@ -724,6 +742,12 @@ begin
 
     // Restore the setting chosen during a previous install.
     Data:=GetPreviousData('CRLF Option','CRLFAlways');
+
+    // Use settings from the user provided INF.
+    if ShouldLoadInf then begin
+        Data:=LoadInfString('Setup','CRLFOption','CRLFAlways');
+    end;
+
     if Data='LFOnly' then begin
         RdbCRLF[GC_LFOnly].Checked:=True;
     end else if Data='CRLFAlways' then begin
@@ -1181,6 +1205,9 @@ begin
         Data:='CmdTools';
     end;
     SetPreviousData(PreviousDataKey,'Path Option',Data);
+    if ShouldSaveInf then begin
+        SaveInfString('Setup','PathOption',Data);
+    end;
 
     // Git SSH options.
     Data:='';
@@ -1189,8 +1216,14 @@ begin
     end else if RdbSSH[GS_Plink].Checked then begin
         Data:='Plink';
         SetPreviousData(PreviousDataKey,'Plink Path',EdtPlink.Text);
+        if ShouldSaveInf then begin
+            SaveInfString('Setup','PlinkPath',EdtPlink.Text);
+        end;
     end;
     SetPreviousData(PreviousDataKey,'SSH Option',Data);
+    if ShouldSaveInf then begin
+        SaveInfString('Setup','SSHOption',Data);
+    end;    
 
     // Line ending conversion options.
     Data:='';
@@ -1202,6 +1235,9 @@ begin
         Data:='CRLFCommitAsIs';
     end;
     SetPreviousData(PreviousDataKey,'CRLF Option',Data);
+    if ShouldSaveInf then begin
+        SaveInfString('Setup','CRLFOption',Data);
+    end;    
 end;
 
 {
