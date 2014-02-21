@@ -17,7 +17,7 @@ test -d $d || {
 		git init &&
 		git config core.autocrlf false &&
 		git add . &&
-		git commit -m "Import of $tar"
+		git commit -n -m "Import of $tar"
 	)
 } || die "Could not check out gnupg source"
 

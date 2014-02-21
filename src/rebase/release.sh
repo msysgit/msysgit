@@ -16,7 +16,7 @@ test $d/.git || {
 	git init &&
 	rm -rf .git/hooks &&
 	git add . &&
-	git commit -m initial &&
+	git commit -n -m initial &&
 	git am ../patches/*
 } &&
 compile &&

@@ -17,7 +17,7 @@ fi &&
 (cd $DIR && make -f win32/Makefile.gcc) &&
 FILES="funzip.exe unzip.exe unzipsfx.exe" &&
 (cd $DIR && cp $FILES /bin/) &&
-(cd /bin && git add $FILES && git commit -s -m "Install $DIR" $FILES) || {
+(cd /bin && git add $FILES && git commit -n -s -m "Install $DIR" $FILES) || {
 	echo "Failed to install unzip"
 	exit 1
 }

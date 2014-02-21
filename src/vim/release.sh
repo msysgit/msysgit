@@ -2,10 +2,10 @@
 
 cd "$(dirname "$0")"
 
-VERSION=7.3
-DIR=vim73
-URL=ftp://ftp.vim.org/pub/vim/unix/vim-7.3.tar.bz2
-MD5='5b9510a17074e2b37d8bb38ae09edbf2'
+VERSION=7.4
+DIR=vim74
+URL=ftp://ftp.vim.org/pub/vim/unix/vim-$VERSION.tar.bz2
+MD5='607e135c559be642f210094ad023dc65'
 FILE=${URL##*/}
 
 die () {
@@ -26,7 +26,7 @@ test -d $DIR || {
 		git init &&
 		git config core.autocrlf false &&
 		git add . &&
-		git commit -m "Import of $FILE"
+		git commit -n -m "Import of $FILE"
 	)
 } || die "Could not check out vim"
 

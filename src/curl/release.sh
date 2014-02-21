@@ -33,7 +33,7 @@ test -d $DIR || {
 		git init &&
 		git config core.autocrlf false &&
 		git add . &&
-		git commit -m "Import of $FILE"
+		git commit -n -m "Import of $FILE"
 	)
 } || die "Could not check out cURL"
 
