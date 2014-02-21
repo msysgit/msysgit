@@ -17,7 +17,7 @@ fi &&
 (cd $DIR &&
 	git init &&
 	git add . &&
-	git commit -m initial &&
+	git commit -n -m initial &&
 	git am ../patches/* &&
 	./configure --prefix=/mingw &&
 	make &&

@@ -24,7 +24,7 @@ cd $release &&
 git init &&
 git config core.autocrlf false &&
 git add . &&
-git commit -m "Import of $release"
+git commit -n -m "Import of $release"
 ) ||
 { echo "Error: Initializing git repository from MSYS source fails." ; exit 1 ; }
 
