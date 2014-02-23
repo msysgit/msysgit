@@ -58,7 +58,7 @@ do
 
 		git diff --diff-filter=AM --name-only HEAD^! |
 			sed -e "s/^/\//" > "$list" &&
-		(cd / && git commit -C HEAD --amend -- "$list") ||
+		(cd / && git commit -n -C HEAD --amend -- "$list") ||
 
 		exit
 )

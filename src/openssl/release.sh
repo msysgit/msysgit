@@ -87,19 +87,19 @@ test -f $DIR/openssl.dll || (
 	cp $list /mingw/bin && (
 		cd /mingw/bin &&
 		git add $list &&
-		git commit -s -m "Install OpenSSL $VERSION"
+		git commit -n -s -m "Install OpenSSL $VERSION"
 	) &&
 	list=$(echo *.dll.a) &&
 	cp $list /mingw/lib && (
 		cd /mingw/lib &&
 		git add $list &&
-		git commit -s -m "Install OpenSSL $VERSION import libs"
+		git commit -n -s -m "Install OpenSSL $VERSION import libs"
 	) &&
 	cd ../outinc &&
 	cp -r openssl /mingw/include &&
 	(
 		cd /mingw/include &&
 		git add openssl &&
-		git commit -s -m "Install OpenSSL $VERSION header files"
+		git commit -n -s -m "Install OpenSSL $VERSION header files"
 	)
 ) || die "Could not install $FILE"
