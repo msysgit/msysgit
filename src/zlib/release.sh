@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=1.2.7
+VERSION=1.2.8
 DIR=zlib-$VERSION
 URL=http://zlib.net/$DIR.tar.gz
 FILE=${URL##*/}
