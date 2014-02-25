@@ -7,7 +7,7 @@
 #else
 #define APP_VERSION   '%APPVERSION%'
 #endif
-#define APP_URL       'http://msysgit.googlecode.com/'
+#define APP_URL       'http://msysgit.github.io/'
 #define APP_BUILTINS  'etc\fileList-builtins.txt'
 #define APP_BINDIMAGE 'etc\fileList-bindimage.txt'
 
