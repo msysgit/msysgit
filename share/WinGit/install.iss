@@ -440,7 +440,7 @@ begin
     RdbPath[GP_BashOnly]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_BashOnly] do begin
         Parent:=PathPage.Surface;
-        Caption:='Use Git Bash only';
+        Caption:='Use Git from Git Bash only';
         Left:=ScaleX(4);
         Top:=ScaleY(8);
         Width:=ScaleX(405);
@@ -453,8 +453,8 @@ begin
     with LblGitBash do begin
         Parent:=PathPage.Surface;
         Caption:=
-            'This is the most conservative choice if you are concerned about the stability' + #13 +
-            'of your system. Your PATH will not be modified.';
+            'This is the safest choice as your PATH will not be modified at all. You will only be' + #13 +
+            'able to use the Git command line tools from Git Bash.';
         Left:=ScaleX(28);
         Top:=ScaleY(32);
         Width:=ScaleX(405);
@@ -465,7 +465,7 @@ begin
     RdbPath[GP_Cmd]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_Cmd] do begin
         Parent:=PathPage.Surface;
-        Caption:='Run Git from the Windows Command Prompt';
+        Caption:='Use Git from the Windows Command Prompt';
         Left:=ScaleX(4);
         Top:=ScaleY(76);
         Width:=ScaleX(405);
@@ -477,9 +477,9 @@ begin
     with LblGitCmd do begin
         Parent:=PathPage.Surface;
         Caption:=
-            'This option is considered safe and no conflicts with other tools are known.' + #13 +
-            'Only Git will be added to your PATH. Use this option if you want to use Git' + #13 +
-            'from a Cygwin Prompt (make sure to not have Cygwin''s Git installed).';
+            'This option is considered safe as it only adds some minimal Git wrappers to your' + #13 +
+            'PATH to avoid cluttering your environment with optional Unix tools. You will be' + #13 +
+            'be able to use Git from both Git Bash and the Windows Command Prompt.';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
         Width:=ScaleX(405);
@@ -490,7 +490,7 @@ begin
     RdbPath[GP_CmdTools]:=TRadioButton.Create(PathPage);
     with RdbPath[GP_CmdTools] do begin
         Parent:=PathPage.Surface;
-        Caption:='Run Git and included Unix tools from the Windows Command Prompt';
+        Caption:='Use Git and optional Unix tools from the Windows Command Prompt';
         Left:=ScaleX(4);
         Top:=ScaleY(152);
         Width:=ScaleX(405);
@@ -501,7 +501,7 @@ begin
     LblGitCmdTools:=TLabel.Create(PathPage);
     with LblGitCmdTools do begin
         Parent:=PathPage.Surface;
-        Caption:='Both Git and its accompanying Unix tools will be added to your PATH.';
+        Caption:='Both Git and the optional Unix tools will be added to your PATH.';
         Left:=ScaleX(28);
         Top:=ScaleY(176);
         Width:=ScaleX(405);
@@ -511,8 +511,8 @@ begin
     with LblGitCmdToolsWarn do begin
         Parent:=PathPage.Surface;
         Caption:=
-            'Warning: This will override Windows tools like find.exe and' + #13 +
-            'sort.exe. Select this option only if you understand the implications.';
+            'Warning: This will override Windows tools like "find" and "sort". Only' + #13 +
+            'use this option if you understand the implications.';
         Left:=ScaleX(28);
         Top:=ScaleY(192);
         Width:=ScaleX(405);
