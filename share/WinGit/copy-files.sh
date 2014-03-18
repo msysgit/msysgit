@@ -73,7 +73,8 @@ md5sum {bin,libexec/git-core}/git-*.exe libexec/git-core/git.exe |
 sed -n -r "s/^$gitmd5\s+\*?(.*)/\1/p" > etc/fileList-builtins.txt &&
 rm $(cat etc/fileList-builtins.txt) &&	# rm builtins - if needed we'll restore them after strip
 (cd $MSYSGITROOT/mingw && tar cf - \
-	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe bin/dos2unix.exe bin/hd2u.exe bin/iconv.exe\
+	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe bin/iconv.exe \
+	bin/dos2unix.exe bin/unix2dos.exe bin/hd2u.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv,libintl}* \
 	bin/getcp.exe bin/rebase.exe \
 	bin/gzip.exe bin/gunzip.exe \
