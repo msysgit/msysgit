@@ -1,5 +1,11 @@
 #! /bin/bash -e
 
+# msys-findutils build script
+#
+# Original version:
+# https://sourceforge.net/projects/mingw/files/MSYS/Base/findutils/findutils-4.4.2-2/
+# findutils-4.4.2-2-msys-1.0.13-src.tar
+
 # NOTE: should be invoked as either:
 #    ./msys-build-findutils findutils-VER.tar.gz
 #    which will unpack the "pristine" source distribution, patch it, 
@@ -218,13 +224,13 @@ fi
 
 abovedir=`cd ${srcdir}/..; pwd`
 PREFIX=/usr
-opt_flags="-O3 -fno-unit-at-a-time -s -march=i386 -mtune=i686"
+opt_flags="-O3 -s -march=i386"
 export CFLAGS=${CFLAGS:-"${opt_flags}"}
 # note: defining towlower this way breaks mbscasecmp, which in turn breaks
 # finds's casefolding, for filenames encoded using multibyte. But, for msys,
 # we really have no alternative; not even GNULIB has completely implemented
 # a replacement towlower.
-export CPPFLAGS="${CPPFLAGS} -D__CYGWIN__ -DWEOF='((wint_t)-1)' -DEILSEQ=138 -Dtowlower=tolower"
+export CPPFLAGS="${CPPFLAGS} -D__CYGWIN__ -DWEOF='((wint_t)-1)' -DEILSEQ=138"
 export CXXFLAGS=${CXXFLAGS:-"${opt_flags}"}
 export F77FLAGS=${F77FLAGS:-"${opt_flags}"}
 export GCJFLAGS=${GCJFLAGS:-"${opt_flags}"}
@@ -346,12 +352,8 @@ msys_package () {
     msys-build-findutils
 }
 
-msys_conf_prep
 msys_conf
 msys_build
-msys_check
-msys_install
-msys_package
 
 cd "$savedir"
 
