@@ -1,0 +1,359 @@
+#! /bin/bash -e
+
+# msys-findutils build script
+#
+# Original version:
+# https://sourceforge.net/projects/mingw/files/MSYS/Base/findutils/findutils-4.4.2-2/
+# findutils-4.4.2-2-msys-1.0.13-src.tar
+
+# NOTE: should be invoked as either:
+#    ./msys-build-findutils findutils-VER.tar.gz
+#    which will unpack the "pristine" source distribution, patch it, 
+#    and begin the build,
+# OR, as
+#    ../msys-build-findutils
+#    where the current working directory is the unpacked and patched
+#    source distribution.
+
+### hardcode PKG and patches tarball
+export PKG=findutils
+export VER=4.4.2
+export BLD=2
+export SYS=msys
+_sysver=$(uname -r)
+export SYSVER=${_sysver%%\(*}
+FULLPKG=${PKG}-${VER}-${BLD}-${SYS} # not sysver
+SRCDIR_=${PKG}-${VER}
+RELDOCDIR=share/doc/${PKG}/${VER}
+BIN1PKG=${PKG}-${VER}-${BLD}-${SYS}-${SYSVER}-bin.tar.lzma
+BIN2PKG=locate-${VER}-${BLD}-${SYS}-${SYSVER}-bin.tar.lzma
+LANGPKG=${PKG}-${VER}-${BLD}-${SYS}-${SYSVER}-lang.tar.lzma
+LICPKG=${PKG}-${VER}-${BLD}-${SYS}-${SYSVER}-lic.tar.lzma
+DOCPKG=${PKG}-${VER}-${BLD}-${SYS}-${SYSVER}-doc.tar.lzma
+SRCPKG=${PKG}-${VER}-${BLD}-${SYS}-${SYSVER}-src.tar.lzma
+BIN1_CONTENTS='bin/find.exe bin/oldfind.exe bin/xargs.exe'
+BIN2_CONTENTS='bin/locate.exe bin/updatedb sbin var'
+LANG_CONTENTS='share/locale'
+LIC_CONTENTS="${RELDOCDIR}/COPYING"
+DOC_CONTENTS="--exclude ${RELDOCDIR}/COPYING \
+	share/doc share/info share/man"
+
+# displays error message and exits
+error() {
+        case $? in
+                0) local errorcode=1 ;;
+                *) local errorcode=$? ;;
+        esac
+
+        echo -e "\e[1;31m*** ERROR:\e[0;0m ${1:-no error message provided}";
+        exit ${errorcode};
+}
+
+# displays information message
+inform() {
+        echo -e "\e[1;32m*** Info:\e[0;0m ${1}";
+}
+
+# displays warning message only
+warning() {
+        echo -e "\e[1;33m*** Warning:\e[0;0m ${1}";
+}
+
+# query
+query() {
+	while true
+	do
+          echo -e "\e[1;35m*** Query:\e[0;0m ${1}";
+	  if read -e answer
+	  then
+	    query_result=$answer
+	    return 0
+	  else
+	    # user did a ^D
+	    echo -e "Quitting.\n"
+	    exit 1
+	  fi
+	done
+}
+
+# displays command to stdout before execution
+verbose() {
+        echo "${@}"
+        "${@}"
+        return $?
+}
+export -f verbose warning inform error
+
+cmparg=
+set_cmparg() {
+        case "$1" in
+        *tar.bz2       ) cmparg="j" ;;
+        *tar.lzma      ) cmparg=" --lzma" ;;
+        *tar.xz        ) cmparg=" --use-compress-program=xz" ;;
+        *tar.gz | *tgz ) cmparg="z" ;;
+        *              ) cmparg="" ;;
+        esac
+}
+
+specific_patchlevel=
+do_patch() {
+  #local patchfile_name;
+  #local patchfile_path;
+  #local patchlevel;
+  if [ -n "$specific_patchlevel" ]
+  then
+    starting_patchlevel=$specific_patchlevel
+    stopping_patchlevel=$specific_patchlevel
+  else
+    starting_patchlevel=0
+    stopping_patchlevel=3
+  fi
+  specific_patchlevel=
+
+  for patchfile_path
+  do
+    patchfile_name="${patchfile_path##*/}"
+
+    if [ ! -e ${patchfile_path} ]
+    then
+      warning "patch ${patchfile_name} not found";
+      continue;
+    fi
+
+    patchlevel=$starting_patchlevel
+
+    while test $patchlevel -le $stopping_patchlevel
+    do
+      if patch -N -s --dry-run -p${patchlevel} -i ${patchfile_path} &> /dev/null
+      then
+        echo "*** applying patch ${patchfile_name}:";
+        patch -N -p${patchlevel} -i ${patchfile_path} || error "patch ${patchfile_name} failed"
+        break;
+      elif patch -N -s --binary --dry-run -p${patchlevel} -i ${patchfile_path} &> /dev/null
+      then
+        echo "*** applying patch ${patchfile_name}:";
+        patch -N --binary -p${patchlevel} -i ${patchfile_path} || error "patch ${patchfile_name} failed"
+        break;
+      elif patch -R -s --dry-run -p${patchlevel} -i ${patchfile_path} &> /dev/null
+      then
+        warning "patch ${patchfile_name} already applied; skipping";
+        break;
+      else
+        if (( patchlevel == 3 ))
+        then
+          error patch "patch ${patchfile_name} will not apply";
+        else
+          patchlevel=`expr $patchlevel + 1`;
+          continue;
+        fi
+      fi
+    done
+  done
+}
+export -f do_patch
+
+
+if [ "x" != "x$1" ]; then
+  if [ -d "$1" ]; then
+    savedir="$PWD"
+    cd "$1"
+    srcdir="$PWD"
+  elif [ -f "$1" ]; then
+    case "$1" in
+    *.tar.bz2 ) srcdir=`echo $1 | sed -e 's/\.tar\.bz2$//'`
+                unpack=tbz
+                savedir="$PWD" ;;
+    *.tar.gz  ) srcdir=`echo $1 | sed -e 's/\.tar\.gz$//'`
+                unpack=tgz
+                savedir="$PWD" ;;
+    *.zip     ) srcdir=`echo $1 | sed -e 's/\.zip$//'`
+                unpack=zip
+                savedir="$PWD" ;;
+    *.tar.lzma ) srcdir=`echo $1 | sed -e 's/\.tar\.lzma$//'`
+                unpack=tlz
+                savedir="$PWD" ;;
+    *.tar.xz )  srcdir=`echo $1 | sed -e 's/\.tar\.xz$//'`
+                unpack=txz
+                savedir="$PWD" ;;
+    * ) error "Bad src directory specified: $1" ;;
+    esac
+  else
+    error "Bad src directory specified: $1"
+  fi
+else
+  savedir="$PWD"
+  srcdir="$PWD"
+fi
+
+if [ "$MSYSTEM" != "MSYS" ]
+then
+  echo "You must be in an MSYS shell to use this script"
+  exit 1
+fi
+
+if [ -n "$unpack" ] ; then
+  case "$unpack" in
+  tbz ) inform "unpacking $1" ; tar xjf $1 ;;
+  tgz ) inform "unpacking $1" ; tar xzf $1 ;;
+  zip ) inform "unpacking $1" ; unzip -q $1 ;;
+  tlz ) inform "unpacking $1" ; tar --lzma -xf $1 ;;
+  txz ) inform "unpacking $1" ; tar --use-compress-program=xz -xf $1 ;;
+  * ) error "unknown pack format" ;;
+  esac
+  if [ -n "${SRCDIR_}" ]; then
+    if [ ! -d "${SRCDIR_}" ]; then
+      echo "src package $1 does not unpack into assumed srcdir $SRCDIR_"
+      exit 1
+    fi
+    srcdir=`cd ${SRCDIR_} && pwd`
+  fi
+  if [ ! -d "$srcdir" ]; then
+    echo "src package $1 does not unpack into assumed srcdir $srcdir"
+    exit 1
+  fi
+
+
+  cd ${srcdir}
+  chmod -R u+w *
+  do_patch ${savedir}/01-findutils-4.4.0-3-cygwin-src-fwdprt.patch
+  do_patch ${savedir}/02-findutils-4.4.2-2-msys.patch
+  cd ${savedir}
+  srcdir=`cd $srcdir; pwd`
+fi
+
+
+abovedir=`cd ${srcdir}/..; pwd`
+PREFIX=/usr
+opt_flags="-O3 -s -march=i386"
+export CFLAGS=${CFLAGS:-"${opt_flags}"}
+# note: defining towlower this way breaks mbscasecmp, which in turn breaks
+# finds's casefolding, for filenames encoded using multibyte. But, for msys,
+# we really have no alternative; not even GNULIB has completely implemented
+# a replacement towlower.
+export CPPFLAGS="${CPPFLAGS} -D__CYGWIN__ -DWEOF='((wint_t)-1)' -DEILSEQ=138"
+export CXXFLAGS=${CXXFLAGS:-"${opt_flags}"}
+export F77FLAGS=${F77FLAGS:-"${opt_flags}"}
+export GCJFLAGS=${GCJFLAGS:-"${opt_flags}"}
+export LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
+
+# NO SPACES!!
+export PATH=`pwd`:/bin:/usr/local/bin:/mingw/bin:/c/WINDOWS/system32:/c/WINDOWS
+
+mkdir -p ${abovedir}/_build
+builddir=${abovedir}/_build
+mkdir -p ${abovedir}/_inst
+instdir=${abovedir}/_inst
+cd ${builddir}
+
+
+msys_conf_prep() {
+  inform "Preparing ${PKG}"
+  cd ${srcdir}
+  autoreconf -fvi
+  cd ${builddir}
+}
+
+msys_conf () {
+  confargs="--prefix=${PREFIX} \
+	--datarootdir=\${prefix}/share --docdir=\${prefix}/${RELDOCDIR} \
+	--sbindir=\${prefix}/sbin --libexecdir=\${prefix}/sbin \
+	--sysconfdir=/etc --localstatedir=/var \
+	--with-libiconv-prefix=/usr --with-libintl-prefix=/usr \
+	DEFAULT_ARG_SIZE=(32u*1024)"
+
+  ${srcdir}/configure --srcdir=${srcdir} ${confargs} \
+	CFLAGS="${CFLAGS}" \
+	CPPFLAGS="${CPPFLAGS}" \
+	CXXFLAGS="${CXXFLAGS}" \
+	LDFLAGS="${LDFLAGS}"
+
+  for f in `find . -name "Makefile"`
+  do
+    cat "$f" | sed -e 's:/libintl\.a:/libintl.dll.a:g' \
+      -e 's:/libiconv\.a:/libiconv.dll.a:g' \
+      > "${f}.new" && \
+    mv "${f}.new" "${f}" 
+  done
+}
+
+msys_build () {
+  inform "Building ${PKG}"
+  make V=0
+}
+
+msys_check () {
+  inform "Testing ${PKG}"
+  (make -k V=0 check 2>&1 || /bin/true) | tee ${builddir}/${PKG}-check.log
+}
+
+msys_install () {
+  inform "Installing ${PKG}"
+  make install DESTDIR=${instdir}
+
+  verbose rm -f ${instdir}${PREFIX}/share/info/dir
+  verbose rm -f ${instdir}${PREFIX}/lib/charset.alias
+  verbose rmdir ${instdir}${PREFIX}/lib || /bin/true
+
+  verbose mkdir -p ${instdir}${PREFIX}/${RELDOCDIR}
+  verbose cp -p ${srcdir}/ChangeLog* \
+	${srcdir}/AUTHORS \
+	${srcdir}/COPYING \
+	${srcdir}/NEWS \
+	${srcdir}/README \
+	${srcdir}/README-hacking \
+	${srcdir}/THANKS \
+	${srcdir}/TODO  ${instdir}${PREFIX}/${RELDOCDIR}
+
+  verbose /usr/bin/install -d -m 755 ${instdir}${PREFIX}/share/doc/MSYS
+  verbose /usr/bin/install -m 644 ${abovedir}/msys-findutils.RELEASE_NOTES \
+          ${instdir}${PREFIX}/share/doc/MSYS/${PKG}-${VER}-${BLD}-${SYS}.RELEASE_NOTES.txt
+
+  # We 'tar' from ${instdir}/usr, so as to move everything from
+  # /usr/* to /* in the tarball to support the /usr == / mount.
+  # However, this means that ${instdir}/var and ${instdir}/etc
+  # will be missed. So:
+  if [ -d ${instdir}/var ]
+  then
+    verbose mv ${instdir}/var ${instdir}${PREFIX}/
+  fi
+  if [ -d ${instdir}/etc ]
+  then
+    verbose mv ${instdir}/etc ${instdir}${PREFIX}/
+  fi
+}
+
+msys_package () {
+  inform "Packaging ${PKG}"
+  cd ${instdir}${PREFIX}
+
+  set_cmparg "${BIN1PKG}"
+  tar cv${cmparg} --hard-dereference -f ${abovedir}/${BIN1PKG} ${BIN1_CONTENTS}
+
+  set_cmparg "${BIN2PKG}"
+  tar cv${cmparg} --hard-dereference -f ${abovedir}/${BIN2PKG} ${BIN2_CONTENTS}
+
+  set_cmparg "${LANGPKG}"
+  tar cv${cmparg} --hard-dereference -f ${abovedir}/${LANGPKG} ${LANG_CONTENTS}
+
+  set_cmparg "${LICPKG}"
+  tar cv${cmparg} --hard-dereference -f ${abovedir}/${LICPKG} ${LIC_CONTENTS}
+
+  set_cmparg "${DOCPKG}"
+  tar cv${cmparg} --hard-dereference -f ${abovedir}/${DOCPKG} ${DOC_CONTENTS}
+
+
+  cd ${abovedir}
+  set_cmparg "${SRCPKG}"
+  tar cv${cmparg} -f ./${SRCPKG} \
+    ${PKG}-${VER}.tar.gz \
+    01-findutils-4.4.0-3-cygwin-src-fwdprt.patch \
+    02-findutils-4.4.2-2-msys.patch \
+    msys-findutils.RELEASE_NOTES \
+    msys-build-findutils
+}
+
+msys_conf
+msys_build
+
+cd "$savedir"
+
