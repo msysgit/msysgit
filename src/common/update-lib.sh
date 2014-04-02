@@ -12,8 +12,7 @@ check_pristine () {
 	(cd / &&
 	 git diff-files --ignore-submodules --quiet &&
 	 git diff-index --cached --ignore-submodules --quiet HEAD &&
-	 others="$(git ls-files --exclude-from=.gitignore \
-	 		--exclude-per-directory=.gitignore --others)" &&
+	 others="$(git ls-files --exclude-standard --others)" &&
 	 test -z "$others") ||
 		die "State not pristine enough for successful package update"
 }
