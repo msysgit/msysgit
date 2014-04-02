@@ -10,8 +10,8 @@ die () {
 
 check_pristine () {
 	(cd / &&
-	 git diff-files --quiet &&
-	 git diff-index --cached --quiet HEAD &&
+	 git diff-files --ignore-submodules --quiet &&
+	 git diff-index --cached --ignore-submodules --quiet HEAD &&
 	 others="$(git ls-files --exclude-from=.gitignore \
 	 		--exclude-per-directory=.gitignore --others)" &&
 	 test -z "$others") ||
@@ -31,9 +31,9 @@ pre_install () {
 
 # update the index 
 post_install () {
-	(cd / && git add .) || exit
+	(cd / && git add -N .) || exit
 
-	git diff --cached --diff-filter=AM --name-only |
+	git diff --cached --ignore-submodules --diff-filter=AM --name-only |
 		sed -e "s/^/\//" > "$FILELIST" ||
 		exit
 		
