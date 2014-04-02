@@ -17,17 +17,13 @@ tar=${package}-${version}.tar.gz
 download
 extract
 
-musttouch=
-test -d "$d"/.git || musttouch=x
 apply_patches
 
-cd $d
-
 # `make` tries to reconfigure, if patched files are newer than aclocal.m4
-test $musttouch && find . ! -path "./.git/*" -type f -print0 | xargs -0 -r touch
+find "$d"/ -name configure -o -name Makefile -o -name '*.in' -print0 |
+xargs -0 -r touch
 
-../msys-build-findutils
-cd ..
+(cd "$d" && ../msys-build-findutils)
 
 FILELIST=fileList.txt
 
