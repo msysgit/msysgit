@@ -479,7 +479,7 @@ begin
         Caption:=
             'This option is considered safe as it only adds some minimal Git wrappers to your' + #13 +
             'PATH to avoid cluttering your environment with optional Unix tools. You will be' + #13 +
-            'be able to use Git from both Git Bash and the Windows Command Prompt.';
+            'able to use Git from both Git Bash and the Windows Command Prompt.';
         Left:=ScaleX(28);
         Top:=ScaleY(100);
         Width:=ScaleX(405);
