@@ -1,8 +1,6 @@
 This is a loose list of things to do.  Please remove the items with the commit
 that implements it.
 
-- add a README
-
 - feed the changes in 4msysgit.git to mingw.git or directly to git.git. This
   is a bit involved, as it means repackaging the whole diff between our master
   and Junio's master.  We might get away with rebasing step by step, i.e.
