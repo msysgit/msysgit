@@ -29,6 +29,8 @@ export MSYSTEM
 
 compile
 
+[ "$1" = -n ] && die "DEBUG: aborting before install"
+
 FILELIST=fileList.txt
 pre_install
 
