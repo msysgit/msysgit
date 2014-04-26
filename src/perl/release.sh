@@ -15,7 +15,7 @@ tar=$d.tar.gz
 download
 
 echo "Verifying md5 sum ..." 
-echo "$md5 *$tar" | md5sum -c --status 
+echo "$md5 *$tar" | md5sum -c --status || { echo 'Invalid md5 sum :('; exit 1; }
 
 extract
 
