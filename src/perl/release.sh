@@ -15,8 +15,7 @@ tar=$d.tar.gz
 download
 
 echo "Verifying md5 sum ..." 
-echo "$md5 *$tar" > $tar.md5
-md5sum -c --status $tar.md5 || exit
+echo "$md5 *$tar" | md5sum -c --status || { echo 'Invalid md5 sum :('; exit 1; }
 
 extract
 
@@ -28,6 +27,8 @@ export MSYSTEM
 ( cd "$d" ; test -f config.sh || ./Configure -de ) || die "Configure failure"
 
 compile
+
+[ "$1" = -n ] && die "DEBUG: aborting before install"
 
 FILELIST=fileList.txt
 pre_install
