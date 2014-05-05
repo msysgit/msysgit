@@ -23,7 +23,7 @@ while test $# -gt 0
 do
 	case "$1" in
 	-f|--force)
-		force=t
+		force=--force
 		;;
 	-s|--show|-d|--dry-run)
 		dryrun=t
@@ -152,4 +152,4 @@ then
 	exit
 fi
 
-exec "$(dirname "$0")"/shears.sh --merging --onto=$TO ${REBASING_BASE:-$TO}
+exec "$(dirname "$0")"/shears.sh $force --merging --onto=$TO ${REBASING_BASE:-$TO}
