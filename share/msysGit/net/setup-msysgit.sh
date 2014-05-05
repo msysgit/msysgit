@@ -65,6 +65,7 @@ git fetch || {
 		read proxy &&
 		test ! -z "$proxy" &&
 		export http_proxy="$proxy" &&
+		export https_proxy="$proxy" &&
 		git fetch
 	} ||
 	error "Could not get msysgit.git"
