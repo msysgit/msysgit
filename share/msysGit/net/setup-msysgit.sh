@@ -65,6 +65,7 @@ git fetch || {
 		read proxy &&
 		test ! -z "$proxy" &&
 		export http_proxy="$proxy" &&
+		export https_proxy="$proxy" &&
 		git fetch
 	} ||
 	error "Could not get msysgit.git"
@@ -76,7 +77,7 @@ echo
 echo -------------------------------------------------------
 echo Checking out the msysgit @@MSYSGITBRANCH@@ branch
 echo -------------------------------------------------------
-git-checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
+git checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
 	error Couldn\'t checkout the @@MSYSGITBRANCH@@ branch!
 mkdir -p .git/hooks &&
 cp share/msysGit/post-checkout-hook .git/hooks/post-checkout ||
@@ -166,7 +167,7 @@ git init &&
 git config remote.origin.url $GITCHEETAH_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
 git fetch origin &&
-git-checkout -l -f -q -b master origin/master ||
+git checkout -l -f -q -b master origin/master ||
 	error "Could not update the submodule src/git-cheetah!"
 
 # Copy profile.d/*.sh if there is any
