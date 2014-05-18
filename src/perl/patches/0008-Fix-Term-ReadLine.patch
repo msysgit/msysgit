@@ -1,0 +1,29 @@
+From db8d1bff1b121a08ca3782c5f52ff6a04ff98533 Mon Sep 17 00:00:00 2001
+From: Sven Strickroth <email@cs-ware.de>
+Date: Thu, 2 Jan 2014 17:26:25 +0100
+Subject: [PATCH] Perl readline creates empty sys$command files if no STDIN is
+ connected
+
+This was originally reported to TortoiseGit:
+http://code.google.com/p/tortoisegit/issues/detail?id=1011
+
+This patch was also reported to MinGW
+(http://sourceforge.net/p/mingw/patches/506/) and upstream perl
+(https://rt.perl.org//Public/Bug/Display.html?id=115900) where it was
+finally accepted and applied (to version 5.18).
+
+Signed-off-by: Sven Strickroth <email@cs-ware.de>
+
+diff --git a/lib/Term/ReadLine.pm b/lib/Term/ReadLine.pm
+index 48eb991..6965aec 100644
+--- a/lib/Term/ReadLine.pm
++++ b/lib/Term/ReadLine.pm
+@@ -214,7 +214,7 @@ sub findConsole {
+         $console = "Dev:Console";
+     } elsif (-e "/dev/tty") {
+ 	$console = "/dev/tty";
+-    } elsif (-e "con" or $^O eq 'MSWin32') {
++    } elsif (-e "con" or $^O eq 'MSWin32' or $^O eq 'msys') {
+ 	$console = "con";
+     } else {
+ 	$console = "sys\$command";
