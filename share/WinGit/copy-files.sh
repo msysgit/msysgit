@@ -52,7 +52,7 @@ tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,\
 unzip.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
 msys-crypto-0.9.8.dll,msys-regex-1.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
-openssl.exe,vim,wc.exe,which,xargs.exe,start} lib/engines/ \
+vim,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ libexec/git-core/mergetools share/antiword/ share/bison/ share/git* \
 share/vim/vimrc share/vim/vim74/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,\
@@ -74,7 +74,7 @@ sed -n -r "s/^$gitmd5\s+\*?(.*)/\1/p" > etc/fileList-builtins.txt &&
 rm $(cat etc/fileList-builtins.txt) &&	# rm builtins - if needed we'll restore them after strip
 (cd $MSYSGITROOT/mingw && tar cf - \
 	bin/*{tcl,tk,wish,gpg,msmtp,curl.exe,*.crt}* bin/connect.exe bin/iconv.exe \
-	bin/dos2unix.exe bin/unix2dos.exe bin/hd2u.exe \
+	bin/dos2unix.exe bin/unix2dos.exe bin/hd2u.exe bin/openssl.exe \
 	bin/*{libcurl,libcrypto,libssl,libgsasl,libiconv,libintl}* \
 	bin/getcp.exe bin/rebase.exe \
 	bin/gzip.exe bin/gunzip.exe \
