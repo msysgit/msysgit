@@ -52,7 +52,7 @@ tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,\
 unzip.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
 msys-crypto-0.9.8.dll,msys-regex-1.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
-vim,wc.exe,which,xargs.exe,start} lib/engines/ \
+vim,vimtutor,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ libexec/git-core/mergetools share/antiword/ share/bison/ share/git* \
 share/vim/vimrc share/vim/vim74/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
 scripts.vim,\
@@ -61,7 +61,7 @@ plugin/netrwPlugin.vim,\
 syntax/c.vim,syntax/conf.vim,syntax/cpp.vim,syntax/diff.vim,\
 syntax/gitcommit.vim,syntax/gitconfig.vim,syntax/gitrebase.vim,syntax/git.vim,\
 syntax/nosyntax.vim,syntax/syncolor.vim,syntax/synload.vim,syntax/syntax.vim,\
-vim.exe}) |
+tutor/,vim.exe}) |
 tar xf - &&
 rm -rf bin/cvs.exe &&
 (test ! -f $MSYSGITROOT/lib/Git.pm || cp -u $MSYSGITROOT/lib/Git.pm lib/perl5/site_perl/Git.pm) &&
