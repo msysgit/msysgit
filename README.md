@@ -2,7 +2,7 @@
 
 This is the build environment -- also known as msysGit -- for [Git for Windows](http://msysgit.github.io/).
 
-The easiest way is to install it via the [net installer](http://code.google.com/p/msysgit/downloads/list?q=netinstall). This installer will clone our [two](http://github.com/msysgit/msysgit) [repositories](http://github.com/msysgit/git), including all the necessary components to build Git for Windows, and perform an initial build.
+The easiest way is to install it via the [net installer](https://github.com/msysgit/msysgit/releases). This installer will clone our [two](http://github.com/msysgit/msysgit) [repositories](http://github.com/msysgit/git), including all the necessary components to build Git for Windows, and perform an initial build.
 
 # The build environment
 
@@ -19,9 +19,9 @@ msysGit brings a few components that are required to build Git:
 
 # The relationship between _msysGit_ and _Git for Windows_
 
-[Git for Windows](http://code.google.com/p/msysgit/downloads/list?q=full+installer+for+official+git) is the software package that installs a minimal environment to run Git on Windows. It comes with a Bash (a Unix-type shell), with a Perl interpreter and with the Git executable and its dependencies.
+[Git for Windows](https://github.com/msysgit/msysgit/releases) is the software package that installs a minimal environment to run Git on Windows. It comes with a Bash (a Unix-type shell), with a Perl interpreter and with the Git executable and its dependencies.
 
-On the other hand, msysGit is the software package installing the _build environment_ that can build Git for Windows.  The easiest way is to install it via the [net installer](http://code.google.com/p/msysgit/downloads/list?q=netinstall).
+On the other hand, msysGit is the software package installing the _build environment_ that can build Git for Windows.  The easiest way is to install it via the [net installer](https://github.com/msysgit/msysgit/releases).
 
 # The difference between MSys and MinGW
 
