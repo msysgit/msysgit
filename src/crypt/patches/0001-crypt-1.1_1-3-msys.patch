@@ -1,0 +1,63 @@
+From 35367c17a3f987c8d83ebed4ce72f9b6816198d0 Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Fri, 20 Jun 2014 10:45:32 +0900
+Subject: [PATCH] crypt-1.1_1-3-msys
+
+Based on the patch in crypt-1.1_1-3-msys-1.0.13-src.tar.lzma.
+Remove COPYING.
+---
+ Makefile     | 11 +++++++----
+ crypt.README |  3 +++
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index d1e429a..c248b55 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,25 +11,28 @@ DLLVER=0
+ EXE=.exe
+ 
+ STATICLIB=libcrypt.a
+-SHAREDLIB=cygcrypt-$(DLLVER).dll
++SHAREDLIB=msys-crypt-$(DLLVER).dll
+ IMPORTLIB=libcrypt.dll.a
+ 
+ APPS=crypt$(EXE)
+ LIBS=$(STATICLIB) $(SHAREDLIB)
+ 
++%.o : %.c
++	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
++
+ all: $(APPS) $(LIBS)
+ 
+ crypt$(EXE): crypt.o $(LIBS)
+-	$(CC) -static -o $@ crypt.o -L. -lcrypt
++	$(CC) $(LDFLAGS) -o $@ crypt.o libcrypt.a
+ 
+ $(STATICLIB): encrypt.o
+ 	ar rv $@ encrypt.o
+ 
+ $(SHAREDLIB): encrypt.o
+-	$(CC) -shared -Wl,--out-implib=$(IMPORTLIB) -Wl,--export-all \
++	$(CC) $(LDFLAGS) -shared -Wl,--out-implib=$(IMPORTLIB) -Wl,--export-all \
+ 	$^ -o $@
+ 
+-encrypt.o: encrypt.h
++encrypt.o: encrypt.c encrypt.h
+ 
+ distclean: clean
+ 
+diff --git a/crypt.README b/crypt.README
+index d7ee763..1106e81 100644
+--- a/crypt.README
++++ b/crypt.README
+@@ -1,3 +1,6 @@
++CYGWIN-SPECIFIC README
++======================
++
+ This is the DES-crypt package Version 1.1
+ 
+ It provides a static library libcrypt.a as well as a shared library
+-- 
+1.9.4.msysgit.0
+
