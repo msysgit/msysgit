@@ -1,0 +1,689 @@
+From 2850e9e9c8092705c89f43573d7b70bfdf1d5c05 Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Thu, 19 Jun 2014 10:33:17 +0900
+Subject: [PATCH] OpenSSH 5.4p1 msys
+
+Based on 01-openssh-5.4p1-msys.patch in
+openssh-5.4p1-1-msys-1.0.13-src.tar.lzma.
+
+Modify config.guess, config.sub for msys.
+Fix installed file path error in Makefine.in.
+---
+ Makefile.in                      |   9 +-
+ config.guess                     |   3 +
+ config.sub                       |   2 +-
+ configure.ac                     |  17 ++
+ defines.h                        |   6 +
+ openbsd-compat/bsd-cygwin_util.c |   8 +
+ openbsd-compat/bsd-cygwin_util.h |   4 +
+ openbsd-compat/bsd-misc.c        |  12 ++
+ openbsd-compat/bsd-misc.h        |   4 +
+ openbsd-compat/bsd-openpty.c     |   3 +
+ openbsd-compat/strptime.c        | 390 +++++++++++++++++++++++++++++++++++++++
+ regress/agent-ptrace.sh          |   2 +-
+ regress/sftp-cmds.sh             |   7 +
+ 13 files changed, 461 insertions(+), 6 deletions(-)
+ create mode 100644 openbsd-compat/strptime.c
+
+diff --git a/Makefile.in b/Makefile.in
+index 69e3567..d323625 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -58,6 +58,7 @@ ENT=@ENT@
+ XAUTH_PATH=@XAUTH_PATH@
+ LDFLAGS=-L. -Lopenbsd-compat/ @LDFLAGS@
+ EXEEXT=@EXEEXT@
++LN_S=cp -p
+ 
+ INSTALL_SSH_PRNG_CMDS=@INSTALL_SSH_PRNG_CMDS@
+ INSTALL_SSH_RAND_HELPER=@INSTALL_SSH_RAND_HELPER@
+@@ -286,10 +287,10 @@ install-files:
+ 	$(INSTALL) -m 644 sftp-server.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/sftp-server.8
+ 	$(INSTALL) -m 644 ssh-keysign.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/ssh-keysign.8
+ 	$(INSTALL) -m 644 ssh-pkcs11-helper.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/ssh-pkcs11-helper.8
+-	-rm -f $(DESTDIR)$(bindir)/slogin
+-	ln -s ./ssh$(EXEEXT) $(DESTDIR)$(bindir)/slogin
++	-rm -f $(DESTDIR)$(bindir)/slogin$(EXEEXT)
++	(cd $(DESTDIR)$(bindir) && $(LN_S) ssh$(EXEEXT) slogin$(EXEEXT) )
+ 	-rm -f $(DESTDIR)$(mandir)/$(mansubdir)1/slogin.1
+-	ln -s ./ssh.1 $(DESTDIR)$(mandir)/$(mansubdir)1/slogin.1
++	(cd $(DESTDIR)$(mandir)/$(mansubdir)1 && $(LN_S) ssh.1 slogin.1 )
+ 
+ install-sysconf:
+ 	if [ ! -d $(DESTDIR)$(sysconfdir) ]; then \
+@@ -391,7 +392,7 @@ tests interop-tests:	$(TARGETS)
+ 	BUILDDIR=`pwd`; \
+ 	[ -d `pwd`/regress ]  ||  mkdir -p `pwd`/regress; \
+ 	[ -f `pwd`/regress/Makefile ]  || \
+-	    ln -s `cd $(srcdir) && pwd`/regress/Makefile `pwd`/regress/Makefile ; \
++	    $(LN_S) `cd $(srcdir) && pwd`/regress/Makefile `pwd`/regress/Makefile ; \
+ 	TEST_SHELL="@TEST_SHELL@"; \
+ 	TEST_SSH_SSH="$${BUILDDIR}/ssh"; \
+ 	TEST_SSH_SSHD="$${BUILDDIR}/sshd"; \
+diff --git a/config.guess b/config.guess
+index c2246a4..b759f1b 100644
+--- a/config.guess
++++ b/config.guess
+@@ -801,6 +801,9 @@ EOF
+     i*:CYGWIN*:*)
+ 	echo ${UNAME_MACHINE}-pc-cygwin
+ 	exit ;;
++    i*:MSYS*:*)
++	echo ${UNAME_MACHINE}-pc-msys
++	exit ;;
+     *:MINGW*:*)
+ 	echo ${UNAME_MACHINE}-pc-mingw32
+ 	exit ;;
+diff --git a/config.sub b/config.sub
+index c2d1257..0ab9120 100644
+--- a/config.sub
++++ b/config.sub
+@@ -1300,7 +1300,7 @@ case $os in
+ 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
+ 	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
+ 	      | -chorusos* | -chorusrdb* | -cegcc* \
+-	      | -cygwin* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
++	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
+ 	      | -mingw32* | -linux-gnu* | -linux-newlib* | -linux-uclibc* \
+ 	      | -uxpv* | -beos* | -mpeix* | -udk* \
+ 	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
+diff --git a/configure.ac b/configure.ac
+index a9960a7..1bc9089 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -448,6 +448,23 @@ int main(void) { exit(0); }
+ 		file descriptor passing])
+ 	AC_DEFINE(SSH_IOBUFSZ, 65535, [Windows is sensitive to read buffer size])
+ 	;;
++*-*-msys*)
++	check_for_libcrypt_later=1
++	LIBS="$LIBS /usr/lib/textreadmode.o"
++	AC_DEFINE(HAVE_CYGWIN, 1, [Define if you are on Cygwin])
++	AC_DEFINE(USE_PIPES, 1, [Use PIPES instead of a socketpair()])
++	AC_DEFINE(DISABLE_SHADOW, 1,
++		[Define if you want to disable shadow passwords])
++	AC_DEFINE(NO_X11_UNIX_SOCKETS, 1,
++		[Define if X11 doesn't support AF_UNIX sockets on that system])
++	AC_DEFINE(NO_IPPORT_RESERVED_CONCEPT, 1,
++		[Define if the concept of ports only accessible to
++		superusers isn't known])
++	AC_DEFINE(DISABLE_FD_PASSING, 1,
++		[Define if your platform needs to skip post auth
++		file descriptor passing])
++	AC_DEFINE(SSH_IOBUFSZ, 65535, [Windows is sensitive to read buffer size])
++	;;
+ *-*-dgux*)
+ 	AC_DEFINE(IP_TOS_IS_BROKEN, 1,
+ 		[Define if your system choked on IP TOS setting])
+diff --git a/defines.h b/defines.h
+index c9b93bf..f685856 100644
+--- a/defines.h
++++ b/defines.h
+@@ -731,6 +731,12 @@ struct winsize {
+ # undef HAVE_MMAP
+ #endif
+ 
++#ifdef __MSYS__
++#undef IOV_MAX
++#define IOV_MAX 1024
++#define SETGROUPS_NOOP
++#endif
++
+ #ifndef IOV_MAX
+ # if defined(_XOPEN_IOV_MAX)
+ #  define	IOV_MAX		_XOPEN_IOV_MAX
+diff --git a/openbsd-compat/bsd-cygwin_util.c b/openbsd-compat/bsd-cygwin_util.c
+index e9fa3a0..5758175 100644
+--- a/openbsd-compat/bsd-cygwin_util.c
++++ b/openbsd-compat/bsd-cygwin_util.c
+@@ -119,4 +119,12 @@ free_windows_environment(char **p)
+ 	xfree(p);
+ }
+ 
++#ifdef __MSYS__
++#include <ctype.h>
++# ifndef TM_YEAR_BASE
++#  define TM_YEAR_BASE      1900
++# endif
++#include "strptime.c"
++#endif
++
+ #endif /* HAVE_CYGWIN */
+diff --git a/openbsd-compat/bsd-cygwin_util.h b/openbsd-compat/bsd-cygwin_util.h
+index 39b8eb7..d4cfb8b 100644
+--- a/openbsd-compat/bsd-cygwin_util.h
++++ b/openbsd-compat/bsd-cygwin_util.h
+@@ -49,6 +49,10 @@ void free_windows_environment(char **);
+ #define open binary_open
+ #define pipe binary_pipe
+ 
++#ifdef __MSYS__
++char * strptime(const char *buf, const char *fmt, struct tm *tm);
++#endif
++
+ #endif /* HAVE_CYGWIN */
+ 
+ #endif /* _BSD_CYGWIN_UTIL_H */
+diff --git a/openbsd-compat/bsd-misc.c b/openbsd-compat/bsd-misc.c
+index 55f100a..4d9128e 100644
+--- a/openbsd-compat/bsd-misc.c
++++ b/openbsd-compat/bsd-misc.c
+@@ -25,6 +25,7 @@
+ # include <sys/time.h>
+ #endif
+ 
++#include <errno.h>
+ #include <string.h>
+ #include <signal.h>
+ #include <stdlib.h>
+@@ -134,6 +135,17 @@ int truncate(const char *path, off_t length)
+ }
+ #endif /* HAVE_TRUNCATE */
+ 
++#if !defined(HAVE_SETGROUPS) && defined(SETGROUPS_NOOP)
++/*
++ * MSYS setgroups should be a noop.
++ */
++int
++setgroups(size_t size, const gid_t *list)
++{
++	return (0);
++}
++#endif
++
+ #if !defined(HAVE_NANOSLEEP) && !defined(HAVE_NSLEEP)
+ int nanosleep(const struct timespec *req, struct timespec *rem)
+ {
+diff --git a/openbsd-compat/bsd-misc.h b/openbsd-compat/bsd-misc.h
+index b61ec42..3a2964d 100644
+--- a/openbsd-compat/bsd-misc.h
++++ b/openbsd-compat/bsd-misc.h
+@@ -67,6 +67,10 @@ int utimes(char *, struct timeval *);
+ int truncate (const char *, off_t);
+ #endif /* HAVE_TRUNCATE */
+ 
++#if !defined(HAVE_SETGROUPS) && defined(SETGROUPS_NOOP)
++int setgroups(size_t, const gid_t *);
++#endif
++
+ #if !defined(HAVE_NANOSLEEP) && !defined(HAVE_NSLEEP)
+ #ifndef HAVE_STRUCT_TIMESPEC
+ struct timespec {
+diff --git a/openbsd-compat/bsd-openpty.c b/openbsd-compat/bsd-openpty.c
+index 9777eb5..486b64f 100644
+--- a/openbsd-compat/bsd-openpty.c
++++ b/openbsd-compat/bsd-openpty.c
+@@ -121,6 +121,8 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+ 		return (-1);
+ 	}
+ 
++/* the following hunk is ok on real cygwin, but dies on msys */
++#ifndef HAVE_CYGWIN
+ 	/*
+ 	 * Try to push the appropriate streams modules, as described 
+ 	 * in Solaris pts(7).
+@@ -130,6 +132,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+ # ifndef __hpux
+ 	ioctl(*aslave, I_PUSH, "ttcompat");
+ # endif /* __hpux */
++#endif /* HAVE_CYGWIN */
+ 
+ 	return (0);
+ 
+diff --git a/openbsd-compat/strptime.c b/openbsd-compat/strptime.c
+new file mode 100644
+index 0000000..e044b41
+--- /dev/null
++++ b/openbsd-compat/strptime.c
+@@ -0,0 +1,390 @@
++/*	$Id$	*/
++/*	$NetBSD: strptime.c,v 1.18 1999/04/29 02:58:30 tv Exp $	*/
++
++/*-
++ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
++ * All rights reserved.
++ *
++ * This code was contributed to The NetBSD Foundation by Klaus Klein.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *        This product includes software developed by the NetBSD
++ *        Foundation, Inc. and its contributors.
++ * 4. Neither the name of The NetBSD Foundation nor the names of its
++ *    contributors may be used to endorse or promote products derived
++ *    from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
++ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++/*
++ * We do not implement alternate representations. However, we always
++ * check whether a given modifier is allowed for a certain conversion.
++ */
++#define ALT_E			0x01
++#define ALT_O			0x02
++#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
++
++
++static	int conv_num(const char **, int *, int, int);
++
++static const char *day[7] = {
++	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
++	"Friday", "Saturday"
++};
++static const char *abday[7] = {
++	"Sun","Mon","Tue","Wed","Thu","Fri","Sat"
++};
++static const char *mon[12] = {
++	"January", "February", "March", "April", "May", "June", "July",
++	"August", "September", "October", "November", "December"
++};
++static const char *abmon[12] = {
++	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
++	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
++};
++static const char *am_pm[2] = {
++	"AM", "PM"
++};
++
++
++char *
++strptime(const char *buf, const char *fmt, struct tm *tm)
++{
++	char c;
++	const char *bp;
++	size_t len = 0;
++	int alt_format, i, split_year = 0;
++
++	bp = buf;
++
++	while ((c = *fmt) != '\0') {
++		/* Clear `alternate' modifier prior to new conversion. */
++		alt_format = 0;
++
++		/* Eat up white-space. */
++		if (isspace(c)) {
++			while (isspace(*bp))
++				bp++;
++
++			fmt++;
++			continue;
++		}
++
++		if ((c = *fmt++) != '%')
++			goto literal;
++
++
++again:		switch (c = *fmt++) {
++		case '%':	/* "%%" is converted to "%". */
++literal:
++			if (c != *bp++)
++				return (0);
++			break;
++
++		/*
++		 * "Alternative" modifiers. Just set the appropriate flag
++		 * and start over again.
++		 */
++		case 'E':	/* "%E?" alternative conversion modifier. */
++			LEGAL_ALT(0);
++			alt_format |= ALT_E;
++			goto again;
++
++		case 'O':	/* "%O?" alternative conversion modifier. */
++			LEGAL_ALT(0);
++			alt_format |= ALT_O;
++			goto again;
++
++		/*
++		 * "Complex" conversion rules, implemented through recursion.
++		 */
++		case 'c':	/* Date and time, using the locale's format. */
++			LEGAL_ALT(ALT_E);
++			if (!(bp = strptime(bp, "%x %X", tm)))
++				return (0);
++			break;
++
++		case 'D':	/* The date as "%m/%d/%y". */
++			LEGAL_ALT(0);
++			if (!(bp = strptime(bp, "%m/%d/%y", tm)))
++				return (0);
++			break;
++
++		case 'R':	/* The time as "%H:%M". */
++			LEGAL_ALT(0);
++			if (!(bp = strptime(bp, "%H:%M", tm)))
++				return (0);
++			break;
++
++		case 'r':	/* The time in 12-hour clock representation. */
++			LEGAL_ALT(0);
++			if (!(bp = strptime(bp, "%I:%M:%S %p", tm)))
++				return (0);
++			break;
++
++		case 'T':	/* The time as "%H:%M:%S". */
++			LEGAL_ALT(0);
++			if (!(bp = strptime(bp, "%H:%M:%S", tm)))
++				return (0);
++			break;
++
++		case 'X':	/* The time, using the locale's format. */
++			LEGAL_ALT(ALT_E);
++			if (!(bp = strptime(bp, "%H:%M:%S", tm)))
++				return (0);
++			break;
++
++		case 'x':	/* The date, using the locale's format. */
++			LEGAL_ALT(ALT_E);
++			if (!(bp = strptime(bp, "%m/%d/%y", tm)))
++				return (0);
++			break;
++
++		/*
++		 * "Elementary" conversion rules.
++		 */
++		case 'A':	/* The day of week, using the locale's form. */
++		case 'a':
++			LEGAL_ALT(0);
++			for (i = 0; i < 7; i++) {
++				/* Full name. */
++				len = strlen(day[i]);
++				if (strncasecmp(day[i], bp, len) == 0)
++					break;
++
++				/* Abbreviated name. */
++				len = strlen(abday[i]);
++				if (strncasecmp(abday[i], bp, len) == 0)
++					break;
++			}
++
++			/* Nothing matched. */
++			if (i == 7)
++				return (0);
++
++			tm->tm_wday = i;
++			bp += len;
++			break;
++
++		case 'B':	/* The month, using the locale's form. */
++		case 'b':
++		case 'h':
++			LEGAL_ALT(0);
++			for (i = 0; i < 12; i++) {
++				/* Full name. */
++				len = strlen(mon[i]);
++				if (strncasecmp(mon[i], bp, len) == 0)
++					break;
++
++				/* Abbreviated name. */
++				len = strlen(abmon[i]);
++				if (strncasecmp(abmon[i], bp, len) == 0)
++					break;
++			}
++
++			/* Nothing matched. */
++			if (i == 12)
++				return (0);
++
++			tm->tm_mon = i;
++			bp += len;
++			break;
++
++		case 'C':	/* The century number. */
++			LEGAL_ALT(ALT_E);
++			if (!(conv_num(&bp, &i, 0, 99)))
++				return (0);
++
++			if (split_year) {
++				tm->tm_year = (tm->tm_year % 100) + (i * 100);
++			} else {
++				tm->tm_year = i * 100;
++				split_year = 1;
++			}
++			break;
++
++		case 'd':	/* The day of month. */
++		case 'e':
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_mday, 1, 31)))
++				return (0);
++			break;
++
++		case 'k':	/* The hour (24-hour clock representation). */
++			LEGAL_ALT(0);
++			/* FALLTHROUGH */
++		case 'H':
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_hour, 0, 23)))
++				return (0);
++			break;
++
++		case 'l':	/* The hour (12-hour clock representation). */
++			LEGAL_ALT(0);
++			/* FALLTHROUGH */
++		case 'I':
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_hour, 1, 12)))
++				return (0);
++			if (tm->tm_hour == 12)
++				tm->tm_hour = 0;
++			break;
++
++		case 'j':	/* The day of year. */
++			LEGAL_ALT(0);
++			if (!(conv_num(&bp, &i, 1, 366)))
++				return (0);
++			tm->tm_yday = i - 1;
++			break;
++
++		case 'M':	/* The minute. */
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_min, 0, 59)))
++				return (0);
++			break;
++
++		case 'm':	/* The month. */
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &i, 1, 12)))
++				return (0);
++			tm->tm_mon = i - 1;
++			break;
++
++		case 'p':	/* The locale's equivalent of AM/PM. */
++			LEGAL_ALT(0);
++			/* AM? */
++			if (strcasecmp(am_pm[0], bp) == 0) {
++				if (tm->tm_hour > 11)
++					return (0);
++
++				bp += strlen(am_pm[0]);
++				break;
++			}
++			/* PM? */
++			else if (strcasecmp(am_pm[1], bp) == 0) {
++				if (tm->tm_hour > 11)
++					return (0);
++
++				tm->tm_hour += 12;
++				bp += strlen(am_pm[1]);
++				break;
++			}
++
++			/* Nothing matched. */
++			return (0);
++
++		case 'S':	/* The seconds. */
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_sec, 0, 61)))
++				return (0);
++			break;
++
++		case 'U':	/* The week of year, beginning on sunday. */
++		case 'W':	/* The week of year, beginning on monday. */
++			LEGAL_ALT(ALT_O);
++			/*
++			 * XXX This is bogus, as we can not assume any valid
++			 * information present in the tm structure at this
++			 * point to calculate a real value, so just check the
++			 * range for now.
++			 */
++			 if (!(conv_num(&bp, &i, 0, 53)))
++				return (0);
++			 break;
++
++		case 'w':	/* The day of week, beginning on sunday. */
++			LEGAL_ALT(ALT_O);
++			if (!(conv_num(&bp, &tm->tm_wday, 0, 6)))
++				return (0);
++			break;
++
++		case 'Y':	/* The year. */
++			LEGAL_ALT(ALT_E);
++			if (!(conv_num(&bp, &i, 0, 9999)))
++				return (0);
++
++			tm->tm_year = i - TM_YEAR_BASE;
++			break;
++
++		case 'y':	/* The year within 100 years of the epoch. */
++			LEGAL_ALT(ALT_E | ALT_O);
++			if (!(conv_num(&bp, &i, 0, 99)))
++				return (0);
++
++			if (split_year) {
++				tm->tm_year = ((tm->tm_year / 100) * 100) + i;
++				break;
++			}
++			split_year = 1;
++			if (i <= 68)
++				tm->tm_year = i + 2000 - TM_YEAR_BASE;
++			else
++				tm->tm_year = i + 1900 - TM_YEAR_BASE;
++			break;
++
++		/*
++		 * Miscellaneous conversions.
++		 */
++		case 'n':	/* Any kind of white-space. */
++		case 't':
++			LEGAL_ALT(0);
++			while (isspace(*bp))
++				bp++;
++			break;
++
++
++		default:	/* Unknown/unsupported conversion. */
++			return (0);
++		}
++
++
++	}
++
++	/* LINTED functional specification */
++	return ((char *)bp);
++}
++
++
++static int
++conv_num(const char **buf, int *dest, int llim, int ulim)
++{
++	int result = 0;
++
++	/* The limit also determines the number of valid digits. */
++	int rulim = ulim;
++
++	if (**buf < '0' || **buf > '9')
++		return (0);
++
++	do {
++		result *= 10;
++		result += *(*buf)++ - '0';
++		rulim /= 10;
++	} while ((result * 10 <= ulim) && rulim && **buf >= '0' && **buf <= '9');
++
++	if (result < llim || result > ulim)
++		return (0);
++
++	*dest = result;
++	return (1);
++}
+diff --git a/regress/agent-ptrace.sh b/regress/agent-ptrace.sh
+index d5892ed..3709389 100644
+--- a/regress/agent-ptrace.sh
++++ b/regress/agent-ptrace.sh
+@@ -5,7 +5,7 @@ tid="disallow agent ptrace attach"
+ 
+ if have_prog uname ; then
+ 	case `uname` in
+-	AIX|CYGWIN*|OSF1)
++	AIX|CYGWIN*|MSYS*|OSF1)
+ 		echo "skipped (not supported on this platform)"
+ 		exit 0
+ 		;;
+diff --git a/regress/sftp-cmds.sh b/regress/sftp-cmds.sh
+index c4d6ae2..046a95f 100644
+--- a/regress/sftp-cmds.sh
++++ b/regress/sftp-cmds.sh
+@@ -23,6 +23,9 @@ then
+ 	CYGWIN*)
+ 		os=cygwin
+ 		;;
++	MSYS*) # lie
++		os=msys
++		;;
+ 	*)
+ 		os=`uname`
+ 		;;
+@@ -94,6 +97,7 @@ echo "get \"$DATA\" $COPY" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 \
+ cmp $DATA ${COPY} || fail "corrupted copy after get"
+ 
+ if [ "$os" != "cygwin" ]; then
++if [ "$os" != "msys" ]; then
+ rm -f ${QUOTECOPY}
+ cp $DATA ${QUOTECOPY}
+ verbose "$tid: get filename with quotes"
+@@ -102,6 +106,7 @@ echo "get \"$QUOTECOPY_ARG\" ${COPY}" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1
+ cmp ${COPY} ${QUOTECOPY} || fail "corrupted copy after get with quotes"
+ rm -f ${QUOTECOPY} ${COPY}
+ fi
++fi
+ 
+ rm -f "$SPACECOPY" ${COPY}
+ cp $DATA "$SPACECOPY"
+@@ -153,12 +158,14 @@ echo "put $DATA $COPY" | \
+ cmp $DATA ${COPY} || fail "corrupted copy after put"
+ 
+ if [ "$os" != "cygwin" ]; then
++if [ "$os" != "msys" ]; then
+ rm -f ${QUOTECOPY}
+ verbose "$tid: put filename with quotes"
+ echo "put $DATA \"$QUOTECOPY_ARG\"" | \
+ 	${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 || fail "put failed"
+ cmp $DATA ${QUOTECOPY} || fail "corrupted copy after put with quotes"
+ fi
++fi
+ 
+ rm -f "$SPACECOPY"
+ verbose "$tid: put filename with spaces"
+-- 
+1.9.4.msysgit.0
+
