@@ -1,0 +1,658 @@
+.TH SFTP 1 "October 20 2013 " ""
+.SH NAME
+\fBsftp\fP
+\- secure file transfer program
+.SH SYNOPSIS
+.br
+\fBsftp\fP
+[\fB\-1246aCfpqrv\fP]
+[\fB\-B\fP \fIbuffer_size\fP]
+[\fB\-b\fP \fIbatchfile\fP]
+[\fB\-c\fP \fIcipher\fP]
+[\fB\-D\fP \fIsftp_server_path\fP]
+[\fB\-F\fP \fIssh_config\fP]
+[\fB\-i\fP \fIidentity_file\fP]
+[\fB\-l\fP \fIlimit\fP]
+[\fB\-o\fP \fIssh_option\fP]
+[\fB\-P\fP \fIport\fP]
+[\fB\-R\fP \fInum_requests\fP]
+[\fB\-S\fP \fIprogram\fP]
+[\fB\-s\fP \fIsubsystem\fP | \fIsftp_server\fP]
+\fIhost\fP
+.br
+\fBsftp\fP
+[\fIuser\fP@]
+\fIhost\fP[:\fIfile ...\fP]
+.br
+\fBsftp\fP
+[\fIuser\fP@]
+\fIhost\fP[:\fIdir\fP[\fI/\fP]]
+.br
+\fBsftp\fP
+\fB\-b\fP \fIbatchfile\fP
+[\fIuser\fP@]\fIhost\fP
+.SH DESCRIPTION
+\fBsftp\fP
+is an interactive file transfer program, similar to
+\fBftp\fP(1),
+which performs all operations over an encrypted
+\fBssh\fP(1)
+transport.
+It may also use many features of ssh, such as public key authentication and
+compression.
+\fBsftp\fP
+connects and logs into the specified
+\fIhost\fP,
+then enters an interactive command mode.
+
+The second usage format will retrieve files automatically if a non-interactive
+authentication method is used; otherwise it will do so after
+successful interactive authentication.
+
+The third usage format allows
+\fBsftp\fP
+to start in a remote directory.
+
+The final usage format allows for automated sessions using the
+\fB\-b\fP
+option.
+In such cases, it is necessary to configure non-interactive authentication
+to obviate the need to enter a password at connection time (see
+\fBsshd\fP(8)
+and
+\fBssh-keygen\fP(1)
+for details).
+
+Since some usage formats use colon characters to delimit host names from path
+names, IPv6 addresses must be enclosed in square brackets to avoid ambiguity.
+
+The options are as follows:
+.TP
+\fB\-1\fP
+Specify the use of protocol version 1.
+.TP
+\fB\-2\fP
+Specify the use of protocol version 2.
+.TP
+\fB\-4\fP
+Forces
+\fBsftp\fP
+to use IPv4 addresses only.
+.TP
+\fB\-6\fP
+Forces
+\fBsftp\fP
+to use IPv6 addresses only.
+.TP
+\fB\-a\fP
+Attempt to continue interrupted downloads rather than overwriting existing
+partial or complete copies of files.
+If the remote file contents differ from the partial local copy then the
+resultant file is likely to be corrupt.
+.TP
+\fB\-B\fP \fIbuffer_size\fP
+Specify the size of the buffer that
+\fBsftp\fP
+uses when transferring files.
+Larger buffers require fewer round trips at the cost of higher
+memory consumption.
+The default is 32768 bytes.
+.TP
+\fB\-b\fP \fIbatchfile\fP
+Batch mode reads a series of commands from an input
+\fIbatchfile\fP
+instead of
+.IR stdin .
+Since it lacks user interaction it should be used in conjunction with
+non-interactive authentication.
+A
+\fIbatchfile\fP
+of
+`\-'
+may be used to indicate standard input.
+\fBsftp\fP
+will abort if any of the following
+commands fail:
+\fBget\fP, \fBput\fP, \fBreget\fP, \fBrename\fP, \fBln\fP,
+\fBrm\fP, \fBmkdir\fP, \fBchdir\fP, \fBls\fP,
+\fBlchdir\fP, \fBchmod\fP, \fBchown\fP,
+\fBchgrp\fP, \fBlpwd\fP, \fBdf\fP, \fBsymlink\fP,
+and
+\fBlmkdir\fP.
+Termination on error can be suppressed on a command by command basis by
+prefixing the command with a
+`\-'
+character (for example,
+\fB-rm /tmp/blah* )\fP.
+.TP
+\fB\-C\fP
+Enables compression (via ssh's
+\fB\-C\fP
+flag).
+.TP
+\fB\-c\fP \fIcipher\fP
+Selects the cipher to use for encrypting the data transfers.
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-D\fP \fIsftp_server_path\fP
+Connect directly to a local sftp server
+(rather than via
+\fBssh\fP(1)) .
+This option may be useful in debugging the client and server.
+.TP
+\fB\-F\fP \fIssh_config\fP
+Specifies an alternative
+per-user configuration file for
+\fBssh\fP(1).
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-f\fP
+Requests that files be flushed to disk immediately after transfer.
+When uploading files, this feature is only enabled if the server
+implements the "fsync@openssh.com" extension.
+.TP
+\fB\-i\fP \fIidentity_file\fP
+Selects the file from which the identity (private key) for public key
+authentication is read.
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-l\fP \fIlimit\fP
+Limits the used bandwidth, specified in Kbit/s.
+.TP
+\fB\-o\fP \fIssh_option\fP
+Can be used to pass options to
+\fBssh\fP
+in the format used in
+\fBssh_config\fP(5).
+This is useful for specifying options
+for which there is no separate
+\fBsftp\fP
+command-line flag.
+For example, to specify an alternate port use:
+\fBsftp -oPort=24\fP.
+For full details of the options listed below, and their possible values, see
+\fBssh_config\fP(5).
+
+.TP
+AddressFamily
+.TP
+BatchMode
+.TP
+BindAddress
+.TP
+CanonicalDomains
+.TP
+CanonicalizeFallbackLocal
+.TP
+CanonicalizeHostname
+.TP
+CanonicalizeMaxDots
+.TP
+CanonicalizePermittedCNAMEs
+.TP
+ChallengeResponseAuthentication
+.TP
+CheckHostIP
+.TP
+Cipher
+.TP
+Ciphers
+.TP
+Compression
+.TP
+CompressionLevel
+.TP
+ConnectionAttempts
+.TP
+ConnectTimeout
+.TP
+ControlMaster
+.TP
+ControlPath
+.TP
+ControlPersist
+.TP
+GlobalKnownHostsFile
+.TP
+GSSAPIAuthentication
+.TP
+GSSAPIDelegateCredentials
+.TP
+HashKnownHosts
+.TP
+Host
+.TP
+HostbasedAuthentication
+.TP
+HostKeyAlgorithms
+.TP
+HostKeyAlias
+.TP
+HostName
+.TP
+IdentityFile
+.TP
+IdentitiesOnly
+.TP
+IPQoS
+.TP
+KbdInteractiveAuthentication
+.TP
+KbdInteractiveDevices
+.TP
+KexAlgorithms
+.TP
+LogLevel
+.TP
+MACs
+.TP
+NoHostAuthenticationForLocalhost
+.TP
+NumberOfPasswordPrompts
+.TP
+PasswordAuthentication
+.TP
+PKCS11Provider
+.TP
+Port
+.TP
+PreferredAuthentications
+.TP
+Protocol
+.TP
+ProxyCommand
+.TP
+PubkeyAuthentication
+.TP
+RekeyLimit
+.TP
+RhostsRSAAuthentication
+.TP
+RSAAuthentication
+.TP
+SendEnv
+.TP
+ServerAliveInterval
+.TP
+ServerAliveCountMax
+.TP
+StrictHostKeyChecking
+.TP
+TCPKeepAlive
+.TP
+UsePrivilegedPort
+.TP
+User
+.TP
+UserKnownHostsFile
+.TP
+VerifyHostKeyDNS
+.TP
+\fB\-P\fP \fIport\fP
+Specifies the port to connect to on the remote host.
+.TP
+\fB\-p\fP
+Preserves modification times, access times, and modes from the
+original files transferred.
+.TP
+\fB\-q\fP
+Quiet mode: disables the progress meter as well as warning and
+diagnostic messages from
+\fBssh\fP(1).
+.TP
+\fB\-R\fP \fInum_requests\fP
+Specify how many requests may be outstanding at any one time.
+Increasing this may slightly improve file transfer speed
+but will increase memory usage.
+The default is 64 outstanding requests.
+.TP
+\fB\-r\fP
+Recursively copy entire directories when uploading and downloading.
+Note that
+\fBsftp\fP
+does not follow symbolic links encountered in the tree traversal.
+.TP
+\fB\-S\fP \fIprogram\fP
+Name of the
+\fIprogram\fP
+to use for the encrypted connection.
+The program must understand
+\fBssh\fP(1)
+options.
+.TP
+\fB\-s\fP \fIsubsystem\fP | \fIsftp_server\fP
+Specifies the SSH2 subsystem or the path for an sftp server
+on the remote host.
+A path is useful for using
+\fBsftp\fP
+over protocol version 1, or when the remote
+\fBsshd\fP(8)
+does not have an sftp subsystem configured.
+.TP
+\fB\-v\fP
+Raise logging level.
+This option is also passed to ssh.
+.SH INTERACTIVE COMMANDS
+Once in interactive mode,
+\fBsftp\fP
+understands a set of commands similar to those of
+\fBftp\fP(1).
+Commands are case insensitive.
+Pathnames that contain spaces must be enclosed in quotes.
+Any special characters contained within pathnames that are recognized by
+\fBglob\fP(3)
+must be escaped with backslashes
+(`\e'.)
+.TP
+\fBbye\fP
+Quit
+\fBsftp\fP.
+.TP
+\fBcd \fIpath\fP\fP
+Change remote directory to
+\fIpath\fP.
+.TP
+\fBchgrp \fIgrp\fP \fIpath\fP\fP
+Change group of file
+\fIpath\fP
+to
+\fIgrp\fP.
+\fIpath\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+\fIgrp\fP
+must be a numeric GID.
+.TP
+\fBchmod \fImode\fP \fIpath\fP\fP
+Change permissions of file
+\fIpath\fP
+to
+\fImode\fP.
+\fIpath\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+.TP
+\fBchown \fIown\fP \fIpath\fP\fP
+Change owner of file
+\fIpath\fP
+to
+\fIown\fP.
+\fIpath\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+\fIown\fP
+must be a numeric UID.
+.TP
+\fBdf\fP [\fB\-hi\fP] [\fIpath\fP] 
+Display usage information for the filesystem holding the current directory
+(or
+\fIpath\fP
+if specified).
+If the
+\fB\-h\fP
+flag is specified, the capacity information will be displayed using
+"human-readable" suffixes.
+The
+\fB\-i\fP
+flag requests display of inode information in addition to capacity information.
+This command is only supported on servers that implement the
+``statvfs@openssh.com''
+extension.
+.TP
+\fBexit\fP
+Quit
+\fBsftp\fP.
+.TP
+\fBget\fP [\fB\-afPpr\fP] \fIremote-path\fP [\fIlocal-path\fP] 
+Retrieve the
+\fIremote-path\fP
+and store it on the local machine.
+If the local
+path name is not specified, it is given the same name it has on the
+remote machine.
+\fIremote-path\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+If it does and
+\fIlocal-path\fP
+is specified, then
+\fIlocal-path\fP
+must specify a directory.
+
+If the
+\fB\-a\fP
+flag is specified, then attempt to resume partial transfers of existing files.
+Note that resumption assumes that any partial copy of the local file matches
+the remote copy.
+If the remote file contents differ from the partial local copy then the
+resultant file is likely to be corrupt.
+
+If the
+\fB\-f\fP
+flag is specified, then
+\fBfsync\fP(2)
+will be called after the file transfer has completed to flush the file
+to disk.
+
+If either the
+\fB\-P\fP
+or
+\fB\-p\fP
+flag is specified, then full file permissions and access times are
+copied too.
+
+If the
+\fB\-r\fP
+flag is specified then directories will be copied recursively.
+Note that
+\fBsftp\fP
+does not follow symbolic links when performing recursive transfers.
+.TP
+\fBhelp\fP
+Display help text.
+.TP
+\fBlcd \fIpath\fP\fP
+Change local directory to
+\fIpath\fP.
+.TP
+\fBlls [\fIls-options\fP [\fIpath]]\fP\fP
+Display local directory listing of either
+\fIpath\fP
+or current directory if
+\fIpath\fP
+is not specified.
+\fIls-options\fP
+may contain any flags supported by the local system's
+\fBls\fP(1)
+command.
+\fIpath\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+.TP
+\fBlmkdir \fIpath\fP\fP
+Create local directory specified by
+\fIpath\fP.
+.TP
+\fBln\fP [\fB\-s\fP] \fIoldpath\fP \fInewpath\fP 
+Create a link from
+\fIoldpath\fP
+to
+\fInewpath\fP.
+If the
+\fB\-s\fP
+flag is specified the created link is a symbolic link, otherwise it is
+a hard link.
+.TP
+\fBlpwd\fP
+Print local working directory.
+.TP
+\fBls\fP [\fB\-1afhlnrSt\fP] [\fIpath\fP] 
+Display a remote directory listing of either
+\fIpath\fP
+or the current directory if
+\fIpath\fP
+is not specified.
+\fIpath\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+
+The following flags are recognized and alter the behaviour of
+\fBls\fP
+accordingly:
+.TP
+\fB\-1\fP
+Produce single columnar output.
+.TP
+\fB\-a\fP
+List files beginning with a dot
+(`\&.'.)
+.TP
+\fB\-f\fP
+Do not sort the listing.
+The default sort order is lexicographical.
+.TP
+\fB\-h\fP
+When used with a long format option, use unit suffixes: Byte, Kilobyte,
+Megabyte, Gigabyte, Terabyte, Petabyte, and Exabyte in order to reduce
+the number of digits to four or fewer using powers of 2 for sizes (K=1024,
+M=1048576, etc.).
+.TP
+\fB\-l\fP
+Display additional details including permissions
+and ownership information.
+.TP
+\fB\-n\fP
+Produce a long listing with user and group information presented
+numerically.
+.TP
+\fB\-r\fP
+Reverse the sort order of the listing.
+.TP
+\fB\-S\fP
+Sort the listing by file size.
+.TP
+\fB\-t\fP
+Sort the listing by last modification time.
+.TP
+\fBlumask \fIumask\fP\fP
+Set local umask to
+\fIumask\fP.
+.TP
+\fBmkdir \fIpath\fP\fP
+Create remote directory specified by
+\fIpath\fP.
+.TP
+\fBprogress\fP
+Toggle display of progress meter.
+.TP
+\fBput\fP [\fB\-fPpr\fP] \fIlocal-path\fP [\fIremote-path\fP] 
+Upload
+\fIlocal-path\fP
+and store it on the remote machine.
+If the remote path name is not specified, it is given the same name it has
+on the local machine.
+\fIlocal-path\fP
+may contain
+\fBglob\fP(3)
+characters and may match multiple files.
+If it does and
+\fIremote-path\fP
+is specified, then
+\fIremote-path\fP
+must specify a directory.
+
+If the
+\fB\-f\fP
+flag is specified, then a request will be sent to the server to call
+\fBfsync\fP(2)
+after the file has been transferred.
+Note that this is only supported by servers that implement
+the "fsync@openssh.com" extension.
+
+If either the
+\fB\-P\fP
+or
+\fB\-p\fP
+flag is specified, then full file permissions and access times are
+copied too.
+
+If the
+\fB\-r\fP
+flag is specified then directories will be copied recursively.
+Note that
+\fBsftp\fP
+does not follow symbolic links when performing recursive transfers.
+.TP
+\fBpwd\fP
+Display remote working directory.
+.TP
+\fBquit\fP
+Quit
+\fBsftp\fP.
+.TP
+\fBreget\fP [\fB\-Ppr\fP] \fIremote-path\fP [\fIlocal-path\fP] 
+Resume download of
+\fIremote-path\fP.
+Equivalent to
+\fBget\fP
+with the
+\fB\-a\fP
+flag set.
+.TP
+\fBrename \fIoldpath\fP \fInewpath\fP\fP
+Rename remote file from
+\fIoldpath\fP
+to
+\fInewpath\fP.
+.TP
+\fBrm \fIpath\fP\fP
+Delete remote file specified by
+\fIpath\fP.
+.TP
+\fBrmdir \fIpath\fP\fP
+Remove remote directory specified by
+\fIpath\fP.
+.TP
+\fBsymlink \fIoldpath\fP \fInewpath\fP\fP
+Create a symbolic link from
+\fIoldpath\fP
+to
+\fInewpath\fP.
+.TP
+\fBversion\fP
+Display the
+\fBsftp\fP
+protocol version.
+.TP
+\fB\&! Ns \fIcommand\fP\fP
+Execute
+\fIcommand\fP
+in local shell.
+.TP
+\fB\&!\fP
+Escape to local shell.
+.TP
+\fB\&?\fP
+Synonym for help.
+.SH SEE ALSO
+\fBftp\fP(1),
+\fBls\fP(1),
+\fBscp\fP(1),
+\fBssh\fP(1),
+\fBssh-add\fP(1),
+\fBssh-keygen\fP(1),
+\fBglob\fP(3),
+\fBssh_config\fP(5),
+\fBsftp-server\fP(8),
+\fBsshd\fP(8)
+
+S. Lehtinen and T. Ylonen, \fISSH File Transfer Protocol\fP, draft-ietf-secsh-filexfer-00.txt, January 2001, work in progress material.

@@ -1,0 +1,111 @@
+.TH MODULI 5 "September 26 2012 " ""
+.SH NAME
+\fBmoduli\fP
+\- Diffie-Hellman moduli
+.SH DESCRIPTION
+The
+\fI/etc/ssh/moduli\fP
+file contains prime numbers and generators for use by
+\fBsshd\fP(8)
+in the Diffie-Hellman Group Exchange key exchange method.
+
+New moduli may be generated with
+\fBssh-keygen\fP(1)
+using a two-step process.
+An initial
+.IR candidate generation
+pass, using
+\fBssh-keygen -G\fP,
+calculates numbers that are likely to be useful.
+A second
+.IR primality testing
+pass, using
+\fBssh-keygen -T\fP,
+provides a high degree of assurance that the numbers are prime and are
+safe for use in Diffie-Hellman operations by
+\fBsshd\fP(8).
+This
+\fBmoduli\fP
+format is used as the output from each pass.
+
+The file consists of newline-separated records, one per modulus,
+containing seven space-separated fields.
+These fields are as follows:
+.TP
+timestamp
+The time that the modulus was last processed as YYYYMMDDHHMMSS.
+.TP
+type
+Decimal number specifying the internal structure of the prime modulus.
+Supported types are:
+
+.TP
+0
+Unknown, not tested.
+.TP
+2
+"Safe" prime; (p-1)/2 is also prime.
+.TP
+4
+Sophie Germain; 2p+1 is also prime.
+
+Moduli candidates initially produced by
+\fBssh-keygen\fP(1)
+are Sophie Germain primes (type 4).
+Further primality testing with
+\fBssh-keygen\fP(1)
+produces safe prime moduli (type 2) that are ready for use in
+\fBsshd\fP(8).
+Other types are not used by OpenSSH.
+.TP
+tests
+Decimal number indicating the type of primality tests that the number
+has been subjected to represented as a bitmask of the following values:
+
+.TP
+0x00
+Not tested.
+.TP
+0x01
+Composite number \(en not prime.
+.TP
+0x02
+Sieve of Eratosthenes.
+.TP
+0x04
+Probabilistic Miller-Rabin primality tests.
+
+The
+\fBssh-keygen\fP(1)
+moduli candidate generation uses the Sieve of Eratosthenes (flag 0x02).
+Subsequent
+\fBssh-keygen\fP(1)
+primality tests are Miller-Rabin tests (flag 0x04).
+.TP
+trials
+Decimal number indicating the number of primality trials
+that have been performed on the modulus.
+.TP
+size
+Decimal number indicating the size of the prime in bits.
+.TP
+generator
+The recommended generator for use with this modulus (hexadecimal).
+.TP
+modulus
+The modulus itself in hexadecimal.
+
+When performing Diffie-Hellman Group Exchange,
+\fBsshd\fP(8)
+first estimates the size of the modulus required to produce enough
+Diffie-Hellman output to sufficiently key the selected symmetric cipher.
+\fBsshd\fP(8)
+then randomly selects a modulus from
+Fa /etc/ssh/moduli
+that best meets the size requirement.
+.SH SEE ALSO
+\fBssh-keygen\fP(1),
+\fBsshd\fP(8)
+.SH STANDARDS
+
+W. Simpson, N. Provos and M. Friedl, \fIDiffie-Hellman Group Exchange for the Secure Shell (SSH) Transport Layer Protocol\fP, RFC 4419, 2006.
