@@ -1,0 +1,153 @@
+From 79a0d6b5eaeedfdb9935be483f2c79966fca8f41 Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Tue, 24 Jun 2014 15:42:28 +0900
+Subject: [PATCH 4/4] Fix compile and install error on msys
+
+Based on the patch.
+https://github.com/sschuberth/mingwGitDevEnv-packages/blob/master/msys-openssh/openssh-6.6p1-1.msys.patch
+---
+ Makefile.in                      |  4 ++--
+ defines.h                        |  6 ++++++
+ openbsd-compat/bsd-cygwin_util.c |  8 ++++++++
+ openbsd-compat/bsd-cygwin_util.h |  4 ++++
+ openbsd-compat/bsd-misc.c        | 11 +++++++++++
+ openbsd-compat/bsd-openpty.c     |  3 +++
+ openbsd-compat/bsd-statvfs.c     |  7 +++++++
+ 7 files changed, 41 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index dfa8b8a..93c6ec5 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -289,8 +289,8 @@ install-files:
+ 	$(INSTALL) -m 644 sftp-server.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/sftp-server.8
+ 	$(INSTALL) -m 644 ssh-keysign.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/ssh-keysign.8
+ 	$(INSTALL) -m 644 ssh-pkcs11-helper.8.out $(DESTDIR)$(mandir)/$(mansubdir)8/ssh-pkcs11-helper.8
+-	-rm -f $(DESTDIR)$(bindir)/slogin
+-	ln -s ./ssh$(EXEEXT) $(DESTDIR)$(bindir)/slogin
++	-rm -f $(DESTDIR)$(bindir)/slogin$(EXEEXT)
++	cp -f ./ssh$(EXEEXT) $(DESTDIR)$(bindir)/slogin$(EXEEXT)
+ 	-rm -f $(DESTDIR)$(mandir)/$(mansubdir)1/slogin.1
+ 	cp -f $(DESTDIR)$(mandir)/$(mansubdir)1/ssh.1 $(DESTDIR)$(mandir)/$(mansubdir)1/slogin.1
+ 
+diff --git a/defines.h b/defines.h
+index 354d5b6..f797429 100644
+--- a/defines.h
++++ b/defines.h
+@@ -787,6 +787,12 @@ struct winsize {
+ # undef HAVE_MMAP
+ #endif
+ 
++#ifdef __MSYS__
++# undef IOV_MAX
++# define IOV_MAX 1024
++# define SETGROUPS_NOOP
++#endif
++
+ #ifndef IOV_MAX
+ # if defined(_XOPEN_IOV_MAX)
+ #  define	IOV_MAX		_XOPEN_IOV_MAX
+diff --git a/openbsd-compat/bsd-cygwin_util.c b/openbsd-compat/bsd-cygwin_util.c
+index 735a035..50ee1ed 100644
+--- a/openbsd-compat/bsd-cygwin_util.c
++++ b/openbsd-compat/bsd-cygwin_util.c
+@@ -100,4 +100,12 @@ free_windows_environment(char **p)
+ 	free(p);
+ }
+ 
++#ifdef __MSYS__
++# include <ctype.h>
++# ifndef TM_YEAR_BASE
++#  define TM_YEAR_BASE 1900
++# endif
++# include "strptime.c"
++#endif
++
+ #endif /* HAVE_CYGWIN */
+diff --git a/openbsd-compat/bsd-cygwin_util.h b/openbsd-compat/bsd-cygwin_util.h
+index 1177366..b862276 100644
+--- a/openbsd-compat/bsd-cygwin_util.h
++++ b/openbsd-compat/bsd-cygwin_util.h
+@@ -58,6 +58,10 @@ void free_windows_environment(char **);
+ #define open binary_open
+ #endif
+ 
++#ifdef __MSYS__
++char * strptime(const char *buf, const char *fmt, struct tm *tm);
++#endif
++
+ #endif /* HAVE_CYGWIN */
+ 
+ #endif /* _BSD_CYGWIN_UTIL_H */
+diff --git a/openbsd-compat/bsd-misc.c b/openbsd-compat/bsd-misc.c
+index 65e8003..4ed5a93 100644
+--- a/openbsd-compat/bsd-misc.c
++++ b/openbsd-compat/bsd-misc.c
+@@ -135,6 +135,17 @@ int truncate(const char *path, off_t length)
+ }
+ #endif /* HAVE_TRUNCATE */
+ 
++#if !defined(HAVE_SETGROUPS) && defined(SETGROUPS_NOOP)
++/*
++ * MSYS setgroups should be a noop.
++ */
++int
++setgroups(size_t size, const gid_t *list)
++{
++	return (0);
++}
++#endif
++
+ #if !defined(HAVE_NANOSLEEP) && !defined(HAVE_NSLEEP)
+ int nanosleep(const struct timespec *req, struct timespec *rem)
+ {
+diff --git a/openbsd-compat/bsd-openpty.c b/openbsd-compat/bsd-openpty.c
+index 9777eb5..956c329 100644
+--- a/openbsd-compat/bsd-openpty.c
++++ b/openbsd-compat/bsd-openpty.c
+@@ -121,6 +121,8 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+ 		return (-1);
+ 	}
+ 
++/* the following hunk is ok on real cygwin, but dies on msys */
++#ifndef __MSYS__
+ 	/*
+ 	 * Try to push the appropriate streams modules, as described 
+ 	 * in Solaris pts(7).
+@@ -130,6 +132,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+ # ifndef __hpux
+ 	ioctl(*aslave, I_PUSH, "ttcompat");
+ # endif /* __hpux */
++#endif /* __MSYS__ */
+ 
+ 	return (0);
+ 
+diff --git a/openbsd-compat/bsd-statvfs.c b/openbsd-compat/bsd-statvfs.c
+index 2b1da80..3ed1158 100644
+--- a/openbsd-compat/bsd-statvfs.c
++++ b/openbsd-compat/bsd-statvfs.c
+@@ -25,6 +25,11 @@
+ # include <sys/mount.h>
+ #endif
+ 
++#ifdef __MSYS__
++# include <sys/vfs.h>
++# define MNAMELEN	90   /* length of buffer for returned name */
++#endif
++
+ #include <errno.h>
+ 
+ static void
+@@ -39,7 +44,9 @@ copy_statfs_to_statvfs(struct statvfs *to, struct statfs *from)
+ 	to->f_ffree = from->f_ffree;
+ 	to->f_favail = from->f_ffree;	/* no exact equivalent */
+ 	to->f_fsid = 0;			/* XXX fix me */
++#ifndef __MSYS__
+ 	to->f_flag = from->f_flags;
++#endif
+ 	to->f_namemax = MNAMELEN;
+ }
+ 
+-- 
+1.9.4.msysgit.0
+

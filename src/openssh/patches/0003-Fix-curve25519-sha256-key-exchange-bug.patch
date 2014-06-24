@@ -1,0 +1,135 @@
+From 23aca077bb9936ca7d78af91333c27fa2904cd2e Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Tue, 24 Jun 2014 13:46:55 +0900
+Subject: [PATCH 3/4] Fix curve25519-sha256 key exchange bug
+
+https://github.com/Alexpux/MSYS2-packages/blob/master/openssh/curve25519-sha256.patch
+---
+ bufaux.c      |  5 ++++-
+ compat.c      | 16 +++++++++++++++-
+ compat.h      |  2 ++
+ sshconnect2.c |  2 ++
+ sshd.c        |  3 +++
+ version.h     |  2 +-
+ 6 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/bufaux.c b/bufaux.c
+index e24b5fc..f6a6f2a 100644
+--- a/bufaux.c
++++ b/bufaux.c
+@@ -1,4 +1,4 @@
+-/* $OpenBSD: bufaux.c,v 1.56 2014/02/02 03:44:31 djm Exp $ */
++/* $OpenBSD: bufaux.c,v 1.57 2014/04/16 23:22:45 djm Exp $ */
+ /*
+  * Author: Tatu Ylonen <ylo@cs.hut.fi>
+  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+@@ -372,6 +372,9 @@ buffer_put_bignum2_from_string(Buffer *buffer, const u_char *s, u_int l)
+ 
+ 	if (l > 8 * 1024)
+ 		fatal("%s: length %u too long", __func__, l);
++	/* Skip leading zero bytes */
++	for (; l > 0 && *s == 0; l--, s++)
++		;
+ 	p = buf = xmalloc(l + 1);
+ 	/*
+ 	 * If most significant bit is set then prepend a zero byte to
+diff --git a/compat.c b/compat.c
+index 9d9fabe..4449145 100644
+--- a/compat.c
++++ b/compat.c
+@@ -95,6 +95,9 @@ compat_datafellows(const char *version)
+ 		{ "Sun_SSH_1.0*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+ 		{ "OpenSSH_4*",		0 },
+ 		{ "OpenSSH_5*",		SSH_NEW_OPENSSH|SSH_BUG_DYNAMIC_RPORT},
++		{ "OpenSSH_6.6.1*",	SSH_NEW_OPENSSH},
++		{ "OpenSSH_6.5*,"
++		  "OpenSSH_6.6*",	SSH_NEW_OPENSSH|SSH_BUG_CURVE25519PAD},
+ 		{ "OpenSSH*",		SSH_NEW_OPENSSH },
+ 		{ "*MindTerm*",		0 },
+ 		{ "2.1.0*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
+@@ -251,7 +254,6 @@ compat_cipher_proposal(char *cipher_prop)
+ 	return cipher_prop;
+ }
+ 
+-
+ char *
+ compat_pkalg_proposal(char *pkalg_prop)
+ {
+@@ -265,3 +267,15 @@ compat_pkalg_proposal(char *pkalg_prop)
+ 	return pkalg_prop;
+ }
+ 
++char *
++compat_kex_proposal(char *kex_prop)
++{
++	if (!(datafellows & SSH_BUG_CURVE25519PAD))
++		return kex_prop;
++	debug2("%s: original KEX proposal: %s", __func__, kex_prop);
++	kex_prop = filter_proposal(kex_prop, "curve25519-sha256@libssh.org");
++	debug2("%s: compat KEX proposal: %s", __func__, kex_prop);
++	if (*kex_prop == '\0')
++		fatal("No supported key exchange algorithms found");
++	return kex_prop;
++}
+diff --git a/compat.h b/compat.h
+index b174fa1..a6c3f3d 100644
+--- a/compat.h
++++ b/compat.h
+@@ -59,6 +59,7 @@
+ #define SSH_BUG_RFWD_ADDR	0x02000000
+ #define SSH_NEW_OPENSSH		0x04000000
+ #define SSH_BUG_DYNAMIC_RPORT	0x08000000
++#define SSH_BUG_CURVE25519PAD	0x10000000
+ 
+ void     enable_compat13(void);
+ void     enable_compat20(void);
+@@ -66,6 +67,7 @@ void     compat_datafellows(const char *);
+ int	 proto_spec(const char *);
+ char	*compat_cipher_proposal(char *);
+ char	*compat_pkalg_proposal(char *);
++char	*compat_kex_proposal(char *);
+ 
+ extern int compat13;
+ extern int compat20;
+diff --git a/sshconnect2.c b/sshconnect2.c
+index 7f4ff41..ec3ad6a 100644
+--- a/sshconnect2.c
++++ b/sshconnect2.c
+@@ -195,6 +195,8 @@ ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
+ 	}
+ 	if (options.kex_algorithms != NULL)
+ 		myproposal[PROPOSAL_KEX_ALGS] = options.kex_algorithms;
++	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
++	    myproposal[PROPOSAL_KEX_ALGS]);
+ 
+ 	if (options.rekey_limit || options.rekey_interval)
+ 		packet_set_rekey_limits((u_int32_t)options.rekey_limit,
+diff --git a/sshd.c b/sshd.c
+index 7523de9..e9084b7 100644
+--- a/sshd.c
++++ b/sshd.c
+@@ -2462,6 +2462,9 @@ do_ssh2_kex(void)
+ 	if (options.kex_algorithms != NULL)
+ 		myproposal[PROPOSAL_KEX_ALGS] = options.kex_algorithms;
+ 
++	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
++	    myproposal[PROPOSAL_KEX_ALGS]);
++
+ 	if (options.rekey_limit || options.rekey_interval)
+ 		packet_set_rekey_limits((u_int32_t)options.rekey_limit,
+ 		    (time_t)options.rekey_interval);
+diff --git a/version.h b/version.h
+index a1579ac..a33e77c 100644
+--- a/version.h
++++ b/version.h
+@@ -1,6 +1,6 @@
+ /* $OpenBSD: version.h,v 1.70 2014/02/27 22:57:40 djm Exp $ */
+ 
+-#define SSH_VERSION	"OpenSSH_6.6"
++#define SSH_VERSION	"OpenSSH_6.6.1"
+ 
+ #define SSH_PORTABLE	"p1"
+ #define SSH_RELEASE	SSH_VERSION SSH_PORTABLE
+-- 
+1.9.4.msysgit.0
+

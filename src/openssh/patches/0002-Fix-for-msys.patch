@@ -1,0 +1,143 @@
+From ae9c9e8dc5a84bec785a27b78a9b1fc5b0766ad8 Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Tue, 24 Jun 2014 13:45:22 +0900
+Subject: [PATCH 2/4] Fix for msys
+
+Based on the patch.
+https://github.com/Alexpux/MSYS2-packages/blob/master/openssh/openssh-6.3p1-msys2.patch
+---
+ config.guess                     | 3 +++
+ configure.ac                     | 2 +-
+ contrib/cygwin/Makefile          | 2 +-
+ openbsd-compat/bsd-cygwin_util.c | 2 +-
+ regress/agent-ptrace.sh          | 2 +-
+ regress/reexec.sh                | 2 +-
+ regress/sftp-cmds.sh             | 4 ++--
+ regress/test-exec.sh             | 7 +++++++
+ 8 files changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/config.guess b/config.guess
+index b94cde8..f2a785f 100644
+--- a/config.guess
++++ b/config.guess
+@@ -851,6 +851,9 @@ EOF
+     amd64:CYGWIN*:*:* | x86_64:CYGWIN*:*:*)
+ 	echo x86_64-unknown-cygwin
+ 	exit ;;
++    amd64:MSYS*:*:* | x86_64:MSYS*:*:*)
++	echo x86_64-unknown-msys
++	exit ;;
+     p*:CYGWIN*:*)
+ 	echo powerpcle-unknown-cygwin
+ 	exit ;;
+diff --git a/configure.ac b/configure.ac
+index 7c6ce08..9f1b966 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -529,7 +529,7 @@ case "$host" in
+ 	AC_DEFINE([DISABLE_UTMP], [1], [Define if you don't want to use utmp])
+ 	AC_DEFINE([DISABLE_WTMP], [1], [Define if you don't want to use wtmp])
+ 	;;
+-*-*-cygwin*)
++*-*-cygwin* | *-*-msys*)
+ 	check_for_libcrypt_later=1
+ 	LIBS="$LIBS /usr/lib/textreadmode.o"
+ 	AC_DEFINE([HAVE_CYGWIN], [1], [Define if you are on Cygwin])
+diff --git a/contrib/cygwin/Makefile b/contrib/cygwin/Makefile
+index a0261f4..2fdb676 100644
+--- a/contrib/cygwin/Makefile
++++ b/contrib/cygwin/Makefile
+@@ -7,7 +7,7 @@ datadir=$(prefix)/share
+ mandir=$(datadir)/man
+ docdir=$(datadir)/doc
+ sshdocdir=$(docdir)/openssh
+-cygdocdir=$(docdir)/Cygwin
++cygdocdir=$(docdir)/MSYS
+ sysconfdir=/etc
+ defaultsdir=$(sysconfdir)/defaults/etc
+ inetdefdir=$(defaultsdir)/inetd.d
+diff --git a/openbsd-compat/bsd-cygwin_util.c b/openbsd-compat/bsd-cygwin_util.c
+index 267e77a..735a035 100644
+--- a/openbsd-compat/bsd-cygwin_util.c
++++ b/openbsd-compat/bsd-cygwin_util.c
+@@ -67,7 +67,7 @@ static struct wenv {
+ 	{ NL("ALLUSERSPROFILE=") },
+ 	{ NL("COMPUTERNAME=") },
+ 	{ NL("COMSPEC=") },
+-	{ NL("CYGWIN=") },
++	{ NL("MSYS=") },
+ 	{ NL("OS=") },
+ 	{ NL("PATH=") },
+ 	{ NL("PATHEXT=") },
+diff --git a/regress/agent-ptrace.sh b/regress/agent-ptrace.sh
+index 1912ca8..22b0753 100644
+--- a/regress/agent-ptrace.sh
++++ b/regress/agent-ptrace.sh
+@@ -5,7 +5,7 @@ tid="disallow agent ptrace attach"
+ 
+ if have_prog uname ; then
+ 	case `uname` in
+-	AIX|CYGWIN*|OSF1)
++	AIX|CYGWIN*|MSYS*|OSF1)
+ 		echo "skipped (not supported on this platform)"
+ 		exit 0
+ 		;;
+diff --git a/regress/reexec.sh b/regress/reexec.sh
+index 433573f..2295686 100644
+--- a/regress/reexec.sh
++++ b/regress/reexec.sh
+@@ -45,7 +45,7 @@ rm -f $PIDFILE
+ cp $OBJ/sshd_config.orig $OBJ/sshd_config
+ 
+ # cygwin can't fork a deleted binary
+-if [ "$os" != "cygwin" ]; then
++if [ "$os" != "cygwin" || "$os" != "msys" ]; then
+ 
+ verbose "test reexec fallback"
+ 
+diff --git a/regress/sftp-cmds.sh b/regress/sftp-cmds.sh
+index aad7fca..e8c002c 100644
+--- a/regress/sftp-cmds.sh
++++ b/regress/sftp-cmds.sh
+@@ -77,7 +77,7 @@ echo "get \"$DATA\" $COPY" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 \
+ 	|| fail "get failed"
+ cmp $DATA ${COPY} || fail "corrupted copy after get"
+ 
+-if [ "$os" != "cygwin" ]; then
++if [ "$os" != "cygwin" || "$os" != "msys" ]; then
+ rm -f ${QUOTECOPY}
+ cp $DATA ${QUOTECOPY}
+ verbose "$tid: get filename with quotes"
+@@ -136,7 +136,7 @@ echo "put $DATA $COPY" | \
+ 	${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 || fail "put failed"
+ cmp $DATA ${COPY} || fail "corrupted copy after put"
+ 
+-if [ "$os" != "cygwin" ]; then
++if [ "$os" != "cygwin" || "$os" != "msys" ]; then
+ rm -f ${QUOTECOPY}
+ verbose "$tid: put filename with quotes"
+ echo "put $DATA \"$QUOTECOPY_ARG\"" | \
+diff --git a/regress/test-exec.sh b/regress/test-exec.sh
+index aac8aa5..f6bc8a6 100644
+--- a/regress/test-exec.sh
++++ b/regress/test-exec.sh
+@@ -16,9 +16,16 @@ CYGWIN_NT-5.0)
+ 	os=cygwin
+ 	TEST_SSH_IPV6=no
+ 	;;
++MSYS_NT-5.0)
++	os=cygwin
++	TEST_SSH_IPV6=no
++	;;
+ CYGWIN*)
+ 	os=cygwin
+ 	;;
++MSYS*)
++	os=cygwin
++	;;
+ esac
+ 
+ if [ ! -z "$TEST_SSH_PORT" ]; then
+-- 
+1.9.4.msysgit.0
+
