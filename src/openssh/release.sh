@@ -5,7 +5,7 @@ cd "$(dirname "$0")" && . ../common/update-lib.sh
 check_pristine
 
 package=openssh
-version=5.4p1
+version=6.6p1
 url=http://ftp.OpenBSD.org/pub/OpenBSD/OpenSSH/portable/
 d=openssh-$version
 tar=$d.tar.gz
