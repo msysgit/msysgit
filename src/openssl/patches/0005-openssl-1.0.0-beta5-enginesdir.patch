@@ -1,0 +1,68 @@
+From 76f59f8e69698341434ab56ea3f62af59d3712ff Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Wed, 25 Jun 2014 14:03:11 +0900
+Subject: [PATCH 5/5] openssl-1.0.0-beta5-enginesdir
+
+https://github.com/Alexpux/MSYS2-packages/blob/master/openssl/openssl-1.0.0-beta5-enginesdir.patch
+---
+ Configure        | 9 +++++++--
+ engines/Makefile | 2 +-
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/Configure b/Configure
+index 9a70556..9713233 100644
+--- a/Configure
++++ b/Configure
+@@ -666,6 +666,7 @@ my $idx_multilib = $idx++;
+ my $prefix="";
+ my $libdir="";
+ my $openssldir="";
++my $enginesdir="";
+ my $exe_ext="";
+ my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
+ my $cross_compile_prefix="";
+@@ -894,6 +895,10 @@ PROCESS_ARGS:
+ 				{
+ 				$openssldir=$1;
+ 				}
++			elsif (/^--enginesdir=(.*)$/)
++				{
++				$enginesdir=$1;
++				}
+ 			elsif (/^--install.prefix=(.*)$/)
+ 				{
+ 				$install_prefix=$1;
+@@ -1146,7 +1151,7 @@ chop $prefix if $prefix =~ /.\/$/;
+ 
+ $openssldir=$prefix . "/ssl" if $openssldir eq "";
+ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
+-
++$enginesdir="$prefix/lib/engines" if $enginesdir eq "";
+ 
+ print "IsMK1MF=$IsMK1MF\n";
+ 
+@@ -1810,7 +1815,7 @@ while (<IN>)
+ 		}
+ 	elsif	(/^#define\s+ENGINESDIR/)
+ 		{
+-		my $foo = "$prefix/$libdir/engines";
++		my $foo = "$enginesdir";
+ 		$foo =~ s/\\/\\\\/g;
+ 		print OUT "#define ENGINESDIR \"$foo\"\n";
+ 		}
+diff --git a/engines/Makefile b/engines/Makefile
+index c2bbbef..72fe438 100644
+--- a/engines/Makefile
++++ b/engines/Makefile
+@@ -129,7 +129,7 @@ install:
+ 				esac; \
+ 				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
+ 			   esac; \
+-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
++			  chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
+ 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
+ 		done; \
+ 	fi
+-- 
+2.0.0.msysgit.0
+
