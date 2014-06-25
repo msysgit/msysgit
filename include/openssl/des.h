@@ -195,9 +195,10 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,DES_key_schedule *ks1,
 			    DES_key_schedule *ks2,DES_key_schedule *ks3,
 			    DES_cblock *ivec,int *num);
-
+#if 0
 void DES_xwhite_in2out(const_DES_cblock *DES_key,const_DES_cblock *in_white,
 		       DES_cblock *out_white);
+#endif
 
 int DES_enc_read(int fd,void *buf,int len,DES_key_schedule *sched,
 		 DES_cblock *iv);
@@ -223,6 +224,9 @@ int DES_set_key(const_DES_cblock *key,DES_key_schedule *schedule);
 int DES_key_sched(const_DES_cblock *key,DES_key_schedule *schedule);
 int DES_set_key_checked(const_DES_cblock *key,DES_key_schedule *schedule);
 void DES_set_key_unchecked(const_DES_cblock *key,DES_key_schedule *schedule);
+#ifdef OPENSSL_FIPS
+void private_DES_set_key_unchecked(const_DES_cblock *key,DES_key_schedule *schedule);
+#endif
 void DES_string_to_key(const char *str,DES_cblock *key);
 void DES_string_to_2keys(const char *str,DES_cblock *key1,DES_cblock *key2);
 void DES_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
