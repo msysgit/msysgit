@@ -24,7 +24,7 @@ pre_install () {
 		exit 1
 	}
 	! test -s "$FILELIST" ||
-		cat "$FILELIST" | (cd / && xargs git rm --ignore-unmatch) ||
+		cat "$FILELIST" | (cd / && xargs -n 200 git rm --ignore-unmatch) ||
 		exit
 }
 
