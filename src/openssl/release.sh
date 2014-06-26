@@ -15,7 +15,7 @@ extract &&
 apply_patches
 
 export CPPFLAGS="${CPPFLAGS} -D__CYGWIN__"
-export LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
+export LDFLAGS="${LDFLAGS} -s -Wl,--enable-auto-import"
 export SHARED_LDFLAGS="${SHARED_LDFLAGS} -Wl,--enable-auto-import"
 
 (cd "$d" && ./Configure --prefix=/usr \
