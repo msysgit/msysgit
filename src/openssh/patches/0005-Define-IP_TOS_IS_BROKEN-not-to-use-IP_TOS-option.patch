@@ -1,0 +1,30 @@
+From 5080680a1dba851ef8a4b6eba9aa91f4a111c9ba Mon Sep 17 00:00:00 2001
+From: Hiroshi Shirosaki <h.shirosaki@gmail.com>
+Date: Fri, 27 Jun 2014 21:15:54 +0900
+Subject: [PATCH 5/5] Define IP_TOS_IS_BROKEN not to use IP_TOS option
+
+Winsock IP_TOS option is silently ignored on Windows 7.
+http://blogs.msdn.com/b/wndp/archive/2006/07/05/657196.aspx
+
+IP_TOS option causes an error on Windows XP.
+https://groups.google.com/forum/#!topic/msysgit/2VEyHhOXEps
+---
+ configure.ac | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 9f1b966..f6fb9c1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -549,6 +549,8 @@ case "$host" in
+ 	# Cygwin defines optargs, optargs as declspec(dllimport) for historical
+ 	# reasons which cause compile warnings, so we disable those warnings.
+ 	OSSH_CHECK_CFLAG_COMPILE([-Wno-attributes])
++	AC_DEFINE([IP_TOS_IS_BROKEN], [1],
++		[Define if your system choked on IP TOS setting])
+ 	;;
+ *-*-dgux*)
+ 	AC_DEFINE([IP_TOS_IS_BROKEN], [1],
+-- 
+1.9.4.msysgit.0
+
