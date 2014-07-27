@@ -60,8 +60,8 @@ make_interface_libaries() {
 	 dlltool -D msys-minires.dll -d "$d"/tmp.def -l /lib/libminires.dll.a &&
 	 pexports /bin/msys-z.dll > "$d"/tmp.def &&
 	 dlltool -D msys-z.dll -d "$d"/tmp.def -l /lib/libz.dll.a &&
-	 pexports /bin/msys-crypto-0.9.8.dll | sed '1 s/-0\.9\.8//' > "$d"/tmp.def &&
-	 dlltool -D msys-crypto-0.9.8.dll -d "$d"/tmp.def -l /lib/libcrypto.dll.a &&
+	 pexports /bin/msys-crypto-1.0.0.dll | sed '1 s/-1\.0\.0//' > "$d"/tmp.def &&
+	 dlltool -D msys-crypto-1.0.0.dll -d "$d"/tmp.def -l /lib/libcrypto.dll.a &&
 	 rm -f "$d"/tmp.def) ||
 		die "Could not make interface libraries"
 }
