@@ -51,7 +51,7 @@ ssh-agent.exe,ssh.exe,ssh-add.exe,ssh-keygen.exe,ssh-keyscan.exe,\
 tail.exe,tar.exe,tee.exe,touch.exe,tr.exe,true.exe,uname.exe,uniq.exe,\
 unzip.exe,vi,\
 msys-perl5_8.dll,lib{apr,aprutil,expat,neon,z,svn}*.dll,pthreadGC2.dll,\
-msys-crypto-0.9.8.dll,msys-regex-1.dll,msys-ssl-0.9.8.dll,msys-minires.dll,msys-z.dll,\
+msys-crypto-1.0.0.dll,msys-regex-1.dll,msys-ssl-1.0.0.dll,msys-minires.dll,msys-z.dll,\
 vim,vimtutor,wc.exe,which,xargs.exe,start} lib/engines/ \
 ssl/ cmd/ lib/perl5/ libexec/git-core/mergetools share/antiword/ share/bison/ share/git* \
 share/vim/vimrc share/vim/vim74/{filetype.vim,ftoff.vim,menu.vim,optwin.vim,\
