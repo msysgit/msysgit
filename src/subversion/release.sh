@@ -10,7 +10,7 @@ url=http://subversion.tigris.org/downloads
 d=subversion-$version
 tar=$d.tar.bz2
 tar2=subversion-deps-$version.tar.bz2
-configure_options="--prefix= --disable-static --enable-shared --build=i686-pc-mingw32"
+configure_options="--prefix= --disable-static --enable-shared --build=i686-pc-mingw32 --with-ssl"
 
 # check for presence of libz (MSys), perl >= 5.8
 perl -e 'require 5.8.0' || exit
