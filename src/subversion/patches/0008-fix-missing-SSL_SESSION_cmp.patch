@@ -1,0 +1,39 @@
+From 3f9f1392d8b0e0b30f0dd419fc3bd880c5c005b8 Mon Sep 17 00:00:00 2001
+From: Karsten Blees <blees@dcon.de>
+Date: Thu, 7 Aug 2014 10:47:10 +0200
+Subject: [PATCH 8/8] fix missing SSL_SESSION_cmp
+
+...which was removed from public OpenSSL API in 1.0
+
+Signed-off-by: Karsten Blees <blees@dcon.de>
+---
+ neon/src/ne_openssl.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/neon/src/ne_openssl.c b/neon/src/ne_openssl.c
+index 794858c..7293e69 100644
+--- a/neon/src/ne_openssl.c
++++ b/neon/src/ne_openssl.c
+@@ -568,6 +568,19 @@ void ne_ssl_context_destroy(ne_ssl_context *ctx)
+     ne_free(ctx);
+ }
+ 
++#if !defined(HAVE_SSL_SESSION_CMP) && !defined(SSL_SESSION_cmp) \
++    && defined(OPENSSL_VERSION_NUMBER) \
++    && OPENSSL_VERSION_NUMBER > 0x10000000L
++/* OpenSSL 1.0 removed SSL_SESSION_cmp for no apparent reason - hoping
++ * it is reasonable to assume that comparing the session IDs is
++ * sufficient. */
++static int SSL_SESSION_cmp(SSL_SESSION *a, SSL_SESSION *b)
++{
++    return a->session_id_length == b->session_id_length
++        && memcmp(a->session_id, b->session_id, a->session_id_length) == 0;
++}
++#endif
++
+ /* For internal use only. */
+ int ne__negotiate_ssl(ne_request *req)
+ {
+-- 
+1.9.4.msysgit.0
+
