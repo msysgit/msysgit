@@ -61,7 +61,7 @@ test -d $DIR || {
 
 	mkdir $DIR && (
 		cd $DIR &&
-		git init &&
+		GIT_TEMPLATE_DIR= git init &&
 		git config core.autocrlf false &&
 		/git/contrib/fast-import/import-tars.perl ../$FILE
 	)
