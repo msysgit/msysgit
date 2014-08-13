@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "BIO_f_base64 3"
-.TH BIO_f_base64 3 "2014-06-05" "1.0.1h" "OpenSSL"
+.TH BIO_f_base64 3 "2014-07-22" "1.0.1i" "OpenSSL"
 .SH "NAME"
 BIO_f_base64 \- base64 BIO filter
 .SH "SYNOPSIS"
@@ -177,13 +177,13 @@ to standard output:
 .Vb 5
 \& b64 = BIO_new(BIO_f_base64());
 \& bio = BIO_new_fp(stdout, BIO_NOCLOSE);
-\& bio = BIO_push(b64, bio);
-\& BIO_write(bio, message, strlen(message));
-\& BIO_flush(bio);
+\& BIO_push(b64, bio);
+\& BIO_write(b64, message, strlen(message));
+\& BIO_flush(b64);
 .Ve
 .PP
 .Vb 1
-\& BIO_free_all(bio);
+\& BIO_free_all(b64);
 .Ve
 .PP
 Read Base64 encoded data from standard input and write the decoded
@@ -199,13 +199,14 @@ data to standard output:
 \& b64 = BIO_new(BIO_f_base64());
 \& bio = BIO_new_fp(stdin, BIO_NOCLOSE);
 \& bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
-\& bio = BIO_push(b64, bio);
-\& while((inlen = BIO_read(bio, inbuf, 512)) > 0) 
+\& BIO_push(b64, bio);
+\& while((inlen = BIO_read(b64, inbuf, 512)) > 0) 
 \&        BIO_write(bio_out, inbuf, inlen);
 .Ve
 .PP
-.Vb 1
-\& BIO_free_all(bio);
+.Vb 2
+\& BIO_flush(bio_out);
+\& BIO_free_all(b64);
 .Ve
 .SH "BUGS"
 .IX Header "BUGS"
