@@ -75,7 +75,7 @@ apply_patches () {
 	test -d "$d"/.git && return
 	patchdir="$(pwd)"/patches
 	(cd "$d" &&
-	 git init &&
+	 GIT_TEMPLATE_DIR= git init &&
 	 git config --local core.autocrlf false &&
 	 git add . &&
 	 git commit -m initial &&
