@@ -6,7 +6,7 @@ srcdir=$(pwd)
 # Limit the number of RSS feed entries.
 limit=10000
 
-rss="$(curl -s http://sourceforge.net/api/file/index/project-id/202880/mtime/desc/limit/$limit/rss)"
+rss="$(curl -s http://sourceforge.net/projects/mingw-w64/rss?limit=$limit)"
 if test $? -ne 0
 then
 	file="$(ls -1 mingw-w64-bin_i686-mingw_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].zip 2>/dev/null)"
