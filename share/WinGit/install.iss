@@ -879,7 +879,7 @@ begin
                     'Are you sure you want to continue?'
                 ,   mbConfirmation
                 ,   MB_YESNO
-                ,   IDNO
+                ,   IDYES
                 )=IDYES);
             end else begin
                 Result:=(SuppressibleMsgBox(
