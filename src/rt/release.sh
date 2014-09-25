@@ -27,29 +27,23 @@ debug_clean=
 test "$debug" = "$(cat debug.txt 2>/dev/null)" || debug_clean=t
 echo "$debug" > debug.txt
 
-test -d ../msys/msys/rt ||
-(
-	cd ../.. &&
-	git submodule update --init src/msys
-) ||
-die "Could not check out msys.git"
+cd ../.. &&
+git submodule update --init src/msys
+cd -
 
 cd ../msys || {
   echo "Huh? ../msys does not exist."
   exit 1
 }
 
-current=$(git rev-list --no-merges origin/master.. | wc -l) &&
 total=$(ls ../rt/patches/*.patch | wc -l) &&
 i=1 &&
 while test $i -le $total
 do
-	test $i -le $current ||
 	git am ../rt/patches/$(printf "%04d" $i)*.patch ||
 	die "Error: Applying patches failed."
 	i=$(($i+1))
 done
-
 
 cd msys &&
 release=MSYS-g$(git show -s --pretty=%h HEAD) ||
