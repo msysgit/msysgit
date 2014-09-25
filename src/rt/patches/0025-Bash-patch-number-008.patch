@@ -1,0 +1,42 @@
+From 28a7fb720f5089a17c61a44e26eef4c407e2e0d0 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:00 +0200
+Subject: [PATCH 25/35] Bash patch number 008
+
+---
+ msys/packages/bash/3.1/jobs.c       | 6 +++++-
+ msys/packages/bash/3.1/patchlevel.h | 2 +-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/jobs.c b/msys/packages/bash/3.1/jobs.c
+index c80264d..239485e 100644
+--- a/msys/packages/bash/3.1/jobs.c
++++ b/msys/packages/bash/3.1/jobs.c
+@@ -2233,7 +2233,11 @@ wait_for (pid)
+   /* This is possibly a race condition -- should it go in stop_pipeline? */
+   wait_sigint_received = 0;
+   if (job_control == 0)
+-    old_sigint_handler = set_signal_handler (SIGINT, wait_sigint_handler);
++    {
++      old_sigint_handler = set_signal_handler (SIGINT, wait_sigint_handler);
++      if (old_sigint_handler == SIG_IGN)
++	set_signal_handler (SIGINT, old_sigint_handler);
++    }
+ 
+   termination_state = last_command_exit_value;
+ 
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index c0d8d42..1e22020 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 7
++#define PATCHLEVEL 8
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

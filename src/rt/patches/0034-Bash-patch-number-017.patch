@@ -1,0 +1,112 @@
+From 12e3c7287efc1e4f5941b0c3103e7a2edd587f3f Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:02 +0200
+Subject: [PATCH 34/35] Bash patch number 017
+
+---
+ msys/packages/bash/3.1/arrayfunc.c  |  6 +-----
+ msys/packages/bash/3.1/patchlevel.h |  2 +-
+ msys/packages/bash/3.1/subst.c      | 15 +++++++++++----
+ msys/packages/bash/3.1/subst.h      |  3 +++
+ 4 files changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/arrayfunc.c b/msys/packages/bash/3.1/arrayfunc.c
+index 3bdd54f..76116bc 100644
+--- a/msys/packages/bash/3.1/arrayfunc.c
++++ b/msys/packages/bash/3.1/arrayfunc.c
+@@ -592,11 +592,7 @@ array_expand_index (s, len)
+   exp = (char *)xmalloc (len);
+   strncpy (exp, s, len - 1);
+   exp[len - 1] = '\0';
+-#if 0
+-  t = expand_string_to_string (exp, 0);
+-#else 
+-  t = expand_string_to_string (exp, Q_DOUBLE_QUOTES);
+-#endif
++  t = expand_arith_string (exp, 0);
+   this_command_name = (char *)NULL;
+   val = evalexp (t, &expok);
+   free (t);
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index 1a4a65a..e8ce389 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 16
++#define PATCHLEVEL 17
+ 
+ #endif /* _PATCHLEVEL_H_ */
+diff --git a/msys/packages/bash/3.1/subst.c b/msys/packages/bash/3.1/subst.c
+index 25e67f1..22dbe66 100644
+--- a/msys/packages/bash/3.1/subst.c
++++ b/msys/packages/bash/3.1/subst.c
+@@ -2589,6 +2589,13 @@ expand_assignment_string_to_string (string, quoted)
+   return (expand_string_to_string_internal (string, quoted, expand_string_assignment));
+ }
+ 
++char *
++expand_arith_string (string, quoted)
++     char *string;
++{
++  return (expand_string_if_necessary (string, quoted, expand_string));
++}
++
+ #if defined (COND_COMMAND)
+ /* Just remove backslashes in STRING.  Returns a new string. */
+ char *
+@@ -5294,7 +5301,7 @@ verify_substring_values (value, substr, vtype, e1p, e2p)
+   else
+     t = (char *)0;
+ 
+-  temp1 = expand_string_if_necessary (substr, Q_DOUBLE_QUOTES, expand_string);
++  temp1 = expand_arith_string (substr, Q_DOUBLE_QUOTES);
+   *e1p = evalexp (temp1, &expok);
+   free (temp1);
+   if (expok == 0)
+@@ -5339,7 +5346,7 @@ verify_substring_values (value, substr, vtype, e1p, e2p)
+     {
+       t++;
+       temp2 = savestring (t);
+-      temp1 = expand_string_if_necessary (temp2, Q_DOUBLE_QUOTES, expand_string);
++      temp1 = expand_arith_string (temp2, Q_DOUBLE_QUOTES);
+       free (temp2);
+       t[-1] = ':';
+       *e2p = evalexp (temp1, &expok);
+@@ -6481,7 +6488,7 @@ param_expand (string, sindex, quoted, expanded_something,
+ 	  temp2[t_index] = '\0';
+ 
+ 	  /* Expand variables found inside the expression. */
+-	  temp1 = expand_string_if_necessary (temp2, Q_DOUBLE_QUOTES, expand_string);
++	  temp1 = expand_arith_string (temp2, Q_DOUBLE_QUOTES);
+ 	  free (temp2);
+ 
+ arithsub:
+@@ -6523,7 +6530,7 @@ comsub:
+       zindex = t_index;
+ 
+        /* Do initial variable expansion. */
+-      temp1 = expand_string_if_necessary (temp, Q_DOUBLE_QUOTES, expand_string);
++      temp1 = expand_arith_string (temp, Q_DOUBLE_QUOTES);
+ 
+       goto arithsub;
+ 
+diff --git a/msys/packages/bash/3.1/subst.h b/msys/packages/bash/3.1/subst.h
+index 33d3f49..e07055b 100644
+--- a/msys/packages/bash/3.1/subst.h
++++ b/msys/packages/bash/3.1/subst.h
+@@ -151,6 +151,9 @@ extern char *expand_string_to_string __P((char *, int));
+ extern char *expand_string_unsplit_to_string __P((char *, int));
+ extern char *expand_assignment_string_to_string __P((char *, int));
+ 
++/* Expand an arithmetic expression string */
++extern char *expand_arith_string __P((char *, int));
++
+ /* De-quoted quoted characters in STRING. */
+ extern char *dequote_string __P((char *));
+ 
+-- 
+2.1.0.msysgit.0
+

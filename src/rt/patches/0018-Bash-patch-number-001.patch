@@ -1,0 +1,83 @@
+From 60fe6ada242c0bd1b479dddda9cf636d42415a05 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:55:59 +0200
+Subject: [PATCH 18/35] Bash patch number 001
+
+---
+ msys/packages/bash/3.1/parse.y      | 15 ++++++++++++---
+ msys/packages/bash/3.1/patchlevel.h |  2 +-
+ 2 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/parse.y b/msys/packages/bash/3.1/parse.y
+index c17ffd6..4c5d248 100644
+--- a/msys/packages/bash/3.1/parse.y
++++ b/msys/packages/bash/3.1/parse.y
+@@ -3701,7 +3701,9 @@ got_token:
+       struct builtin *b;
+       b = builtin_address_internal (token, 0);
+       if (b && (b->flags & ASSIGNMENT_BUILTIN))
+-        parser_state |= PST_ASSIGNOK;
++	parser_state |= PST_ASSIGNOK;
++      else if (STREQ (token, "eval") || STREQ (token, "let"))
++	parser_state |= PST_ASSIGNOK;
+     }
+ 
+   yylval.word = the_word;
+@@ -4692,18 +4694,21 @@ parse_compound_assignment (retlenp)
+      int *retlenp;
+ {
+   WORD_LIST *wl, *rl;
+-  int tok, orig_line_number, orig_token_size;
++  int tok, orig_line_number, orig_token_size, orig_last_token, assignok;
+   char *saved_token, *ret;
+ 
+   saved_token = token;
+   orig_token_size = token_buffer_size;
+   orig_line_number = line_number;
++  orig_last_token = last_read_token;
+ 
+   last_read_token = WORD;	/* WORD to allow reserved words here */
+ 
+   token = (char *)NULL;
+   token_buffer_size = 0;
+ 
++  assignok = parser_state&PST_ASSIGNOK;		/* XXX */
++
+   wl = (WORD_LIST *)NULL;	/* ( */
+   parser_state |= PST_COMPASSIGN;
+ 
+@@ -4746,7 +4751,7 @@ parse_compound_assignment (retlenp)
+ 	jump_to_top_level (DISCARD);
+     }
+ 
+-  last_read_token = WORD;
++  last_read_token = orig_last_token;		/* XXX - was WORD? */
+   if (wl)
+     {
+       rl = REVERSE_LIST (wl, WORD_LIST *);
+@@ -4758,6 +4763,10 @@ parse_compound_assignment (retlenp)
+ 
+   if (retlenp)
+     *retlenp = (ret && *ret) ? strlen (ret) : 0;
++
++  if (assignok)
++    parser_state |= PST_ASSIGNOK;
++
+   return ret;
+ }
+ 
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index b11fc16..c91cb32 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 0
++#define PATCHLEVEL 1
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

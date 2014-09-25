@@ -1,0 +1,82 @@
+From 10c72e221cf0712180179673af7aa9d2116adc50 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:01 +0200
+Subject: [PATCH 32/35] Bash patch number 015
+
+---
+ msys/packages/bash/3.1/lib/glob/sm_loop.c | 19 ++++++++++++++-----
+ msys/packages/bash/3.1/patchlevel.h       |  2 +-
+ 2 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/lib/glob/sm_loop.c b/msys/packages/bash/3.1/lib/glob/sm_loop.c
+index 6e8cf3a..d66ad18 100644
+--- a/msys/packages/bash/3.1/lib/glob/sm_loop.c
++++ b/msys/packages/bash/3.1/lib/glob/sm_loop.c
+@@ -638,12 +638,13 @@ EXTMATCH (xc, s, se, p, pe, flags)
+   CHAR *psub;			/* pointer to sub-pattern */
+   CHAR *pnext;			/* pointer to next sub-pattern */
+   CHAR *srest;			/* pointer to rest of string */
+-  int m1, m2;
++  int m1, m2, xflags;		/* xflags = flags passed to recursive matches */
+ 
+ #if DEBUG_MATCHING
+ fprintf(stderr, "extmatch: xc = %c\n", xc);
+ fprintf(stderr, "extmatch: s = %s; se = %s\n", s, se);
+ fprintf(stderr, "extmatch: p = %s; pe = %s\n", p, pe);
++fprintf(stderr, "extmatch: flags = %d\n", flags);
+ #endif
+ 
+   prest = PATSCAN (p + (*p == L('(')), pe, 0); /* ) */
+@@ -677,8 +678,12 @@ fprintf(stderr, "extmatch: p = %s; pe = %s\n", p, pe);
+ 		 string matches the rest of the pattern.  Also handle
+ 		 multiple matches of the pattern. */
+ 	      if (m1)
+-		m2 = (GMATCH (srest, se, prest, pe, flags) == 0) ||
+-		      (s != srest && GMATCH (srest, se, p - 1, pe, flags) == 0);
++		{
++		  /* if srest > s, we are not at start of string */
++		  xflags = (srest > s) ? (flags & ~FNM_PERIOD) : flags;
++		  m2 = (GMATCH (srest, se, prest, pe, xflags) == 0) ||
++			(s != srest && GMATCH (srest, se, p - 1, pe, xflags) == 0);
++		}
+ 	      if (m1 && m2)
+ 		return (0);
+ 	    }
+@@ -704,8 +709,10 @@ fprintf(stderr, "extmatch: p = %s; pe = %s\n", p, pe);
+ 	  srest = (prest == pe) ? se : s;
+ 	  for ( ; srest <= se; srest++)
+ 	    {
++	      /* if srest > s, we are not at start of string */
++	      xflags = (srest > s) ? (flags & ~FNM_PERIOD) : flags;
+ 	      if (GMATCH (s, srest, psub, pnext - 1, flags) == 0 &&
+-		  GMATCH (srest, se, prest, pe, flags) == 0)
++		  GMATCH (srest, se, prest, pe, xflags) == 0)
+ 		return (0);
+ 	    }
+ 	  if (pnext == prest)
+@@ -726,7 +733,9 @@ fprintf(stderr, "extmatch: p = %s; pe = %s\n", p, pe);
+ 	      if (pnext == prest)
+ 		break;
+ 	    }
+-	  if (m1 == 0 && GMATCH (srest, se, prest, pe, flags) == 0)
++	  /* if srest > s, we are not at start of string */
++	  xflags = (srest > s) ? (flags & ~FNM_PERIOD) : flags;
++	  if (m1 == 0 && GMATCH (srest, se, prest, pe, xflags) == 0)
+ 	    return (0);
+ 	}
+       return (FNM_NOMATCH);
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index b093bc9..0531899 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 14
++#define PATCHLEVEL 15
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

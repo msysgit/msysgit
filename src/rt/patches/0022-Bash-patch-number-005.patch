@@ -1,0 +1,42 @@
+From c17168e44d1f110e20a21f1699431c17db77d4b9 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:00 +0200
+Subject: [PATCH 22/35] Bash patch number 005
+
+---
+ msys/packages/bash/3.1/patchlevel.h | 2 +-
+ msys/packages/bash/3.1/subst.c      | 6 ++++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index 06c6c1c..b162fd1 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 4
++#define PATCHLEVEL 5
+ 
+ #endif /* _PATCHLEVEL_H_ */
+diff --git a/msys/packages/bash/3.1/subst.c b/msys/packages/bash/3.1/subst.c
+index d70fcb1..25e67f1 100644
+--- a/msys/packages/bash/3.1/subst.c
++++ b/msys/packages/bash/3.1/subst.c
+@@ -6841,6 +6841,12 @@ add_string:
+ 	  if (temp && *temp && t_index > 0)
+ 	    {
+ 	      temp1 = bash_tilde_expand (temp, tflag);
++	      if  (temp1 && *temp1 == '~' && STREQ (temp, temp1))
++		{
++		  FREE (temp);
++		  FREE (temp1);
++		  goto add_character;		/* tilde expansion failed */
++		}
+ 	      free (temp);
+ 	      temp = temp1;
+ 	      sindex += t_index;
+-- 
+2.1.0.msysgit.0
+

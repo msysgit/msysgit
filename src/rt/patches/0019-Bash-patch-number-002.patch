@@ -1,0 +1,202 @@
+From eb14ff9da60e010111c35b59cd171c4c812353d9 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:55:59 +0200
+Subject: [PATCH 19/35] Bash patch number 002
+
+---
+ msys/packages/bash/3.1/doc/bash.1       | 25 ++++++++++++++++++++-----
+ msys/packages/bash/3.1/doc/bashref.texi | 21 +++++++++++++++------
+ msys/packages/bash/3.1/doc/version.texi | 10 +++++-----
+ msys/packages/bash/3.1/patchlevel.h     |  2 +-
+ 4 files changed, 41 insertions(+), 17 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/doc/bash.1 b/msys/packages/bash/3.1/doc/bash.1
+index 40e1fbd..c56da76 100644
+--- a/msys/packages/bash/3.1/doc/bash.1
++++ b/msys/packages/bash/3.1/doc/bash.1
+@@ -6,12 +6,12 @@
+ .\"	Case Western Reserve University
+ .\"	chet@po.cwru.edu
+ .\"
+-.\"	Last Change: Sat Aug 27 13:28:44 EDT 2005
++.\"	Last Change: Wed Dec 28 19:58:45 EST 2005
+ .\"
+ .\" bash_builtins, strip all but Built-Ins section
+ .if \n(zZ=1 .ig zZ
+ .if \n(zY=1 .ig zY
+-.TH BASH 1 "2005 Aug 27" "GNU Bash-3.1-beta1"
++.TH BASH 1 "2005 Dec 28" "GNU Bash-3.1"
+ .\"
+ .\" There's some problem with having a `@'
+ .\" in a tagged paragraph with the BSD man macros.
+@@ -677,8 +677,8 @@ If the shell option
+ .B nocasematch
+ is enabled, the match is performed without regard to the case
+ of alphabetic characters.
+-The return value is 0 if the string matches or does not match
+-the pattern, respectively, and 1 otherwise.
++The return value is 0 if the string matches (\fB==\fP) or does not match
++(\fB!=\fP) the pattern, and 1 otherwise.
+ Any part of the pattern may be quoted to force it to be matched as a
+ string.
+ .if t .sp 0.5
+@@ -807,6 +807,12 @@ it against each \fIpattern\fP in turn, using the same matching rules
+ as for pathname expansion (see
+ .B Pathname Expansion
+ below).
++The \fIword\fP is expanded using tilde
++expansion, parameter and variable expansion, arithmetic substituion,
++command substitution, process substitution and quote removal.
++Each \fIpattern\fP examined is expanded using tilde
++expansion, parameter and variable expansion, arithmetic substituion,
++command substitution, and process substitution.
+ If the shell option
+ .B nocasematch
+ is enabled, the match is performed without regard to the case
+@@ -8484,7 +8490,7 @@ option suppresses shell function lookup, as with the \fBcommand\fP builtin.
+ returns true if any of the arguments are found, false if
+ none are found.
+ .TP
+-\fBulimit\fP [\fB\-SHacdflmnpstuv\fP [\fIlimit\fP]]
++\fBulimit\fP [\fB\-SHacdfilmnpqstuvx\fP [\fIlimit\fP]]
+ Provides control over the resources available to the shell and to
+ processes started by it, on systems that allow such control.
+ The \fB\-H\fP and \fB\-S\fP options specify that the hard or soft limit is
+@@ -8523,6 +8529,9 @@ The maximum size of a process's data segment
+ .B \-f
+ The maximum size of files created by the shell
+ .TP
++.B \-i
++The maximum number of pending signals
++.TP
+ .B \-l
+ The maximum size that may be locked into memory
+ .TP
+@@ -8536,6 +8545,9 @@ allow this value to be set)
+ .B \-p
+ The pipe size in 512-byte blocks (this may not be set)
+ .TP
++.B \-q
++The maximum number of bytes in POSIX message queues
++.TP
+ .B \-s
+ The maximum stack size
+ .TP
+@@ -8547,6 +8559,9 @@ The maximum number of processes available to a single user
+ .TP
+ .B \-v
+ The maximum amount of virtual memory available to the shell
++.TP
++.B \-x
++The maximum number of file locks
+ .PD
+ .PP
+ If
+diff --git a/msys/packages/bash/3.1/doc/bashref.texi b/msys/packages/bash/3.1/doc/bashref.texi
+index b25dad9..75da46b 100644
+--- a/msys/packages/bash/3.1/doc/bashref.texi
++++ b/msys/packages/bash/3.1/doc/bashref.texi
+@@ -961,8 +961,8 @@ If the shell option @code{nocasematch}
+ (see the description of @code{shopt} in @ref{Bash Builtins})
+ is enabled, the match is performed without regard to the case
+ of alphabetic characters.
+-The return value is 0 if the string matches or does not match
+-the pattern, respectively, and 1 otherwise.
++The return value is 0 if the string matches (@samp{==}) or does not
++match (@samp{!=})the pattern, and 1 otherwise.
+ Any part of the pattern may be quoted to force it to be matched as a
+ string.
+ 
+@@ -2598,7 +2598,7 @@ the command directly, without invoking another program.
+ Builtin commands are necessary to implement functionality impossible
+ or inconvenient to obtain with separate utilities.
+ 
+-This section briefly the builtins which Bash inherits from
++This section briefly describes the builtins which Bash inherits from
+ the Bourne Shell, as well as the builtin commands which are unique
+ to or have been extended in Bash.
+ 
+@@ -3833,7 +3833,7 @@ builtin command.
+ @item ulimit
+ @btindex ulimit
+ @example
+-ulimit [-acdflmnpstuvSH] [@var{limit}]
++ulimit [-acdfilmnpqstuvxSH] [@var{limit}]
+ @end example
+ @code{ulimit} provides control over the resources available to processes
+ started by the shell, on systems that allow such control.  If an
+@@ -3857,6 +3857,9 @@ The maximum size of a process's data segment.
+ @item -f
+ The maximum size of files created by the shell.
+ 
++@item -i
++The maximum number of pending signals.
++
+ @item -l
+ The maximum size that may be locked into memory.
+ 
+@@ -3869,6 +3872,9 @@ The maximum number of open file descriptors.
+ @item -p
+ The pipe buffer size.
+ 
++@item -q
++The maximum number of bytes in POSIX message queues.
++
+ @item -s
+ The maximum stack size.
+ 
+@@ -3881,6 +3887,9 @@ The maximum number of processes available to a single user.
+ @item -v
+ The maximum amount of virtual memory available to the process.
+ 
++@item -x
++The maximum number of file locks.
++
+ @end table
+ 
+ If @var{limit} is given, it is the new value of the specified resource;
+@@ -4089,8 +4098,8 @@ shell will exit.
+ Print shell input lines as they are read.
+ 
+ @item -x
+-Print a trace of simple commands, \fBfor\fP commands, \fBcase\fP
+-commands, \fBselect\fP commands, and arithmetic \fBfor\fP commands
++Print a trace of simple commands, @code{for} commands, @code{case}
++commands, @code{select} commands, and arithmetic @code{for} commands
+ and their arguments or associated word lists after they are
+ expanded and before they are executed.  The value of the @env{PS4}
+ variable is expanded and the resultant value is printed before
+diff --git a/msys/packages/bash/3.1/doc/version.texi b/msys/packages/bash/3.1/doc/version.texi
+index f769a19..6ee00d4 100644
+--- a/msys/packages/bash/3.1/doc/version.texi
++++ b/msys/packages/bash/3.1/doc/version.texi
+@@ -2,9 +2,9 @@
+ Copyright (C) 1988-2005 Free Software Foundation, Inc.
+ @end ignore
+ 
+-@set LASTCHANGE Mon Sep  5 11:47:04 EDT 2005
++@set LASTCHANGE Fri Dec 30 10:50:51 EST 2005
+ 
+-@set EDITION 3.1-beta1
+-@set VERSION 3.1-beta1
+-@set UPDATED 5 September 2005
+-@set UPDATED-MONTH September 2005
++@set EDITION 3.1
++@set VERSION 3.1
++@set UPDATED 30 December 2005
++@set UPDATED-MONTH December 2005
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index c91cb32..a66f6d7 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 1
++#define PATCHLEVEL 2
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+
