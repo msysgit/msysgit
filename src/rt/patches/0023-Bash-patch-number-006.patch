@@ -1,0 +1,48 @@
+From d654c8bd7cbcf866d07a263a8b8148b410016e48 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:00 +0200
+Subject: [PATCH 23/35] Bash patch number 006
+
+---
+ msys/packages/bash/3.1/lib/readline/terminal.c | 5 ++++-
+ msys/packages/bash/3.1/patchlevel.h            | 2 +-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/lib/readline/terminal.c b/msys/packages/bash/3.1/lib/readline/terminal.c
+index cc61388..eb72c19 100644
+--- a/msys/packages/bash/3.1/lib/readline/terminal.c
++++ b/msys/packages/bash/3.1/lib/readline/terminal.c
+@@ -122,7 +122,7 @@ char *_rl_term_up;
+ static char *_rl_visible_bell;
+ 
+ /* Non-zero means the terminal can auto-wrap lines. */
+-int _rl_term_autowrap;
++int _rl_term_autowrap = -1;
+ 
+ /* Non-zero means that this terminal has a meta key. */
+ static int term_has_meta;
+@@ -274,6 +274,9 @@ void
+ _rl_set_screen_size (rows, cols)
+      int rows, cols;
+ {
++  if (_rl_term_autowrap == -1)
++    _rl_init_terminal_io (rl_terminal_name);
++
+   if (rows > 0)
+     _rl_screenheight = rows;
+   if (cols > 0)
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index b162fd1..dbb7cd6 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 5
++#define PATCHLEVEL 6
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

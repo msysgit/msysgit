@@ -1,0 +1,72 @@
+From 96aba0d1fc0801e24f85affccf0eae3fa418cb6e Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:01 +0200
+Subject: [PATCH 31/35] Bash patch number 014
+
+---
+ msys/packages/bash/3.1/lib/readline/display.c | 20 +++++++++++---------
+ msys/packages/bash/3.1/patchlevel.h           |  2 +-
+ 2 files changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/lib/readline/display.c b/msys/packages/bash/3.1/lib/readline/display.c
+index 093ffec..8011169 100644
+--- a/msys/packages/bash/3.1/lib/readline/display.c
++++ b/msys/packages/bash/3.1/lib/readline/display.c
+@@ -1986,11 +1986,15 @@ _rl_make_prompt_for_search (pchar)
+      int pchar;
+ {
+   int len;
+-  char *pmt;
++  char *pmt, *p;
+ 
+   rl_save_prompt ();
+ 
+-  if (saved_local_prompt == 0)
++  /* We've saved the prompt, and can do anything with the various prompt
++     strings we need before they're restored.  We want the unexpanded
++     portion of the prompt string after any final newline. */
++  p = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
++  if (p == 0)
+     {
+       len = (rl_prompt && *rl_prompt) ? strlen (rl_prompt) : 0;
+       pmt = (char *)xmalloc (len + 2);
+@@ -2001,19 +2005,17 @@ _rl_make_prompt_for_search (pchar)
+     }
+   else
+     {
+-      len = *saved_local_prompt ? strlen (saved_local_prompt) : 0;
++      p++;
++      len = strlen (p);
+       pmt = (char *)xmalloc (len + 2);
+       if (len)
+-	strcpy (pmt, saved_local_prompt);
++	strcpy (pmt, p);
+       pmt[len] = pchar;
+       pmt[len+1] = '\0';
+-      local_prompt = savestring (pmt);
+-      prompt_last_invisible = saved_last_invisible;
+-      prompt_visible_length = saved_visible_length + 1;
+-    }
++    }  
+ 
++  /* will be overwritten by expand_prompt, called from rl_message */
+   prompt_physical_chars = saved_physical_chars + 1;
+-
+   return pmt;
+ }
+ 
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index fbf719b..b093bc9 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 13
++#define PATCHLEVEL 14
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

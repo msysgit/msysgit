@@ -1,0 +1,51 @@
+From baed864a6272e7004e92ddbd81f04fd95d24f23a Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:00 +0200
+Subject: [PATCH 26/35] Bash patch number 009
+
+---
+ msys/packages/bash/3.1/jobs.c       | 7 +++++--
+ msys/packages/bash/3.1/patchlevel.h | 2 +-
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/jobs.c b/msys/packages/bash/3.1/jobs.c
+index 239485e..d30a427 100644
+--- a/msys/packages/bash/3.1/jobs.c
++++ b/msys/packages/bash/3.1/jobs.c
+@@ -619,8 +619,11 @@ stop_pipeline (async, deferred)
+ 	   * once in the parent and once in each child.  This is where
+ 	   * the parent gives it away.
+ 	   *
++	   * Don't give the terminal away if this shell is an asynchronous
++	   * subshell.
++	   *
+ 	   */
+-	  if (job_control && newjob->pgrp)
++	  if (job_control && newjob->pgrp && (subshell_environment&SUBSHELL_ASYNC) == 0)
+ 	    give_terminal_to (newjob->pgrp, 0);
+ 	}
+     }
+@@ -1690,7 +1693,7 @@ make_child (command, async_p)
+ 	     In this case, we don't want to give the terminal to the
+ 	     shell's process group (we could be in the middle of a
+ 	     pipeline, for example). */
+-	  if (async_p == 0 && pipeline_pgrp != shell_pgrp)
++	  if (async_p == 0 && pipeline_pgrp != shell_pgrp && ((subshell_environment&SUBSHELL_ASYNC) == 0))
+ 	    give_terminal_to (pipeline_pgrp, 0);
+ 
+ #if defined (PGRP_PIPE)
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index 1e22020..6cf28ca 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 8
++#define PATCHLEVEL 9
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+

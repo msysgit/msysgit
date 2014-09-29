@@ -1,0 +1,106 @@
+From c59e8b05ccd4eabc9a049c05f1f4fb1198669659 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 25 Sep 2014 00:56:01 +0200
+Subject: [PATCH 27/35] Bash patch number 010
+
+---
+ msys/packages/bash/3.1/parse.y      | 29 ++++++++++++++++++++---------
+ msys/packages/bash/3.1/patchlevel.h |  2 +-
+ 2 files changed, 21 insertions(+), 10 deletions(-)
+
+diff --git a/msys/packages/bash/3.1/parse.y b/msys/packages/bash/3.1/parse.y
+index 4c5d248..98d37a0 100644
+--- a/msys/packages/bash/3.1/parse.y
++++ b/msys/packages/bash/3.1/parse.y
+@@ -2722,6 +2722,7 @@ read_token (command)
+ #define P_ALLOWESC	0x02
+ #define P_DQUOTE	0x04
+ #define P_COMMAND	0x08	/* parsing a command, so look for comments */
++#define P_BACKQUOTE	0x10	/* parsing a backquoted command substitution */
+ 
+ static char matched_pair_error;
+ static char *
+@@ -2731,12 +2732,12 @@ parse_matched_pair (qc, open, close, lenp, flags)
+      int *lenp, flags;
+ {
+   int count, ch, was_dollar, in_comment, check_comment;
+-  int pass_next_character, nestlen, ttranslen, start_lineno;
++  int pass_next_character, backq_backslash, nestlen, ttranslen, start_lineno;
+   char *ret, *nestret, *ttrans;
+   int retind, retsize, rflags;
+ 
+   count = 1;
+-  pass_next_character = was_dollar = in_comment = 0;
++  pass_next_character = backq_backslash = was_dollar = in_comment = 0;
+   check_comment = (flags & P_COMMAND) && qc != '\'' && qc != '"' && (flags & P_DQUOTE) == 0;
+ 
+   /* RFLAGS is the set of flags we want to pass to recursive calls. */
+@@ -2748,11 +2749,8 @@ parse_matched_pair (qc, open, close, lenp, flags)
+   start_lineno = line_number;
+   while (count)
+     {
+-#if 0
+-      ch = shell_getc ((qc != '\'' || (flags & P_ALLOWESC)) && pass_next_character == 0);
+-#else
+-      ch = shell_getc (qc != '\'' && pass_next_character == 0);
+-#endif
++      ch = shell_getc (qc != '\'' && pass_next_character == 0 && backq_backslash == 0);
++
+       if (ch == EOF)
+ 	{
+ 	  free (ret);
+@@ -2777,9 +2775,16 @@ parse_matched_pair (qc, open, close, lenp, flags)
+ 	  continue;
+ 	}
+       /* Not exactly right yet */
+-      else if (check_comment && in_comment == 0 && ch == '#' && (retind == 0 || ret[retind-1] == '\n' || whitespace (ret[retind -1])))
++      else if MBTEST(check_comment && in_comment == 0 && ch == '#' && (retind == 0 || ret[retind-1] == '\n' || whitespace (ret[retind - 1])))
+ 	in_comment = 1;
+ 
++      /* last char was backslash inside backquoted command substitution */
++      if (backq_backslash)
++	{
++	  backq_backslash = 0;
++	  /* Placeholder for adding special characters */
++	}
++
+       if (pass_next_character)		/* last char was backslash */
+ 	{
+ 	  pass_next_character = 0;
+@@ -2820,6 +2825,8 @@ parse_matched_pair (qc, open, close, lenp, flags)
+ 	{
+ 	  if MBTEST((flags & P_ALLOWESC) && ch == '\\')
+ 	    pass_next_character++;
++	  else if MBTEST((flags & P_BACKQUOTE) && ch == '\\')
++	    backq_backslash++;
+ 	  continue;
+ 	}
+ 
+@@ -2904,7 +2911,11 @@ add_nestret:
+ 	}
+       else if MBTEST(qc == '`' && (ch == '"' || ch == '\'') && in_comment == 0)
+ 	{
+-	  nestret = parse_matched_pair (0, ch, ch, &nestlen, rflags);
++	  /* Add P_BACKQUOTE so backslash quotes the next character and
++	     shell_getc does the right thing with \<newline>.  We do this for
++	     a measure  of backwards compatibility -- it's not strictly the
++	     right POSIX thing. */
++	  nestret = parse_matched_pair (0, ch, ch, &nestlen, rflags|P_BACKQUOTE);
+ 	  goto add_nestret;
+ 	}
+       else if MBTEST(was_dollar && (ch == '(' || ch == '{' || ch == '['))	/* ) } ] */
+diff --git a/msys/packages/bash/3.1/patchlevel.h b/msys/packages/bash/3.1/patchlevel.h
+index 6cf28ca..75a5ae4 100644
+--- a/msys/packages/bash/3.1/patchlevel.h
++++ b/msys/packages/bash/3.1/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 9
++#define PATCHLEVEL 10
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.1.0.msysgit.0
+
