@@ -1,22 +1,75 @@
 #!/bin/sh
 #
-# Rebase the thicket of branches -- including their merge structure -- on top
-# of the specified upstream branch (defaults to 'junio/next'), optionally
-# retaining "fast-forwardability" by fake-merging (using the "ours" strategy)
-# the previous state on top of the current upstream state ("merging rebase").
+# This script intends to help rebasing a "thicket of branches", i.e. a branch
+# that contains merged topic branches.
 #
+# The main use case is the development of Git for Windows: its integration
+# branch needs to be rebased frequently, to facilitate submitting patch series
+# to upstream Git. Git for Windows' integration branch contains dozens of
+# topic branches that are at various stages of readiness, though, hence it is
+# essential to maintain the branch structure.
+#
+# As an additional convenience, this script supports a method developed by the
+# Git for Windows project to rebase while *still* retaining the ability to
+# fast-forward from previous states of the branch, called the 'merging
+# rebase': instead of starting the rebase directly on top of the upstream
+# commit, the previous history is integrated via a "fake" merge (i.e.  using
+# the 'ours' strategy, in effect reverting all of the changes that are about
+# to be rebased).
+#
+# Example usage (regular Git for Windows workflow)
+#
+# git fetch junio
+# BASE="$(git rev-parse ":/Start the merging-rebase")"
+# shears.sh --onto junio/master $BASE
+#
+# Usage: shears [options] <upstream>
 # options:
-#  --merging
+#  -m,--merging[=<message>]
 #     start the rebased branch by a fake merge of the previous state
+#  --onto=<commit>
+#     rebase onto the given revision
+#  -f,--force
+#     force operation even if a previous run was aborted unsuccessfully
 #
-# The idea is to generate our very own rebase script, then call rebase -i with
-# our fake editor to put the rebase script into place and then let the user edit
-# the script.
+# Technical implementation notes:
 #
-# To make things prettier, we rewrite the rebase script after letting the user
-# edit it, to replace "new" rebase commands with calls to a temporary alias ".r"
-# that is added to help with starting the merging rebase, merging things, and
-# cleaning up afterwards.
+# The idea is to generate a rebase script with "new" commands, i.e. in
+# addition to "pick", "reword" and friends, additional commands are handled:
+#
+# bud
+#  rewinds to the <onto> commit, to start "budding" a new branch
+#
+# mark <nickname>
+#  assign a nick name to the current revision, for later use with "merge" or
+#  "rewind"
+#
+# rewind <nickname>
+#  reset the HEAD to the given revision (the previous state should be marked
+#  with a nickname first, to avoid losing commits)
+#
+# finish <nickname>
+#  mark a topic branch as complete, starting the next one
+#
+# merge [-C <commit>] <nickname>
+#  merge the given topic branch, optionally using the commit message of a
+#  specific commit
+#
+# start_merging_rebase
+#  start the rebase by a fake merge, i.e. incorporating the commits about to
+#  be rebased but reverting all their changes, to maintain fast-forwardability
+#
+# cleanup
+#  clean up all temporary aliases and refs; This *must* be the last command.
+#
+# To support these additional commands, we not only generate our very own
+# rebase script, but then call rebase -i with our fake editor to put the
+# rebase script into place and then let the user edit the script.
+#
+# After letting the user edit the script, we rewrite the rebase script,
+# replacing the "new" rebase commands with calls to a temporary alias ".r"
+# that simply calls the command implementations contained in the shears.sh
+# script itself.
 
 die () {
 	echo "$*" >&2
@@ -401,7 +454,7 @@ EOF
 	do
 		linenumber="$(echo "$todo" |
 			grep -n -e "^\(pick\|# skip\) $commit" \
-				-e "^merge [-\.0-9a-zA-Z/ ]* -C $commit")"
+				-e "^merge [-_\\.0-9a-zA-Z/ ]* -C $commit")"
 		linenumber=${linenumber%%:*}
 		test -n "$linenumber" ||
 		die "Internal error: could not find $commit ($(name_commit $commit)) in $todo"
