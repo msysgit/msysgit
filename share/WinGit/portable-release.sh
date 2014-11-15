@@ -19,7 +19,7 @@ TARGET7=tmp.7z
 TMPDIR=/tmp/WinGit
 
 DONT_REMOVE_BUILTINS=1 "$(dirname $0)/copy-files.sh" $TMPDIR &&
-sed -e '/share\/msysGit/d' -e "s/msysGit/Portable Git (version $version)/" \
+sed -e '/share\/msysGit/d' -e "s/msysGit/Portable Git (version $1)/" \
 	< etc/motd > $TMPDIR/etc/motd &&
 cd "$TMPDIR" &&
 cp $MSYSGITROOT/share/WinGit/README.portable ./ &&
