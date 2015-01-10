@@ -5,7 +5,7 @@ cd "$(dirname "$0")" && . ../common/update-lib.sh
 check_pristine
 
 package=openssl
-version=1.0.1i
+version=1.0.1k
 url=http://www.openssl.org/source
 d=$package-$version
 tar=$d.tar.gz
