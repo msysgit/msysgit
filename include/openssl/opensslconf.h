@@ -1,6 +1,9 @@
 /* opensslconf.h */
 /* WARNING: Generated automatically from opensslconf.h.in by Configure. */
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_SYSNAME_CYGWIN32
 # define OPENSSL_SYSNAME_CYGWIN32
@@ -248,3 +251,6 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 
 #endif /* DES_DEFAULT_OPTIONS */
 #endif /* HEADER_DES_LOCL_H */
+#ifdef  __cplusplus
+}
+#endif
