@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=0.9.8zb
+VERSION=0.9.8zd
 DIR=openssl-$VERSION
 URL=http://www.openssl.org/source/$DIR.tar.gz
 FILE=${URL##*/}
