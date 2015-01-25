@@ -11,13 +11,13 @@ configure_options=--prefix=
 
 download &&
 extract &&
-test $d/.git || {
+test -d $d/.git || {
 	cd $d &&
 	git init &&
 	rm -rf .git/hooks &&
 	git add . &&
 	git commit -n -m initial &&
-	git am ../patches/*
+	git am --keep-cr ../patches/*
 } &&
 compile &&
 cp $d/rebase.exe /bin/ &&
