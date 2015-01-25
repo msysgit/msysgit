@@ -27,16 +27,7 @@ test -d $DIR || {
 	)
 } || die "Could not check out Poppler"
 
-# test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
-# (cd $DIR && git am ../patches/*) ||
-# die "Could not apply patches"
-
-# NOTE -Wl,--exclude-libs,libgcc_eh.a is needed because of bug in shipped gcc:
-# http://forums.codeblocks.org/index.php/topic,10508.msg72112.html#msg72112
-# http://sourceforge.net/tracker/index.php?func=detail&aid=2813974&group_id=200665&atid=974439
-# Bug present in TDM GCC 4.4.0 and fixed in TDB GCC 4.4.1-tdm-1
 (cd $DIR &&
-LDFLAGS="-Wl,--exclude-libs,libgcc_eh.a"	\
 ./configure --prefix=/mingw	\
 	--disable-splash-output	\
 	--disable-cairo-output	\
