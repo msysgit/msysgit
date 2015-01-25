@@ -13,7 +13,7 @@ version=1.3
 dir=tkimg$version
 tar=tkimg$version.tar.bz2
 taropt=-j
-url=http://kent.dl.sourceforge.net/sourceforge/tkimg/$tar
+url=http://iweb.dl.sourceforge.net/project/tkimg/tkimg/$version/$tar
 
 patch_tkImg () {
 	init_git &&
@@ -31,8 +31,17 @@ patch=patch_tkImg
 configure_extra=--srcdir=$(pwd)/$dir
 
 premake_tkImg () {
-	perl -i.bak -pe "s/-L(\\S+) -l(tkimgstub\S+)/\\1\/\\2.a/" \
+	perl -i.bak -pe "s/-L(\S+) -l(tkimgstub\S+)/\\1\/\\2.a/" \
 		$(find -name Makefile)
+	perl -i.bak -pe "s/-L(\S+) -l(zlibtclstub\S+)/\\1\/\\2.a/" \
+		$(find -name Makefile)
+	perl -i.bak -pe "s/-L(\S+) -l(jpegtclstub\S+)/\\1\/\\2.a/" \
+		$(find -name Makefile)
+	perl -i.bak -pe "s/-L(\S+) -l(pngtclstub\S+)/\\1\/\\2.a/" \
+		$(find -name Makefile)
+	perl -i.bak -pe "s/-L(\S+) -l(tifftclstub\S+)/\\1\/\\2.a/" \
+		$(find -name Makefile)
+	perl -i.bak -pe 's/^.*XMD_H.*$/#if !defined(XMD_H) && !defined(_BASETSD_H)/' libjpeg/jmorecfg.h
 }
 
 premake=premake_tkImg
