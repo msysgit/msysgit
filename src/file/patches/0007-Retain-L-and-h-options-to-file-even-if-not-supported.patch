@@ -1,0 +1,52 @@
+From 5130451c47db0ec69af7f957f7f24fb7d1119b5f Mon Sep 17 00:00:00 2001
+From: KernelJ <kernelj@epixxware.com>
+Date: Sat, 24 Jan 2015 22:04:18 +0000
+Subject: [PATCH 7/7] Retain -L and -h options to file even if not supported
+
+---
+ src/file.c      | 6 ++++--
+ src/file_opts.h | 4 +++-
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/src/file.c b/src/file.c
+index 3b73c56..cfa9e89 100644
+--- a/src/file.c
++++ b/src/file.c
+@@ -258,14 +258,16 @@ main(int argc, char *argv[])
+ 		case 'z':
+ 			flags |= MAGIC_COMPRESS;
+ 			break;
+-#ifdef S_IFLNK
+ 		case 'L':
++#ifdef S_IFLNK
+ 			flags |= MAGIC_SYMLINK;
++#endif
+ 			break;
+ 		case 'h':
++#ifdef S_IFLNK
+ 			flags &= ~MAGIC_SYMLINK;
+-			break;
+ #endif
++			break;
+ 		case '?':
+ 		default:
+ 			errflg++;
+diff --git a/src/file_opts.h b/src/file_opts.h
+index 1a73e87..7496aca 100644
+--- a/src/file_opts.h
++++ b/src/file_opts.h
+@@ -34,8 +34,10 @@ OPT_LONGONLY("mime-encoding", 0, "        output the MIME encoding\n")
+ OPT('k', "keep-going", 0, "           don't stop at the first match\n")
+ #ifdef S_IFLNK
+ OPT('L', "dereference", 0, "          follow symlinks (default)\n")
+-OPT('h', "no-dereference", 0, "       don't follow symlinks\n")
++#else
++OPT('L', "dereference", 0, "          follow symlinks (not supported, has no effect)\n")
+ #endif
++OPT('h', "no-dereference", 0, "       don't follow symlinks\n")
+ OPT('n', "no-buffer", 0, "            do not buffer output\n")
+ OPT('N', "no-pad", 0, "               do not pad output\n")
+ OPT('0', "print0", 0, "               terminate filenames with ASCII NUL\n")
+-- 
+1.9.5.msysgit.0.4.gceda007
+
