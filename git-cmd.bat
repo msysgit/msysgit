@@ -13,4 +13,4 @@
 @if not defined TERM set TERM=msys
 
 @cd /d %HOME%
-@start %COMSPEC%
+@call %COMSPEC%
