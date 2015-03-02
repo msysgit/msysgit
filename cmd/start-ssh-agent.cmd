@@ -58,7 +58,8 @@ if exist "%GIT%" (
         )
     )
     rem See if we have the key
-    "!SSH_ADD!" 1>nul 2>nul
+    set "HOME=%USERPROFILE%"
+    "!SSH_ADD!" -l 1>nul 2>nul
     set result=!ERRORLEVEL!
     if not !result! == 0 (
         if !result! == 2 (
@@ -70,7 +71,6 @@ if exist "%GIT%" (
             )
             echo. done
         )
-        set "HOME=%USERPROFILE%"
         "!SSH_ADD!"
         echo.
     )
