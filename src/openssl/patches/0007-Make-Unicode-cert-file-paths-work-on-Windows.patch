@@ -1,24 +1,21 @@
-From 5a0811c893bb409e3a1ec192f12d49353b96fc61 Mon Sep 17 00:00:00 2001
-From: Adam Roben <adam@roben.org>
-Date: Tue, 5 Jun 2012 10:48:17 -0400
-Subject: [PATCH] Make Unicode cert file paths work on Windows
+From 70fa9e27e7347953de5ffc9f7fc058544d47bb45 Mon Sep 17 00:00:00 2001
+From: Thomas Braun <thomas.braun@byte-physics.de>
+Date: Thu, 19 Mar 2015 16:10:35 +0100
+Subject: [PATCH 7/7] Make Unicode cert file paths work on Windows
 
 Cert file paths are now assumed to be UTF-8 encoded. We transcode them
 to UTF-16 and then open them with _wfopen, which correctly handles
 non-ASCII characters, unlike fopen.
 
 Signed-off-by: Adam Roben <adam@roben.org>
----
- crypto/bio/bss_file.c |   50 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 49 insertions(+), 1 deletion(-)
 
 diff --git a/crypto/bio/bss_file.c b/crypto/bio/bss_file.c
-index 47fa266..82a8fe2 100644
+index f9b9383..2af44a8 100644
 --- a/crypto/bio/bss_file.c
 +++ b/crypto/bio/bss_file.c
-@@ -116,12 +116,60 @@ static BIO_METHOD methods_filep=
- 	NULL,
- 	};
+@@ -115,12 +115,60 @@ static BIO_METHOD methods_filep = {
+     NULL,
+ };
  
 +#if defined(OPENSSL_SYS_WINDOWS)
 +static wchar_t* utf8_to_utf16(const char* input)
@@ -69,15 +66,15 @@ index 47fa266..82a8fe2 100644
 +	}
 +
  BIO *BIO_new_file(const char *filename, const char *mode)
- 	{
- 	BIO *ret;
- 	FILE *file;
+ {
+     BIO *ret;
+     FILE *file;
  
--	if ((file=fopen(filename,mode)) == NULL)
-+	if ((file=open_file(filename, mode)) == NULL)
- 		{
- 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
- 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
+-    if ((file = fopen(filename, mode)) == NULL) {
++    if ((file = open_file(filename, mode)) == NULL) {
+         SYSerr(SYS_F_FOPEN, get_last_sys_error());
+         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
+         if (errno == ENOENT)
 -- 
-1.7.10.msysgit.1
+2.1.0
 
