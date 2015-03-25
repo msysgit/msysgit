@@ -11,7 +11,9 @@
 # 1.9.4.msysgit.2
 #id=${1:-591437}
 # 1.9.5.msysgit.0
-id=${1:-795893}
+#id=${1:-795893}
+# 1.9.5.msysgit.1
+id=${1:-1070825}
 
 curl -s https://api.github.com/repos/msysgit/msysgit/releases/$id/assets |
 grep -e '"name":' -e '"download_count":'
