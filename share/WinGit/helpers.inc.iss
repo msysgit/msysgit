@@ -87,21 +87,25 @@ end;
 // by creating all intermediate directories and a temporary file.
 function IsDirWritable(DirName:String):Boolean;
 var
-    AbsoluteDir,FirstExistingDir,FirstCreatedDir,FileName:String;
+    FirstExistingDir,FirstDirToCreate,FileName:String;
 begin
     Result:=True;
 
-    AbsoluteDir:=ExpandFileName(DirName);
-
-    FirstExistingDir:=AbsoluteDir;
+    // We cannot use ForceDirectories here as we need to track the first directory to be created.
+    FirstExistingDir:=ExpandFileName(DirName);
     while not DirExists(FirstExistingDir) do begin
-        FirstCreatedDir:=FirstExistingDir;
-        FirstExistingDir:=ExtractFileDir(FirstExistingDir);
+        FirstDirToCreate:=FirstExistingDir;
+        FirstExistingDir:=ExtractFileDir(FirstDirToCreate);
+
+        if FirstExistingDir=FirstDirToCreate then begin
+            Result:=False;
+            Exit;
+        end;
     end;
     Log('Line {#__LINE__}: First directory in hierarchy that already exists is "' + FirstExistingDir + '".')
 
-    if Length(FirstCreatedDir)>0 then begin
-        Log('Line {#__LINE__}: First directory in hierarchy needs to be created is "' + FirstCreatedDir + '".')
+    if Length(FirstDirToCreate)>0 then begin
+        Log('Line {#__LINE__}: First directory in hierarchy needs to be created is "' + FirstDirToCreate + '".')
 
         if ForceDirectories(DirName) then begin
             FileName:=GenerateUniqueName(DirName,'.txt');
@@ -118,7 +122,7 @@ begin
             Result:=False;
         end;
 
-        if not DelTree(FirstCreatedDir,True,False,True) then begin
+        if not DelTree(FirstDirToCreate,True,False,True) then begin
             Result:=False;
         end;
     end;
