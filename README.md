@@ -1,4 +1,8 @@
-# Build environment for Git for Windows
+# Please note!
+
+Git for Windows 1.x was retired on August 18th, 2015, superseded by [Git for Windows 2.x](https://git-for-windows.github.io/). The development environment of Git for Windows 2.x is no longer maintained in a monolithic Git repository but rather as the [Git SDK](https://git-for-windows.github.io/#download-sdk), a friendly fork of [MSys2](https://msys2.github.io/) pre-configured to ease the development of Git for Windows.
+
+# Build environment for Git for Windows 1.x
 
 This is the build environment -- also known as msysGit -- for [Git for Windows](http://msysgit.github.io/).
 
