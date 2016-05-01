@@ -1,6 +1,4 @@
 #
-# $Id: fonts.tcl,v 1.11 2007/12/13 15:27:08 dgp Exp $
-#
 # Font specifications.
 #
 # This file, [source]d at initialization time, sets up the following

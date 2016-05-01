@@ -24,20 +24,9 @@ fi
 # strip out cygwin paths from PATH
 case "$PATH" in
 */cygwin/*)
-	PATH="$(awk -vRS=: -vORS=: '!/cygwin/' <<< "$PATH")"
-	# awk always adds a trailing separator
-	export PATH="${PATH%:}"
+	export PATH=$(p=$(echo $PATH | tr ":" "\n" | grep -v "/cygwin/" | tr "\n" ":"); echo ${p%:})
 	;;
 esac
-
-# check msys-1.0.dll
-if test -f /etc/msys-1.0.dll.md5
-then
-	# if check succeeds, let's avoid checking again
-	test "$(md5sum /bin/msys-1.0.dll)" = "$(cat /etc/msys-1.0.dll.md5)" &&
-	rm -f /etc/msys-1.0.dll.md5 ||
-	printf "\n\033[31mERROR: Your msys-1.0.dll is out-of-date!\033[m\n\n"
-fi
 
 if [ -z "$USERNAME" ]; then
   LOGNAME="`id -un`"
@@ -67,6 +56,11 @@ HOME="$(cd "$HOME" ; pwd)"
 export PATH="$HOME/bin:$PATH"
 
 export GNUPGHOME=~/.gnupg
+
+if [ -z "$MAGIC" ]; then
+  magicfile=$(cd / && pwd -W)'/mingw/share/misc/magic.mgc'
+  test -f "$magicfile" && export MAGIC="$magicfile"
+fi
 
 if [ "x$HISTFILE" == "x/.bash_history" ]; then
   HISTFILE=$HOME/.bash_history
@@ -133,7 +127,7 @@ test -x /share/msysGit/post-checkout-hook &&
 mkdir -p /.git/hooks &&
 cp /share/msysGit/post-checkout-hook /.git/hooks/post-checkout
 
-test -f /etc/motd && sed "s/\$MESSAGE/$MESSAGE/" < /etc/motd
+test -z "$SKIP_MOTD" -a -f /etc/motd && sed "s/\$MESSAGE/$MESSAGE/" < /etc/motd
 test -x /share/msysGit/initialize.sh -a ! -d /.git &&
 cat << EOF
 
@@ -156,19 +150,27 @@ esac
 
 
 . /git/contrib/completion/git-completion.bash
+[ -r /git/contrib/completion/git-prompt.sh ] && . /git/contrib/completion/git-prompt.sh
+
+# non-printable characters must be enclosed inside \[ and \]
+PS1='\[\033]0;$MSYSTEM:${PWD//[^[:ascii:]]/?}\007\]' # set window title
+PS1="$PS1"'\n'                 # new line
+PS1="$PS1"'\[\033[32m\]'       # change color
+PS1="$PS1"'\u@\h '             # user@host<space>
+PS1="$PS1"'\[\033[33m\]'       # change color
+PS1="$PS1"'\w'                 # current working directory
 if test -z "$WINELOADERNOEXEC"
 then
-	PS1='\[\033]0;$MSYSTEM:\w\007
-\033[32m\]\u@\h \[\033[33m\w$(__git_ps1)\033[0m\]
-$ '
-else
-	PS1='\[\033]0;$MSYSTEM:\w\007
-\033[32m\]\u@\h \[\033[33m\w\033[0m\]
-$ '
+    PS1="$PS1"'$(__git_ps1)'   # bash function
 fi
+PS1="$PS1"'\[\033[0m\]'        # change color
+PS1="$PS1"'\n'                 # new line
+PS1="$PS1"'$ '                 # prompt: always $
 
 # set default options for 'less'
 export LESS=-FRSX
+export LESSCHARSET=utf-8
+
 # set default protocol for 'plink'
 export PLINK_PROTOCOL=ssh
 

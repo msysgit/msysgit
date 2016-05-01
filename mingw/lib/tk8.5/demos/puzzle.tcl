@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a 15-puzzle game using a collection
 # of buttons.
-#
-# RCS: @(#) $Id: puzzle.tcl,v 1.7 2007/04/23 21:16:01 das Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

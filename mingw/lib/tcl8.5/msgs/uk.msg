@@ -33,7 +33,7 @@ namespace eval ::tcl::clock {
     ::msgcat::mcset uk MONTHS_FULL [list \
         "\u0441\u0456\u0447\u043d\u044f"\
         "\u043b\u044e\u0442\u043e\u0433\u043e"\
-        "\u0431\u0435\u0440\u0435\u0436\u043d\u044f"\
+        "\u0431\u0435\u0440\u0435\u0437\u043d\u044f"\
         "\u043a\u0432\u0456\u0442\u043d\u044f"\
         "\u0442\u0440\u0430\u0432\u043d\u044f"\
         "\u0447\u0435\u0440\u0432\u043d\u044f"\

@@ -50,5 +50,5 @@ Did not find a (non-msysGit) git; please run
 when Git was compiled
 EOF
 fi &&
-exec wine $WINECONSOLE cmd /c msys.bat ||
+exec wine $WINECONSOLE bin/bash --login -i ||
 echo "Failure to start Wine!"

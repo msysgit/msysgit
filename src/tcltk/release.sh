@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 srcdir=$(pwd)
 
 mirror=http://kent.dl.sourceforge.net/project/tcl/Tcl/
-version=8.5.9
+version=8.5.13
 
 for p in tcl tk
 do
@@ -58,7 +58,7 @@ do
 
 		git diff --diff-filter=AM --name-only HEAD^! |
 			sed -e "s/^/\//" > "$list" &&
-		(cd / && git commit -C HEAD --amend -- "$list") ||
+		(cd / && git commit -n -C HEAD --amend -- "$list") ||
 
 		exit
 )

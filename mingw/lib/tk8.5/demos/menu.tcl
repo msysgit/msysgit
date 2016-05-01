@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a window with a bunch of menus
 # and cascaded menus using menubars.
-#
-# RCS: @(#) $Id: menu.tcl,v 1.11 2007/04/23 21:16:00 das Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -58,7 +56,7 @@ menu $m -tearoff 0
 $m add command -label "Long entry that does nothing"
 if {[tk windowingsystem] eq "aqua"} {
     set modifier Command
-} elseif {$tcl_platform(platform) == "windows"} {
+} elseif {[tk windowingsystem] == "win32"} {
     set modifier Control
 } else {
     set modifier Meta

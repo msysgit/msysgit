@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -249,9 +249,11 @@ complication for you. Given simply the URL to a file, libcurl will take care
 of all the details needed to get the file moved from one machine to another.
 
 .SH "Multi-threading Issues"
-The first basic rule is that you must \fBnever\fP share a libcurl handle (be
-it easy or multi or whatever) between multiple threads. Only use one handle in
-one thread at a time.
+The first basic rule is that you must \fBnever\fP simultaneously share a
+libcurl handle (be it easy or multi or whatever) between multiple
+threads. Only use one handle in one thread at any time. You can pass the
+handles around among threads, but you must never use a single handle from more
+than one thread at any given time.
 
 libcurl is completely thread safe, except for two issues: signals and SSL/TLS
 handlers. Signals are used for timing out name resolves (during DNS lookup) -
@@ -275,7 +277,15 @@ NSS
 
  is claimed to be thread-safe already without anything required.
 
+PolarSSL
+
+ Required actions unknown.
+
 yassl
+
+ Required actions unknown.
+
+axTLS
 
  Required actions unknown.
 
@@ -807,10 +817,6 @@ This header is required by HTTP 1.1 and even many 1.0 servers and should be
 the name of the server we want to talk to. This includes the port number if
 anything but default.
 
-.IP "Pragma"
-\&"no-cache". Tells a possible proxy to not grab a copy from the cache but to
-fetch a fresh one.
-
 .IP "Accept"
 \&"*/*".
 
@@ -1233,6 +1239,15 @@ are used to generate structured data. Characters like embedded carriage
 returns or ampersands could allow the user to create additional headers or
 fields that could cause malicious transactions.
 
+.IP "Server-supplied Names"
+A server can supply data which the application may, in some cases, use as
+a file name. The curl command-line tool does this with --remote-header-name,
+using the Content-disposition: header to generate a file name.  An application
+could also use CURLINFO_EFFECTIVE_URL to generate a file name from a
+server-supplied redirect URL. Special care must be taken to sanitize such
+names to avoid the possibility of a malicious server supplying one like
+"/etc/passwd", "\autoexec.bat" or even ".bashrc".
+
 .IP "Server Certificates"
 A secure application should never use the CURLOPT_SSL_VERIFYPEER option to
 disable certificate validation. There are numerous attacks that are enabled
@@ -1284,9 +1299,7 @@ ones at any time), you start the transfers by calling
 
 \fIcurl_multi_perform(3)\fP is asynchronous. It will only execute as little as
 possible and then return back control to your program. It is designed to never
-block. If it returns CURLM_CALL_MULTI_PERFORM you better call it again soon,
-as that is a signal that it still has local data to send or remote data to
-receive.
+block.
 
 The best usage of this interface is when you do a select() on all possible
 file descriptors or sockets to know when to call libcurl again. This also
@@ -1322,9 +1335,21 @@ to figure out success on each individual transfer.
  [ seeding, passwords, keys, certificates, ENGINE, ca certs ]
 
 .SH "Sharing Data Between Easy Handles"
+You can share some data between easy handles when the easy interface is used,
+and some data is share automatically when you use the multi interface.
 
- [ fill in ]
+When you add easy handles to a multi handle, these easy handles will
+automatically share a lot of the data that otherwise would be kept on a
+per-easy handle basis when the easy interface is used.
 
+The DNS cache is shared between handles within a multi handle, making
+subsequent name resolvings faster and the connection pool that is kept to
+better allow persistent connections and connection re-use is shared. If you're
+using the easy interface, you can still share these between specific easy
+handles by using the share interface, see \fIlibcurl-share(3)\fP.
+
+Some things are never shared automatically, not within multi handles, like for
+example cookies so the only way to share that is with the share interface.
 .SH "Footnotes"
 
 .IP "[1]"

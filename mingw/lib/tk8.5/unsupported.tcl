@@ -3,8 +3,6 @@
 # Commands provided by Tk without official support.  Use them at your
 # own risk.  They may change or go away without notice.
 #
-# RCS: @(#) $Id: unsupported.tcl,v 1.5 2005/11/25 15:58:15 dkf Exp $
-#
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 

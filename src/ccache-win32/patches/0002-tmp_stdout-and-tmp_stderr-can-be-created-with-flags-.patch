@@ -1,0 +1,40 @@
+From 1d22f5f06b44e4fbdb8463f448bd95633d7d1b54 Mon Sep 17 00:00:00 2001
+From: Jie Meng <zuxy.meng@gmail.com>
+Date: Mon, 9 Feb 2009 13:07:02 +0000
+Subject: [PATCH] tmp_stdout and tmp_stderr can be created with flags to
+ improve performance
+
+We can use FILE_ATTRIBUTE_TEMPORARY and FILE_FLAG_SEQUENTIAL_SCAN to
+better reflect the way we use them.
+
+[ccache-win32 issue #6]
+
+Signed-off-by: Jie Meng <zuxy.meng@gmail.com>
+Signed-off-by: Pat Thoyts <patthoyts@users.sourceforge.net>
+---
+ execute.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/execute.c b/execute.c
+index 4059f4b..0706894 100644
+--- a/execute.c
++++ b/execute.c
+@@ -102,13 +102,13 @@ int execute(char **argv,
+ 	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
+ 
+ 	fd_out = CreateFile(path_stdout, GENERIC_WRITE, 0, &sa, CREATE_ALWAYS,
+-                            FILE_ATTRIBUTE_NORMAL, NULL);
++                            FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+ 	if (fd_out == INVALID_HANDLE_VALUE) {
+ 		return STATUS_NOCACHE;
+ 	}
+ 
+ 	fd_err = CreateFile(path_stderr, GENERIC_WRITE, 0, &sa, CREATE_ALWAYS,
+-                            FILE_ATTRIBUTE_NORMAL, NULL);
++                            FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+ 	if (fd_err == INVALID_HANDLE_VALUE) {
+ 		return STATUS_NOCACHE;
+ 	}
+-- 
+1.8.1.msysgit.1
+

@@ -10,7 +10,7 @@ set -o pipefail
 
 cd / &&
 (export GIT_INDEX_FILE=$1 &&
- git diff-files --name-only -z &&
+ git diff-files --name-only --ignore-submodules -z &&
  git ls-files --exclude-standard --others -z) |
 git update-index -z --add --remove --stdin &&
 shift &&

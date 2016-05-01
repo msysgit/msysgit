@@ -15,14 +15,6 @@ if {"vista" ni [ttk::style theme names]} {
 namespace eval ttk::theme::vista {
 
     ttk::style theme settings vista {
-        
-        # We should ask the system for these, but for now...
-	set SM {
-	    SM_CXVSCROLL 17 SM_CYVSCROLL 0
-	    SM_CXHSCROLL 0 SM_CYHSCROLL 17
-	}
-	set cx [expr {[dict get $SM SM_CXVSCROLL] / 2}]
-	set cy [expr {[dict get $SM SM_CYVSCROLL] / 2}]
 
  	ttk::style configure . \
 	    -background SystemButtonFace \
@@ -42,9 +34,9 @@ namespace eval ttk::theme::vista {
 	ttk::style configure TMenubutton -padding {8 4}
 
 	ttk::style element create Menubutton.dropdown vsapi \
-	    TOOLBAR 4 {{selected active} 6 {selected !active} 5 
+	    TOOLBAR 4 {{selected active} 6 {selected !active} 5
 		disabled 4 pressed 3 active 2 {} 1} \
-	    -padding [list $cx $cy]
+	    -syssize {SM_CXVSCROLL SM_CYVSCROLL}
 
 	ttk::style configure TNotebook -tabmargins {2 2 2 0}
 	ttk::style map TNotebook.Tab \
@@ -59,7 +51,7 @@ namespace eval ttk::theme::vista {
 
         # Label and Toolbutton
 	ttk::style configure TLabelframe.Label -foreground "#0046d5"
-        
+
 	ttk::style configure Toolbutton -padding {4 4}
 
         # Combobox
@@ -70,7 +62,7 @@ namespace eval ttk::theme::vista {
             COMBOBOX 4 {disabled 4 focus 3 active 2 hover 2 {} 1}
         ttk::style element create Combobox.rightdownarrow vsapi \
             COMBOBOX 6 {disabled 4 pressed 3 active 2 {} 1} \
-            -padding [list $cx $cy]
+            -syssize {SM_CXVSCROLL SM_CYVSCROLL}
         ttk::style layout TCombobox {
             Combobox.border -sticky nswe -border 0 -children {
                 Combobox.rightdownarrow -side right -sticky ns
@@ -120,20 +112,22 @@ namespace eval ttk::theme::vista {
 	    ;
 
         # Spinbox
-        ttk::style configure TSpinbox -padding 0 ;#{2 0 15 1}
+        ttk::style configure TSpinbox -padding 0
         ttk::style element create Spinbox.field vsapi \
             EDIT 9 {disabled 4 focus 3 hover 2 {} 1} -padding {1 1 1 2}
         ttk::style element create Spinbox.background vsapi \
             EDIT 3 {disabled 3 readonly 3 focus 4 hover 2 {} 1}
         ttk::style element create Spinbox.innerbg vsapi \
             EDIT 3 {disabled 3 readonly 3 focus 4 hover 2 {} 1}\
-            -padding {2 0 15 1}
+            -padding {2 0 15 2}
         ttk::style element create Spinbox.uparrow vsapi \
             SPIN 1 {disabled 4 pressed 3 active 2 {} 1} \
-            -height 5 -width 8
+            -padding 1 -halfheight 1 \
+            -syssize { SM_CXVSCROLL SM_CYVSCROLL }
         ttk::style element create Spinbox.downarrow vsapi \
             SPIN 2 {disabled 4 pressed 3 active 2 {} 1} \
-            -height 5 -width 8
+            -padding 1 -halfheight 1 \
+            -syssize { SM_CXVSCROLL SM_CYVSCROLL }
         ttk::style layout TSpinbox {
             Spinbox.field -sticky nswe -children {
                 Spinbox.background -sticky news -children {
@@ -155,23 +149,30 @@ namespace eval ttk::theme::vista {
         
         # SCROLLBAR elements (Vista includes a state for 'hover')
         ttk::style element create Vertical.Scrollbar.uparrow vsapi \
-            SCROLLBAR 1 {disabled 4 pressed 3 active 2 hover 17 {} 1}
+            SCROLLBAR 1 {disabled 4 pressed 3 active 2 hover 17 {} 1} \
+            -syssize {SM_CXVSCROLL SM_CYVSCROLL}
         ttk::style element create Vertical.Scrollbar.downarrow vsapi \
-            SCROLLBAR 1 {disabled 8 pressed 7 active 6 hover 18 {} 5}
+            SCROLLBAR 1 {disabled 8 pressed 7 active 6 hover 18 {} 5} \
+            -syssize {SM_CXVSCROLL SM_CYVSCROLL}
         ttk::style element create Vertical.Scrollbar.trough vsapi \
             SCROLLBAR 7 {disabled 4 pressed 3 active 2 hover 5 {} 1}
         ttk::style element create Vertical.Scrollbar.thumb vsapi \
-            SCROLLBAR 3 {disabled 4 pressed 3 active 2 hover 5 {} 1}
+            SCROLLBAR 3 {disabled 4 pressed 3 active 2 hover 5 {} 1} \
+            -syssize {SM_CXVSCROLL SM_CYVSCROLL}
         ttk::style element create Vertical.Scrollbar.grip vsapi \
-            SCROLLBAR 9 {disabled 4 pressed 3 active 2 hover 5 {} 1}
+            SCROLLBAR 9 {disabled 4 pressed 3 active 2 hover 5 {} 1} \
+            -syssize {SM_CXVSCROLL SM_CYVSCROLL}
         ttk::style element create Horizontal.Scrollbar.leftarrow vsapi \
-            SCROLLBAR 1 {disabled 12 pressed 11 active 10 hover 19 {} 9}
+            SCROLLBAR 1 {disabled 12 pressed 11 active 10 hover 19 {} 9} \
+            -syssize {SM_CXHSCROLL SM_CYHSCROLL}
         ttk::style element create Horizontal.Scrollbar.rightarrow vsapi \
-            SCROLLBAR 1 {disabled 16 pressed 15 active 14 hover 20 {} 13}
+            SCROLLBAR 1 {disabled 16 pressed 15 active 14 hover 20 {} 13} \
+            -syssize {SM_CXHSCROLL SM_CYHSCROLL}
         ttk::style element create Horizontal.Scrollbar.trough vsapi \
             SCROLLBAR 5 {disabled 4 pressed 3 active 2 hover 5 {} 1}
         ttk::style element create Horizontal.Scrollbar.thumb vsapi \
-            SCROLLBAR 2 {disabled 4 pressed 3 active 2 hover 5 {} 1}
+            SCROLLBAR 2 {disabled 4 pressed 3 active 2 hover 5 {} 1} \
+            -syssize {SM_CXHSCROLL SM_CYHSCROLL}
         ttk::style element create Horizontal.Scrollbar.grip vsapi \
             SCROLLBAR 8 {disabled 4 pressed 3 active 2 hover 5 {} 1}
 
@@ -218,7 +219,6 @@ namespace eval ttk::theme::vista {
         # Treeview
         ttk::style configure Item -padding {4 0 0 0}
         
-        unset -nocomplain cx cy
         package provide ttk::theme::vista 1.0
     }
 }

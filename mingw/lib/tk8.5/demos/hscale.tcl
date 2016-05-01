@@ -1,8 +1,6 @@
 # hscale.tcl --
 #
 # This demonstration script shows an example with a horizontal scale.
-#
-# RCS: @(#) $Id: hscale.tcl,v 1.5 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

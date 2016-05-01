@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=7.21.1
+VERSION=7.41.0
 DIR=curl-$VERSION
 URL=http://curl.haxx.se/download/$DIR.tar.bz2
 FILE=${URL##*/}
@@ -10,6 +10,17 @@ FILE=${URL##*/}
 die () {
 	echo "$*" >&2
 	exit 1
+}
+
+cleanup_old_curl () {
+    for f in \
+        /mingw/bin/libcurl-4.dll \
+        /mingw/bin/curl-config \
+        /mingw/bin/libcurl.la
+    do
+        [ -f $f ] && rm -f $f
+    done
+    return 0
 }
 
 test -d $DIR || {
@@ -20,9 +31,9 @@ test -d $DIR || {
 	tar xjvf $FILE && (
 		cd $DIR &&
 		git init &&
-                git config core.autocrlf false &&
+		git config core.autocrlf false &&
 		git add . &&
-		git commit -m "Import of $FILE"
+		git commit -n -m "Import of $FILE"
 	)
 } || die "Could not check out cURL"
 
@@ -31,10 +42,18 @@ test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
 die "Could not apply patches"
 
 (cd $DIR &&
-./configure --prefix=/mingw --with-ssl=/mingw --enable-sspi &&
-make &&
+CFG='-ssl-ipv6-zlib-sspi-spnego-ldaps' \
+OPENSSL_PATH=/mingw \
+OPENSSL_LIBPATH=/mingw/lib \
+OPENSSL_LIBS='-lcrypto.dll -lssl.dll' \
+make mingw32 &&
 index=$(/share/msysGit/pre-install.sh) &&
-make install &&
+cleanup_old_curl &&
+/bin/install -m 0755 src/curl.exe /mingw/bin/curl.exe &&
+/bin/install -m 0755 lib/libcurl.dll /mingw/bin/libcurl.dll &&
+/bin/install -m 0755 lib/libcurl.a /mingw/lib/libcurl.a &&
+/bin/install -m 0755 lib/libcurldll.a /mingw/lib/libcurl.dll.a &&
+/bin/install -m 0644 include/curl/*.h /mingw/include/curl/ &&
 make ca-bundle &&
 ls ../certs/*.pem 2>/dev/null |
 while read pem

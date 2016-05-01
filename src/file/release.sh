@@ -22,7 +22,7 @@ fi &&
 (cd $DIR &&
 	git init &&
 	git add . &&
-	git commit -m initial &&
+	git commit -n -m initial &&
 	git am ../patches/* &&
 	CFLAGS="-I/git/compat/regex -DGAWK -DNO_MBSUPPORT" \
 		./configure --prefix=/mingw &&

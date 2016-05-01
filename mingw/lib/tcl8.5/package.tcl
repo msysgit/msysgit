@@ -3,8 +3,6 @@
 # utility procs formerly in init.tcl which can be loaded on demand
 # for package management.
 #
-# RCS: @(#) $Id: package.tcl,v 1.35.4.1 2008/07/03 17:22:59 dgp Exp $
-#
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1998 Sun Microsystems, Inc.
 #
@@ -395,7 +393,7 @@ proc pkg_mkIndex {args} {
 	    break
 	}
 	lappend cmd ::tcl::Pkg::Create -name $name -version $version
-	foreach spec $files($pkg) {
+	foreach spec [lsort -index 0 $files($pkg)] {
 	    foreach {file type procs} $spec {
 		if { $direct } {
 		    set procs {}

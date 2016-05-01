@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-VERSION=1.6
+VERSION=1.7
 DIR=hexdump-$VERSION
 URL=http://catb.org/~esr/hexdump/$DIR.tar.gz
 FILE=${URL##*/}
@@ -21,7 +21,7 @@ test -d $DIR || {
 		cd $DIR &&
 		git init &&
 		git add . &&
-		git commit -m "Import of $FILE"
+		git commit -n -m "Import of $FILE"
 	)
 } || die "Could not check out $DIR"
 
@@ -32,7 +32,7 @@ die "Could not apply patches"
 
 (cd $DIR &&
 make &&
+index=$(/share/msysGit/pre-install.sh) &&
 cp hexdump.exe /mingw/bin/ &&
-cd / &&
-git commit -s -m "Install $FILE" /mingw/bin/hexdump.exe
+/share/msysGit/post-install.sh $index "Install $FILE"
 ) || die "Could not install $FILE"

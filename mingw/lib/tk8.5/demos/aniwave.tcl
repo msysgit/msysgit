@@ -3,8 +3,6 @@
 # This demonstration script illustrates how to adjust canvas item
 # coordinates in a way that does something fairly similar to waveform
 # display.
-#
-# RCS: @(#) $Id: aniwave.tcl,v 1.2 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

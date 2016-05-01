@@ -214,7 +214,7 @@ sub findConsole {
         $console = "Dev:Console";
     } elsif (-e "/dev/tty") {
 	$console = "/dev/tty";
-    } elsif (-e "con" or $^O eq 'MSWin32') {
+    } elsif (-e "con" or $^O eq 'MSWin32' or $^O eq 'msys') {
 	$console = "con";
     } else {
 	$console = "sys\$command";
