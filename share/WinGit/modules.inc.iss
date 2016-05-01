@@ -1,3 +1,5 @@
+[Code]
+
 // This file contains code paths for Windows 95, Windows 2000 and Windows Vista
 // to get a list of processes that use a given module (DLL). For the processes
 // that lock the file, the process ID, the full path to the executable, and file
@@ -207,7 +209,7 @@ external 'Module32NextA@Kernel32.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModules_Win95(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_Win95(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Success:Boolean;
     ProcSnap:THandle;
@@ -218,7 +220,7 @@ var
     i:Longint;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     ProcSnap:=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
     if ProcSnap=INVALID_HANDLE_VALUE then begin
@@ -275,12 +277,12 @@ begin
 
     CloseHandle(ProcSnap);
 
-    Result:=True;
+    Result:=1;
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_Win95(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -355,7 +357,7 @@ external 'GetModuleFileNameExA@Psapi.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use one of the specified modules.
 // Each module may be a filename to a DLL with or without path.
-function FindProcessesUsingModules_Win2000(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_Win2000(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     ProcList,ModList:IdList;
     p,m,i:Longint;
@@ -364,7 +366,7 @@ var
     PathLength:DWORD;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     if not GetProcessList(ProcList) then begin
         Exit;
@@ -407,12 +409,12 @@ begin
         end;
     end;
 
-    Result:=True;
+    Result:=1;
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module may be a filename to a DLL with or without path.
-function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_Win2000(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -430,13 +432,13 @@ const
     CCH_RM_MAX_APP_NAME = 255;
     CCH_RM_MAX_SVC_NAME = 63;
 
-    RmUnknownApp  = 0;
-    RmMainWindow  = 1;
-    RmOtherWindow = 2;
-    RmService     = 3;
-    RmExplorer    = 4;
-    RmConsole     = 5;
-    RmCritical    = 1000;
+    RmUnknownApp  = 0;    // The application cannot be classified as any other type. An application of this type can only be shut down by a forced shutdown.
+    RmMainWindow  = 1;    // A Windows application run as a stand-alone process that displays a top-level window.
+    RmOtherWindow = 2;    // A Windows application that does not run as a stand-alone process and does not display a top-level window.
+    RmService     = 3;    // The application is a Windows service.
+    RmExplorer    = 4;    // The application is Windows Explorer.
+    RmConsole     = 5;    // The application is a stand-alone console application.
+    RmCritical    = 1000; // A system restart is required to complete the installation because a process cannot be shut down.
 
     RmStatusUnknown        = $0000;
     RmStatusRunning        = $0001;
@@ -447,6 +449,9 @@ const
     RmStatusErrorOnRestart = $0020;
     RmStatusShutdownMasked = $0040;
     RmStatusRestartMasked  = $0080;
+
+    RmForceShutdown          = $0001;
+    RmShutdownOnlyRegistered = $0010;
 
 type
     SessionKey=array[1..CCH_RM_SESSION_KEY+1] of Char;
@@ -468,6 +473,7 @@ type
         TSSessionId:DWORD;
         bRestartable:BOOL;
     end;
+    RM_WRITE_STATUS_CALLBACK=DWORD;
 
 function RmStartSession(var pSessionHandle:DWORD;dwSessionFlags:DWORD;strSessionKey:SessionKey):DWORD;
 external 'RmStartSession@Rstrtmgr.dll stdcall delayload';
@@ -478,12 +484,18 @@ external 'RmEndSession@Rstrtmgr.dll stdcall delayload';
 function RmRegisterResources(dwSessionHandle:DWORD;hFiles:UINT;rgsFilenames:TArrayOfString;nApplications:UINT;rgApplications:array of RM_UNIQUE_PROCESS;nServices:UINT;rgsServiceNames:TArrayOfString):DWORD;
 external 'RmRegisterResources@Rstrtmgr.dll stdcall delayload';
 
-function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded:UINT;var pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
+function RmGetList(dwSessionHandle:DWORD;var pnProcInfoNeeded,pnProcInfo:UINT;rgAffectedApps:array of RM_PROCESS_INFO;lpdwRebootReasons:IdList):DWORD;
 external 'RmGetList@Rstrtmgr.dll stdcall delayload';
+
+function RmShutdown(dwSessionHandle:DWORD;lActionFlags:ULONG;fnStatus:RM_WRITE_STATUS_CALLBACK):DWORD;
+external 'RmShutdown@Rstrtmgr.dll stdcall delayload';
+
+function RmRestart(dwSessionHandle:DWORD;dwRestartFlags:DWORD;fnStatus:RM_WRITE_STATUS_CALLBACK):DWORD;
+external 'RmRestart@Rstrtmgr.dll stdcall delayload';
 
 // Returns a list of running processes that currectly use one of the specified modules.
 // Each module has to be a full path and filename to a DLL.
-function FindProcessesUsingModules_WinVista(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModules_WinVista(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Handle:DWORD;
     Name:SessionKey;
@@ -498,7 +510,7 @@ var
     Success:DWORD;
 begin
     SetArrayLength(Processes,0);
-    Result:=False;
+    Result:=0;
 
     // NULL-terminate the array of chars.
     Name[CCH_RM_SESSION_KEY+1]:=#0;
@@ -518,35 +530,30 @@ begin
 
         if (Success=ERROR_SUCCESS) and (Needed>0) then begin
             for i:=0 to Needed-1 do begin
-                // Optionally, only list non-critical stand-alone processes that do not require a forced shutdown.
-                //if (AppList[i].ApplicationType=RmMainWindow) or (AppList[i].ApplicationType=RmExplorer) or (AppList[i].ApplicationType=RmConsole) then begin
-                    Process:=OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,False,AppList[i].Process.dwProcessId);
-                    if Process<>0 then begin
-                        SetLength(Path,MAX_PATH);
-                        PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
-                        SetLength(Path,PathLength);
+                Process:=OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,False,AppList[i].Process.dwProcessId);
+                if Process<>0 then begin
+                    SetLength(Path,MAX_PATH);
+                    PathLength:=GetModuleFileNameEx(Process,0,Path,MAX_PATH);
+                    SetLength(Path,PathLength);
 
-                        Have:=GetArrayLength(Processes);
-                        SetArrayLength(Processes,Have+1);
-                        Processes[Have].ID:=AppList[i].Process.dwProcessId;
-                        Processes[Have].Path:=Path;
-                        Processes[Have].Name:=ArrayToString(AppList[i].strAppName);
-                        Processes[Have].Restartable:=AppList[i].bRestartable;
+                    Have:=GetArrayLength(Processes);
+                    SetArrayLength(Processes,Have+1);
+                    Processes[Have].ID:=AppList[i].Process.dwProcessId;
+                    Processes[Have].Path:=Path;
+                    Processes[Have].Name:=ArrayToString(AppList[i].strAppName);
+                    Processes[Have].Restartable:=AppList[i].bRestartable;
 
-                        CloseHandle(Process);
-                    end;
-                //end;
+                    CloseHandle(Process);
+                end;
             end;
-            Result:=True;
+            Result:=Handle;
         end;
     end;
-
-    RmEndSession(Handle);
 end;
 
 // Returns a list of running processes that currectly use the specified module.
 // The module has to be a full path and filename to a DLL.
-function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):Boolean;
+function FindProcessesUsingModule_WinVista(Module:String;var Processes:ProcessList):DWORD;
 var
     Modules:TArrayOfString;
 begin
@@ -560,8 +567,9 @@ end;
 }
 
 // Returns a list of running processes that currectly use one of the specified modules.
-// Automatically calls the best implementation for the running OS.
-function FindProcessesUsingModules(Modules:TArrayOfString;var Processes:ProcessList):Boolean;
+// Automatically calls the best implementation for the running OS. The return value is
+// non-zero on success, and equals the Restart Manager session handle on Vista and above.
+function FindProcessesUsingModules(Modules:TArrayOfString;var Processes:ProcessList):DWORD;
 var
     Version:TWindowsVersion;
 begin
@@ -577,8 +585,9 @@ begin
 end;
 
 // Returns a list of running processes that currectly use the specified module.
-// Automatically calls the best implementation for the running OS.
-function FindProcessesUsingModule(Module:String;var Processes:ProcessList):Boolean;
+// Automatically calls the best implementation for the running OS. The return value is
+// non-zero on success, and equals the Restart Manager session handle on Vista and above.
+function FindProcessesUsingModule(Module:String;var Processes:ProcessList):DWORD;
 var
     Version:TWindowsVersion;
 begin
@@ -600,12 +609,11 @@ end;
 // Tries to replace an in-use file, e.g. a registered shell extension, by
 // renaming it and then renaming the new file to the original name. Optionally,
 // performs (un-)registering via regsvr32.
-function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean):Boolean;
+function ReplaceInUseFile(CurFile,NewFile:String;Register:Boolean;var ErrorMsg:String):Boolean;
 var
     CurFilePath,CurFileName,NewFileName:String;
     CurFileStem,CurFileTemp:String;
     UnregisterFailed,RenameFailed:Boolean;
-    Msg:String;
 begin
     Result:=False;
 
@@ -640,20 +648,18 @@ begin
     end;
 
     if not RenameFile(NewFile,CurFile) then begin
-        Msg:='Unable to install a new version of "'+CurFileName+'". ' +
-             'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
+        ErrorMsg:='Unable to install a new version of "'+CurFileName+'". ' +
+                  'Please finish the installation manually by following theses steps on the command line:' + #13 + #13;
         if FileExists(CurFile) then begin
             if UnregisterFailed then begin
-                Msg := Msg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
+                ErrorMsg := ErrorMsg + '- run "regsvr32 /u ' + CurFileName + '",' + #13;
             end;
             if RenameFailed then begin
-                Msg := Msg + '- rename "' + CurFileName + '" to something else,' + #13;
+                ErrorMsg := ErrorMsg + '- rename "' + CurFileName + '" to something else,' + #13;
             end;
         end;
-        Msg         := Msg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
-        Msg         := Msg + '- run "regsvr32 ' + CurFileName + '".';
-
-        MsgBox(Msg,mbError,MB_OK);
+        ErrorMsg         := ErrorMsg + '- rename "' + NewFileName + '" to "' + CurFileName + '",' + #13;
+        ErrorMsg         := ErrorMsg + '- run "regsvr32 ' + CurFileName + '".';
     end else begin
         if Register then begin
             RegisterServer(Is64BitInstallMode,CurFile,False);

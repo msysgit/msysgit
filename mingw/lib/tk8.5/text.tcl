@@ -3,8 +3,6 @@
 # This file defines the default bindings for Tk text widgets and provides
 # procedures that help in implementing the bindings.
 #
-# RCS: @(#) $Id: text.tcl,v 1.41.4.3 2010/08/12 07:59:15 dkf Exp $
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998 by Scriptics Corporation.
@@ -541,7 +539,7 @@ proc ::tk::TextButton1 {w x y} {
     }
     # Allow focus in any case on Windows, because that will let the
     # selection be displayed even for state disabled text widgets.
-    if {$::tcl_platform(platform) eq "windows" \
+    if {[tk windowingsystem] eq "win32" \
 	    || [$w cget -state] eq "normal"} {
 	focus $w
     }
@@ -1098,7 +1096,7 @@ proc ::tk_textPaste w {
 # w -		The text window in which the cursor is to move.
 # start -	Position at which to start search.
 
-if {$tcl_platform(platform) eq "windows"}  {
+if {[tk windowingsystem] eq "win32"}  {
     proc ::tk::TextNextWord {w start} {
 	TextNextPos $w [TextNextPos $w $start tcl_endOfWord] \
 		tcl_startOfNextWord

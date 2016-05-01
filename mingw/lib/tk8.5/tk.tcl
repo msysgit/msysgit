@@ -3,8 +3,6 @@
 # Initialization script normally executed in the interpreter for each Tk-based
 # application.  Arranges class bindings for widgets.
 #
-# RCS: @(#) $Id: tk.tcl,v 1.73.2.15 2010/08/04 17:06:52 dgp Exp $
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
@@ -17,7 +15,7 @@ package require Tcl 8.5	;# Guard against [source] in an 8.4- interp before
 # Insist on running with compatible version of Tcl
 package require Tcl 8.5.0
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.9
+package require -exact Tk  8.5.13
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -114,26 +112,23 @@ proc ::tk::PlaceWindow {w {place ""} {anchor ""}} {
 	set y [expr {([winfo screenheight $w]-[winfo reqheight $w])/2}]
 	set checkBounds 0
     }
-    if {[tk windowingsystem] eq "win32"} {
-        # Bug 533519: win32 multiple desktops may produce negative geometry.
-        set checkBounds 0
-    }
     if {$checkBounds} {
-	if {$x < 0} {
-	    set x 0
-	} elseif {$x > ([winfo screenwidth $w]-[winfo reqwidth $w])} {
-	    set x [expr {[winfo screenwidth $w]-[winfo reqwidth $w]}]
+	if {$x < [winfo vrootx $w]} {
+	    set x [winfo vrootx $w]
+	} elseif {$x > ([winfo vrootx $w]+[winfo vrootwidth $w]-[winfo reqwidth $w])} {
+	    set x [expr {[winfo vrootx $w]+[winfo vrootwidth $w]-[winfo reqwidth $w]}]
 	}
-	if {$y < 0} {
-	    set y 0
-	} elseif {$y > ([winfo screenheight $w]-[winfo reqheight $w])} {
-	    set y [expr {[winfo screenheight $w]-[winfo reqheight $w]}]
+	if {$y < [winfo vrooty $w]} {
+	    set y [winfo vrooty $w]
+	} elseif {$y > ([winfo vrooty $w]+[winfo vrootheight $w]-[winfo reqheight $w])} {
+	    set y [expr {[winfo vrooty $w]+[winfo vrootheight $w]-[winfo reqheight $w]}]
 	}
 	if {[tk windowingsystem] eq "aqua"} {
 	    # Avoid the native menu bar which sits on top of everything.
 	    if {$y < 22} { set y 22 }
 	}
     }
+    wm maxsize $w [winfo vrootwidth $w] [winfo vrootheight $w]
     wm geometry $w +$x+$y
     wm deiconify $w
 }
@@ -210,7 +205,7 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 # Results:
 #   Returns the selection, or an error if none could be found
 #
-if {$tcl_platform(platform) eq "unix"} {
+if {[tk windowingsystem] ne "win32"} {
     proc ::tk::GetSelection {w {sel PRIMARY}} {
 	if {[catch {selection get -displayof $w -selection $sel \
 		-type UTF8_STRING} txt] \

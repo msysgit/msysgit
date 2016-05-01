@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a toplevel window that displays
 # all of Tk's built-in bitmaps.
-#
-# RCS: @(#) $Id: bitmap.tcl,v 1.5 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

@@ -3,8 +3,6 @@
 # This file contains obsolete procedures that people really shouldn't
 # be using anymore, but which are kept around for backward compatibility.
 #
-# RCS: @(#) $Id: obsolete.tcl,v 1.4.2.2 2010/01/09 00:54:06 patthoyts Exp $
-#
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 #

@@ -9,7 +9,7 @@ export GIT_SKIP_TESTS='
 export NO_SVN_TESTS=t
 case " $*" in
 *' -j'*) ;;
-*) PARALLEL_MAKE=-j5;;
+*) PARALLEL_MAKE=-j15;;
 esac
 
 generate_skip_list () {
@@ -55,7 +55,13 @@ get_finished_tests () {
 	CURRENT_TESTS="$REMAINING_TESTS"
 }
 
-cd /git &&
+cd /usr/git &&
+for file in *.exe
+do
+	dir=${file%.exe} &&
+	test ! -d "$dir" ||
+	rm -rf "$dir"
+done &&
 echo make $PARALLEL_MAKE &&
 (cd t &&
  rm -rf test-results &&
@@ -69,8 +75,8 @@ echo make $PARALLEL_MAKE &&
 	"*** t"*)
 		TEST_NAME=$(get_test_name "$line")
 		CURRENT_TESTS="$CURRENT_TESTS $TEST_NAME"
-		printf "Currently running $(echo "$CURRENT_TESTS" |
-			sed 's/-[^ ]*//g')\\r"
+		printf "$(echo "$CURRENT_TESTS" |
+			sed 's/t\([0-9]*\)-[^ ]*/\1/g')\\r"
 		;;
 	'* passed'*|'# passed'*)
 		get_finished_tests

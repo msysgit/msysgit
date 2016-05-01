@@ -1,6 +1,4 @@
 #
-# $Id: defaults.tcl,v 1.6.2.1 2010/08/26 02:06:10 hobbs Exp $
-#
 # Settings for default theme.
 #
 

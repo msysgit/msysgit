@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a toplevel window containing
 # several animated label widgets.
-#
-# RCS: @(#) $Id: anilabel.tcl,v 1.2 2004/12/21 11:56:35 dkf Exp $
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

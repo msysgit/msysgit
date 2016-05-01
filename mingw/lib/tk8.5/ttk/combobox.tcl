@@ -1,6 +1,4 @@
 #
-# $Id: combobox.tcl,v 1.12.2.4 2010/08/26 02:06:10 hobbs Exp $
-#
 # Combobox bindings.
 #
 # <<NOTE-WM-TRANSIENT>>:
@@ -114,9 +112,12 @@ switch -- [tk windowingsystem] {
 #
 proc ttk::combobox::Press {mode w x y} {
     variable State
+
+    $w instate disabled { return }
+
     set State(entryPress) [expr {
-	   [$w instate {!readonly !disabled}]
-	&& [string match *textarea [$w identify $x $y]]
+	   [$w instate !readonly]
+	&& [string match *textarea [$w identify element $x $y]]
     }]
 
     focus $w

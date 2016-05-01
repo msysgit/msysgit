@@ -1,6 +1,4 @@
 #
-# $Id: menubutton.tcl,v 1.1 2006/10/31 01:42:27 hobbs Exp $
-#
 # Bindings for Menubuttons.
 #
 # Menubuttons have three interaction modes:

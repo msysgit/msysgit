@@ -3,8 +3,6 @@
 # This file defines several procedures for managing the input
 # focus.
 #
-# RCS: @(#) $Id: focus.tcl,v 1.11 2006/01/25 18:22:04 dgp Exp $
-#
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution

@@ -8,7 +8,7 @@ test -z "$1" && {
 }
 
 MSYSGITBRANCH="$2"
-test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=devel
+test -z "$MSYSGITBRANCH" && MSYSGITBRANCH=master
 FOURMSYSGITBRANCH="$3"
 
 TARGET="$HOME"/msysGit-netinstall-"$1".exe
@@ -34,6 +34,10 @@ test 0 = "$(cat /tmp/exitstatus)" &&
 strip bin/*.exe libexec/git-core/*.exe &&
 mkdir etc &&
 cp "$SHARE"/gitconfig etc/ &&
+if test -d /etc/profile.d
+then
+	cp -R /etc/profile.d ./
+fi &&
 sed -e "s|@@MSYSGITBRANCH@@|$MSYSGITBRANCH|g" \
     -e "s|@@FOURMSYSGITBRANCH@@|$FOURMSYSGITBRANCH|g" \
   < "$SHARE"/setup-msysgit.sh > setup-msysgit.sh &&

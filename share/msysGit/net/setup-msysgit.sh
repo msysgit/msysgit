@@ -34,11 +34,10 @@ echo "Environment is clean. Can install msysgit."
 
 echo
 echo -------------------------------------------------------
-echo Fetching the latest MSys environment
+echo Fetching the latest msysgit environment
 echo -------------------------------------------------------
-MSYSGIT_REPO_GIT=git://repo.or.cz/msysgit.git
-MSYSGIT_REPO_GIT_MOB=ssh://mob@repo.or.cz/srv/git/msysgit.git
-MSYSGIT_REPO_HTTP=http://repo.or.cz/r/msysgit.git
+MSYSGIT_REPO_GIT=git://github.com/msysgit/msysgit
+MSYSGIT_REPO_HTTP=https://github.com/msysgit/msysgit.git
 
 # Multiply git.exe
 
@@ -48,6 +47,7 @@ do
 		"$INSTALL_PATH/installer-tmp/bin/git-$builtin.exe"
 done
 
+git config --system http.sslCAinfo /bin/curl-ca-bundle.crt
 git init &&
 git config core.autocrlf false &&
 git config remote.origin.url $MSYSGIT_REPO_GIT &&
@@ -55,9 +55,6 @@ git config remote.origin.fetch \
 	+refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/@@MSYSGITBRANCH@@ &&
 git config branch.@@MSYSGITBRANCH@@.remote origin &&
 git config branch.@@MSYSGITBRANCH@@.merge refs/heads/@@MSYSGITBRANCH@@ &&
-git config remote.mob.url $MSYSGIT_REPO_GIT_MOB &&
-git config remote.mob.fetch +refs/heads/@@MSYSGITBRANCH@@:refs/remotes/origin/mob &&
-git config remote.mob.push HEAD:mob &&
 
 USE_HTTP=
 git fetch || {
@@ -68,6 +65,7 @@ git fetch || {
 		read proxy &&
 		test ! -z "$proxy" &&
 		export http_proxy="$proxy" &&
+		export https_proxy="$proxy" &&
 		git fetch
 	} ||
 	error "Could not get msysgit.git"
@@ -77,9 +75,9 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
 echo
 echo -------------------------------------------------------
-echo Checking out the @@MSYSGITBRANCH@@ branch
+echo Checking out the msysgit @@MSYSGITBRANCH@@ branch
 echo -------------------------------------------------------
-git-checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
+git checkout -l -f -q -b @@MSYSGITBRANCH@@ origin/@@MSYSGITBRANCH@@ ||
 	error Couldn\'t checkout the @@MSYSGITBRANCH@@ branch!
 mkdir -p .git/hooks &&
 cp share/msysGit/post-checkout-hook .git/hooks/post-checkout ||
@@ -91,22 +89,25 @@ rm -rf git
 
 echo
 echo -------------------------------------------------------
-echo Fetching the latest MinGW Git sources
+echo Fetching the latest Git sources
 echo -------------------------------------------------------
 
 case "$USE_HTTP" in
 t)
-	GIT_REPO_URL=http://repo.or.cz/r/git.git/
+	GIT_REPO_URL=https://github.com/git/git.git
+	HTMLDOCS_REPO_URL=https://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=http://repo.or.cz/r/git/mingw.git/
-	MINGW4MSYSGIT_REPO_URL=http://repo.or.cz/r/git/mingw/4msysgit.git/
+	MINGW4MSYSGIT_REPO_URL=https://github.com/msysgit/git.git
+	GITCHEETAH_REPO_URL=https://github.com/msysgit/Git-Cheetah.git
 ;;
 '')
-	GIT_REPO_URL=git://repo.or.cz/git.git
+	GIT_REPO_URL=git://github.com/git/git
+	HTMLDOCS_REPO_URL=git://github.com/gitster/git-htmldocs.git
 	MINGW_REPO_URL=git://repo.or.cz/git/mingw.git
-	MINGW4MSYSGIT_REPO_URL=git://repo.or.cz/git/mingw/4msysgit.git
+	MINGW4MSYSGIT_REPO_URL=git://github.com/msysgit/git
+	GITCHEETAH_REPO_URL=git://github.com/msysgit/Git-Cheetah
 ;;
 esac
-MINGW4MSYSGIT_MOB_URL=ssh://mob@repo.or.cz/srv/git/git/mingw/4msysgit.git
 
 git config submodule.git.url $MINGW4MSYSGIT_REPO_URL &&
 mkdir -p git &&
@@ -121,13 +122,10 @@ git config remote.mingw.fetch '+refs/heads/*:refs/remotes/mingw/*' &&
 git fetch --tags mingw &&
 git config remote.origin.url $MINGW4MSYSGIT_REPO_URL &&
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git config remote.mob.url $MINGW4MSYSGIT_MOB_URL &&
-git config remote.mob.fetch '+refs/heads/*:refs/remotes/origin/*' &&
-git config remote.mob.push 'HEAD:mob' &&
 git fetch --tags origin &&
 if test -z "@@FOURMSYSGITBRANCH@@"
 then
-	FOURMSYS=origin/devel
+	FOURMSYS=origin/master
 else
 	FOURMSYS=origin/@@FOURMSYSGITBRANCH@@
 fi &&
@@ -139,19 +137,47 @@ error Couldn\'t update submodule git!
 
 echo
 echo -------------------------------------------------------
-echo Fetching HTML help pages
+echo Fetching Git html help submodule
 echo -------------------------------------------------------
 
 cd .. &&
 rm -rf /doc/git/html &&
-git config submodule.html.url $GIT_REPO_URL &&
+git config submodule.html.url $HTMLDOCS_REPO_URL &&
 mkdir -p doc/git/html &&
 cd doc/git/html &&
 git init &&
-git config remote.origin.url $GIT_REPO_URL &&
-git config remote.origin.fetch '+refs/heads/html:refs/remotes/origin/html' &&
+git config remote.origin.url $HTMLDOCS_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/master:refs/remotes/origin/master' &&
 git fetch origin &&
 git checkout -l -f -q $(cd ../../.. && git ls-tree HEAD doc/git/html |
 	sed -n "s/^160000 commit \(.*\).doc\/git\/html$/\1/p") ||
 error "Couldn't update submodule doc/git/html (HTML help will not work)."
 
+echo
+echo -------------------------------------------------------
+echo Fetching git-cheetah submodule
+echo -------------------------------------------------------
+
+cd ../../.. &&
+rm -rf /src/git-cheetah &&
+git config submodule.git-cheetah.url $GITCHEETAH_REPO_URL &&
+mkdir -p src/git-cheetah &&
+cd src/git-cheetah &&
+git init &&
+git config remote.origin.url $GITCHEETAH_REPO_URL &&
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' &&
+git fetch origin &&
+git checkout -l -f -q -b master origin/master ||
+	error "Could not update the submodule src/git-cheetah!"
+
+# Copy profile.d/*.sh if there is any
+
+cd ../.. &&
+if test -d "$INSTALL_PATH"/installer-tmp/profile.d
+then
+	mkdir -p etc/profile.d &&
+	for file in "$INSTALL_PATH"/installer-tmp/profile.d/*.sh
+	do
+		cp "$file" etc/profile.d/
+	done
+fi

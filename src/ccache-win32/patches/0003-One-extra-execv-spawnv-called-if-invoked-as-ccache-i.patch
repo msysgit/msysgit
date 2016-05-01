@@ -1,0 +1,109 @@
+From 5ba2b678af30b8b9693704734c398132af6caf32 Mon Sep 17 00:00:00 2001
+From: Jie Meng <zuxy.meng@gmail.com>
+Date: Mon, 9 Feb 2009 09:00:00 +0000
+Subject: [PATCH] One extra execv/spawnv called if invoked as "ccache" instead
+ of "ccache.exe"
+
+The situation could be improved if we define "ccache" as MYNAME2 and
+accept it as a valid base name.
+
+Signed-off-by: Jie Meng <zuxy.meng@gmail.com>
+Signed-off-by: Pat Thoyts <patthoyts@users.sourceforge.net>
+---
+ ccache.c | 26 +++++++++++++++++---------
+ ccache.h |  1 +
+ 2 files changed, 18 insertions(+), 9 deletions(-)
+
+diff --git a/ccache.c b/ccache.c
+index 93b65bd..780310f 100644
+--- a/ccache.c
++++ b/ccache.c
+@@ -93,6 +93,7 @@ static struct {
+ static void failed(void)
+ {
+ 	char *e;
++	int ret;
+ 
+ 	/* delete intermediate pre-processor file if needed */
+ 	if (i_tmpfile) {
+@@ -115,17 +116,21 @@ static void failed(void)
+ 
+ 	if ((e=getenv("CCACHE_PREFIX"))) {
+ 		char *p = find_executable(e, MYNAME);
+-		if (!p) {
++		if (!p && !(p = find_executable(e, MYNAME2))) {
+ 			perror(e);
+ 			exit(1);
+ 		}
+ 		args_add_prefix(orig_args, p);
+ 	}
+ 
+-	execv(orig_args->argv[0], orig_args->argv);
+-	cc_log("execv returned (%s)!\n", strerror(errno));
+-	perror(orig_args->argv[0]);
+-	exit(1);
++	_flushall();
++	errno = 0;
++	ret = spawnv(_P_WAIT, orig_args->argv[0], (const char* const*)orig_args->argv);
++	if (errno) {
++		cc_log("execv returned (%s)!\n", strerror(errno));
++		perror(orig_args->argv[0]);
++	}
++	exit(ret);
+ }
+ 
+ 
+@@ -577,7 +582,7 @@ static void find_compiler(int argc, char **argv)
+ 	base = str_basename(argv[0]);
+ 
+ 	/* we might be being invoked like "ccache gcc -c foo.c" */
+-	if (strcmp(base, MYNAME) == 0) {
++	if (strcmp(base, MYNAME) == 0 || strcmp(base, MYNAME2) == 0) {
+ 		args_remove_first(orig_args);
+ 		free(base);
+ 		// if (strchr(argv[1],'/')) {
+@@ -593,7 +598,8 @@ static void find_compiler(int argc, char **argv)
+ 		base = strdup(path);
+ 	}
+ 
+-	orig_args->argv[0] = find_executable(base, MYNAME);
++	if (!(orig_args->argv[0] = find_executable(base, MYNAME)))
++		orig_args->argv[0] = find_executable(base, MYNAME2);
+ 
+ 	/* can't find the compiler! */
+ 	if (!orig_args->argv[0]) {
+@@ -839,7 +845,7 @@ static void process_args(int argc, char **argv)
+ 
+ 	if ((e=getenv("CCACHE_PREFIX"))) {
+ 		char *p = find_executable(e, MYNAME);
+-		if (!p) {
++		if (!p && !(p = find_executable(e, MYNAME2))) {
+ 			perror(e);
+ 			exit(1);
+ 		}
+@@ -1026,7 +1032,9 @@ int main(int argc, char *argv[])
+ 
+ 	/* check if we are being invoked as "ccache" */
+ 	if (strlen(argv[0]) >= strlen(MYNAME) &&
+-	    strcmp(argv[0] + strlen(argv[0]) - strlen(MYNAME), MYNAME) == 0) {
++	    strcmp(argv[0] + strlen(argv[0]) - strlen(MYNAME), MYNAME) == 0 ||
++	    strlen(argv[0]) >= strlen(MYNAME2) &&
++	    strcmp(argv[0] + strlen(argv[0]) - strlen(MYNAME2), MYNAME2) == 0) {
+ 		if (argc < 2) {
+ 			usage();
+ 			exit(1);
+diff --git a/ccache.h b/ccache.h
+index e65888d..588848f 100644
+--- a/ccache.h
++++ b/ccache.h
+@@ -37,6 +37,7 @@
+ 
+ #ifdef _WIN32
+  #define MYNAME "ccache.exe"
++ #define MYNAME2 "ccache"
+ #else
+  #define MYNAME "ccache"
+ #endif
+-- 
+1.8.1.msysgit.1
+

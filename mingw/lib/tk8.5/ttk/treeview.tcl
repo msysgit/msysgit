@@ -1,4 +1,3 @@
-# $Id: treeview.tcl,v 1.4.2.2 2010/08/26 02:06:10 hobbs Exp $
 #
 # ttk::treeview widget bindings and utilities.
 #
