@@ -8,6 +8,13 @@ if errorlevel 1 (
     goto failure
 )
 
+rem verify we can use SETX to make environment variables more permanent
+set USESETX=0
+setx /? 1>nul 2>nul
+if %ERRORLEVEL% == 0 (
+    set USESETX=1
+)
+
 rem Start the ssh-agent if needed by git
 for %%i in ("git.exe") do set GIT=%%~$PATH:i
 if exist "%GIT%" (
@@ -67,6 +74,9 @@ if exist "%GIT%" (
             for /f "tokens=1-2 delims==;" %%a in ('"!SSH_AGENT!"') do (
                 if not [%%b] == [] (
                     set %%a=%%b
+                    if %USESETX% == 1 (
+                        setx %%a %%b 1> nul
+                    )
                 )
             )
             echo. done
