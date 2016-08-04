@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 VERSION=0.9.8zf
 DIR=openssl-$VERSION
-URL=http://www.openssl.org/source/$DIR.tar.gz
+URL=https://www.openssl.org/source/$DIR.tar.gz
 FILE=${URL##*/}
 
 die () {
@@ -65,7 +65,7 @@ test -d $DIR || {
 		git config core.autocrlf false &&
 		/git/contrib/fast-import/import-tars.perl ../$FILE
 	)
-} || die "Could not check out openssl"
+} || die "Could not check out OpenSSL"
 
 test $(cat $DIR/apps/md4.c 2> /dev/null | wc -l) -gt 2 || (
 	cd $DIR &&
