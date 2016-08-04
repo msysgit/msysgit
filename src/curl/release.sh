@@ -49,6 +49,7 @@ OPENSSL_LIBS='-lcrypto.dll -lssl.dll' \
 make mingw32 &&
 index=$(/share/msysGit/pre-install.sh) &&
 cleanup_old_curl &&
+mkdir -p /mingw/include/curl &&
 /bin/install -m 0755 src/curl.exe /mingw/bin/curl.exe &&
 /bin/install -m 0755 lib/libcurl.dll /mingw/bin/libcurl.dll &&
 /bin/install -m 0755 lib/libcurl.a /mingw/lib/libcurl.a &&

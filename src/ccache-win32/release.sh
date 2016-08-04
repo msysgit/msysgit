@@ -16,7 +16,7 @@ git svn clone $REPO -r$REV $DIR ||
 die "Could not clone $REPO"
 
 test $(cd $DIR && git rev-list HEAD | wc -l) -gt 1 ||
-(cd $DIR && git am ../patches/*) ||
+(cd $DIR && git am ../patches/* && sed -i "s/^CC=.*$/CC=gcc -O2/" Makefile) ||
 die "Could not apply patches"
 
 (cd $DIR &&

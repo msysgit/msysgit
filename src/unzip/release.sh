@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-URL=http://ftp.uni-koeln.de/util/arc/
+URL=ftp://ftp.openbsd.org/ports/distfiles
 TAR=unzip60.tar.gz
 DIR=unzip60
 

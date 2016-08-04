@@ -61,7 +61,7 @@ do
 		(cd / && git commit -n -C HEAD --amend -- "$list") ||
 
 		exit
-)
+	)
 done
 
 echo "Successfully built and installed Tcl/Tk $version"
